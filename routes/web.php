@@ -259,7 +259,7 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::middleware(['role:admin,moderator,super_admin,master_admin'])->group(function () {
             Route::resource('countries', CountryController::class)->only(['index', 'create', 'store']);
         });
-        Route::middleware(['role:admin,super_admin,master_admin'])->group(function () {
+        Route::middleware(['role:master_admin'])->group(function () {
             Route::resource('countries', CountryController::class)->only(['edit', 'update', 'destroy']);
         });
 
@@ -267,7 +267,7 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::middleware(['role:admin,moderator,super_admin,master_admin'])->group(function () {
             Route::resource('states', StateController::class)->only(['index', 'create', 'store']);
         });
-        Route::middleware(['role:admin,super_admin,master_admin'])->group(function () {
+        Route::middleware(['role:master_admin'])->group(function () {
             Route::resource('states', StateController::class)->only(['edit', 'update', 'destroy']);
         });
 
@@ -275,7 +275,7 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::middleware(['role:admin,moderator,super_admin,master_admin'])->group(function () {
             Route::resource('cities', CityController::class)->only(['index', 'create', 'store']);
         });
-        Route::middleware(['role:admin,super_admin,master_admin'])->group(function () {
+        Route::middleware(['role:master_admin'])->group(function () {
             Route::resource('cities', CityController::class)->only(['edit', 'update', 'destroy']);
         });
 

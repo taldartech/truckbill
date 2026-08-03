@@ -55,7 +55,7 @@ class MasterFieldsTest extends TestCase
         return $user;
     }
 
-    public function test_country_state_city_crud_admin(): void
+    public function test_country_state_city_create_admin(): void
     {
         $admin = $this->makeUser('admin');
 
@@ -86,6 +86,35 @@ class MasterFieldsTest extends TestCase
         $this->assertDatabaseHas('cities', ['name' => 'Ahmedabad', 'state_id' => $state->id]);
     }
 
+    public function test_admin_cannot_edit_or_delete_country_state_city(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$country, $state, $city] = $this->seedCountryStateCity();
+
+        $this->actingAs($admin)->get(route('master.countries.edit', $country))->assertForbidden();
+        $this->actingAs($admin)->put(route('master.countries.update', $country), [
+            'name' => 'Updated',
+            'code' => 'UP',
+        ])->assertForbidden();
+        $this->actingAs($admin)->delete(route('master.countries.destroy', $country))->assertForbidden();
+
+        $this->actingAs($admin)->get(route('master.states.edit', $state))->assertForbidden();
+        $this->actingAs($admin)->put(route('master.states.update', $state), [
+            'name' => 'Updated',
+            'country_id' => $country->id,
+            'code' => 'UP',
+        ])->assertForbidden();
+        $this->actingAs($admin)->delete(route('master.states.destroy', $state))->assertForbidden();
+
+        $this->actingAs($admin)->get(route('master.cities.edit', $city))->assertForbidden();
+        $this->actingAs($admin)->put(route('master.cities.update', $city), [
+            'name' => 'Updated',
+            'state_id' => $state->id,
+            'country_id' => $country->id,
+        ])->assertForbidden();
+        $this->actingAs($admin)->delete(route('master.cities.destroy', $city))->assertForbidden();
+    }
+
     public function test_master_admin_can_crud_country_state_city(): void
     {
         $master = $this->makeUser('master_admin');
@@ -108,13 +137,35 @@ class MasterFieldsTest extends TestCase
             'state_id' => $state->id,
             'country_id' => $country->id,
         ])->assertRedirect(route('master.cities.index'));
+        $city = City::where('name', 'Ahmedabad')->firstOrFail();
 
-        $this->assertDatabaseHas('countries', ['code' => 'IN']);
-        $this->assertDatabaseHas('states', ['code' => 'GJ']);
-        $this->assertDatabaseHas('cities', ['name' => 'Ahmedabad', 'state_id' => $state->id]);
+        $this->actingAs($master)->put(route('master.cities.update', $city), [
+            'name' => 'Surat',
+            'state_id' => $state->id,
+            'country_id' => $country->id,
+        ])->assertRedirect(route('master.cities.index'));
+
+        $this->actingAs($master)->put(route('master.states.update', $state), [
+            'name' => 'Maharashtra',
+            'country_id' => $country->id,
+            'code' => 'MH',
+        ])->assertRedirect(route('master.states.index'));
+
+        $this->actingAs($master)->put(route('master.countries.update', $country), [
+            'name' => 'Bharat',
+            'code' => 'IN',
+        ])->assertRedirect(route('master.countries.index'));
+
+        $this->actingAs($master)->delete(route('master.cities.destroy', $city))->assertRedirect(route('master.cities.index'));
+        $this->actingAs($master)->delete(route('master.states.destroy', $state))->assertRedirect(route('master.states.index'));
+        $this->actingAs($master)->delete(route('master.countries.destroy', $country))->assertRedirect(route('master.countries.index'));
+
+        $this->assertDatabaseMissing('cities', ['id' => $city->id]);
+        $this->assertDatabaseMissing('states', ['id' => $state->id]);
+        $this->assertDatabaseMissing('countries', ['id' => $country->id]);
     }
 
-    public function test_super_admin_without_company_session_can_crud_country_state_city(): void
+    public function test_super_admin_can_create_but_not_edit_or_delete_country_state_city(): void
     {
         $super = $this->makeUser('super_admin');
         $this->assertFalse($super->canAccessCompanyPanel());
@@ -137,8 +188,28 @@ class MasterFieldsTest extends TestCase
             'state_id' => $state->id,
             'country_id' => $country->id,
         ])->assertRedirect(route('master.cities.index'));
+        $city = City::where('name', 'Ahmedabad')->firstOrFail();
 
         $this->assertDatabaseHas('cities', ['name' => 'Ahmedabad', 'state_id' => $state->id]);
+
+        $this->actingAs($super)->get(route('master.countries.edit', $country))->assertForbidden();
+        $this->actingAs($super)->delete(route('master.countries.destroy', $country))->assertForbidden();
+        $this->actingAs($super)->get(route('master.states.edit', $state))->assertForbidden();
+        $this->actingAs($super)->delete(route('master.states.destroy', $state))->assertForbidden();
+        $this->actingAs($super)->get(route('master.cities.edit', $city))->assertForbidden();
+        $this->actingAs($super)->delete(route('master.cities.destroy', $city))->assertForbidden();
+    }
+
+    /**
+     * @return array{0: Country, 1: State, 2: City}
+     */
+    protected function seedCountryStateCity(): array
+    {
+        $country = Country::create(['name' => 'India', 'code' => 'IN']);
+        $state = State::create(['name' => 'Gujarat', 'country_id' => $country->id, 'code' => 'GJ']);
+        $city = City::create(['name' => 'Ahmedabad', 'state_id' => $state->id, 'country_id' => $country->id]);
+
+        return [$country, $state, $city];
     }
 
     public function test_accountant_can_view_masters_but_not_create(): void

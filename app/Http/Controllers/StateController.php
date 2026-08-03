@@ -106,6 +106,10 @@ class StateController extends Controller
     
     private function getActionButtons($state)
     {
+        if (auth()->user()->userRole?->name !== 'master_admin') {
+            return '';
+        }
+
         $editUrl = route('master.states.edit', $state->id);
         $deleteUrl = route('master.states.destroy', $state->id);
         

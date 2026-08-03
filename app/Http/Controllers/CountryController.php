@@ -98,6 +98,10 @@ class CountryController extends Controller
     
     private function getActionButtons($country)
     {
+        if (auth()->user()->userRole?->name !== 'master_admin') {
+            return '';
+        }
+
         $editUrl = route('master.countries.edit', $country->id);
         $deleteUrl = route('master.countries.destroy', $country->id);
         

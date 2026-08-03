@@ -123,6 +123,10 @@ class CityController extends Controller
     
     private function getActionButtons($city)
     {
+        if (auth()->user()->userRole?->name !== 'master_admin') {
+            return '';
+        }
+
         $editUrl = route('master.cities.edit', $city->id);
         $deleteUrl = route('master.cities.destroy', $city->id);
         
