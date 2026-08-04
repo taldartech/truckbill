@@ -292,8 +292,9 @@
                 amount: order.razorpay_amount_paise,
                 currency: 'INR',
                 order_id: order.razorpay_order_id,
-                name: '{{ $company->name }}',
-                description: 'TruckBill subscription',
+                description: order.description || 'TruckBill subscription',
+                prefill: order.prefill || {},
+                notes: order.notes || {},
                 handler: async (response) => {
                     await fetch('{{ route('subscription.callback') }}', {
                         method: 'POST',
