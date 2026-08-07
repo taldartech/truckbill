@@ -205,3 +205,122 @@
     gap: 0.35rem;
     font-size: 0.8125rem;
 }
+
+/* Create / edit form pages (ownfleet-aligned) */
+.app-create-page {
+    max-width: 1100px;
+}
+
+.app-create-page .app-index-list-card > .card-body {
+    padding: 1rem 1.15rem 1.25rem;
+}
+
+.app-form-section {
+    border: 1px solid var(--brand-border, #e5e7eb);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.app-form-section:last-child {
+    margin-bottom: 0;
+}
+
+.app-form-section__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    background: var(--brand-gradient);
+    color: var(--brand-text-on-green, #fff);
+}
+
+.app-form-section__header h5,
+.app-form-section__header .app-form-section__title {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--brand-text-on-green, #fff) !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.app-form-section__header--muted {
+    background: var(--brand-table-header-bg, #f1f5f9);
+    color: var(--brand-text-primary);
+}
+
+.app-form-section__header--muted h5,
+.app-form-section__header--muted .app-form-section__title {
+    color: var(--brand-text-primary) !important;
+}
+
+.app-form-section__body {
+    padding: 1rem;
+}
+
+.app-form-section__hint {
+    font-size: 0.8125rem;
+    color: var(--brand-text-muted);
+    margin-bottom: 0.75rem;
+}
+
+.app-create-page .form-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--brand-text-muted);
+    margin-bottom: 0.35rem;
+}
+
+.app-create-page .form-control,
+.app-create-page .form-select {
+    min-height: 38px;
+    border-radius: 0.5rem;
+    border-color: var(--brand-border, #e5e7eb);
+    font-size: 0.875rem;
+}
+
+.app-create-page .form-control:focus,
+.app-create-page .form-select:focus {
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 0.2rem var(--brand-input-focus-shadow, rgba(47, 179, 111, 0.15));
+}
+
+.app-create-page .form-control-plaintext.bg-white,
+.app-create-page .form-control-plaintext.bg-light {
+    border-radius: 0.5rem;
+    min-height: 38px;
+}
+
+.app-form-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    margin-top: 1rem;
+    background: #f8fafc;
+    border: 1px solid var(--brand-border, #e5e7eb);
+    border-radius: 12px;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.app-form-actions .card-body {
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.app-form-actions .btn {
+    min-height: 36px;
+    font-size: 0.8125rem !important;
+    font-weight: 600 !important;
+    border-radius: 0.5rem !important;
+    padding: 0.4rem 0.9rem !important;
+}
