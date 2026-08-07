@@ -9,38 +9,42 @@
 @endpush
 
 @section('content')
-<div class="container mt-4">
-    <div class="col-sm-6"><h3 class="mb-0">Consignees/Consignors/Customer</h3></div>
+<div class="container mt-4 app-index-page app-index-page--standard">
     @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="mb-3">
+            <span class="badge text-bg-dark border app-index-flash">
+                <i class="bi bi-check-circle-fill text-success"></i> {{ session('success') }}
+            </span>
+        </div>
     @endif
 
-    <div class="d-flex justify-content-end gap-2 mb-3">
-        <a href="{{ route('consignees.create') }}" class="btn btn-brand-primary">
-            <i class="bi bi-plus"></i> Create
-        </a>
-    </div>
-
-    <div class="card mb-4">
+    <div class="card app-index-list-card mb-4">
         <div class="card-header">
-            <h3 class="card-title">Consignees/Consignors/Customer List</h3>
+            <h3 class="card-title mb-0">Consignees / Consignors / Customers</h3>
+            <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+                <a href="{{ route('consignees.create') }}" class="btn app-index-header-btn" aria-label="Create consignee">
+                    <i class="fas fa-plus"></i> Create
+                </a>
+            </div>
         </div>
         <div class="card-body">
-            <table id="consigneesTable" class="table table-bordered table-striped">
-                <thead>
-                    <tr>
-                        <th style="width: 80px;">Sr. No</th>
-                        <th>Name</th>
-                        <th>City</th>
-                        <th>State</th>
-                        <th>Country</th>
-                        <th>Contact Number</th>
-                        @if(auth()->check() && auth()->user()->canActAsAdmin())
-                        <th style="width: 120px;">Actions</th>
-                        @endif
-                    </tr>
-                </thead>
-            </table>
+            <div class="table-responsive">
+                <table id="consigneesTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 80px;">Sr. No</th>
+                            <th>Name</th>
+                            <th>City</th>
+                            <th>State</th>
+                            <th>Country</th>
+                            <th>Contact Number</th>
+                            @if(auth()->check() && auth()->user()->canActAsAdmin())
+                            <th class="app-index-actions-cell" style="width: 120px;">Actions</th>
+                            @endif
+                        </tr>
+                    </thead>
+                </table>
+            </div>
         </div>
     </div>
 </div>
@@ -136,17 +140,16 @@ $(document).ready(function() {
                 orderable: false,
                 searchable: false,
                 width: '120px',
-                className: 'text-center'
+                className: 'app-index-actions-cell'
             }
             @endif
         ],
         order: [[0, 'desc']],
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-             '<"row"<"col-sm-12 col-md-12"B>>' +
-             '<"row"<"col-sm-12"tr>>' +
-             '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        dom: '<"app-index-dt-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2"<"d-flex flex-wrap align-items-center gap-2"l><"d-flex flex-wrap align-items-center gap-2"fB>>' +
+            't' +
+            '<"app-index-partload-pagination d-flex flex-wrap align-items-center justify-content-between gap-2"<"app-index-partload-pagination__summary"i><"app-index-partload-pagination__nav"p>>',
         buttons: [
             {
                 extend: 'excel',
@@ -156,12 +159,12 @@ $(document).ready(function() {
         ],
         language: {
             search: "Search:",
-            lengthMenu: "Show _MENU_ entries",
-            info: "Showing _START_ to _END_ of _TOTAL_ entries",
-            infoEmpty: "Showing 0 to 0 of 0 entries",
-            infoFiltered: "(filtered from _MAX_ total entries)",
-            zeroRecords: "No matching records found",
-            emptyTable: "No data available in table",
+            lengthMenu: "Show _MENU_",
+            info: "Showing _START_ to _END_ of _TOTAL_ consignees",
+            infoEmpty: "Showing 0 to 0 of 0 consignees",
+            infoFiltered: "(filtered from _MAX_ total)",
+            zeroRecords: "No consignees found.",
+            emptyTable: "No consignees found.",
             paginate: {
                 first: "First",
                 last: "Last",
@@ -172,27 +175,7 @@ $(document).ready(function() {
         responsive: true,
         autoWidth: false,
         stateSave: true,
-        searchDelay: 500,
-        initComplete: function() {
-            // Add individual column search
-            this.api().columns([1, 2, 3, 4, 5]).every(function() {
-                var column = this;
-                var $header = $(column.header());
-                var title = $header.text().trim();
-
-                // Wrap existing text in a div to keep it at top
-                $header.html('<div style="margin-bottom: 5px;">' + title + '</div>');
-
-                // Create input element
-                var input = $('<input type="text" class="form-control form-control-sm" placeholder="Search ' + title + '" />')
-                    .appendTo($header)
-                    .on('keyup change clear', function() {
-                        if (column.search() !== this.value) {
-                            column.search(this.value).draw();
-                        }
-                    });
-            });
-        }
+        searchDelay: 500
     });
 
     // Handle consignee name click to show details

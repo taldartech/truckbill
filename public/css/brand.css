@@ -11,6 +11,13 @@
     --brand-border: #E5E7EB;
     --brand-text-primary: #111827;
     --brand-text-muted: #4B5563;
+    --brand-text-on-green: #FFFFFF;
+
+    /* Index page typography (ownfleet-aligned) */
+    --app-font-size-page-title: 1.125rem;
+    --app-font-size-table: 0.875rem;
+    --app-font-size-table-head: 0.8125rem;
+    --app-font-weight-semibold: 600;
 
     /* Status Colors */
     --brand-success: #22C55E;

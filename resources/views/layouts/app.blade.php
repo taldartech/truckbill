@@ -50,6 +50,7 @@
     <link rel="stylesheet" href="/theme/dist/css/adminlte.min.css" />
     <link rel="stylesheet" href="/css/buttons.css">
     <link rel="stylesheet" href="/css/brand.css">
+    <link rel="stylesheet" href="/css/app-index-page.css">
     <!-- apexcharts -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.css"
         integrity="sha256-4MX+61mt9NVvvuPjUWdUdyfZfxSB1/Rf9WtqRHgG5S0=" crossorigin="anonymous" />

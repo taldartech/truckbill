@@ -6,43 +6,50 @@
 @endpush
 
 @section('content')
-<div class="container mt-4">
-    <div class="col-sm-6"><h3 class="mb-0">Transporter Masters</h3></div>
-
+<div class="container mt-4 app-index-page app-index-page--standard">
     @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="mb-3">
+            <span class="badge text-bg-dark border app-index-flash">
+                <i class="bi bi-check-circle-fill text-success"></i> {{ session('success') }}
+            </span>
+        </div>
     @endif
     @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
+        <div class="mb-3">
+            <span class="badge text-bg-dark border app-index-flash">
+                <i class="bi bi-exclamation-triangle-fill text-danger"></i> {{ session('error') }}
+            </span>
+        </div>
     @endif
 
-    <div class="d-flex justify-content-end gap-2 mb-3">
-        <a href="{{ route('master.transporter-masters.create') }}" class="btn btn-brand-primary">
-            <i class="bi bi-plus"></i> Create
-        </a>
-    </div>
-
-    <div class="card mb-4">
+    <div class="card app-index-list-card mb-4">
         <div class="card-header">
-            <h3 class="card-title">Global Transporter Master Records</h3>
+            <h3 class="card-title mb-0">Transporter Masters</h3>
+            <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+                <a href="{{ route('master.transporter-masters.create') }}" class="btn app-index-header-btn" aria-label="Create transporter master">
+                    <i class="fas fa-plus"></i> Create
+                </a>
+            </div>
         </div>
         <div class="card-body">
-            <table id="transporterMastersTable" class="table table-bordered table-striped">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>PAN</th>
-                        <th>GST</th>
-                        <th>PAN Active</th>
-                        <th>Location</th>
-                        <th>Linked</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div class="table-responsive">
+                <table id="transporterMastersTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>PAN</th>
+                            <th>GST</th>
+                            <th>PAN Active</th>
+                            <th>Location</th>
+                            <th>Linked</th>
+                            <th class="app-index-actions-cell" style="width: 120px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
@@ -73,15 +80,14 @@ $(document).ready(function() {
             { data: 'pan_active', name: 'pan_active', width: '100px', className: 'text-center' },
             { data: 'location', name: 'location' },
             { data: 'transporters_count', name: 'transporters_count', width: '90px', className: 'text-center' },
-            { data: 'actions', name: 'actions', orderable: false, searchable: false, width: '110px', className: 'text-center' }
+            { data: 'actions', name: 'actions', orderable: false, searchable: false, width: '110px', className: 'app-index-actions-cell' }
         ],
         order: [[0, 'desc']],
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-             '<"row"<"col-sm-12 col-md-12"B>>' +
-             '<"row"<"col-sm-12"tr>>' +
-             '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        dom: '<"app-index-dt-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2"<"d-flex flex-wrap align-items-center gap-2"l><"d-flex flex-wrap align-items-center gap-2"fB>>' +
+            't' +
+            '<"app-index-partload-pagination d-flex flex-wrap align-items-center justify-content-between gap-2"<"app-index-partload-pagination__summary"i><"app-index-partload-pagination__nav"p>>',
         buttons: [
             {
                 extend: 'excel',

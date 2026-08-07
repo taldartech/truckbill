@@ -27,28 +27,6 @@
             border-color: rgba(0,0,0,0.05) !important;
         }
 
-        /* Glassmorphism Cards */
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-        }
-
-        .card-header {
-            background: transparent !important;
-            border-bottom: 1px solid rgba(0,0,0,0.05) !important;
-            padding: 12px 20px !important;
-        }
-
-        .card-title {
-            color: var(--slate-800);
-            font-weight: 700 !important;
-            letter-spacing: -0.025em;
-        }
-
         /* Action Buttons */
         .btn-action {
             width: 28px;
@@ -172,10 +150,6 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
-        /* last .row child of .dataTables_wrapper */
-        .dataTables_wrapper .row:last-child {
-            padding: 0 22px !important;
-        }
     </style>
 @endpush
 
@@ -202,50 +176,58 @@
 @endpush
 
 @section('content')
-    <div class="container-fluid py-1 mt-2">
-        <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-            <h3 class="mb-0 card-title animate__animated animate__fadeInDown">Good Hires (Lorry Hire)</h3>
-            @if (session('success'))
-                <span class="badge text-bg-dark border animate__animated animate__fadeIn"><i class="bi bi-check-circle-fill text-success me-1"></i> {{ session('success') }}</span>
-            @endif
-            @if (session('error'))
-                <span class="badge text-bg-dark border animate__animated animate__fadeIn"><i class="bi bi-exclamation-triangle-fill text-danger me-1"></i> {{ session('error') }}</span>
-            @endif
-        </div>
+    <div class="container-fluid mt-4 app-index-page app-index-page--standard">
+        @if (session('success'))
+            <div class="mb-3">
+                <span class="badge text-bg-dark border app-index-flash">
+                    <i class="bi bi-check-circle-fill text-success"></i> {{ session('success') }}
+                </span>
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="mb-3">
+                <span class="badge text-bg-dark border app-index-flash">
+                    <i class="bi bi-exclamation-triangle-fill text-danger"></i> {{ session('error') }}
+                </span>
+            </div>
+        @endif
 
-        <!-- Search & Operations Section -->
-        <div class="glass-card mb-2 animate__animated animate__fadeInDown">
-            <div class="card-header py-1 d-flex justify-content-between align-items-center" style="background-color: rgba(0, 0, 0, 0.1) !important;">
-                <div class="d-flex align-items-center gap-4">
-                    <h6 class="card-title mb-0">Search & Filters</h6>
-                    <div class="status-legend mb-0 d-none d-md-flex">
-                        <div class="legend-item">
-                            <div class="legend-color legend-delivered"></div>
-                            <span class="small">Delivered</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color legend-cancelled"></div>
-                            <span class="small">Cancelled</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color legend-pending"></div>
-                            <span class="small">Pending</span>
+        <div class="card app-index-list-card mb-4">
+            <div class="card-header">
+                <h3 class="card-title mb-0">Good Hires (Lorry Hire)</h3>
+            </div>
+
+            <div class="app-index-dt-toolbar">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                    <div class="d-flex flex-wrap align-items-center gap-3">
+                        <h6 class="mb-0" style="font-size: 0.8125rem; color: var(--brand-text-muted);">Search & Filters</h6>
+                        <div class="status-legend mb-0 d-none d-md-flex">
+                            <div class="legend-item">
+                                <div class="legend-color legend-delivered"></div>
+                                <span class="small">Delivered</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color legend-cancelled"></div>
+                                <span class="small">Cancelled</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color legend-pending"></div>
+                                <span class="small">Pending</span>
+                            </div>
                         </div>
                     </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button id="bulk-memo-id-btn" class="header-pill-btn btn btn-primary border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;" data-bs-toggle="modal" data-bs-target="#bulkMemoIdModal">
+                            <i class="bi bi-clipboard-check"></i> Bulk Memo
+                        </button>
+                        <button id="voucher-payment-btn" class="header-pill-btn btn btn-brand-primary border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;">
+                            <i class="bi bi-receipt"></i> Voucher
+                        </button>
+                        <button id="combined-payment-btn" class="header-pill-btn btn btn-warning border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;">
+                            <i class="bi bi-collection"></i> Combined
+                        </button>
+                    </div>
                 </div>
-                <div class="d-flex gap-2">
-                    <button id="bulk-memo-id-btn" class="header-pill-btn btn btn-primary border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;" data-bs-toggle="modal" data-bs-target="#bulkMemoIdModal">
-                        <i class="bi bi-clipboard-check"></i> Bulk Memo
-                    </button>
-                    <button id="voucher-payment-btn" class="header-pill-btn btn btn-brand-primary border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;">
-                        <i class="bi bi-receipt"></i> Voucher
-                    </button>
-                    <button id="combined-payment-btn" class="header-pill-btn btn btn-warning border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;">
-                        <i class="bi bi-collection"></i> Combined
-                    </button>
-                </div>
-            </div>
-            <div class="card-header" style="padding: 10px 16px !important;">
                 <form method="GET" action="{{ route('freight_bookings.index') }}" id="searchForm">
                     <div class="row g-2 align-items-end">
                         <div class="col-md-5">
@@ -264,7 +246,6 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- Pending Memo -->
                         <div class="col-md-2 d-flex align-items-end">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" name="pending_memo" value="1"
@@ -284,20 +265,17 @@
                         </div>
                     </div>
                 </form>
+                @if (request('search'))
+                    <div class="alert alert-info py-1 px-3 mb-0 mt-2" style="font-size: 11px;">
+                        <i class="bi bi-info-circle me-1"></i> Results for: <strong>"{{ request('search') }}"</strong>
+                        <a href="{{ route('freight_bookings.index') }}" class="btn btn-link btn-sm p-0 ms-2" style="font-size: 11px;">Clear Search</a>
+                    </div>
+                @endif
             </div>
-        </div>
 
-        @if (request('search'))
-            <div class="alert alert-info py-1 px-3 mb-2 animate__animated animate__fadeIn" style="font-size: 11px;">
-                <i class="bi bi-info-circle me-1"></i> Results for: <strong>"{{ request('search') }}"</strong>
-                <a href="{{ route('freight_bookings.index') }}" class="btn btn-link btn-sm p-0 ms-2" style="font-size: 11px;">Clear Search</a>
-            </div>
-        @endif
-
-        <div class="glass-card animate__animated animate__fadeInUp">
-            <div class="card-body p-0">
+            <div class="card-body">
                 <div class="table-responsive">
-                    <table id="freightBookingsTable" class="table table-hover mb-0">
+                    <table id="freightBookingsTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
                         <thead class="table-light">
                             <tr>
                                 <th style="width: 40px;" class="text-center"><input type="checkbox" id="select-all"></th>
@@ -1802,6 +1780,9 @@
                     orderable: false,
                     targets: [0, 3, 4, 5, 6, -1]
                 }],
+                dom: '<"app-index-dt-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2"<"d-flex flex-wrap align-items-center gap-2"l>>' +
+                    't' +
+                    '<"app-index-partload-pagination d-flex flex-wrap align-items-center justify-content-between gap-2"<"app-index-partload-pagination__summary"i><"app-index-partload-pagination__nav"p>>',
                 language: {
                     emptyTable: `<div class="text-muted">
                                         <i class="bi bi-inbox display-4"></i>

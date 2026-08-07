@@ -53,160 +53,167 @@
 @endpush
 
 @section('content')
-    <div class="container mt-4">
-        <div class="col-sm-6">
-            <h3 class="mb-0">Invoice Management</h3>
-        </div>
+    <div class="container mt-4 app-index-page app-index-page--standard">
         @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+            <div class="mb-3">
+                <span class="badge text-bg-dark border app-index-flash">
+                    <i class="bi bi-check-circle-fill text-success"></i> {{ session('success') }}
+                </span>
+            </div>
         @endif
         @if (session('error'))
-            <div class="alert alert-danger">{{ session('error') }}</div>
+            <div class="mb-3">
+                <span class="badge text-bg-dark border app-index-flash">
+                    <i class="bi bi-exclamation-triangle-fill text-danger"></i> {{ session('error') }}
+                </span>
+            </div>
         @endif
 
-        {{-- Always visible container --}}
-        <div class="d-flex justify-content-end gap-2 mb-3">
-            <button type="button" class="btn btn-brand-primary"
-                onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
-                <i class="bi bi-funnel"></i> Search filter
-            </button>
-            <a href="{{ route('custom-invoices.create') }}" class="btn btn-warning">
-                <i class="bi bi-file-earmark-plus"></i> Create Custom Invoice
-            </a>
-            <a href="{{ route('invoices.create') }}" class="btn btn-brand-primary">
-                <i class="bi bi-plus"></i> Create
-            </a>
-        </div>
-
-        {{-- Quick Stats --}}
-        <div class="row mb-3">
-            <div class="col-md-3">
-                <div class="card text-bg-primary mb-2">
-                    <div class="card-body p-2">Total Invoices: <b>{{ $totalInvoices }}</b></div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-brand-primary text-white mb-2">
-                    <div class="card-body p-2">Paid: <b>{{ $paidCount }}</b></div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-bg-warning mb-2">
-                    <div class="card-body p-2">Unpaid: <b>{{ $unpaidCount }}</b></div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-bg-info mb-2">
-                    <div class="card-body p-2">Total Amount: <b>&#8377;{{ number_format($totalAmount, 2) }}</b></div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Hidden filter form --}}
-        <form method="GET" action="{{ route('invoices.index') }}" id="advanced-search-box"
-            class="card card-body shadow-sm mb-4 d-none">
-            {{-- Filter checkboxes --}}
-            <div class="row g-2">
-                <div class="col-md-12">
-                    <label class="form-label fw-bold">Choose Filter Fields:</label>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" value="manual_invoice_number" id="filter_invoice"
-                            onchange="toggleField(this)">
-                        <label class="form-check-label" for="filter_invoice">Invoice #</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" value="customer" id="filter_customer"
-                            onchange="toggleField(this)">
-                        <label class="form-check-label" for="filter_customer">Customer</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" value="payment_status" id="filter_status"
-                            onchange="toggleField(this)">
-                        <label class="form-check-label" for="filter_status">Status</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" value="generated_date" id="filter_date"
-                            onchange="toggleField(this)">
-                        <label class="form-check-label" for="filter_date">Date</label>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Conditionally visible filter fields --}}
-            <div class="row g-3 mt-2" id="filter-fields">
-                <div class="col-md-3 d-none" id="field_generated_date_from">
-                    <label class="form-label">From Date</label>
-                    <input type="date" name="generated_date_from" class="form-control"
-                        value="{{ request('generated_date_from') }}">
-                </div>
-                <div class="col-md-3 d-none" id="field_generated_date_to">
-                    <label class="form-label">To Date</label>
-                    <input type="date" name="generated_date_to" class="form-control"
-                        value="{{ request('generated_date_to') }}">
-                </div>
-                <div class="col-md-3 d-none" id="field_manual_invoice_number">
-                    <label class="form-label">Invoice #</label>
-                    <input type="text" name="manual_invoice_number" class="form-control"
-                        value="{{ request('manual_invoice_number') }}">
-                </div>
-                <div class="col-md-3 d-none" id="field_customer">
-                    <label class="form-label">Customer</label>
-                    <select name="customer" id="filter_customer_select" class="form-select">
-                        <option value="">All</option>
-                    </select>
-                </div>
-                <div class="col-md-3 d-none" id="field_payment_status">
-                    <label class="form-label">Status</label>
-                    <select name="payment_status" class="form-select">
-                        <option value="">All</option>
-                        <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Pending
-                        </option>
-                        <option value="partial" {{ request('payment_status') == 'partial' ? 'selected' : '' }}>Partial
-                        </option>
-                        <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
-                    </select>
-                </div>
-                <div class="col-md-3 d-none" id="field_generated_date">
-                    <label class="form-label">Date</label>
-                    <input type="date" name="generated_date" class="form-control"
-                        value="{{ request('generated_date') }}">
-                </div>
-            </div>
-
-            {{-- Form action buttons --}}
-            <div class="text-end mt-3">
-                <button type="submit" class="btn btn-brand-primary">
-                    <i class="bi bi-search"></i> Search
-                </button>
-                <a href="{{ route('invoices.index') }}" class="btn btn-back ms-2">
-                    <i class="bi bi-arrow-clockwise"></i> Reset
-                </a>
-            </div>
-        </form>
-
-        {{-- Main content card --}}
-        <div class="card mb-4">
+        <div class="card app-index-list-card mb-4">
             <div class="card-header">
-                <h3 class="card-title">Invoices List</h3>
+                <h3 class="card-title mb-0">Invoice Management</h3>
+                <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+                    <button type="button" class="btn app-index-header-btn"
+                        onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
+                        <i class="bi bi-funnel"></i> Search filter
+                    </button>
+                    <a href="{{ route('custom-invoices.create') }}" class="btn app-index-header-btn">
+                        <i class="bi bi-file-earmark-plus"></i> Create Custom Invoice
+                    </a>
+                    <a href="{{ route('invoices.create') }}" class="btn app-index-header-btn">
+                        <i class="bi bi-plus"></i> Create
+                    </a>
+                </div>
             </div>
-            <div class="card-body" style="overflow-x: auto;">
-                <table id="invoicesTable" class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th style="width: 10px">ID</th>
-                            <th>Invoice #</th>
-                            <th>Memo No.</th>
-                            <th>Type</th>
-                            <th>Generated Date</th>
-                            <th>Customer</th>
-                            <th>Total Amount</th>
-                            <th>Paid Amount</th>
-                            <th>Remaining</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                </table>
+
+            <div class="app-index-dt-toolbar">
+                {{-- Quick Stats --}}
+                <div class="row g-2 mb-3">
+                    <div class="col-md-3">
+                        <div class="card text-bg-primary mb-0">
+                            <div class="card-body p-2">Total Invoices: <b>{{ $totalInvoices }}</b></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-brand-primary text-white mb-0">
+                            <div class="card-body p-2">Paid: <b>{{ $paidCount }}</b></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-bg-warning mb-0">
+                            <div class="card-body p-2">Unpaid: <b>{{ $unpaidCount }}</b></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-bg-info mb-0">
+                            <div class="card-body p-2">Total Amount: <b>&#8377;{{ number_format($totalAmount, 2) }}</b></div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Hidden filter form --}}
+                <form method="GET" action="{{ route('invoices.index') }}" id="advanced-search-box"
+                    class="card card-body shadow-sm mb-0 d-none">
+                    {{-- Filter checkboxes --}}
+                    <div class="row g-2">
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Choose Filter Fields:</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" value="manual_invoice_number" id="filter_invoice"
+                                    onchange="toggleField(this)">
+                                <label class="form-check-label" for="filter_invoice">Invoice #</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" value="customer" id="filter_customer"
+                                    onchange="toggleField(this)">
+                                <label class="form-check-label" for="filter_customer">Customer</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" value="payment_status" id="filter_status"
+                                    onchange="toggleField(this)">
+                                <label class="form-check-label" for="filter_status">Status</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" value="generated_date" id="filter_date"
+                                    onchange="toggleField(this)">
+                                <label class="form-check-label" for="filter_date">Date</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Conditionally visible filter fields --}}
+                    <div class="row g-3 mt-2" id="filter-fields">
+                        <div class="col-md-3 d-none" id="field_generated_date_from">
+                            <label class="form-label">From Date</label>
+                            <input type="date" name="generated_date_from" class="form-control"
+                                value="{{ request('generated_date_from') }}">
+                        </div>
+                        <div class="col-md-3 d-none" id="field_generated_date_to">
+                            <label class="form-label">To Date</label>
+                            <input type="date" name="generated_date_to" class="form-control"
+                                value="{{ request('generated_date_to') }}">
+                        </div>
+                        <div class="col-md-3 d-none" id="field_manual_invoice_number">
+                            <label class="form-label">Invoice #</label>
+                            <input type="text" name="manual_invoice_number" class="form-control"
+                                value="{{ request('manual_invoice_number') }}">
+                        </div>
+                        <div class="col-md-3 d-none" id="field_customer">
+                            <label class="form-label">Customer</label>
+                            <select name="customer" id="filter_customer_select" class="form-select">
+                                <option value="">All</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-none" id="field_payment_status">
+                            <label class="form-label">Status</label>
+                            <select name="payment_status" class="form-select">
+                                <option value="">All</option>
+                                <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Pending
+                                </option>
+                                <option value="partial" {{ request('payment_status') == 'partial' ? 'selected' : '' }}>Partial
+                                </option>
+                                <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-none" id="field_generated_date">
+                            <label class="form-label">Date</label>
+                            <input type="date" name="generated_date" class="form-control"
+                                value="{{ request('generated_date') }}">
+                        </div>
+                    </div>
+
+                    {{-- Form action buttons --}}
+                    <div class="text-end mt-3">
+                        <button type="submit" class="btn btn-brand-primary">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                        <a href="{{ route('invoices.index') }}" class="btn btn-back ms-2">
+                            <i class="bi bi-arrow-clockwise"></i> Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="invoicesTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 10px">ID</th>
+                                <th>Invoice #</th>
+                                <th>Memo No.</th>
+                                <th>Type</th>
+                                <th>Generated Date</th>
+                                <th>Customer</th>
+                                <th>Total Amount</th>
+                                <th>Paid Amount</th>
+                                <th>Remaining</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -402,6 +409,9 @@
                 order: [
                     [0, 'desc']
                 ],
+                dom: '<"app-index-dt-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2"<"d-flex flex-wrap align-items-center gap-2"l><"d-flex flex-wrap align-items-center gap-2"f>>' +
+                    't' +
+                    '<"app-index-partload-pagination d-flex flex-wrap align-items-center justify-content-between gap-2"<"app-index-partload-pagination__summary"i><"app-index-partload-pagination__nav"p>>',
                 drawCallback: function() {
                     initTooltips();
                 }

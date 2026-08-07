@@ -4,10 +4,10 @@
 
 @push('styles')
     <style>
-        .audit-page .card {
-            border: none;
+        .audit-page .app-index-list-card .audit-inner-card {
+            border: 1px solid #e6edf7;
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.06);
+            box-shadow: none;
         }
 
         .audit-subtitle {
@@ -119,19 +119,24 @@
 
 @section('content')
     <div class="content audit-page">
-        <div class="container-fluid">
-            <div class="row mb-3">
-                <div class="col-12">
-                    <h3 class="mb-1">Audit log</h3>
-                    <p class="audit-subtitle mb-0">Detailed timeline of system changes. Filter and inspect each event with old and new values.</p>
+        <div class="container-fluid mt-4 app-index-page app-index-page--standard">
+            <div class="card app-index-list-card mb-4">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title mb-0">Audit Log</h3>
+                    </div>
+                </div>
+
+                <div class="app-index-dt-toolbar audit-filter-card">
+                    <p class="audit-subtitle mb-2">Detailed timeline of system changes. Filter and inspect each event with old and new values.</p>
                     @if (! empty($auditScopeAllCompanies))
-                        <p class="small text-muted mt-2 mb-0">
+                        <p class="small text-muted mb-2">
                             <i class="far fa-building me-1"></i>
                             <span class="text-dark">All your companies</span>
                             <span class="badge bg-light text-dark border ms-1">combined view</span>
                         </p>
                     @elseif (! empty($currentCompany))
-                        <p class="small text-muted mt-2 mb-0">
+                        <p class="small text-muted mb-2">
                             <i class="far fa-building me-1"></i>
                             <span class="text-dark">{{ $currentCompany->name }}</span>
                             @if (! empty($currentCompany->short_name))
@@ -139,14 +144,6 @@
                             @endif
                         </p>
                     @endif
-                </div>
-            </div>
-
-            <div class="card audit-filter-card mb-3">
-                <div class="card-header border-0 pb-0">
-                    <h5 class="card-title mb-0">Filters</h5>
-                </div>
-                <div class="card-body pt-3">
                     <form method="get" action="{{ route('audit-logs.index') }}" class="row g-3 align-items-end">
                         @if ($showCompanyPicker)
                             <div class="col-lg-3 col-md-6">
@@ -159,7 +156,6 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                {{-- <p class="small text-muted mb-0 mt-1">Only your companies are listed. Pick one to load audit for that company.</p> --}}
                             </div>
                         @endif
                         <div class="col-lg-3 col-md-6">
@@ -204,128 +200,128 @@
                         </div>
                     </form>
                 </div>
-            </div>
 
-            <div class="row mb-3">
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="audit-stat-card" style="background: linear-gradient(135deg, #06b6d4 0%, #2563eb 100%);">
-                        <div class="audit-stat-title">Total Events</div>
-                        <div class="audit-stat-value">{{ $insights['total_events'] }}</div>
-                        <div class="small">Audit entries after filters</div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="audit-stat-card" style="background: linear-gradient(135deg, #16a34a 0%, #059669 100%);">
-                        <div class="audit-stat-title">Last 7 Days</div>
-                        <div class="audit-stat-value">{{ $insights['last_7_days'] }}</div>
-                        <div class="small">Recent change activity</div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="audit-stat-card" style="background: linear-gradient(135deg, {{ $insights['trend_percent'] >= 0 ? '#f59e0b 0%, #f97316 100%' : '#ef4444 0%, #dc2626 100%' }});">
-                        <div class="audit-stat-title">Trend</div>
-                        <div class="audit-stat-value">{{ $insights['trend_percent'] >= 0 ? '+' : '' }}{{ $insights['trend_percent'] }}%</div>
-                        <div class="small">Vs previous 7 days</div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="audit-stat-card" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%);">
-                        <div class="audit-stat-title">Updated Events</div>
-                        <div class="audit-stat-value">{{ $insights['action_stats']->get('updated', 0) }}</div>
-                        <div class="small">Records modified</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header border-0 pb-0">
-                    <h5 class="card-title mb-1">Timeline View</h5>
-                    <p class="audit-subtitle mb-0">Newest activity on top. Expand each event to see old and new values.</p>
-                </div>
-                <div class="audit-timeline-wrap">
-                    @if ($ownedCompanies->isEmpty())
-                        <div class="alert alert-warning border rounded-3 mb-3">
-                            <strong>No companies found</strong> for your account. Create one under
-                            <a href="{{ route('company.index') }}" class="alert-link">Company Management</a>.
+                <div class="card-body">
+                    <div class="row g-3 p-3 mb-0">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="audit-stat-card" style="background: linear-gradient(135deg, #06b6d4 0%, #2563eb 100%);">
+                                <div class="audit-stat-title">Total Events</div>
+                                <div class="audit-stat-value">{{ $insights['total_events'] }}</div>
+                                <div class="small">Audit entries after filters</div>
+                            </div>
                         </div>
-                    @elseif (! $hasActiveFilters)
-                        <div class="alert alert-light border rounded-3 mb-3">
-                            <strong>No data by default.</strong> Apply filters (LR Number / date / user / module) to load timeline.
+                        <div class="col-lg-3 col-md-6">
+                            <div class="audit-stat-card" style="background: linear-gradient(135deg, #16a34a 0%, #059669 100%);">
+                                <div class="audit-stat-title">Last 7 Days</div>
+                                <div class="audit-stat-value">{{ $insights['last_7_days'] }}</div>
+                                <div class="small">Recent change activity</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="audit-stat-card" style="background: linear-gradient(135deg, {{ $insights['trend_percent'] >= 0 ? '#f59e0b 0%, #f97316 100%' : '#ef4444 0%, #dc2626 100%' }});">
+                                <div class="audit-stat-title">Trend</div>
+                                <div class="audit-stat-value">{{ $insights['trend_percent'] >= 0 ? '+' : '' }}{{ $insights['trend_percent'] }}%</div>
+                                <div class="small">Vs previous 7 days</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="audit-stat-card" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%);">
+                                <div class="audit-stat-title">Updated Events</div>
+                                <div class="audit-stat-value">{{ $insights['action_stats']->get('updated', 0) }}</div>
+                                <div class="small">Records modified</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="px-3 pb-2">
+                        <h5 class="mb-1" style="font-size: 1rem;">Timeline View</h5>
+                        <p class="audit-subtitle mb-0">Newest activity on top. Expand each event to see old and new values.</p>
+                    </div>
+                    <div class="audit-timeline-wrap">
+                        @if ($ownedCompanies->isEmpty())
+                            <div class="alert alert-warning border rounded-3 mb-3">
+                                <strong>No companies found</strong> for your account. Create one under
+                                <a href="{{ route('company.index') }}" class="alert-link">Company Management</a>.
+                            </div>
+                        @elseif (! $hasActiveFilters)
+                            <div class="alert alert-light border rounded-3 mb-3">
+                                <strong>No data by default.</strong> Apply filters (LR Number / date / user / module) to load timeline.
+                            </div>
+                        @endif
+
+                        <div class="audit-timeline">
+                            @forelse ($logs as $log)
+                                @php
+                                    $action = $log->action;
+                                    $badgeClass = $action === 'created' ? 'bg-success' : ($action === 'updated' ? 'bg-info' : ($action === 'deleted' ? 'bg-danger' : 'bg-secondary'));
+                                @endphp
+                                <div class="audit-item">
+                                    <div class="d-flex flex-wrap align-items-start gap-2 mb-2">
+                                        <span class="badge {{ $badgeClass }} text-uppercase">{{ $action }}</span>
+                                        <span class="badge bg-light text-dark border">{{ $log->subjectTypeDisplayName() }}</span>
+                                    </div>
+
+                                    <div class="audit-item-title mb-1">{{ $log->displaySummary() }}</div>
+
+                                    <div class="audit-meta mb-2">
+                                        <i class="far fa-clock me-1"></i>{{ $log->occurred_at->timezone(config('app.timezone'))->format('d M Y, h:i:s A') }}
+                                        @if ($log->company && ! empty($log->company->short_name))
+                                            <span class="mx-2">|</span>
+                                            <span class="badge bg-light text-dark border">{{ $log->company->short_name }}</span>
+                                        @endif
+                                        <span class="mx-2">|</span>
+                                        <i class="far fa-user me-1"></i>
+                                        @if ($log->user)
+                                            {{ $log->user->name }}
+                                            <span class="text-muted">({{ $log->user->email }})</span>
+                                        @else
+                                            System
+                                        @endif
+                                    </div>
+
+                                    @if ($log->fieldChanges->isNotEmpty())
+                                        <details>
+                                            <summary class="text-primary" style="cursor: pointer;">View field changes</summary>
+                                            <div class="table-responsive mt-2">
+                                                <table class="table table-sm table-bordered audit-changes-table mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th width="30%">Field</th>
+                                                            <th width="35%">Before</th>
+                                                            <th width="35%">After</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach ($log->fieldChanges as $row)
+                                                            <tr>
+                                                                <td>{{ $row->field_label ?: $row->attribute_name }}</td>
+                                                                <td>{{ $row->old_value ?? '—' }}</td>
+                                                                <td>{{ $row->new_value ?? '—' }}</td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </details>
+                                    @endif
+                                </div>
+                            @empty
+                                <div class="text-center text-muted py-4">
+                                    @if ($ownedCompanies->isEmpty())
+                                        Add a company first, then apply filters.
+                                    @else
+                                        {{ $hasActiveFilters ? 'No activity found for selected filters.' : 'Apply filters to view the timeline.' }}
+                                    @endif
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                    @if ($logs->hasPages())
+                        <div class="app-index-partload-pagination">
+                            {{ $logs->links() }}
                         </div>
                     @endif
-
-                    <div class="audit-timeline">
-                        @forelse ($logs as $log)
-                            @php
-                                $action = $log->action;
-                                $badgeClass = $action === 'created' ? 'bg-success' : ($action === 'updated' ? 'bg-info' : ($action === 'deleted' ? 'bg-danger' : 'bg-secondary'));
-                            @endphp
-                            <div class="audit-item">
-                                <div class="d-flex flex-wrap align-items-start gap-2 mb-2">
-                                    <span class="badge {{ $badgeClass }} text-uppercase">{{ $action }}</span>
-                                    <span class="badge bg-light text-dark border">{{ $log->subjectTypeDisplayName() }}</span>
-                                </div>
-
-                                <div class="audit-item-title mb-1">{{ $log->displaySummary() }}</div>
-
-                                <div class="audit-meta mb-2">
-                                    <i class="far fa-clock me-1"></i>{{ $log->occurred_at->timezone(config('app.timezone'))->format('d M Y, h:i:s A') }}
-                                    @if ($log->company && ! empty($log->company->short_name))
-                                        <span class="mx-2">|</span>
-                                        <span class="badge bg-light text-dark border">{{ $log->company->short_name }}</span>
-                                    @endif
-                                    <span class="mx-2">|</span>
-                                    <i class="far fa-user me-1"></i>
-                                    @if ($log->user)
-                                        {{ $log->user->name }}
-                                        <span class="text-muted">({{ $log->user->email }})</span>
-                                    @else
-                                        System
-                                    @endif
-                                </div>
-
-                                @if ($log->fieldChanges->isNotEmpty())
-                                    <details>
-                                        <summary class="text-primary" style="cursor: pointer;">View field changes</summary>
-                                        <div class="table-responsive mt-2">
-                                            <table class="table table-sm table-bordered audit-changes-table mb-0">
-                                                <thead>
-                                                    <tr>
-                                                        <th width="30%">Field</th>
-                                                        <th width="35%">Before</th>
-                                                        <th width="35%">After</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach ($log->fieldChanges as $row)
-                                                        <tr>
-                                                            <td>{{ $row->field_label ?: $row->attribute_name }}</td>
-                                                            <td>{{ $row->old_value ?? '—' }}</td>
-                                                            <td>{{ $row->new_value ?? '—' }}</td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </details>
-                                @endif
-                            </div>
-                        @empty
-                            <div class="text-center text-muted py-4">
-                                @if ($ownedCompanies->isEmpty())
-                                    Add a company first, then apply filters.
-                                @else
-                                    {{ $hasActiveFilters ? 'No activity found for selected filters.' : 'Apply filters to view the timeline.' }}
-                                @endif
-                            </div>
-                        @endforelse
-                    </div>
                 </div>
-                @if ($logs->hasPages())
-                    <div class="card-footer bg-white border-0 pt-0">
-                        {{ $logs->links() }}
-                    </div>
-                @endif
             </div>
         </div>
     </div>

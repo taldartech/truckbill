@@ -52,34 +52,6 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
-        .container {
-            max-width: 100% !important;
-            padding-left: 20px !important;
-            padding-right: 20px !important;
-        }
-
-        /* Glassmorphism Cards */
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-        }
-
-        .card-header {
-            background: transparent !important;
-            border-bottom: 1px solid rgba(0,0,0,0.05) !important;
-            padding: 12px 20px !important;
-        }
-
-        .card-title {
-            color: var(--slate-800);
-            font-weight: 700 !important;
-            letter-spacing: -0.025em;
-        }
-
         /* Status Dots */
         .status-dot {
             width: 7px;
@@ -163,22 +135,6 @@
             font-weight: 500;
         }
 
-        /* Header Specific Adjustments */
-        .header-pill-btn {
-            border-radius: 50px !important;
-            font-size: 11px !important;
-            font-weight: 600 !important;
-            padding: 4px 12px !important;
-            display: inline-flex;
-            align-items: center;
-            transition: all 0.2s ease;
-        }
-
-        .header-pill-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
-        }
-
         .filter-action-btn {
             width: 32px;
             height: 32px;
@@ -223,87 +179,80 @@
             box-shadow: none !important;
         }
 
-        /* dataTables_wrapper .row first & last child */
-        .dataTables_wrapper .row:first-child,
-        .dataTables_wrapper .row:last-child {
-            padding: 0 12px !important;
-        }
     </style>
 @endpush
 
 @section('content')
-    <div class="container-fluid py-2">
-        <div class="d-flex justify-content-between align-items-center mb-2 px-3">
-            <div>
-                @if (session('success'))
-                    <span class="badge bg-success animate__animated animate__fadeIn">{{ session('success') }}</span>
-                @endif
-                @if (session('error'))
-                    <span class="badge bg-danger animate__animated animate__fadeIn">{{ session('error') }}</span>
-                @endif
+    <div class="container-fluid mt-4 app-index-page app-index-page--standard">
+        @if (session('success'))
+            <div class="mb-3">
+                <span class="badge text-bg-dark border app-index-flash">
+                    <i class="bi bi-check-circle-fill text-success"></i> {{ session('success') }}
+                </span>
             </div>
-        </div>
+        @endif
+        @if (session('error'))
+            <div class="mb-3">
+                <span class="badge text-bg-dark border app-index-flash">
+                    <i class="bi bi-exclamation-triangle-fill text-danger"></i> {{ session('error') }}
+                </span>
+            </div>
+        @endif
 
-        <div class="glass-card mb-3 animate__animated animate__fadeInDown">
-            <div class="card-header py-3">
-                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <h4 class="card-title mb-0" style="white-space: nowrap;">Good Receipts (Bilty)</h4>
-                        <div class="d-flex gap-2">
-                            <a href="{{ route('lorry_receipts.create') }}" class="header-pill-btn btn btn-primary border-0 shadow-sm" style="background: var(--brand-primary);">
-                                <i class="bi bi-plus-circle me-1"></i> Create
-                            </a>
-                            <a href="{{ route('lorry_receipts.createLinked') }}" class="header-pill-btn btn btn-edit shadow-sm">
-                                <i class="bi bi-link-45deg me-1"></i> Linked
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="d-flex flex-wrap align-items-center gap-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="input-group-custom">
-                                <span>From</span>
-                                <input type="date" id="fromDate">
-                            </div>
-                            <div class="input-group-custom">
-                                <span>To</span>
-                                <input type="date" id="toDate">
-                            </div>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button type="button" class="filter-action-btn" id="filterBtn" style="background: var(--brand-primary); color: white;" title="Filter" data-bs-toggle="tooltip">
-                                <i class="bi bi-funnel-fill"></i>
-                            </button>
-                            <button type="button" class="filter-action-btn" id="resetDateFilter" style="background: var(--brand-text-primary); color: white;" title="Reset" data-bs-toggle="tooltip">
-                                <i class="bi bi-arrow-counterclockwise"></i>
-                            </button>
-                        </div>
-                    </div>
+        <div class="card app-index-list-card mb-4">
+            <div class="card-header">
+                <h3 class="card-title mb-0">Good Receipts (Bilty)</h3>
+                <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+                    <a href="{{ route('lorry_receipts.create') }}" class="btn app-index-header-btn" aria-label="Create good receipt">
+                        <i class="bi bi-plus-circle"></i> Create
+                    </a>
+                    <a href="{{ route('lorry_receipts.createLinked') }}" class="btn app-index-header-btn" aria-label="Create linked good receipt">
+                        <i class="bi bi-link-45deg"></i> Linked
+                    </a>
                 </div>
             </div>
-        </div>
 
-    </div>
-    <div class="glass-card animate__animated animate__fadeInUp">
-        <div class="card-body p-0">
-            <div class="table-responsive" style="max-height: calc(100vh - 250px); overflow-y: auto;">
-                <table id="lorryReceiptsTable" class="table table-hover table-sm mb-0">
-                    <thead>
-                        <tr>
-                            <th>GR Date</th>
-                            <th>LR Details</th>
-                            <th>Customer</th>
-                            <th>Consignor</th>
-                            <th>Consignee</th>
-                            <th>Status</th>
-                            <th>Truck</th>
-                            <th>Weight</th>
-                            <th>Rate</th>
-                            <th>Amount</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                </table>
+            <div class="app-index-dt-toolbar d-flex flex-wrap justify-content-end align-items-center gap-3">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <div class="input-group-custom">
+                        <span>From</span>
+                        <input type="date" id="fromDate">
+                    </div>
+                    <div class="input-group-custom">
+                        <span>To</span>
+                        <input type="date" id="toDate">
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="filter-action-btn" id="filterBtn" style="background: var(--brand-primary); color: white;" title="Filter" data-bs-toggle="tooltip">
+                        <i class="bi bi-funnel-fill"></i>
+                    </button>
+                    <button type="button" class="filter-action-btn" id="resetDateFilter" style="background: var(--brand-text-primary); color: white;" title="Reset" data-bs-toggle="tooltip">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="table-responsive" style="max-height: calc(100vh - 250px); overflow-y: auto;">
+                    <table id="lorryReceiptsTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
+                        <thead class="table-light">
+                            <tr>
+                                <th>GR Date</th>
+                                <th>LR Details</th>
+                                <th>Customer</th>
+                                <th>Consignor</th>
+                                <th>Consignee</th>
+                                <th>Status</th>
+                                <th>Truck</th>
+                                <th>Weight</th>
+                                <th>Rate</th>
+                                <th>Amount</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -790,6 +739,9 @@
                     responsive: false, // Disable responsive collapse
                     scrollX: true, // Enable DataTables horizontal scroll
                     autoWidth: false,
+                    dom: '<"app-index-dt-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2"<"d-flex flex-wrap align-items-center gap-2"l><"d-flex flex-wrap align-items-center gap-2"f>>' +
+                        't' +
+                        '<"app-index-partload-pagination d-flex flex-wrap align-items-center justify-content-between gap-2"<"app-index-partload-pagination__summary"i><"app-index-partload-pagination__nav"p>>',
                     drawCallback: function(settings) {
                         $('[data-bs-toggle="tooltip"]').tooltip();
                     }
