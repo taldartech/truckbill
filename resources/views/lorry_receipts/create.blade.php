@@ -443,7 +443,7 @@
                             @error('fr_rate')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                            <div class="invalid-feedback">Please enter a freight rate between 1 and 20,000.</div>
+                            <div class="invalid-feedback">Between 1 and 20,000.</div>
                         </div>
                         <div class="lrf-pf">
                             <label class="lrf-pf__lbl" for="amount">
@@ -1853,7 +1853,7 @@ grNumberInput.addEventListener('blur', function() {
                 const value = parseFloat(frRateInput.value);
 
                 if (frRateInput.value && (isNaN(value) || value < 1 || value > 20000)) {
-                    frRateInput.setCustomValidity('Please enter a valid freight rate between 1 and 20,000.');
+                    frRateInput.setCustomValidity('Between 1 and 20,000.');
                     frRateInput.classList.add('is-invalid');
                     frRateInput.classList.remove('is-valid');
                 } else if (frRateInput.value) {

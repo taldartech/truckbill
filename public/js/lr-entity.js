@@ -34,14 +34,14 @@
   }
 
   function renderDetailsHtmlFromObject(data, options = {}) {
-    const { title = 'All Details', hideDeclarationGiven = false } = options;
+    const { title = 'Details', hideDeclarationGiven = false } = options;
 
     if (data === null || data === undefined) {
-      return `<div class="text-muted">No details available.</div>`;
+      return `<div class="lrf-confirm"><p class="lrf-confirm__empty">No details available.</p></div>`;
     }
 
     const getSafe = (value) => {
-      if (value === null || value === undefined) {
+      if (value === null || value === undefined || value === '') {
         return 'Not Set';
       }
 
@@ -49,7 +49,7 @@
         return value.length ? value.join(', ') : 'Not Set';
       }
 
-      return value;
+      return String(value);
     };
 
     const yesNo = (value) => {
@@ -61,29 +61,22 @@
     };
 
     const tdsValue = data.tds_percentage ?? data.tdsPercentage ?? null;
-    const tdsDisplay = tdsValue === null || tdsValue === undefined || tdsValue === '' ? 'Not Set' : `${tdsValue}%`;
+    const tdsDisplay =
+      tdsValue === null || tdsValue === undefined || tdsValue === ''
+        ? 'Not Set'
+        : `${parseFloat(tdsValue).toFixed(2)}%`;
 
-    // Common fields for Transporter / Truck Owner.
-    // If the backend returns slightly different structures, we still try to display useful values.
     const name = getSafe(
-      data.name ??
-        data.transporterMaster?.name ??
-        data.transporter_master?.name
+      data.name ?? data.transporterMaster?.name ?? data.transporter_master?.name
     );
     const email = getSafe(
-      data.email ??
-        data.transporterMaster?.email ??
-        data.transporter_master?.email
+      data.email ?? data.transporterMaster?.email ?? data.transporter_master?.email
     );
     const pan = getSafe(
-      data.pan_number ??
-        data.transporterMaster?.pan_number ??
-        data.transporter_master?.pan_number
+      data.pan_number ?? data.transporterMaster?.pan_number ?? data.transporter_master?.pan_number
     );
     const gst = getSafe(
-      data.gst_number ??
-        data.transporterMaster?.gst_number ??
-        data.transporter_master?.gst_number
+      data.gst_number ?? data.transporterMaster?.gst_number ?? data.transporter_master?.gst_number
     );
     const mobile = getSafe(data.mobile_number);
     const contactPerson = getSafe(data.contact_person_name);
@@ -93,99 +86,282 @@
     const gstType = getSafe(
       data.gst_type ?? data.transporterMaster?.gst_type ?? data.transporter_master?.gst_type
     );
-
     const address = getSafe(
       data.address ?? data.transporterMaster?.address ?? data.transporter_master?.address
     );
 
     const tm = data.transporterMaster ?? data.transporter_master ?? null;
-    const cityFromRelation = tm?.city?.name;
-    const stateFromRelation = tm?.state?.name;
-    const countryFromRelation = tm?.country?.name;
-
     const cityDisplay = getSafe(
-      (typeof data.city === 'string' ? data.city : null) ??
-        cityFromRelation ??
-        data.transporterMaster?.city?.name ??
-        data.transporter_master?.city?.name
+      (typeof data.city === 'string' ? data.city : null) ?? tm?.city?.name
     );
     const stateDisplay = getSafe(
-      (typeof data.state === 'string' ? data.state : null) ??
-        stateFromRelation ??
-        data.transporterMaster?.state?.name ??
-        data.transporter_master?.state?.name
-    );
-    const countryDisplay = getSafe(
-      (typeof data.country === 'string' ? data.country : null) ??
-        countryFromRelation ??
-        data.transporterMaster?.country?.name ??
-        data.transporter_master?.country?.name
+      (typeof data.state === 'string' ? data.state : null) ?? tm?.state?.name
     );
 
-    let json = '';
-    try {
-      json = JSON.stringify(data, null, 2);
-    } catch (e) {
-      json = String(data);
-    }
+    const isUnset = (value) => value === 'Not Set';
+    const fact = (label, value, { emphasize = false } = {}) => {
+      const unset = isUnset(value);
+      const valueClass = [
+        'lrf-confirm__fact-value',
+        unset ? 'is-unset' : '',
+        emphasize && !unset ? 'is-emphasis' : '',
+      ]
+        .filter(Boolean)
+        .join(' ');
 
-    const escapedJson = escapeHtml(json);
+      return `
+        <div class="lrf-confirm__fact">
+          <span class="lrf-confirm__fact-label">${escapeHtml(label)}</span>
+          <span class="${valueClass}">${escapeHtml(value)}</span>
+        </div>
+      `;
+    };
 
-    // Used to draw attention in the confirmation modal.
-    const keyHighlight = (value) => `
-      <span class="badge bg-warning text-dark" style="word-break: break-word; font-size: 1rem !important;">${escapeHtml(value)}</span>
-    `;
+    const declarationChip =
+      declarationGiven === 'Yes'
+        ? '<span class="lrf-confirm__chip lrf-confirm__chip--ok">Declaration Yes</span>'
+        : declarationGiven === 'No'
+          ? '<span class="lrf-confirm__chip lrf-confirm__chip--warn">Declaration No</span>'
+          : '';
 
     return `
-      <div class="mt-2">
-        <div class="mb-2">
-          <strong>${escapeHtml(title)}</strong>
+      <div class="lrf-confirm">
+        <div class="lrf-confirm__hero">
+          <div class="lrf-confirm__avatar" aria-hidden="true">${escapeHtml((name || '?').charAt(0).toUpperCase())}</div>
+          <div class="lrf-confirm__hero-text">
+            <div class="lrf-confirm__name">${escapeHtml(name)}</div>
+            <div class="lrf-confirm__meta">
+              ${!isUnset(shortName) ? `<span class="lrf-confirm__chip">${escapeHtml(shortName)}</span>` : ''}
+              <span class="lrf-confirm__chip lrf-confirm__chip--soft">TDS ${escapeHtml(tdsDisplay)}</span>
+              ${hideDeclarationGiven ? '' : declarationChip}
+            </div>
+          </div>
         </div>
 
-        <div class="row g-2">
-          <div class="col-12 col-md-6">
-            <p class="mb-1"><strong>Name:</strong> ${keyHighlight(name)}</p>
-            <p class="mb-1"><strong>Mobile:</strong> ${keyHighlight(mobile)}</p>
-            <p class="mb-1"><strong>Email:</strong> ${escapeHtml(email)}</p>
-            <p class="mb-1"><strong>Contact Person:</strong> ${escapeHtml(contactPerson)}</p>
-          </div>
+        <div class="lrf-confirm__section-label">${escapeHtml(title)}</div>
 
-          <div class="col-12 col-md-6">
-            <p class="mb-1"><strong>PAN:</strong> ${escapeHtml(pan)}</p>
-            <p class="mb-1"><strong>GST:</strong> ${escapeHtml(gst)}</p>
-            <p class="mb-1"><strong>GST Type:</strong> ${escapeHtml(gstType)}</p>
-            <p class="mb-1"><strong>TDS Percentage:</strong> ${escapeHtml(tdsDisplay)}</p>
-            ${
-              hideDeclarationGiven
-                ? ''
-                : `<p class="mb-1"><strong>Declaration Given:</strong> ${escapeHtml(declarationGiven)}</p>`
-            }
-          </div>
+        <div class="lrf-confirm__grid">
+          ${fact('Mobile', mobile, { emphasize: true })}
+          ${fact('Contact Person', contactPerson)}
+          ${fact('Email', email)}
+          ${fact('PAN', pan, { emphasize: true })}
+          ${fact('GST', gst)}
+          ${fact('GST Type', gstType)}
+          ${hideDeclarationGiven ? '' : fact('Declaration', declarationGiven)}
+          ${fact('Beneficiary ID', beneficiaryId)}
+          ${fact('City', cityDisplay)}
+          ${fact('State', stateDisplay)}
+        </div>
 
-          <div class="col-12">
-            <p class="mb-1"><strong>Beneficiary ID:</strong> ${keyHighlight(beneficiaryId)}</p>
-            <p class="mb-1"><strong>Short Name:</strong> ${keyHighlight(shortName)}</p>
-            <p class="mb-1"><strong>Address:</strong> ${escapeHtml(address)}</p>
-            <p class="mb-1"><strong>City:</strong> ${escapeHtml(cityDisplay)} &nbsp; <strong>State:</strong> ${escapeHtml(stateDisplay)}</p>
-          </div>
+        <div class="lrf-confirm__address">
+          <span class="lrf-confirm__fact-label">Address</span>
+          <span class="lrf-confirm__fact-value ${isUnset(address) ? 'is-unset' : ''}">${escapeHtml(address)}</span>
         </div>
       </div>
     `;
   }
 
+  function ensureConfirmModalStyles() {
+    if (document.getElementById('lrf-confirm-modal-styles')) {
+      return;
+    }
+
+    const style = document.createElement('style');
+    style.id = 'lrf-confirm-modal-styles';
+    style.textContent = `
+      .lrf-swal-popup {
+        border-radius: 16px !important;
+        padding: 0 !important;
+        width: min(560px, 94vw) !important;
+        box-shadow: 0 18px 50px rgba(15, 23, 42, 0.18) !important;
+        overflow: hidden;
+      }
+      .lrf-swal-title {
+        margin: 0 !important;
+        padding: 1rem 1.15rem 0.35rem !important;
+        font-size: 1.05rem !important;
+        font-weight: 800 !important;
+        color: #0f172a !important;
+        text-align: left !important;
+      }
+      .lrf-swal-html {
+        margin: 0 !important;
+        padding: 0 1.15rem 0.35rem !important;
+        text-align: left !important;
+      }
+      .lrf-swal-actions {
+        margin: 0 !important;
+        padding: 0.85rem 1.15rem 1.1rem !important;
+        gap: 0.55rem !important;
+        width: 100% !important;
+        justify-content: stretch !important;
+      }
+      .lrf-swal-confirm,
+      .lrf-swal-cancel {
+        flex: 1 1 0 !important;
+        margin: 0 !important;
+        border-radius: 10px !important;
+        font-weight: 700 !important;
+        font-size: 0.875rem !important;
+        padding: 0.65rem 0.9rem !important;
+        box-shadow: none !important;
+      }
+      .lrf-swal-confirm {
+        background: #2fb36f !important;
+      }
+      .lrf-swal-confirm:hover {
+        background: #23965c !important;
+      }
+      .lrf-swal-cancel {
+        background: #fff !important;
+        color: #475569 !important;
+        border: 1px solid #e2e8f0 !important;
+      }
+      .lrf-swal-cancel:hover {
+        background: #f8fafc !important;
+        color: #0f172a !important;
+      }
+      .lrf-swal-popup .swal2-icon {
+        display: none !important;
+      }
+      .lrf-confirm {
+        font-family: inherit;
+        color: #334155;
+      }
+      .lrf-confirm__empty {
+        margin: 0.5rem 0;
+        color: #94a3b8;
+      }
+      .lrf-confirm__hero {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        padding: 0.85rem 0.9rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(47,179,111,0.12) 0%, rgba(45,140,255,0.06) 55%, #f8fafc 100%);
+        border: 1px solid rgba(47,179,111,0.18);
+        margin-bottom: 0.85rem;
+      }
+      .lrf-confirm__avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: #2fb36f;
+        color: #fff;
+        font-weight: 800;
+        font-size: 1.05rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(47,179,111,0.28);
+      }
+      .lrf-confirm__name {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.25;
+        word-break: break-word;
+      }
+      .lrf-confirm__meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-top: 0.35rem;
+      }
+      .lrf-confirm__chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.15rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        background: #e2e8f0;
+        color: #334155;
+      }
+      .lrf-confirm__chip--soft {
+        background: #eff6ff;
+        color: #1d4ed8;
+      }
+      .lrf-confirm__chip--ok {
+        background: #dcfce7;
+        color: #166534;
+      }
+      .lrf-confirm__chip--warn {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .lrf-confirm__section-label {
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #94a3b8;
+        margin-bottom: 0.5rem;
+      }
+      .lrf-confirm__grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.55rem 0.75rem;
+      }
+      .lrf-confirm__fact,
+      .lrf-confirm__address {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.12rem;
+      }
+      .lrf-confirm__address {
+        margin-top: 0.75rem;
+        padding-top: 0.7rem;
+        border-top: 1px dashed #e2e8f0;
+      }
+      .lrf-confirm__fact-label {
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #94a3b8;
+      }
+      .lrf-confirm__fact-value {
+        font-size: 0.84rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.35;
+        word-break: break-word;
+      }
+      .lrf-confirm__fact-value.is-unset {
+        color: #94a3b8;
+        font-weight: 600;
+      }
+      .lrf-confirm__fact-value.is-emphasis {
+        color: #0f172a;
+        font-weight: 800;
+      }
+      @media (max-width: 520px) {
+        .lrf-confirm__grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function ConfirmEntitySelectionModal({ title, detailsHtml, onConfirm, onCancel }) {
+    ensureConfirmModalStyles();
+
     if (typeof Swal !== 'undefined' && Swal && typeof Swal.fire === 'function') {
       Swal.fire({
         title,
         html: detailsHtml,
-        icon: 'question',
         showCancelButton: true,
-        confirmButtonText: '✅ Confirm',
-        confirmButtonColor: '#16a34a',
-        cancelButtonText: '❌ Cancel',
-        cancelButtonColor: '#dc2626',
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
         focusCancel: true,
         allowOutsideClick: false,
+        reverseButtons: true,
+        buttonsStyling: true,
         didOpen: () => {
           setTimeout(() => {
             const cancelButton = Swal.getCancelButton();
@@ -193,8 +369,13 @@
           }, 50);
         },
         customClass: {
-          popup: 'swal-wide'
-        }
+          popup: 'lrf-swal-popup',
+          title: 'lrf-swal-title',
+          htmlContainer: 'lrf-swal-html',
+          actions: 'lrf-swal-actions',
+          confirmButton: 'lrf-swal-confirm',
+          cancelButton: 'lrf-swal-cancel',
+        },
       }).then((result) => {
         if (result.isConfirmed) {
           onConfirm?.();
@@ -206,7 +387,6 @@
       return;
     }
 
-    // Fallback when SweetAlert2 is missing.
     const ok = confirm(title);
     if (ok) {
       onConfirm?.();
@@ -725,7 +905,7 @@
             const entityName = formatTransporterDisplayName(transporterDetails) || owner.name || 'N/A';
 
             const completeDetailsHtml = renderDetailsHtmlFromObject(transporterDetails, {
-              title: 'Complete Transporter/Truck Owner Details',
+              title: 'Owner details',
             });
 
             const detailsHtml = `
@@ -735,7 +915,7 @@
             `;
 
             ConfirmEntitySelectionModal({
-              title: 'Confirm Truck Owner Selection',
+              title: 'Confirm truck owner',
               detailsHtml,
               onConfirm: () => {
                 if (seq !== confirmSeq) {
@@ -841,7 +1021,7 @@
           }
 
           const completeDetailsHtml = renderDetailsHtmlFromObject(transporterDetails, {
-            title: 'Complete Transporter Details',
+            title: 'Agency details',
             hideDeclarationGiven: true,
           });
 
@@ -852,7 +1032,7 @@
           `;
 
           ConfirmEntitySelectionModal({
-            title: 'Confirm Agency Selection',
+            title: 'Confirm agency',
             detailsHtml,
             onConfirm: () => {
               if (seq !== confirmSeq) {

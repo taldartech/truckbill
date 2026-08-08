@@ -1,207 +1,235 @@
 @extends('layouts.app')
 
 @section('content')
-<style>
-.confirmation-section {
-    border-bottom: 1px solid #eee;
-    padding-bottom: 1rem;
-    margin-bottom: 1rem;
-}
-.confirmation-label {
-    font-weight: 600;
-    color: #555;
-}
-.confirmation-value {
-    font-weight: 500;
-}
-.badge-lg {
-    font-size: 0.9rem;
-    padding: 0.5rem 0.75rem;
-}
-</style>
+    @php
+        $lr = $lorry_receipt;
+        $tdsPct = $lr->transporter->tds_percentage ?? 0;
+        $trRate = (float) ($formData['tr_fr_rate'] ?? 0);
+        $trAmount = (float) ($formData['tr_amount'] ?? 0);
+        $tdsAmount = (float) ($formData['tds_amount'] ?? 0);
+        $balanceAmount = (float) ($formData['balance_amount'] ?? 0);
+        $isFixed = ! empty($formData['is_fixed_amount']);
+    @endphp
 
-<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-    <div class="card-header">
-        <div class="card-title h4">Confirm Good Hire (Lorry Hire)</div>
-    </div>
-    <div class="card-body">
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i> Please review the good hire (lorry hire) details below before final submission.
+    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}">
+
+    <div class="lrf-page lrf-page--confirm app-index-page">
+        <div class="lrf-page__toolbar">
+            <div>
+                <h1 class="lrf-page__toolbar-title">Confirm Good Hire</h1>
+                <p class="lrf-page__toolbar-sub">Review linked bilty and hire charges before submitting.</p>
+            </div>
+            <div class="lrf-page__toolbar-actions">
+                <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
+            </div>
         </div>
 
-        <!-- LR Information Section -->
-        <div class="confirmation-section">
-            <h5 class="mb-3">Good Receipt (Bilty) Information</h5>
-            <div class="row">
-                <div class="col-md-3 mb-3">
-                    <div class="confirmation-label">LR Number</div>
-                    <div class="confirmation-value text-primary">{{ $lorry_receipt->lr_number }}</div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="confirmation-label">Transporter</div>
-                    <div class="confirmation-value">{{ $lorry_receipt->transporter->name }}</div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="confirmation-label">Transporter Type</div>
-                    <div class="confirmation-value">
-                        @if($lorry_receipt->transporter->is_owner)
-                            <span class="badge bg-primary text-white">Truck Owner</span>
-                        @else
-                            <span class="badge bg-info text-white">Agency</span>
+        {{-- Linked Bilty --}}
+        <div class="lrf-section lrf-linked">
+            <div class="lrf-linked__head">
+                <div class="lrf-linked__head-main">
+                    <div class="lrf-linked__eyebrow">Linked Bilty</div>
+                    <div class="lrf-linked__title-row">
+                        <span class="lrf-linked__lr" title="Good Receipt number">{{ $lr->lr_number }}</span>
+                        @if ($lr->transporter)
+                            <span class="lrf-chip {{ $lr->transporter->is_owner ? 'lrf-chip--info' : 'lrf-chip--ok' }}">
+                                {{ $lr->transporter->is_owner ? 'Owner payee' : 'Agency payee' }}
+                            </span>
                         @endif
                     </div>
                 </div>
-                <div class="col-md-3 mb-3">
-                    <div class="confirmation-label">Truck</div>
-                    <div class="confirmation-value">{{ $lorry_receipt->truck->truck_number }}</div>
+                <div class="lrf-linked__route-pill" title="Route">
+                    <span>{{ $lr->source_city ?? '—' }}</span>
+                    <i class="bi bi-arrow-right"></i>
+                    <span>{{ $lr->destination_city ?? '—' }}</span>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-md-3 mb-3">
-                    <div class="confirmation-label">Reference By</div>
-                    <div class="confirmation-value">{{ $lorry_receipt->reference ? $lorry_receipt->reference->name : 'N/A' }}</div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="confirmation-label">Customer</div>
-                    <div class="confirmation-value">{{ $lorry_receipt->customer ? $lorry_receipt->customer->name : 'N/A' }}</div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="confirmation-label">Consignor</div>
-                    <div class="confirmation-value">{{ $lorry_receipt->consignor ? $lorry_receipt->consignor->name : 'N/A' }}</div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="confirmation-label">Consignee</div>
-                    <div class="confirmation-value">{{ $lorry_receipt->consignee ? $lorry_receipt->consignee->name : 'N/A' }}</div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-3 mb-3">
-                    <div class="confirmation-label">Weight</div>
-                    <div class="confirmation-value">{{ number_format($lorry_receipt->weight, 3) }} MT</div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="confirmation-label">Goods Type</div>
-                    <div class="confirmation-value">{{ $lorry_receipt->good_type ?? 'N/A' }}</div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="confirmation-label">Source</div>
-                    <div class="confirmation-value">{{ $lorry_receipt->source_city }}, {{ $lorry_receipt->source_state }}</div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="confirmation-label">Destination</div>
-                    <div class="confirmation-value">{{ $lorry_receipt->destination_city }}, {{ $lorry_receipt->destination_state }}</div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-3 mb-3">
-                    <div class="confirmation-label">TDS Percentage</div>
-                    <div class="confirmation-value">{{ number_format($lorry_receipt->transporter->tds_percentage, 2) }}%</div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Good Hire (Lorry Hire) Details Section -->
-        <div class="confirmation-section">
-            <h5 class="mb-3">Good Hire (Lorry Hire) Details</h5>
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <div class="confirmation-label">TR Freight Rate</div>
-                    <div class="confirmation-value">{{ number_format($formData['tr_fr_rate'], 2) }}</div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="confirmation-label">TR Amount</div>
-                    <div class="confirmation-value">{{ number_format($formData['tr_amount'], 2) }}</div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="confirmation-label">TDS Amount</div>
-                    <div class="confirmation-value">{{ number_format($formData['tds_amount'], 2) }}</div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <div class="confirmation-label">Balance Amount</div>
-                    <div class="confirmation-value">{{ number_format($formData['balance_amount'], 2) }}</div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="confirmation-label">E-Way Bill Number</div>
-                    <div class="confirmation-value">{{ $formData['eway_bill_number'] ?? 'Not provided' }}</div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="confirmation-label">E-Way Bill Expiry Date</div>
-                    <div class="confirmation-value">{{ $formData['eway_bill_expiry'] ? date('d-m-Y', strtotime($formData['eway_bill_expiry'])) : 'Not provided' }}</div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="confirmation-label">PAN Verified</div>
-                    <div class="confirmation-value">
-                        @if($formData['pan_verified'])
-                            <span class="badge bg-brand-primary">Yes</span>
-                        @else
-                            <span class="badge bg-danger">No</span>
-                        @endif
+            <div class="lrf-section__body">
+                <div class="lrf-linked__kpis">
+                    <div class="lrf-linked__kpi">
+                        <span class="lrf-linked__kpi-label">Goods</span>
+                        <span class="lrf-linked__kpi-value">{{ $lr->good_type ?? '—' }}</span>
+                    </div>
+                    <div class="lrf-linked__kpi">
+                        <span class="lrf-linked__kpi-label">Weight</span>
+                        <span class="lrf-linked__kpi-value">{{ number_format($lr->weight ?? 0, 3) }} <small>MT</small></span>
+                    </div>
+                    <div class="lrf-linked__kpi">
+                        <span class="lrf-linked__kpi-label">LR Rate</span>
+                        <span class="lrf-linked__kpi-value">₹{{ number_format($lr->fr_rate ?? 0, 2) }}</span>
+                    </div>
+                    <div class="lrf-linked__kpi lrf-linked__kpi--accent">
+                        <span class="lrf-linked__kpi-label">LR Amount</span>
+                        <span class="lrf-linked__kpi-value">₹{{ number_format($lr->amount ?? 0, 2) }}</span>
                     </div>
                 </div>
-            </div>
-            @if(!empty($formData['remark']))
-            <div class="row">
-                <div class="col-12 mb-3">
-                    <div class="confirmation-label">Remark</div>
-                    <div class="confirmation-value">{{ $formData['remark'] }}</div>
-                </div>
-            </div>
-            @endif
-        </div>
 
-        <!-- Financial Summary Section -->
-        <div class="card bg-light mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Financial Summary</h5>
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="d-flex justify-content-between">
-                            <span>TR Amount:</span>
-                            <span class="fw-bold">{{ number_format($formData['tr_amount'], 2) }}</span>
+                <div class="lrf-linked__panels">
+                    <div class="lrf-linked__panel">
+                        <div class="lrf-linked__panel-title">
+                            <i class="bi bi-people"></i> Parties
+                        </div>
+                        <div class="lrf-linked__facts">
+                            <div class="lrf-linked__fact">
+                                <span class="lrf-linked__fact-label">Customer</span>
+                                <span class="lrf-linked__fact-value">{{ $lr->customer->name ?? 'N/A' }}</span>
+                            </div>
+                            <div class="lrf-linked__fact">
+                                <span class="lrf-linked__fact-label">Payee</span>
+                                <span class="lrf-linked__fact-value">
+                                    {{ $lr->transporter->name ?? 'N/A' }}
+                                    @if ($lr->transporter)
+                                        <span class="lrf-chip {{ $lr->transporter->is_owner ? 'lrf-chip--info' : 'lrf-chip--ok' }}">
+                                            {{ $lr->transporter->is_owner ? 'Owner' : 'Agency' }}
+                                        </span>
+                                    @endif
+                                </span>
+                            </div>
+                            <div class="lrf-linked__fact">
+                                <span class="lrf-linked__fact-label">Consignor</span>
+                                <span class="lrf-linked__fact-value">{{ $lr->consignor->name ?? 'N/A' }}</span>
+                            </div>
+                            <div class="lrf-linked__fact">
+                                <span class="lrf-linked__fact-label">Consignee</span>
+                                <span class="lrf-linked__fact-value">{{ $lr->consignee->name ?? 'N/A' }}</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="d-flex justify-content-between">
-                            <span>TDS Amount:</span>
-                            <span class="fw-bold text-danger">- {{ number_format($formData['tds_amount'], 2) }}</span>
+
+                    <div class="lrf-linked__panel">
+                        <div class="lrf-linked__panel-title">
+                            <i class="bi bi-truck"></i> Vehicle &amp; Route
                         </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="d-flex justify-content-between">
-                            <span>Balance Amount:</span>
-                            <span class="fw-bold text-brand-primary">{{ number_format($formData['balance_amount'], 2) }}</span>
+                        <div class="lrf-linked__facts">
+                            <div class="lrf-linked__fact">
+                                <span class="lrf-linked__fact-label">Truck</span>
+                                <span class="lrf-linked__fact-value">{{ $lr->truck->truck_number ?? 'N/A' }}</span>
+                            </div>
+                            <div class="lrf-linked__fact">
+                                <span class="lrf-linked__fact-label">TDS %</span>
+                                <span class="lrf-linked__fact-value">{{ number_format($tdsPct, 2) }}%</span>
+                            </div>
+                            <div class="lrf-linked__fact">
+                                <span class="lrf-linked__fact-label">From</span>
+                                <span class="lrf-linked__fact-value">
+                                    {{ $lr->source_city ?? 'N/A' }}{{ ! empty($lr->source_state) ? ', '.$lr->source_state : '' }}
+                                </span>
+                            </div>
+                            <div class="lrf-linked__fact">
+                                <span class="lrf-linked__fact-label">To</span>
+                                <span class="lrf-linked__fact-value">
+                                    {{ $lr->destination_city ?? 'N/A' }}{{ ! empty($lr->destination_state) ? ', '.$lr->destination_state : '' }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Form for submission -->
+        {{-- Hire + optional in one review card --}}
+        <div class="lrf-section">
+            <div class="lrf-section__head lrf-section__head--summary">
+                <div class="lrf-section__head-left">
+                    <div>
+                        <h2 class="lrf-section__title">Hire Charges</h2>
+                        <p class="lrf-section__desc">Amounts that will be saved with this good hire</p>
+                    </div>
+                </div>
+                @if ($isFixed)
+                    <span class="lrf-chip lrf-chip--warn">Fixed amount</span>
+                @endif
+            </div>
+            <div class="lrf-section__body">
+                <div class="lrf-confirm-hire">
+                    <div class="lrf-linked__kpis lrf-confirm-hire__kpis">
+                        <div class="lrf-linked__kpi">
+                            <span class="lrf-linked__kpi-label">TR Freight Rate</span>
+                            <span class="lrf-linked__kpi-value">₹{{ number_format($trRate, 2) }}</span>
+                        </div>
+                        <div class="lrf-linked__kpi">
+                            <span class="lrf-linked__kpi-label">TR Amount</span>
+                            <span class="lrf-linked__kpi-value">₹{{ number_format($trAmount, 2) }}</span>
+                        </div>
+                        <div class="lrf-linked__kpi">
+                            <span class="lrf-linked__kpi-label">TDS Amount</span>
+                            <span class="lrf-linked__kpi-value">₹{{ number_format($tdsAmount, 2) }}</span>
+                        </div>
+                        <div class="lrf-linked__kpi lrf-linked__kpi--accent">
+                            <span class="lrf-linked__kpi-label">Balance</span>
+                            <span class="lrf-linked__kpi-value">₹{{ number_format($balanceAmount, 2) }}</span>
+                        </div>
+                    </div>
+
+                    <div class="lrf-confirm-summary">
+                        <div class="lrf-confirm-summary__row">
+                            <span>TR Amount</span>
+                            <strong>₹{{ number_format($trAmount, 2) }}</strong>
+                        </div>
+                        <div class="lrf-confirm-summary__row">
+                            <span>TDS Amount</span>
+                            <strong class="text-danger">− ₹{{ number_format($tdsAmount, 2) }}</strong>
+                        </div>
+                        <div class="lrf-confirm-summary__row lrf-confirm-summary__row--total">
+                            <span>Balance Amount</span>
+                            <strong>₹{{ number_format($balanceAmount, 2) }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lrf-confirm-optional">
+                    <div class="lrf-confirm-optional__label">Optional details</div>
+                    <div class="lrf-linked__facts lrf-linked__facts--4">
+                        <div class="lrf-linked__fact">
+                            <span class="lrf-linked__fact-label">E-Way Bill Number</span>
+                            <span class="lrf-linked__fact-value">{{ $formData['eway_bill_number'] ?: 'Not provided' }}</span>
+                        </div>
+                        <div class="lrf-linked__fact">
+                            <span class="lrf-linked__fact-label">E-Way Bill Expiry</span>
+                            <span class="lrf-linked__fact-value">
+                                {{ ! empty($formData['eway_bill_expiry']) ? date('d-m-Y', strtotime($formData['eway_bill_expiry'])) : 'Not provided' }}
+                            </span>
+                        </div>
+                        <div class="lrf-linked__fact">
+                            <span class="lrf-linked__fact-label">PAN Verified</span>
+                            <span class="lrf-linked__fact-value">
+                                @if (! empty($formData['pan_verified']))
+                                    <span class="lrf-chip lrf-chip--ok">Yes</span>
+                                @else
+                                    <span class="lrf-chip lrf-chip--bad">No</span>
+                                @endif
+                            </span>
+                        </div>
+                        <div class="lrf-linked__fact">
+                            <span class="lrf-linked__fact-label">Remark</span>
+                            <span class="lrf-linked__fact-value">{{ $formData['remark'] ?: '—' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <form method="POST" action="{{ route('freight_bookings.store') }}">
             @csrf
-            <!-- Hidden fields to pass all form data -->
-            @foreach($formData as $key => $value)
+            @foreach ($formData as $key => $value)
                 <input type="hidden" name="{{ $key }}" value="{{ $value }}">
             @endforeach
             <input type="hidden" name="confirmed" value="1">
 
-            <div class="d-flex justify-content-between mt-4">
-                <a href="javascript:history.back()" class="btn btn-back">
-                    <i class="fas fa-arrow-left me-1"></i> Back to Edit
+            <div class="lrf-actions">
+                <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-pencil me-1"></i> Back to Edit
                 </a>
-                <div>
-                    <button type="submit" name="action" value="save" class="btn btn-brand-primary me-2">
-                        <i class="fas fa-check-circle me-1"></i> Confirm & Submit
-                    </button>
-                    <button type="submit" name="action" value="save_and_view" class="btn btn-view">
-                        <i class="bi bi-eye me-1"></i> Save & do payment
-                    </button>
-
-                </div>
+                <button type="submit" name="action" value="save" class="btn btn-success btn-sm">
+                    <i class="bi bi-check-lg me-1"></i> Confirm &amp; Submit
+                </button>
+                <button type="submit" name="action" value="save_and_view" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-wallet2 me-1"></i> Save &amp; do payment
+                </button>
             </div>
         </form>
     </div>
-</div>
 @endsection
