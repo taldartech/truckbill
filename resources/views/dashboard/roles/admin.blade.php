@@ -6,11 +6,6 @@
             'url' => route('lorry_receipts.create'),
         ],
         [
-            'label' => 'New Hire',
-            'icon' => 'bi bi-truck',
-            'url' => route('freight_bookings.create'),
-        ],
-        [
             'label' => 'Invoices',
             'icon' => 'bi bi-receipt',
             'url' => route('invoices.index'),
