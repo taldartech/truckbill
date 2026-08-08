@@ -435,11 +435,12 @@
     }
 
     if (transporterSelect2 && typeof transporterSelect2.trigger === 'function') {
-      transporterSelect2.trigger('change.select2');
+      transporterSelect2.trigger('change');
     }
 
     if (truckSelect2 && typeof truckSelect2.val === 'function') {
-      truckSelect2.val(null).trigger('change.select2');
+      // Use plain `change` so page listeners (pay-to visibility, summary) also reset.
+      truckSelect2.val(null).trigger('change');
     }
   }
 
@@ -520,7 +521,12 @@
 
       ownerOption.disabled = !isOwnerAvailable;
       if (!isOwnerAvailable && transporterTypeSelect.value === 'owner') {
-        transporterTypeSelect.value = 'agency';
+        transporterTypeSelect.value = '';
+      }
+
+      const ownerPill = document.getElementById('lrPayPillOwner');
+      if (ownerPill) {
+        ownerPill.disabled = !isOwnerAvailable;
       }
     };
 
@@ -529,9 +535,12 @@
       const ownerAvailable = transporterId !== null && transporterId !== undefined && transporterId !== '';
       setOwnerOptionAvailability(ownerAvailable);
 
-      if (!ownerAvailable) {
-        transporterTypeSelect.value = 'agency';
-        transporterLabel.textContent = 'Agency *';
+      if (!ownerAvailable && transporterTypeSelect.value === 'owner') {
+        transporterTypeSelect.value = '';
+        transporterLabel.textContent = 'Payee *';
+        document.querySelectorAll('.lrf-pay-pill').forEach((pill) => {
+          pill.classList.remove('is-active');
+        });
       }
 
       return ownerAvailable;
@@ -560,9 +569,9 @@
         truckText,
       };
 
-      const ownerAvailable = enforceAgencyForOwnerlessTruck(selectedTruckId);
+      enforceAgencyForOwnerlessTruck(selectedTruckId);
 
-      if (transporterTypeSelect.value === 'owner' && ownerAvailable) {
+      if (transporterTypeSelect.value === 'owner') {
         autoSelectTruckOwner(selectedTruckId);
       }
     });
@@ -596,9 +605,9 @@
         truckText,
       };
 
-      const ownerAvailable = enforceAgencyForOwnerlessTruck(selectedTruckId);
+      enforceAgencyForOwnerlessTruck(selectedTruckId);
 
-      if (transporterTypeSelect.value === 'owner' && ownerAvailable) {
+      if (transporterTypeSelect.value === 'owner') {
         autoSelectTruckOwner(selectedTruckId);
       }
     });
@@ -613,7 +622,17 @@
       transporterSelect.disabled = false;
       transporterSelect2.trigger('change.select2');
 
-      transporterLabel.textContent = selectedType === 'owner' ? 'Truck Owner *' : 'Agency *';
+      transporterLabel.innerHTML = selectedType === 'owner'
+        ? 'Truck Owner<span class="lrf-pf__req">*</span>'
+        : selectedType === 'agency'
+          ? 'Agency<span class="lrf-pf__req">*</span>'
+          : 'Payee<span class="lrf-pf__req">*</span>';
+      transporterLabel.classList.add('lrf-pf__lbl');
+
+      document.querySelectorAll('.lrf-pay-pill').forEach((pill) => {
+        const isActive = selectedType !== '' && pill.getAttribute('data-pay-type') === selectedType;
+        pill.classList.toggle('is-active', isActive);
+      });
 
       if (selectedType === 'owner') {
         const ownerAvailable = enforceAgencyForOwnerlessTruck(selectedTruckId);
@@ -756,9 +775,22 @@
                   });
                   if (transporterTypeSelect) {
                     transporterTypeSelect.value = '';
+                    transporterTypeSelect.dispatchEvent(new Event('change'));
                   }
+                  document.querySelectorAll('.lrf-pay-pill').forEach((pill) => {
+                    pill.classList.remove('is-active');
+                    if (pill.getAttribute('data-pay-type') === 'owner') {
+                      pill.disabled = false;
+                    }
+                  });
                   showTdsPercentage(null);
                   resetEditTruckOwnerLinkHref();
+                  if (typeof window.syncLrPayeeVisibility === 'function') {
+                    window.syncLrPayeeVisibility();
+                  }
+                  if (typeof window.syncLrTruckMetaAfterClear === 'function') {
+                    window.syncLrTruckMetaAfterClear();
+                  }
                 });
               },
             });

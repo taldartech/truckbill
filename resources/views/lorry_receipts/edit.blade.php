@@ -411,15 +411,20 @@
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label for="source_city" class="form-label">Source City *</label>
                             <input type="text" class="form-control" id="source_city" name="source_city" required
                                 value="{{ old('source_city', $lorry_receipt->source_city) }}" readonly>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label for="source_state" class="form-label">Source State *</label>
                             <input type="text" class="form-control" id="source_state" name="source_state" required
                                 value="{{ old('source_state', $lorry_receipt->source_state) }}" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="loading_station" class="form-label">Loading Station</label>
+                            <input type="text" class="form-control" id="loading_station" name="loading_station"
+                                value="{{ old('loading_station', $lorry_receipt->loading_station) }}">
                         </div>
                     </div>
                     <div class="row mb-3">

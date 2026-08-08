@@ -1,66 +1,88 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="card card-info card-outline mb-4">
-    <div class="card-header">
-        <h3 class="card-title">{{ isset($state) ? 'Edit State' : 'Add New State' }}</h3>
-    </div>
+<div class="container mt-4 pb-5 app-index-page app-create-page">
     <form action="{{ isset($state) ? route('master.states.update', $state->id) : route('master.states.store') }}" method="POST" class="needs-validation" novalidate>
         @csrf
         @if(isset($state))
             @method('PUT')
         @endif
-        
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label for="name" class="form-label">State Name *</label>
-                    <input type="text" class="form-control" id="name" name="name" required 
-                           value="{{ old('name', isset($state) ? $state->name : '') }}">
-                    @error('name')
-                        <div class="text-danger">{{ $message }}</div>
-                    @enderror
-                    <div class="valid-feedback">Looks good!</div>
+
+        <div class="card app-index-list-card mb-3">
+            <div class="card-header">
+                <h3 class="card-title mb-0">
+                    <i class="bi bi-map me-1"></i> {{ isset($state) ? 'Edit State' : 'Add New State' }}
+                </h3>
+                <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+                    <a href="{{ route('master.states.index') }}" class="btn app-index-header-btn" aria-label="Back to states">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
                 </div>
-                
-                <div class="col-md-6">
-                    <label for="country_id" class="form-label">Country *</label>
-                    <select class="form-select" id="country_id" name="country_id" required>
-                        <option value="">Select Country</option>
-                        @foreach($countries as $country)
-                            <option value="{{ $country->id }}" 
-                                    {{ old('country_id', isset($state) ? $state->country_id : '') == $country->id ? 'selected' : '' }}>
-                                {{ $country->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('country_id')
-                        <div class="text-danger">{{ $message }}</div>
-                    @enderror
-                    <div class="invalid-feedback">Please select a country.</div>
-                </div>
-                
-                <div class="col-md-6">
-                    <label for="code" class="form-label">Code *</label>
-                    <input type="text" class="form-control" id="code" name="code" 
-                           value="{{ old('code', isset($state) ? $state->code : '') }}" required>
-                    @error('code')
-                        <div class="text-danger">{{ $message }}</div>
-                    @enderror
-                    <div class="valid-feedback">Looks good!</div>
+            </div>
+
+            <div class="card-body">
+                <div class="app-form-section">
+                    <div class="app-form-section__header">
+                        <h5 class="app-form-section__title"><i class="bi bi-map"></i> State Details</h5>
+                    </div>
+                    <div class="app-form-section__body">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">State Name *</label>
+                                <input type="text" class="form-control" id="name" name="name" required
+                                       value="{{ old('name', isset($state) ? $state->name : '') }}">
+                                @error('name')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                                <div class="valid-feedback">Looks good!</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="country_id" class="form-label">Country *</label>
+                                <select class="form-select" id="country_id" name="country_id" required>
+                                    <option value="">Select Country</option>
+                                    @foreach($countries as $country)
+                                        <option value="{{ $country->id }}"
+                                                {{ old('country_id', isset($state) ? $state->country_id : '') == $country->id ? 'selected' : '' }}>
+                                            {{ $country->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('country_id')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                                <div class="invalid-feedback">Please select a country.</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="code" class="form-label">Code *</label>
+                                <input type="text" class="form-control" id="code" name="code"
+                                       value="{{ old('code', isset($state) ? $state->code : '') }}" required>
+                                @error('code')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                                <div class="valid-feedback">Looks good!</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        
-        <div class="card-footer">
-            <button type="submit" class="btn btn-brand-primary">Submit form</button>
-            <a href="{{ route('master.states.index') }}" class="btn btn-back">Back to List</a>
+
+        <div class="app-form-actions card">
+            <div class="card-body">
+                <a href="{{ route('master.states.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-x-lg me-1"></i> Cancel
+                </a>
+                <button class="btn btn-brand-primary" type="submit">
+                    <i class="bi bi-floppy-fill me-1"></i> Save
+                </button>
+            </div>
         </div>
     </form>
 </div>
 
 <script>
-    // Example starter JavaScript for disabling form submissions if there are invalid fields
     (() => {
         'use strict';
 

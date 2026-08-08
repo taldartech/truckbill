@@ -6,185 +6,240 @@
 @endpush
 
 @section('content')
-    <div class="container mt-4" id="preFormContainer">
-        <div class="card card-warning card-outline" style="width: 50%; margin: auto;">
-            <div class="card-header">
-                <h3 class="card-title">Select Customer & Memo to Proceed</h3>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Customer *</label>
-                        <select id="preCustomerSelect" style="width:100%" required>
-                            <option value=""></option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Memo ID</label>
-                        <div class="input-group">
-                            {{-- <input type="text" id="preMemoId" class="form-control" placeholder="Optional"> --}}
-                            <button class="btn btn-secondary" type="button" id="showMemoOptions">Show
-                                Memos</button>
-                        </div>
+    <div class="container mt-4 pb-5 app-index-page app-create-page">
+        {{-- Step 1: Select customer & memo --}}
+        <div id="preFormContainer">
+            <div class="card app-index-list-card mb-3">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-receipt me-1"></i> Create Invoice
+                    </h3>
+                    <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+                        <a href="{{ route('invoices.index') }}" class="btn app-index-header-btn" aria-label="Back to invoices">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
                     </div>
                 </div>
-                <div id="memoOptionsContainer" style="display: none; margin-top: 15px;">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="card-title mb-0">Available Memos</h6>
+
+                <div class="card-body">
+                    <div class="app-form-section">
+                        <div class="app-form-section__header">
+                            <h5 class="app-form-section__title">
+                                <i class="bi bi-person-check"></i> Select Customer & Memo
+                            </h5>
                         </div>
-                        <div class="card-body">
-                            <div id="memoCheckboxes"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card-footer text-center">
-                <button type="button" class="btn btn-primary" id="showInvoiceFormBtn" disabled>Next-></button>
-            </div>
-        </div>
-    </div>
-
-    <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto; display: none;"
-        id="mainInvoiceForm">
-
-        <div class="card-header">
-            <h3 class="card-title">Add New Invoice</h3>
-        </div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-12">
-                    <div class="alert alert-info mb-4">
-                        <h5>Selected Information</h5>
-                        <div id="selectedInfo">
-                            <div class="row">
+                        <div class="app-form-section__body">
+                            <div class="row g-2">
                                 <div class="col-md-6">
-                                    <strong>Customer:</strong> <span id="selectedCustomerName"></span>
+                                    <label class="form-label">Customer *</label>
+                                    <select id="preCustomerSelect" style="width:100%" required>
+                                        <option value=""></option>
+                                    </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <strong>Location:</strong> <span id="selectedLocation" name="location"></span>
-                                </div>
-                                <div class="col-md-6">
-                                    <strong>Memo(s):</strong> <span id="selectedMemoIds"></span>
+                                    <label class="form-label">Memo ID</label>
+                                    <div class="input-group">
+                                        {{-- <input type="text" id="preMemoId" class="form-control" placeholder="Optional"> --}}
+                                        <button class="btn btn-secondary" type="button" id="showMemoOptions">Show
+                                            Memos</button>
+                                    </div>
                                 </div>
                             </div>
-                            <div id="selectedLrNumbers" class="mt-3"></div>
+                            <div id="memoOptionsContainer" style="display: none; margin-top: 15px;">
+                                <div class="app-form-section mb-0">
+                                    <div class="app-form-section__header app-form-section__header--muted">
+                                        <h5 class="app-form-section__title mb-0">Available Memos</h5>
+                                    </div>
+                                    <div class="app-form-section__body">
+                                        <div id="memoCheckboxes"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <form action="{{ route('invoices.store') }}" method="POST" class="needs-validation" id="invoiceCreateForm" novalidate="">
-            @csrf
-            @php
-                $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
-                $userCompanyId = auth()->user()->company_id ?? null;
-            @endphp
-            <div class="card-body">
-                <div class="row g-3">
 
-                    <div class="col-md-4">
-                        <label class="form-label">Reference No (Optional)</label>
-                        <input type="text" placeholder="Invoice Number" id="manual_invoice_number"
-                            name="manual_invoice_number"
-                            class="form-control @error('manual_invoice_number') is-invalid @enderror"
-                            value="{{ old('manual_invoice_number') }}">
-
-                        {{-- Add this feedback div --}}
-                        <div id="manual-invoice-number-feedback"></div>
-
-                        @error('manual_invoice_number')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                        <div class="valid-feedback">Looks good!</div>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Invoice Type *</label>
-                        <select class="form-select" disabled>
-                            <option value="Forward"
-                                {{ ($company->gst_scheme ?? '') == 'forward charge' ? 'selected' : '' }}>Forward</option>
-                            <option value="Reverse"
-                                {{ ($company->gst_scheme ?? '') == 'reverse charge' ? 'selected' : '' }}>Reverse</option>
-                        </select>
-                        <!-- Hidden input to actually submit the value -->
-                        <input type="hidden" name="invoice_type"
-                            @if ($company->gst_scheme == 'reverse charge') value="Reverse" @else value="Forward" @endif>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Generated Date *</label>
-                        <input type="date" placeholder="Generated Date" name="generated_date" class="form-control"
-                            required value="{{ date('Y-m-d') }}">
-                        @error('generated_date')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                        <div class="invalid-feedback">Please select a date.</div>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Customer *</label>
-                        {{-- <select name="customer_id" class="form-select" required>
-                            <option value="">Select</option>
-                            @foreach ($consignees as $consignee)
-                                <option value="{{ $consignee->id }}" {{ old('customer_id') == $consignee->id ? 'selected' : '' }}>{{ $consignee->name }}</option>
-                            @endforeach
-                        </select> --}}
-                        {{-- Hidden input to store selected customer_id --}}
-                        <input type="hidden" name="customer_id" id="prefilledCustomerId" value="{{ old('customer_id') }}">
-
-                        <input type="text" id="prefilledCustomerName" class="form-control" readonly required
-                            value="{{ old('customer_name') }}">
-
-                        @error('customer_id')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                        <div class="invalid-feedback">Please select a customer.</div>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Total Amount *</label>
-                        <input type="number" placeholder="Total Amount" name="total_amount" class="form-control"
-                            step="0.01" min="0" required readonly value="{{ old('total_amount') }}">
-                        @error('total_amount')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                        <div class="invalid-feedback">Please enter a valid amount.</div>
-                    </div>
-                    <input type="hidden" name="payment_status" value="pending">
-
-                    <div class="col-md-8" id="memoDiv" style="display: none;">
-                        <label class="form-label">Memos</label>
-                        <select name="memo_ids[]" class="form-select" id="memoSelect" multiple>
-                            <!-- options will be loaded dynamically -->
-                        </select>
-                        <small class="text-muted">Hold Ctrl (Cmd on Mac) to select multiple.</small>
-                        @error('memo_ids')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
+            <div class="app-form-actions card">
+                <div class="card-body">
+                    <button type="button" class="btn btn-brand-primary" id="showInvoiceFormBtn" disabled>
+                        Next <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
                 </div>
             </div>
-            <input type="hidden" name="sgst" id="sgstInput" value="0">
-            <input type="hidden" name="cgst" id="cgstInput" value="0">
-            <input type="hidden" name="igst" id="igstInput" value="0">
-            <input type="hidden" name="net_amount" id="netAmountInput" value="0">
-            <input type="hidden" name="base_amount" id="baseAmountInput" value="0">
+        </div>
 
-            <div class="card-footer">
-                <button class="btn btn-brand-primary" type="submit">
-                    <i class="bi bi-check2-circle me-1"></i>Generate invoice
-                </button>
-            </div>
-        </form>
-    </div>
+        {{-- Step 2: Invoice form --}}
+        <div id="mainInvoiceForm" style="display: none;">
+            <form action="{{ route('invoices.store') }}" method="POST" class="needs-validation" id="invoiceCreateForm" novalidate="">
+                @csrf
+                @php
+                    $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
+                    $userCompanyId = auth()->user()->company_id ?? null;
+                @endphp
 
-    <!-- LR Details Container -->
-    <div class="container mt-4" id="lrDetailsContainer" style="display: none;">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Selected LR Details</h3>
-            </div>
-            <div class="card-body">
-                <div id="lrDetailsContent"></div>
+                <div class="card app-index-list-card mb-3">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">
+                            <i class="bi bi-receipt-cutoff me-1"></i> Add New Invoice
+                        </h3>
+                        <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+                            <a href="{{ route('invoices.index') }}" class="btn app-index-header-btn" aria-label="Back to invoices">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="app-form-section">
+                            <div class="app-form-section__header">
+                                <h5 class="app-form-section__title">
+                                    <i class="bi bi-info-circle"></i> Selected Information
+                                </h5>
+                            </div>
+                            <div class="app-form-section__body">
+                                <div id="selectedInfo">
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <strong>Customer:</strong> <span id="selectedCustomerName"></span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Location:</strong> <span id="selectedLocation" name="location"></span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Memo(s):</strong> <span id="selectedMemoIds"></span>
+                                        </div>
+                                    </div>
+                                    <div id="selectedLrNumbers" class="mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="app-form-section">
+                            <div class="app-form-section__header">
+                                <h5 class="app-form-section__title">
+                                    <i class="bi bi-file-earmark-text"></i> Invoice Details
+                                </h5>
+                            </div>
+                            <div class="app-form-section__body">
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Reference No (Optional)</label>
+                                        <input type="text" placeholder="Invoice Number" id="manual_invoice_number"
+                                            name="manual_invoice_number"
+                                            class="form-control @error('manual_invoice_number') is-invalid @enderror"
+                                            value="{{ old('manual_invoice_number') }}">
+
+                                        {{-- Add this feedback div --}}
+                                        <div id="manual-invoice-number-feedback"></div>
+
+                                        @error('manual_invoice_number')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+                                        <div class="valid-feedback">Looks good!</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Invoice Type *</label>
+                                        <select class="form-select" disabled>
+                                            <option value="Forward"
+                                                {{ ($company->gst_scheme ?? '') == 'forward charge' ? 'selected' : '' }}>Forward</option>
+                                            <option value="Reverse"
+                                                {{ ($company->gst_scheme ?? '') == 'reverse charge' ? 'selected' : '' }}>Reverse</option>
+                                        </select>
+                                        <!-- Hidden input to actually submit the value -->
+                                        <input type="hidden" name="invoice_type"
+                                            @if ($company->gst_scheme == 'reverse charge') value="Reverse" @else value="Forward" @endif>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Generated Date *</label>
+                                        <input type="date" placeholder="Generated Date" name="generated_date" class="form-control"
+                                            required value="{{ date('Y-m-d') }}">
+                                        @error('generated_date')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+                                        <div class="invalid-feedback">Please select a date.</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Customer *</label>
+                                        {{-- <select name="customer_id" class="form-select" required>
+                                            <option value="">Select</option>
+                                            @foreach ($consignees as $consignee)
+                                                <option value="{{ $consignee->id }}" {{ old('customer_id') == $consignee->id ? 'selected' : '' }}>{{ $consignee->name }}</option>
+                                            @endforeach
+                                        </select> --}}
+                                        {{-- Hidden input to store selected customer_id --}}
+                                        <input type="hidden" name="customer_id" id="prefilledCustomerId" value="{{ old('customer_id') }}">
+
+                                        <input type="text" id="prefilledCustomerName" class="form-control" readonly required
+                                            value="{{ old('customer_name') }}">
+
+                                        @error('customer_id')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+                                        <div class="invalid-feedback">Please select a customer.</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Total Amount *</label>
+                                        <input type="number" placeholder="Total Amount" name="total_amount" class="form-control"
+                                            step="0.01" min="0" required readonly value="{{ old('total_amount') }}">
+                                        @error('total_amount')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+                                        <div class="invalid-feedback">Please enter a valid amount.</div>
+                                    </div>
+                                    <input type="hidden" name="payment_status" value="pending">
+
+                                    <div class="col-md-8" id="memoDiv" style="display: none;">
+                                        <label class="form-label">Memos</label>
+                                        <select name="memo_ids[]" class="form-select" id="memoSelect" multiple>
+                                            <!-- options will be loaded dynamically -->
+                                        </select>
+                                        <small class="text-muted">Hold Ctrl (Cmd on Mac) to select multiple.</small>
+                                        @error('memo_ids')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" name="sgst" id="sgstInput" value="0">
+                <input type="hidden" name="cgst" id="cgstInput" value="0">
+                <input type="hidden" name="igst" id="igstInput" value="0">
+                <input type="hidden" name="net_amount" id="netAmountInput" value="0">
+                <input type="hidden" name="base_amount" id="baseAmountInput" value="0">
+
+                <div class="app-form-actions card">
+                    <div class="card-body">
+                        <a href="{{ route('invoices.index') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-lg me-1"></i> Cancel
+                        </a>
+                        <button class="btn btn-brand-primary" type="submit">
+                            <i class="bi bi-check2-circle me-1"></i>Generate invoice
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        {{-- LR Details Container --}}
+        <div id="lrDetailsContainer" class="mt-3" style="display: none;">
+            <div class="card app-index-list-card mb-3">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-truck me-1"></i> Selected LR Details
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="app-form-section mb-0">
+                        <div class="app-form-section__body">
+                            <div id="lrDetailsContent"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

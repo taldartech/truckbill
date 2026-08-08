@@ -1,42 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<style>
-/* Prevent form expansion on validation errors */
-.form-control, .form-select {
-    min-height: 38px;
-    box-sizing: border-box;
-}
-
-.text-danger {
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-    word-wrap: break-word;
-}
-
-/* Ensure consistent column widths */
-.row .col-md-4 {
-    flex: 0 0 33.333333%;
-    max-width: 33.333333%;
-}
-
-/* Prevent card from expanding */
-.card {
-    overflow: hidden;
-}
-
-/* Consistent spacing for form groups */
-.mb-3 {
-    margin-bottom: 1rem !important;
-}
-</style>
-<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-    <!--begin::Header-->
-    <div class="card-header">
-        <div class="card-title h4">Add New Truck Owner</div>
-    </div>
-    <!--end::Header-->
-    <!--begin::Form-->
+<div class="container mt-4 pb-5 app-index-page app-create-page">
     <form action="{{ route('truck_owners.store') }}" method="POST" class="needs-validation" novalidate="">
         @csrf
         @php
@@ -49,274 +14,286 @@
                     === \App\Models\Company::dummyTransporterTruckOwnerPanNumber((int) $userCompanyId);
             }
         @endphp
-        @error('registered_truck_id')
-            <div class="text-danger">{{ $message }}</div>
-        @enderror
-        <div class="card-body">
-            {{-- Company field hidden as requested --}}
-            @if($canEditCompany)
-                <input type="hidden" name="company_id" value="{{ old('company_id', $userCompanyId) }}">
-            @else
-                <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
-            @endif
-            <input type="hidden" name="transporter_master_id" id="transporter_master_id" value="{{ old('transporter_master_id') }}">
-            <input type="hidden" id="pan_verified" value="{{ $shouldRestoreAfterValidation ? '1' : '0' }}">
-            <input type="hidden" id="is_dummy_pan" value="{{ $restoredPanIsDummy ? '1' : '0' }}">
 
-            <!-- PAN Check Section - must complete before rest of form -->
-            <div class="card mb-4 p-3 bg-light" id="panLookupSection">
-                <h5 class="mb-3"><i class="fas fa-search me-2"></i> Enter PAN Number First</h5>
-                <p class="text-muted small mb-3">Enter the 10-digit PAN and click Check. The form will appear only after a successful PAN check.</p>
-                <div class="mb-2">@include('shared.check-pan-status-link')</div>
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="pan_lookup" class="form-label">PAN Number *</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="pan_lookup" value="{{ old('pan_number') }}" placeholder="Enter 10-digit PAN" maxlength="10" style="text-transform: uppercase;">
-                            <button type="button" class="btn btn-brand-primary" id="btnPanLookup">
-                                <i class="fas fa-check me-1"></i> Check PAN
-                            </button>
-                        </div>
-                        <div id="panLookupMessage" class="mt-2 small"></div>
-                    </div>
+        <div class="card app-index-list-card mb-3">
+            <div class="card-header">
+                <h3 class="card-title mb-0">
+                    <i class="bi bi-truck me-1"></i> Add New Truck Owner
+                </h3>
+                <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+                    <a href="{{ route('truck_owners.index') }}" class="btn app-index-header-btn" aria-label="Back to truck owners">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
                 </div>
             </div>
 
-            <!-- Already registered (same company, truck owner) -->
-            <div id="panAlreadyRegisteredSection" class="alert alert-warning d-none" role="alert">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <strong>Already registered.</strong> This PAN is already registered as a truck owner for this company.
-            </div>
+            <div class="card-body">
+                @error('registered_truck_id')
+                    <div class="alert alert-danger py-2">{{ $message }}</div>
+                @enderror
 
-            <!-- Rest of form (shown only after PAN check and not already registered) -->
-            <div id="restOfForm" class="{{ $shouldRestoreAfterValidation ? '' : 'd-none' }}">
-            <!-- Master Data (Read-only when found via PAN) -->
-            <div id="masterDataSection" class="d-none">
-                <div class="card mb-4 p-3 bg-light">
-                    <h5 class="mb-3 text-muted"><i class="fas fa-lock me-2"></i> Master Data (Read-only from PAN)</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Truck Owner Name</label>
-                            <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_name">-</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Email</label>
-                            <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_email">-</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">PAN Number</label>
-                            <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_pan">-</div>
-                        </div>
+                @if($canEditCompany)
+                    <input type="hidden" name="company_id" value="{{ old('company_id', $userCompanyId) }}">
+                @else
+                    <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
+                @endif
+                <input type="hidden" name="transporter_master_id" id="transporter_master_id" value="{{ old('transporter_master_id') }}">
+                <input type="hidden" id="pan_verified" value="{{ $shouldRestoreAfterValidation ? '1' : '0' }}">
+                <input type="hidden" id="is_dummy_pan" value="{{ $restoredPanIsDummy ? '1' : '0' }}">
+
+                {{-- PAN Check --}}
+                <div class="app-form-section" id="panLookupSection">
+                    <div class="app-form-section__header">
+                        <h5 class="app-form-section__title"><i class="fas fa-search"></i> PAN Verification</h5>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label">GST Number</label>
-                            <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_gst">-</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">PAN Active</label>
-                            <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_pan_active">-</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Address</label>
-                            <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_address">-</div>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Country / State / City</label>
-                            <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_location">-</div>
+                    <div class="app-form-section__body">
+                        <p class="app-form-section__hint mb-2">Enter the 10-digit PAN and click Check. The form appears only after a successful PAN check.</p>
+                        <div class="mb-2">@include('shared.check-pan-status-link')</div>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label for="pan_lookup" class="form-label">PAN Number *</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="pan_lookup" value="{{ old('pan_number') }}" placeholder="Enter 10-digit PAN" maxlength="10" style="text-transform: uppercase;">
+                                    <button type="button" class="btn btn-brand-primary" id="btnPanLookup">
+                                        <i class="fas fa-check me-1"></i> Check PAN
+                                    </button>
+                                </div>
+                                <div id="panLookupMessage" class="mt-2 small"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- New Master Form (when PAN not found) -->
-            <div id="newMasterFormSection">
-                <div class="card mb-4 p-3 bg-light">
-                    <div class="row"><div class="col"><h5 class="mb-3">Master Data</h5></div></div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="name" class="form-label">Truck Owner Name *</label>
-                            <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" placeholder="Enter Truck Owner Name">
-                            @error('name') <div class="text-danger">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="col-md-4">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" placeholder="Enter Email (optional)">
-                            @error('email') <div class="text-danger">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="col-md-4">
-                            <label for="gst_number" class="form-label">GST Number</label>
-                            <input type="text" class="form-control @error('gst_number') is-invalid @enderror" id="gst_number" name="gst_number" value="{{ old('gst_number') }}" placeholder="Enter GST Number">
-                            @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
+                <div id="panAlreadyRegisteredSection" class="alert alert-warning d-none" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Already registered.</strong> This PAN is already registered as a truck owner for this company.
+                </div>
+
+                <div id="restOfForm" class="{{ $shouldRestoreAfterValidation ? '' : 'd-none' }}">
+                    {{-- Master Data (Read-only when found via PAN) --}}
+                    <div id="masterDataSection" class="d-none">
+                        <div class="app-form-section">
+                            <div class="app-form-section__header app-form-section__header--muted">
+                                <h5 class="app-form-section__title"><i class="fas fa-lock"></i> Master Data (read-only from PAN)</h5>
+                            </div>
+                            <div class="app-form-section__body">
+                                <div class="row g-2 mb-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Truck Owner Name</label>
+                                        <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_name">-</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Email</label>
+                                        <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_email">-</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">PAN Number</label>
+                                        <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_pan">-</div>
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label">GST Number</label>
+                                        <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_gst">-</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">PAN Active</label>
+                                        <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_pan_active">-</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Address</label>
+                                        <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_address">-</div>
+                                    </div>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Country / State / City</label>
+                                        <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_location">-</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="pan_number" class="form-label">PAN Number *</label>
-                            <input type="text" class="form-control" id="pan_number" name="pan_number" value="{{ old('pan_number') }}" placeholder="Enter PAN Number" maxlength="10" style="text-transform: uppercase;">
+
+                    {{-- Single Truck Owner Details section --}}
+                    <div class="app-form-section">
+                        <div class="app-form-section__header">
+                            <h5 class="app-form-section__title"><i class="bi bi-building"></i> Truck Owner Details</h5>
+                        </div>
+                        <div class="app-form-section__body">
+                            <input type="hidden" id="pan_number" name="pan_number" value="{{ old('pan_number') }}">
+
+                            <div id="newMasterFormSection">
+                                <div class="row g-2 mb-2">
+                                    <div class="col-md-4">
+                                        <label for="name" class="form-label">Truck Owner Name *</label>
+                                        <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" placeholder="Enter Truck Owner Name">
+                                        @error('name') <div class="text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="email" class="form-label">Email</label>
+                                        <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" placeholder="Enter Email (optional)">
+                                        @error('email') <div class="text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="gst_number" class="form-label">GST Number</label>
+                                        <input type="text" class="form-control @error('gst_number') is-invalid @enderror" id="gst_number" name="gst_number" value="{{ old('gst_number') }}" placeholder="Enter GST Number">
+                                        @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label">PAN is Active *</label><br>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="pan_active" id="pan_active_yes" value="1" {{ old('pan_active') === '1' ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="pan_active_yes">Yes</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="pan_active" id="pan_active_no" value="0" {{ old('pan_active') === '0' ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="pan_active_no">No</label>
+                                        </div>
+                                        @error('pan_active') <div class="text-danger">{{ $message }}</div> @enderror
+                                        <div class="mt-1">@include('shared.check-pan-status-link')</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-4">
+                                    <label for="contact_person_name" class="form-label">Contact Person Name</label>
+                                    <input type="text" class="form-control @error('contact_person_name') is-invalid @enderror" id="contact_person_name" name="contact_person_name" value="{{ old('contact_person_name') }}" placeholder="Enter Contact Person Name">
+                                    @error('contact_person_name') <div class="text-danger">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="mobile_number" class="form-label">Mobile Number *</label>
+                                    <input type="tel" class="form-control" id="mobile_number" name="mobile_number" value="{{ old('mobile_number') }}" placeholder="Enter 10-digit mobile" maxlength="10" required>
+                                    @error('mobile_number') <div class="text-danger">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Book Balance</label>
+                                    <div class="form-control-plaintext bg-light border rounded px-3 py-2">
+                                        <strong>0.00</strong>
+                                        <small class="text-muted d-block">Read-only field</small>
+                                    </div>
+                                    <input type="hidden" name="advance_amount" value="0">
+                                </div>
+                            </div>
+
+                            <div id="locationDetailsSection">
+                                <div class="row g-2 mb-2">
+                                    <div class="col-md-4">
+                                        <label for="country_id" class="form-label">Country *</label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="country_id" name="country_id" required>
+                                                <option value="">Select Country</option>
+                                                @foreach($countries as $country)
+                                                    <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
+                                                        {{ $country->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            <button type="button" class="btn btn-brand-primary" data-bs-toggle="modal" data-bs-target="#addCountryModal" title="Add New Country">
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </div>
+                                        @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="state_id" class="form-label">State *</label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="state_id" name="state_id" required>
+                                                <option value="">Select State</option>
+                                                @if(old('country_id'))
+                                                    @foreach($states as $state)
+                                                        <option value="{{ $state->id }}" {{ old('state_id') == $state->id ? 'selected' : '' }}>
+                                                            {{ $state->name }}
+                                                        </option>
+                                                    @endforeach
+                                                @endif
+                                            </select>
+                                            <button type="button" class="btn btn-brand-primary" data-bs-toggle="modal" data-bs-target="#addStateModal" title="Add New State">
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </div>
+                                        @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="city_id" class="form-label">City *</label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="city_id" name="city_id" required>
+                                                <option value="">Select City</option>
+                                                @if(old('state_id'))
+                                                    @foreach($cities as $city)
+                                                        <option value="{{ $city->id }}" {{ old('city_id') == $city->id ? 'selected' : '' }}>
+                                                            {{ $city->name }}
+                                                        </option>
+                                                    @endforeach
+                                                @endif
+                                            </select>
+                                            <button type="button" class="btn btn-brand-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" title="Add New City">
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </div>
+                                        @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-12">
+                                        <label for="address" class="form-label">Address</label>
+                                        <textarea class="form-control @error('address') is-invalid @enderror" id="address" name="address" rows="2" placeholder="Enter complete address">{{ old('address') }}</textarea>
+                                        @error('address') <div class="text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-4">
+                                    <label class="form-label">Declaration Given? *</label><br>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given') === '1' ? 'checked' : '' }} required>
+                                        <label class="form-check-label" for="decl_yes">Yes</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="declaration_given" id="decl_no" value="0" {{ old('declaration_given') === '0' ? 'checked' : '' }} required>
+                                        <label class="form-check-label" for="decl_no">No</label>
+                                    </div>
+                                    @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="total_trucks" class="form-label">Total Trucks</label>
+                                    <input type="number" class="form-control @error('total_trucks') is-invalid @enderror" id="total_trucks" name="total_trucks" min="0" required value="{{ old('total_trucks', 0) }}" placeholder="Enter total trucks">
+                                    @error('total_trucks') <div class="text-danger">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="tds_percentage" class="form-label">TDS % *</label>
+                                    <input type="hidden" id="tds_calculated_baseline" value="{{ old('tds_percentage', '0') }}">
+                                    <input type="number" step="0.01" min="0" max="100" class="form-control @error('tds_percentage') is-invalid @enderror" id="tds_percentage" name="tds_percentage" value="{{ old('tds_percentage', '0') }}" required>
+                                    @error('tds_percentage') <div class="text-danger">{{ $message }}</div> @enderror
+                                </div>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <label for="tds_adjustment_remark" class="form-label">TDS adjustment remark</label>
+                                    <textarea class="form-control @error('tds_adjustment_remark') is-invalid @enderror" id="tds_adjustment_remark" name="tds_adjustment_remark" rows="2" placeholder="Required when TDS % differs from the calculated rate">{{ old('tds_adjustment_remark') }}</textarea>
+                                    @error('tds_adjustment_remark') <div class="text-danger">{{ $message }}</div> @enderror
+                                </div>
+                            </div>
                             @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">PAN is Active *</label><br>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="pan_active" id="pan_active_yes" value="1" {{ old('pan_active') === '1' ? 'checked' : '' }}>
-                                <label class="form-check-label" for="pan_active_yes">Yes</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="pan_active" id="pan_active_no" value="0" {{ old('pan_active') === '0' ? 'checked' : '' }}>
-                                <label class="form-check-label" for="pan_active_no">No</label>
-                            </div>
-                            @error('pan_active') <div class="text-danger">{{ $message }}</div> @enderror
-                            <div class="mt-1">@include('shared.check-pan-status-link')</div>
-                        </div>
                     </div>
-                </div>
+                </div>{{-- /#restOfForm --}}
             </div>
+        </div>
 
-            <!-- Editable: Contact Person & Mobile (always) -->
-            <div class="card mb-4 p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">Contact Details</h5></div></div>
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="contact_person_name" class="form-label">Contact Person Name</label>
-                        <input type="text" class="form-control @error('contact_person_name') is-invalid @enderror" id="contact_person_name" name="contact_person_name" value="{{ old('contact_person_name') }}" placeholder="Enter Contact Person Name">
-                        @error('contact_person_name') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="mobile_number" class="form-label">Mobile Number *</label>
-                        <input type="tel" class="form-control" id="mobile_number" name="mobile_number" value="{{ old('mobile_number') }}" placeholder="Enter 10-digit mobile" maxlength="10" required>
-                        @error('mobile_number') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Book Balance</label>
-                        <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong> 0.00</strong></div>
-                        <input type="hidden" name="advance_amount" value="0">
-                    </div>
-                </div>
+        <div id="truckOwnerFormActions" class="app-form-actions card {{ $shouldRestoreAfterValidation ? '' : 'd-none' }}">
+            <div class="card-body">
+                <a href="{{ route('truck_owners.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-x-lg me-1"></i> Cancel
+                </a>
+                <button class="btn btn-brand-primary" type="button" onclick="showConfirmationModal()">
+                    <i class="bi bi-floppy-fill me-1"></i> Save
+                </button>
             </div>
-
-            <!-- Business Details Section -->
-            <div class="card mb-4 p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">Business Details</h5></div></div>
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Declaration Given? *</label><br>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given') === '1' ? 'checked' : '' }} required>
-                            <label class="form-check-label" for="decl_yes">Yes</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_no" value="0" {{ old('declaration_given') === '0' ? 'checked' : '' }} required>
-                            <label class="form-check-label" for="decl_no">No</label>
-                        </div>
-                        @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="total_trucks" class="form-label">Total Trucks</label>
-                        <input type="number" class="form-control @error('total_trucks') is-invalid @enderror" id="total_trucks" name="total_trucks" min="0" required value="{{ old('total_trucks', 0) }}" placeholder="Enter total trucks">
-                        @error('total_trucks') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="tds_percentage" class="form-label">TDS % *</label>
-                        <input type="hidden" id="tds_calculated_baseline" value="{{ old('tds_percentage', '0') }}">
-                        <input type="number" step="0.01" min="0" max="100" class="form-control @error('tds_percentage') is-invalid @enderror" id="tds_percentage" name="tds_percentage" value="{{ old('tds_percentage', '0') }}" required>
-                        @error('tds_percentage') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-12">
-                        <label for="tds_adjustment_remark" class="form-label">TDS adjustment remark</label>
-                        <textarea class="form-control @error('tds_adjustment_remark') is-invalid @enderror" id="tds_adjustment_remark" name="tds_adjustment_remark" rows="3" placeholder="Required when TDS % differs from the calculated rate">{{ old('tds_adjustment_remark') }}</textarea>
-                        @error('tds_adjustment_remark') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-            </div>
-
-            <!-- Location Details Section (for new master only) -->
-            <div id="locationDetailsSection" class="card mb-4 p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">Location Details</h5></div></div>
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="country_id" class="form-label">Country *</label>
-                        <div class="input-group">
-                            <select class="form-select" id="country_id" name="country_id" required>
-                                <option value="">Select Country</option>
-                                @foreach($countries as $country)
-                                    <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
-                                        {{ $country->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCountryModal" title="Add New Country">
-                                <i class="bi bi-plus"></i>
-                            </button>
-                        </div>
-                        @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="state_id" class="form-label">State *</label>
-                        <div class="input-group">
-                            <select class="form-select" id="state_id" name="state_id" required>
-                                <option value="">Select State</option>
-                                @if(old('country_id'))
-                                    @foreach($states as $state)
-                                        <option value="{{ $state->id }}" {{ old('state_id') == $state->id ? 'selected' : '' }}>
-                                            {{ $state->name }}
-                                        </option>
-                                    @endforeach
-                                @endif
-                            </select>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStateModal" title="Add New State">
-                                <i class="bi bi-plus"></i>
-                            </button>
-                        </div>
-                        @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="city_id" class="form-label">City *</label>
-                        <div class="input-group">
-                            <select class="form-select" id="city_id" name="city_id" required>
-                                <option value="">Select City</option>
-                                @if(old('state_id'))
-                                    @foreach($cities as $city)
-                                        <option value="{{ $city->id }}" {{ old('city_id') == $city->id ? 'selected' : '' }}>
-                                            {{ $city->name }}
-                                        </option>
-                                    @endforeach
-                                @endif
-                            </select>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" title="Add New City">
-                                <i class="bi bi-plus"></i>
-                            </button>
-                        </div>
-                        @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-                {{-- </div> --}}
-                <div class="row mb-3">
-                    <div class="col-md-12">
-                        <label for="address" class="form-label">Address</label>
-                        <textarea class="form-control @error('address') is-invalid @enderror" id="address" name="address" rows="3" placeholder="Enter complete address">{{ old('address') }}</textarea>
-                        @error('address') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Actions Section -->
-            <div class="card p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">Quick Actions</h5></div></div>
-                <div class="row g-2">
-                    <div class="col-md-4">
-                        <button class="btn btn-brand-primary w-100 mb-2" type="button" onclick="showConfirmationModal()">💾 Submit Form</button>
-                    </div>
-                    <div class="col-md-4">
-                        <a href="{{ route('truck_owners.index') }}" class="btn btn-back w-100 mb-2">📄 Back to List</a>
-                    </div>
-                </div>
-            </div>
-            </div><!-- /#restOfForm -->
         </div>
     </form>
 </div>
@@ -325,7 +302,7 @@
 <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header bg-gradient-primary text-white">
                 <h5 class="modal-title" id="confirmationModalLabel">
                     <i class="fas fa-check-circle me-2"></i>Confirm Truck Owner Details
                 </h5>
@@ -564,6 +541,19 @@
         }
     }
 
+    function syncTruckOwnerFormActions() {
+        const actions = document.getElementById('truckOwnerFormActions');
+        const form = document.getElementById('restOfForm');
+        if (!actions || !form) {
+            return;
+        }
+        if (form.classList.contains('d-none')) {
+            actions.classList.add('d-none');
+        } else {
+            actions.classList.remove('d-none');
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const btnPanLookup = document.getElementById('btnPanLookup');
         const panLookup = document.getElementById('pan_lookup');
@@ -579,6 +569,8 @@
         let lastCheckedPan = '';
         const shouldRestoreAfterValidation = @json($shouldRestoreAfterValidation);
 
+        syncTruckOwnerFormActions();
+
         if (panLookup && panField && (panField.value || '').trim() !== '') {
             panLookup.value = panField.value;
             applyDefaultDummyTdsRemark();
@@ -591,6 +583,7 @@
             panVerifiedInput.value = '0';
             setIsDummyPan(false);
             if (restOfForm) restOfForm.classList.add('d-none');
+            syncTruckOwnerFormActions();
             if (panAlreadyRegisteredSection) panAlreadyRegisteredSection.classList.add('d-none');
             panLookupMessage.textContent = 'PAN changed. Please click Check PAN again.';
             panLookupMessage.className = 'mt-2 small text-warning';
@@ -617,6 +610,7 @@
                 panLookupMessage.className = 'mt-2 small text-muted';
                 if (panAlreadyRegisteredSection) panAlreadyRegisteredSection.classList.add('d-none');
                 if (restOfForm) restOfForm.classList.add('d-none');
+                syncTruckOwnerFormActions();
 
                 const url = '/api/transporter-master-by-pan?pan_number=' + encodeURIComponent(pan) + '&company_id=' + encodeURIComponent(companyId) + '&is_owner=1';
                 fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
@@ -628,10 +622,12 @@
                         panLookupMessage.textContent = 'This PAN is already registered as a truck owner for this company.';
                         panLookupMessage.className = 'mt-2 small text-danger';
                         if (panAlreadyRegisteredSection) panAlreadyRegisteredSection.classList.remove('d-none');
+                        syncTruckOwnerFormActions();
                         return;
                     }
                     setIsDummyPan(!!data.is_dummy_pan);
                     if (restOfForm) restOfForm.classList.remove('d-none');
+                    syncTruckOwnerFormActions();
                     if (data.found && data.master) {
                         document.getElementById('display_name').textContent = data.master.name || '-';
                         document.getElementById('display_email').textContent = data.master.email || '-';
@@ -687,6 +683,7 @@
                     setIsDummyPan(false);
                     panLookupMessage.textContent = err.message || 'Check failed. Please try again.';
                     panLookupMessage.className = 'mt-2 small text-danger';
+                    syncTruckOwnerFormActions();
                 })
                 .finally(() => { btnPanLookup.disabled = false; });
             });
@@ -703,6 +700,7 @@
             if (restOfForm) {
                 restOfForm.classList.remove('d-none');
             }
+            syncTruckOwnerFormActions();
             if (panAlreadyRegisteredSection) {
                 panAlreadyRegisteredSection.classList.add('d-none');
             }

@@ -1278,6 +1278,7 @@ lrItemsContainer.addEventListener('blur', function(e) {
                         source_state: item.querySelector('.source-state').value,
                         destination_city: item.querySelector('.destination-city').value,
                         destination_state: item.querySelector('.destination-state').value,
+                        loading_station: item.querySelector('.loading-station-input')?.value ?? '',
                         unloading_station: item.querySelector('.unloading-station-input')?.value ?? '',
                         lane: item.querySelector('.lane').value || 'Road',
                         good_type: item.querySelector('.goods-type').value,

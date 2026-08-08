@@ -1,43 +1,60 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-12 col-lg-10 col-xl-8">
-<div class="card card-info card-outline mb-4">
-    <div class="card-header">
-        <h3 class="card-title">{{ $goodsType ? 'Edit Goods Type' : 'Create Goods Type' }}</h3>
-    </div>
+<div class="container mt-4 pb-5 app-index-page app-create-page">
     <form method="POST" action="{{ $goodsType ? route('master.goods-types.update', $goodsType) : route('master.goods-types.store') }}" class="needs-validation" novalidate>
         @csrf
         @if($goodsType)
             @method('PUT')
         @endif
 
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label for="name" class="form-label">Name *</label>
-                    <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', $goodsType->name ?? '') }}" required>
-                    @error('name')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                    <div class="valid-feedback">Looks good!</div>
+        <div class="card app-index-list-card mb-3">
+            <div class="card-header">
+                <h3 class="card-title mb-0">
+                    <i class="bi bi-box-seam me-1"></i> {{ $goodsType ? 'Edit Goods Type' : 'Create Goods Type' }}
+                </h3>
+                <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+                    <a href="{{ route('master.goods-types.index') }}" class="btn app-index-header-btn" aria-label="Back to goods types">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="app-form-section">
+                    <div class="app-form-section__header">
+                        <h5 class="app-form-section__title"><i class="bi bi-box-seam"></i> Goods Type Details</h5>
+                    </div>
+                    <div class="app-form-section__body">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">Name *</label>
+                                <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', $goodsType->name ?? '') }}" required>
+                                @error('name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="valid-feedback">Looks good!</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        
-        <div class="card-footer">
-            <a href="{{ route('master.goods-types.index') }}" class="btn btn-back">Back to List</a>
-            <button type="submit" class="btn btn-brand-primary">Submit form</button>
+
+        <div class="app-form-actions card">
+            <div class="card-body">
+                <a href="{{ route('master.goods-types.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-x-lg me-1"></i> Cancel
+                </a>
+                <button class="btn btn-brand-primary" type="submit">
+                    <i class="bi bi-floppy-fill me-1"></i> Save
+                </button>
+            </div>
         </div>
     </form>
-        </div>
-    </div>
 </div>
 
 <script>
-    // Example starter JavaScript for disabling form submissions if there are invalid fields
     (() => {
         'use strict';
 

@@ -62,6 +62,10 @@
                         <small class="linked-lr-party-hint consignor-city-text"></small>
                         <small class="linked-lr-party-hint consignor-state-text"></small>
                         <div class="invalid-feedback">Please select a consignor.</div>
+                        <div class="mt-2">
+                            <label class="form-label">Loading Station</label>
+                            <input type="text" class="form-control loading-station-input" autocomplete="off" placeholder="Source loading point">
+                        </div>
                     </div>
                     <div class="col-12 col-lg-4">
                         <label class="form-label">Consignee *</label>
@@ -72,10 +76,10 @@
                         <small class="linked-lr-party-hint consignee-city-text"></small>
                         <small class="linked-lr-party-hint consignee-state-text"></small>
                         <div class="invalid-feedback">Please select a consignee.</div>
-                    </div>
-                    <div class="col-12 col-lg-4">
-                        <label class="form-label">Unloading Station</label>
-                        <input type="text" class="form-control unloading-station-input" autocomplete="off" placeholder="Destination unloading point">
+                        <div class="mt-2">
+                            <label class="form-label">Unloading Station</label>
+                            <input type="text" class="form-control unloading-station-input" autocomplete="off" placeholder="Destination unloading point">
+                        </div>
                     </div>
                 </div>
                 <div class="linked-lr-route-banner lr-route-banner mt-3 d-none">

@@ -46,6 +46,7 @@ class LorryReceipt extends Model implements Auditable
         'transporter_type',
         'linked_lr_id',
         'invoice_number',
+        'loading_station',
         'unloading_station',
         'gr_number',
     ];

@@ -1,164 +1,163 @@
 @extends('layouts.app')
 
 @section('content')
-<style>
-/* Prevent form expansion on validation errors */
-.form-control, .form-select {
-    min-height: 38px;
-    box-sizing: border-box;
-}
+<div class="container mt-4 pb-5 app-index-page app-create-page">
+    @if(session('success'))
+        <div class="mb-3">
+            <span class="badge text-bg-dark border app-index-flash">
+                <i class="bi bi-check-circle-fill text-success"></i> {{ session('success') }}
+            </span>
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="mb-3">
+            <span class="badge text-bg-dark border app-index-flash">
+                <i class="bi bi-exclamation-triangle-fill text-danger"></i> {{ session('error') }}
+            </span>
+        </div>
+    @endif
 
-.text-danger {
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-    word-wrap: break-word;
-}
-
-/* Ensure consistent column widths */
-.row .col-md-4 {
-    flex: 0 0 33.333333%;
-    max-width: 33.333333%;
-}
-
-/* Prevent card from expanding */
-.card {
-    overflow: hidden;
-}
-
-/* Consistent spacing for form groups */
-.mb-3 {
-    margin-bottom: 1rem !important;
-}
-</style>
-
-@if(session('success'))
-    <div class="alert alert-success mt-2">
-        {{ session('success') }}
-    </div>
-@endif
-
-<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-    <div class="card-header">
-        <div class="card-title h4">Add New Consignee/Consignor/Customer</div>
-    </div>
-    <!--begin::Form-->
     <form method="POST" action="{{ route('consignees.store') }}" class="needs-validation" novalidate="">
         @csrf
         <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
-        
-        <div class="card-body">
-            <!-- Basic Details -->
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <label for="name" class="form-label">Consignee Name *</label>
-                    <input placeholder="Enter Consignee Name" type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}">
-                    @error('name') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-md-4">
-                    <label for="contact_number" class="form-label">Contact Number *</label>
-                    <input placeholder="Enter Contact Number" type="text" class="form-control" id="contact_number" name="contact_number" required value="{{ old('contact_number') }}">
-                    @error('contact_number') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-md-4">
-                    <label for="email" class="form-label">Email</label>
-                    <input placeholder="Enter Email" type="email" class="form-control" id="email" name="email" value="{{ old('email') }}">
-                    @error('email') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
-                
-            </div>
-            
-            <div class="row mb-3">
-            <div class="col-md-4">
-                    <label for="gst_number" class="form-label">GST Number</label>
-                    <input placeholder="Enter GST Number" type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number') }}">
-                    <div class="invalid-feedback" id="gst_number_feedback"></div>
-                    @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-md-4">
-                    <label for="pan_number" class="form-label">PAN Number</label>
-                    <input placeholder="Enter PAN Number (e.g., ABCDE1234F)" type="text" class="form-control" id="pan_number" name="pan_number" value="{{ old('pan_number') }}" maxlength="10" style="text-transform: uppercase;">
-                    <div class="invalid-feedback" id="pan_number_feedback"></div>
-                    @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
-                
-            </div>
-            <!-- Location Details -->
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <label for="country_id" class="form-label">Country *</label>
-                    <div class="input-group">
-                        <select class="form-select" id="country_id" name="country_id" required>
-                            <option value="">Select Country</option>
-                            @foreach($countries as $country)
-                                <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
-                                    {{ $country->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCountryModal" title="Add New Country">
-                            <i class="bi bi-plus"></i>
-                        </button>
-                    </div>
-                    @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-md-4">
-                    <label for="state_id" class="form-label">State *</label>
-                    <div class="input-group">
-                        <select class="form-select" id="state_id" name="state_id" required>
-                            <option value="">Select State</option>
-                            @if(old('country_id'))
-                                @foreach($states as $state)
-                                    <option value="{{ $state->id }}" {{ old('state_id') == $state->id ? 'selected' : '' }}>
-                                        {{ $state->name }}
-                                    </option>
-                                @endforeach
-                            @endif
-                        </select>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStateModal" title="Add New State">
-                            <i class="bi bi-plus"></i>
-                        </button>
-                    </div>
-                    @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-md-4">
-                    <label for="city_id" class="form-label">City *</label>
-                    <div class="input-group">
-                        <select class="form-select" id="city_id" name="city_id" required>
-                            <option value="">Select City</option>
-                            @if(old('state_id'))
-                                @foreach($cities as $city)
-                                    <option value="{{ $city->id }}" {{ old('city_id') == $city->id ? 'selected' : '' }}>
-                                        {{ $city->name }}
-                                    </option>
-                                @endforeach
-                            @endif
-                        </select>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" title="Add New City">
-                            <i class="bi bi-plus"></i>
-                        </button>
-                    </div>
-                    @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
+
+        <div class="card app-index-list-card mb-3">
+            <div class="card-header">
+                <h3 class="card-title mb-0">
+                    <i class="bi bi-people me-1"></i> Add New Consignee/Consignor/Customer
+                </h3>
+                <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+                    <a href="{{ route('consignees.index') }}" class="btn app-index-header-btn" aria-label="Back to consignees">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
                 </div>
             </div>
-            <div class="row mb-3">
-                <div class="col-md-8">
-                    <label for="address" class="form-label">Address</label>
-                    <input placeholder="Enter Address" type="text" class="form-control" id="address" name="address" value="{{ old('address') }}">
-                    @error('address') <div class="text-danger">{{ $message }}</div> @enderror
+
+            <div class="card-body">
+                <div class="app-form-section">
+                    <div class="app-form-section__header">
+                        <h5 class="app-form-section__title"><i class="bi bi-person-vcard"></i> Basic Details</h5>
+                    </div>
+                    <div class="app-form-section__body">
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-4">
+                                <label for="name" class="form-label">Consignee Name *</label>
+                                <input placeholder="Enter Consignee Name" type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}">
+                                @error('name') <div class="text-danger">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label for="contact_number" class="form-label">Contact Number *</label>
+                                <input placeholder="Enter Contact Number" type="text" class="form-control" id="contact_number" name="contact_number" required value="{{ old('contact_number') }}">
+                                @error('contact_number') <div class="text-danger">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label for="email" class="form-label">Email</label>
+                                <input placeholder="Enter Email" type="email" class="form-control" id="email" name="email" value="{{ old('email') }}">
+                                @error('email') <div class="text-danger">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label for="gst_number" class="form-label">GST Number</label>
+                                <input placeholder="Enter GST Number" type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number') }}">
+                                <div class="invalid-feedback" id="gst_number_feedback"></div>
+                                @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label for="pan_number" class="form-label">PAN Number</label>
+                                <input placeholder="Enter PAN Number (e.g., ABCDE1234F)" type="text" class="form-control" id="pan_number" name="pan_number" value="{{ old('pan_number') }}" maxlength="10" style="text-transform: uppercase;">
+                                <div class="invalid-feedback" id="pan_number_feedback"></div>
+                                @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="app-form-section">
+                    <div class="app-form-section__header">
+                        <h5 class="app-form-section__title"><i class="bi bi-geo-alt"></i> Location Details</h5>
+                    </div>
+                    <div class="app-form-section__body">
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-4">
+                                <label for="country_id" class="form-label">Country *</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="country_id" name="country_id" required>
+                                        <option value="">Select Country</option>
+                                        @foreach($countries as $country)
+                                            <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
+                                                {{ $country->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <button type="button" class="btn btn-brand-primary" data-bs-toggle="modal" data-bs-target="#addCountryModal" title="Add New Country">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
+                                @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label for="state_id" class="form-label">State *</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="state_id" name="state_id" required>
+                                        <option value="">Select State</option>
+                                        @if(old('country_id'))
+                                            @foreach($states as $state)
+                                                <option value="{{ $state->id }}" {{ old('state_id') == $state->id ? 'selected' : '' }}>
+                                                    {{ $state->name }}
+                                                </option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                    <button type="button" class="btn btn-brand-primary" data-bs-toggle="modal" data-bs-target="#addStateModal" title="Add New State">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
+                                @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label for="city_id" class="form-label">City *</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="city_id" name="city_id" required>
+                                        <option value="">Select City</option>
+                                        @if(old('state_id'))
+                                            @foreach($cities as $city)
+                                                <option value="{{ $city->id }}" {{ old('city_id') == $city->id ? 'selected' : '' }}>
+                                                    {{ $city->name }}
+                                                </option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                    <button type="button" class="btn btn-brand-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" title="Add New City">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
+                                @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-8">
+                                <label for="address" class="form-label">Address</label>
+                                <input placeholder="Enter Address" type="text" class="form-control" id="address" name="address" value="{{ old('address') }}">
+                                @error('address') <div class="text-danger">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        
-        <div class="card-footer">
-            <button class="btn btn-brand-primary" type="submit">
-                <i class="bi bi-check-circle"></i> Create Consignee
-            </button>
-            <a href="{{ route('consignees.index') }}" class="btn btn-back">
-                <i class="bi bi-arrow-left"></i> Back to List
-            </a>
+
+        <div class="app-form-actions card">
+            <div class="card-body">
+                <a href="{{ route('consignees.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-x-lg me-1"></i> Cancel
+                </a>
+                <button class="btn btn-brand-primary" type="submit">
+                    <i class="bi bi-floppy-fill me-1"></i> Create Consignee
+                </button>
+            </div>
         </div>
     </form>
-    <!--end::Form-->
 </div>
 
 <!-- Add Country Modal -->
@@ -294,10 +293,6 @@
       </div>
     </div>
   </div>
- 
-  
-  
-  
 
 @endsection
 

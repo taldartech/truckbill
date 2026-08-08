@@ -1,37 +1,52 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-12 col-xl-10">
-            <div class="card card-info card-outline mb-4">
-                <div class="card-header">
-                    <h3 class="card-title">{{ $transporterMaster ? 'Edit Transporter Master' : 'Add Transporter Master' }}</h3>
+<div class="container mt-4 pb-5 app-index-page app-create-page">
+    <form
+        action="{{ $transporterMaster ? route('master.transporter-masters.update', $transporterMaster) : route('master.transporter-masters.store') }}"
+        method="POST"
+        class="needs-validation"
+        novalidate
+    >
+        @csrf
+        @if($transporterMaster)
+            @method('PUT')
+        @endif
+
+        <div class="card app-index-list-card mb-3">
+            <div class="card-header">
+                <h3 class="card-title mb-0">
+                    <i class="bi bi-person-badge me-1"></i> {{ $transporterMaster ? 'Edit Transporter Master' : 'Add Transporter Master' }}
+                </h3>
+                <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+                    <a href="{{ route('master.transporter-masters.index') }}" class="btn app-index-header-btn" aria-label="Back to transporter masters">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
                 </div>
-                <form
-                    action="{{ $transporterMaster ? route('master.transporter-masters.update', $transporterMaster) : route('master.transporter-masters.store') }}"
-                    method="POST"
-                    class="needs-validation"
-                    novalidate
-                >
-                    @csrf
-                    @if($transporterMaster)
-                        @method('PUT')
-                    @endif
+            </div>
 
-                    <div class="card-body">
-                        @if($transporterMaster && $associatedCompanies->isNotEmpty())
-                            <div class="mb-4">
-                                <label class="form-label">Associated Companies</label>
-                                <div class="d-flex flex-wrap gap-2">
-                                    @foreach($associatedCompanies as $company)
-                                        <span class="badge bg-secondary">{{ $company->name }}</span>
-                                    @endforeach
-                                </div>
+            <div class="card-body">
+                @if($transporterMaster && $associatedCompanies->isNotEmpty())
+                    <div class="app-form-section">
+                        <div class="app-form-section__header app-form-section__header--muted">
+                            <h5 class="app-form-section__title"><i class="bi bi-buildings"></i> Associated Companies</h5>
+                        </div>
+                        <div class="app-form-section__body">
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach($associatedCompanies as $company)
+                                    <span class="badge bg-secondary">{{ $company->name }}</span>
+                                @endforeach
                             </div>
-                        @endif
+                        </div>
+                    </div>
+                @endif
 
-                        <div class="row g-3">
+                <div class="app-form-section">
+                    <div class="app-form-section__header">
+                        <h5 class="app-form-section__title"><i class="bi bi-building"></i> Transporter Details</h5>
+                    </div>
+                    <div class="app-form-section__body">
+                        <div class="row g-2 mb-2">
                             <div class="col-md-4">
                                 <label for="name" class="form-label">Transport Name *</label>
                                 <input type="text" class="form-control" id="name" name="name" required
@@ -50,7 +65,9 @@
                                        value="{{ old('pan_number', $transporterMaster?->pan_number) }}">
                                 @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>
+                        </div>
 
+                        <div class="row g-2 mb-2">
                             <div class="col-md-4">
                                 <label for="gst_number" class="form-label">GST Number</label>
                                 <input type="text" class="form-control text-uppercase" id="gst_number" name="gst_number" maxlength="15"
@@ -80,7 +97,9 @@
                                 </div>
                                 @error('pan_active') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>
+                        </div>
 
+                        <div class="row g-2 mb-2">
                             <div class="col-md-4">
                                 <label for="country_id" class="form-label">Country</label>
                                 <select class="form-select" id="country_id" name="country_id">
@@ -108,7 +127,9 @@
                                 </select>
                                 @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>
+                        </div>
 
+                        <div class="row g-2">
                             <div class="col-12">
                                 <label for="address" class="form-label">Address</label>
                                 <textarea class="form-control" id="address" name="address" rows="3">{{ old('address', $transporterMaster?->address) }}</textarea>
@@ -116,15 +137,21 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="card-footer">
-                        <button type="submit" class="btn btn-brand-primary">Save</button>
-                        <a href="{{ route('master.transporter-masters.index') }}" class="btn btn-back">Back to List</a>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
-    </div>
+
+        <div class="app-form-actions card">
+            <div class="card-body">
+                <a href="{{ route('master.transporter-masters.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-x-lg me-1"></i> Cancel
+                </a>
+                <button class="btn btn-brand-primary" type="submit">
+                    <i class="bi bi-floppy-fill me-1"></i> Save
+                </button>
+            </div>
+        </div>
+    </form>
 </div>
 
 <script>

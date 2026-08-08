@@ -7,56 +7,10 @@
     <!-- SweetAlert2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
     <style>
-        /* Prevent form expansion on validation errors */
-        .form-control,
-        .form-select {
-            min-height: 38px;
-            box-sizing: border-box;
-        }
-
         .text-danger {
             font-size: 0.875rem;
             margin-top: 0.25rem;
             word-wrap: break-word;
-        }
-
-        /* Select2: theme draws border on .select2-selection — never put border/background on __rendered (nested box bug) */
-        .card-body .select2-container {
-            width: 100% !important;
-            max-width: 100%;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection {
-            min-height: 38px;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single {
-            min-height: 38px;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-            display: block;
-            padding-left: 0.75rem;
-            padding-right: 2rem;
-            padding-top: 0.375rem;
-            padding-bottom: 0.375rem;
-            line-height: 1.35;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .select2-container--bootstrap-5.select2-container--focus .select2-selection--single,
-        .select2-container--bootstrap-5.select2-container--open .select2-selection--single {
-            border-color: var(--bs-primary);
-            box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
-            height: auto;
-            min-height: 36px;
-            top: 0;
-            right: 0.5rem;
         }
 
         .select2-result-truck {
@@ -70,183 +24,518 @@
 
         .select2-dropdown {
             border: 1px solid #dee2e6;
-            border-radius: 0.375rem;
+            border-radius: 0.5rem;
         }
 
         .select2-results__option--highlighted {
-            background-color: var(--bs-primary);
+            background-color: var(--brand-primary, var(--bs-primary));
             color: white;
         }
 
-        /* Highlight transporter input when declaration not given */
         #transporter_id.declaration-warning {
             border-color: #ffc107 !important;
             border-width: 2px !important;
             box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25) !important;
         }
 
-        /* Highlight Select2 container when declaration not given */
-        .select2-container.declaration-warning {
-            border-color: #ffc107 !important;
-            border-width: 2px !important;
-            box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25) !important;
+        .select2-container.declaration-warning .select2-selection {
+            border-color: #f59e0b !important;
+            box-shadow: 0 0 0 0.15rem rgba(245, 158, 11, 0.2) !important;
         }
 
         .select2-container.declaration-warning .select2-selection__rendered {
             background-color: #fff3cd !important;
         }
-
-        .lr-payee-select-wrap .select2-container {
-            width: 100% !important;
-            max-width: 100%;
-        }
-
-        .lr-payee-select-wrap .select2-container .select2-selection--single {
-            min-height: 38px;
-            height: auto;
-        }
-
-        .lr-payee-select-wrap .select2-selection--single .select2-selection__rendered {
-            white-space: normal;
-            word-break: break-word;
-            overflow-wrap: anywhere;
-            text-overflow: clip;
-        }
     </style>
-    <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-        <div class="card-header">
-            <div class="d-flex w-100">
-                <div class="card-title h4">Add New Good Receipt (Bilty)</div>
-                <div class="ms-auto">
-                    <a href="{{ route('consignees.create') }}" class="btn btn-brand-primary">
-                        <i class="bi bi-plus"></i> Create Consignee/Consignor/Customer</a>
-                </div>
+    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}">
+    <div class="lrf-page app-index-page">
+        <div class="lrf-page__toolbar">
+            <div>
+                <h1 class="lrf-page__toolbar-title">Add New Good Receipt (Bilty)</h1>
+                <p class="lrf-page__toolbar-sub">Complete steps 1–3 to save. Optional details can be added anytime.</p>
+            </div>
+            <div class="lrf-page__toolbar-actions">
+                <a href="{{ route('consignees.create') }}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                    <i class="bi bi-plus-lg me-1"></i> Create Consignee
+                </a>
+                <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
             </div>
         </div>
-        <!--begin::Form-->
-        <form method="POST" action="{{ route('lorry_receipts.store') }}" id="lorryReceiptForm" class="needs-validation"
+
+        <form method="POST" action="{{ route('lorry_receipts.store') }}" id="lorryReceiptForm" class="needs-validation lrf"
             novalidate="">
             @csrf
             <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
-            <div class="card-body">
-                <!-- Declaration Warning (shown at top when truck owner declaration not submitted) -->
-                <div id="declarationWarning" class="alert alert-warning mb-3" style="display: none;">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    <strong>Warning:</strong> Declaration is not submitted for the selected truck owner.
+
+            <div id="declarationWarning" class="alert alert-warning lrf-alert mb-3" style="display: none;">
+                <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                <div>
+                    <strong>Declaration missing</strong> for the selected truck owner.
                     <a href="#" id="editTruckOwnerLink" target="_blank" class="alert-link">
-                        <i class="bi bi-pencil-square"></i> Edit Truck Owner
+                        Edit Truck Owner
                     </a>
                 </div>
-                <!-- General Details -->
-                <div class="card mb-4 p-3 bg-light">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="mb-3">General Details</h5>
+            </div>
+
+            {{-- Section 1 — Receipt Details --}}
+            <div class="lrf-section">
+                <div class="lrf-section__head">
+                    <div class="lrf-section__head-left">
+                        <div class="lrf-step-num">1</div>
+                        <div>
+                            <h2 class="lrf-section__title">Receipt Details</h2>
+                            <p class="lrf-section__desc">Who is shipping, which truck, and who gets paid</p>
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="lr_number" class="form-label">LR Number * <small class="text-muted">(Must be
-                                    unique)</small></label>
-                            <input type="text" class="form-control" id="lr_number" name="lr_number"
-                                value="{{ old('lr_number') }}" required placeholder="Enter unique LR Number">
-                            @error('lr_number')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please enter a unique LR number.</div>
-                            <div id="lr-number-feedback" class="mt-1"></div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="gr_date" class="form-label">GR Date *</label>
-                            <input type="date" class="form-control" id="gr_date" name="gr_date" required
-                                value="{{ old('gr_date') }}">
-                            @error('gr_date')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please select a GR date.</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="customer_id" class="form-label">Customer *</label>
-                            <select class="form-select" id="customer_id" name="customer_id" required
-                                data-placeholder="Search and select customer...">
-                                <option value="">Select Customer</option>
-                                @php($selectedCustomer = $consignees->firstWhere('id', old('customer_id')))
-                                @if($selectedCustomer)
-                                    <option value="{{ $selectedCustomer->id }}" selected>
-                                        {{ $selectedCustomer->name }}
-                                    </option>
-                                @endif
-                            </select>
-                            @error('customer_id')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please select a customer.</div>
-                        </div>
-                    </div>
-                    <!-- Memo ID field removed from creation form as it cannot be present at creation time -->
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="truck_id" class="form-label">Truck *</label>
-                            <select class="form-select" id="truck_id" name="truck_id" required
-                                data-placeholder="Search and select truck...">
-                                <option value="">Select Trucks</option>
-                                @php($selectedTruck = $trucks->firstWhere('id', old('truck_id')))
-                                @if($selectedTruck)
-                                    <option value="{{ $selectedTruck->id }}"
-                                        data-transporter-id="{{ $selectedTruck->transporter_id }}"
-                                        data-transporter-name="{{ $selectedTruck->transporter ? $selectedTruck->transporter->name : '' }}"
-                                        selected>
-                                        {{ $selectedTruck->truck_number }}
-                                        @if ($selectedTruck->driver)
-                                            - Driver: {{ $selectedTruck->driver->name }}
-                                        @endif
-                                        ({{ $selectedTruck->transporter ? $selectedTruck->transporter->name : 'No Truck Owner' }})
-                                    </option>
-                                @endif
-                            </select>
-                            @error('truck_id')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please select a truck.</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="transporter_type" class="form-label" id="transporterTypeLabel">Select Payment Type
-                                *</label>
-                            <select class="form-select" id="transporter_type" name="transporter_type" required>
-                                <option value="">Select Type</option>
-                                <option value="owner" {{ old('transporter_type') === 'owner' ? 'selected' : '' }}>Truck Owner</option>
-                                <option value="agency" {{ old('transporter_type') === 'agency' ? 'selected' : '' }}>Agency</option>
-                            </select>
-                            <div class="invalid-feedback">Please select transporter type.</div>
-                        </div>
-                        <div class="col-md-4 min-w-0">
-                            <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
-                            <div class="lr-payee-select-wrap">
-                                <select class="form-select" id="transporter_id" name="transporter_id" required
-                                    onchange="window.LREntity.showTdsPercentage(this.value)">
-                                    <option value="">Select Transporter</option>
-                                    @if (! empty($payeeTransporter))
-                                        <option value="{{ $payeeTransporter->id }}" selected>
-                                            {{ $payeeTransporter->displayNameWithShortName() }}
+                </div>
+                <div class="lrf-section__body">
+                    <div class="lrf-receipt-grid">
+                        <div class="lrf-receipt-card">
+                            <div class="lrf-receipt-card__title">Document</div>
+                            <div class="lrf-grid lrf-grid--2">
+                                <div class="lrf-pf">
+                                    <label for="lr_number" class="lrf-pf__lbl">LR Number<span class="lrf-pf__req">*</span></label>
+                                    <input type="text" class="form-control" id="lr_number" name="lr_number"
+                                        value="{{ old('lr_number') }}" required placeholder="Enter unique LR Number" autocomplete="off">
+                                    @error('lr_number')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                    <div class="invalid-feedback">Please enter a unique LR number.</div>
+                                    <div id="lr-number-feedback" class="lrf-field-feedback" aria-live="polite"></div>
+                                </div>
+                                <div class="lrf-pf">
+                                    <label for="gr_date" class="lrf-pf__lbl">GR Date<span class="lrf-pf__req">*</span></label>
+                                    <input type="date" class="form-control" id="gr_date" name="gr_date" required
+                                        value="{{ old('gr_date', now()->toDateString()) }}">
+                                    @error('gr_date')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                    <div class="invalid-feedback">Please select a GR date.</div>
+                                </div>
+                            </div>
+                            <div class="lrf-pf mt-2">
+                                <div class="lrf-pf__lbl-row">
+                                    <label for="customer_id" class="lrf-pf__lbl">Customer<span class="lrf-pf__req">*</span></label>
+                                    <a href="{{ route('consignees.create') }}" class="lrf-quick-add" target="_blank" rel="noopener">
+                                        <i class="bi bi-plus-lg"></i> Add
+                                    </a>
+                                </div>
+                                <select class="form-select" id="customer_id" name="customer_id" required
+                                    data-placeholder="Search and select customer...">
+                                    <option value="">Select Customer</option>
+                                    @php($selectedCustomer = $consignees->firstWhere('id', old('customer_id')))
+                                    @if($selectedCustomer)
+                                        <option value="{{ $selectedCustomer->id }}" selected>
+                                            {{ $selectedCustomer->name }}
                                         </option>
                                     @endif
                                 </select>
+                                @error('customer_id')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                                <div class="invalid-feedback">Please select a customer.</div>
+                            </div>
+                        </div>
+
+                        <div class="lrf-receipt-card">
+                            <div class="lrf-receipt-card__title">Vehicle &amp; Payee</div>
+                            @php($selectedTruck = $trucks->firstWhere('id', old('truck_id')))
+                            @php($lrTruckSelected = filled(old('truck_id')) || ! empty($selectedTruck))
+                            @php($lrPayTypeSelected = in_array(old('transporter_type'), ['owner', 'agency'], true))
+
+                            <div class="lrf-grid lrf-grid--2">
+                                <div class="lrf-pf">
+                                    <label for="truck_id" class="lrf-pf__lbl">Truck<span class="lrf-pf__req">*</span></label>
+                                    <select class="form-select" id="truck_id" name="truck_id" required
+                                        data-placeholder="Search and select truck...">
+                                        <option value="">Select Trucks</option>
+                                        @if($selectedTruck)
+                                            <option value="{{ $selectedTruck->id }}"
+                                                data-transporter-id="{{ $selectedTruck->transporter_id }}"
+                                                data-transporter-name="{{ $selectedTruck->transporter ? $selectedTruck->transporter->name : '' }}"
+                                                data-driver-name="{{ $selectedTruck->driver?->name ?? '' }}"
+                                                selected>
+                                                {{ $selectedTruck->truck_number }}
+                                                @if ($selectedTruck->driver)
+                                                    - Driver: {{ $selectedTruck->driver->name }}
+                                                @endif
+                                                ({{ $selectedTruck->transporter ? $selectedTruck->transporter->name : 'No Truck Owner' }})
+                                            </option>
+                                        @endif
+                                    </select>
+                                    @error('truck_id')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                    <div class="invalid-feedback">Please select a truck.</div>
+                                </div>
+
+                                <div class="lrf-pf" id="lrPayToField" @if(! $lrTruckSelected) hidden @endif>
+                                    <label class="lrf-pf__lbl" id="transporterTypeLabel">Pay to<span class="lrf-pf__req">*</span></label>
+                                    <div class="lrf-pay-pills" role="group" aria-label="Pay to">
+                                        <button type="button" class="lrf-pay-pill{{ old('transporter_type') === 'owner' ? ' is-active' : '' }}"
+                                            data-pay-type="owner" id="lrPayPillOwner">Truck Owner</button>
+                                        <button type="button" class="lrf-pay-pill{{ old('transporter_type') === 'agency' ? ' is-active' : '' }}"
+                                            data-pay-type="agency" id="lrPayPillAgency">Agency</button>
+                                    </div>
+                                    <select class="form-select lrf-pay-type-select" id="transporter_type" name="transporter_type"
+                                        @if($lrTruckSelected) required @endif
+                                        aria-hidden="true" tabindex="-1">
+                                        <option value="">Select Type</option>
+                                        <option value="owner" {{ old('transporter_type') === 'owner' ? 'selected' : '' }}>Truck Owner</option>
+                                        <option value="agency" {{ old('transporter_type') === 'agency' ? 'selected' : '' }}>Agency</option>
+                                    </select>
+                                    <div class="invalid-feedback">Please select who gets paid.</div>
+                                </div>
                             </div>
 
-                            @error('transporter_id')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please select a transporter.</div>
-                            <div id="tdsRateDisplay" class="mt-2" style="display: none;">
-                                <span class="badge bg-warning text-dark fs-6">
-                                    🎯 TDS Rate: <span id="tdsPercentageValue">--</span>
-                                </span>
+                            <div id="lrPayeeRow" class="lrf-grid lrf-grid--2 lrf-payee-row" @if(! $lrPayTypeSelected) hidden @endif>
+                                <div class="lrf-pf">
+                                    <div class="lrf-pf__lbl-row">
+                                        <label for="transporter_id" id="transporterLabel" class="lrf-pf__lbl">
+                                            @if(old('transporter_type') === 'agency')
+                                                Agency<span class="lrf-pf__req">*</span>
+                                            @elseif(old('transporter_type') === 'owner')
+                                                Truck Owner<span class="lrf-pf__req">*</span>
+                                            @else
+                                                Payee<span class="lrf-pf__req">*</span>
+                                            @endif
+                                        </label>
+                                        <span id="lr-add-transporter-wrap" class="d-none">
+                                            <a id="lr-add-transporter-btn"
+                                                href="{{ route('truck_owners.create') }}"
+                                                data-href-owner="{{ route('truck_owners.create') }}"
+                                                class="lrf-quick-add"
+                                                target="_blank"
+                                                rel="noopener">
+                                                <i class="bi bi-plus-lg"></i> Add
+                                            </a>
+                                        </span>
+                                    </div>
+                                    <div class="lr-payee-select-wrap">
+                                        <select class="form-select" id="transporter_id" name="transporter_id"
+                                            @if($lrPayTypeSelected) required @endif
+                                            onchange="window.LREntity.showTdsPercentage(this.value)">
+                                            <option value="">Select Payee</option>
+                                            @if (! empty($payeeTransporter))
+                                                <option value="{{ $payeeTransporter->id }}" selected>
+                                                    {{ $payeeTransporter->displayNameWithShortName() }}
+                                                </option>
+                                            @endif
+                                        </select>
+                                    </div>
+                                    @error('transporter_id')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                    <div class="invalid-feedback">Please select a payee.</div>
+                                    <div id="tdsRateDisplay" class="lrf-tds-source" hidden aria-hidden="true">
+                                        <span id="tdsPercentageValue">--</span>
+                                    </div>
+                                </div>
+
+                                <div class="lrf-truck-summary lrf-truck-summary--panel" id="lrTruckSummary">
+                                    <span class="lrf-truck-summary__item" id="lrTruckSummaryDriverItem" hidden>
+                                        <span class="lrf-truck-summary__k">Driver</span>
+                                        <span class="lrf-truck-summary__v" id="lrTruckSummaryDriver">—</span>
+                                    </span>
+                                    <span class="lrf-truck-summary__sep" id="lrTruckSummaryDriverSep" hidden aria-hidden="true">·</span>
+                                    <span class="lrf-truck-summary__item">
+                                        <span class="lrf-truck-summary__k">TDS</span>
+                                        <span class="lrf-truck-summary__v" id="lrTruckSummaryTds">—</span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4 min-w-0">
-                            <label for="reference_by" class="form-label">Reference By</label>
+                </div>
+            </div>
+
+            {{-- Section 2 — Parties & Route --}}
+            <div class="lrf-section">
+                <div class="lrf-section__head lrf-section__head--green">
+                    <div class="lrf-section__head-left">
+                        <div class="lrf-step-num lrf-step-num--green">2</div>
+                        <div>
+                            <h2 class="lrf-section__title">Parties & Route</h2>
+                            <p class="lrf-section__desc">Goods travel from consignor to consignee</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="lrf-section__body">
+                    <div class="lrf-party-flow" id="lrPartyFlow">
+                        <div class="lrf-party-card lrf-party-card--from" id="lrConsignorCard">
+                            <div class="lrf-party-card__badge">FROM</div>
+                            <div class="lrf-party-card__title">
+                                <i class="bi bi-geo-alt-fill"></i> Consignor<span class="lrf-pf__req">*</span>
+                            </div>
+                            <div class="lrf-pf">
+                                <select class="form-select" id="consignor_id" name="consignor_id" required
+                                    data-placeholder="Search consignor...">
+                                    <option value="">Select Consignor</option>
+                                    @php($selectedConsignor = $consignees->firstWhere('id', old('consignor_id')))
+                                    @if($selectedConsignor)
+                                        <option value="{{ $selectedConsignor->id }}" selected>
+                                            {{ $selectedConsignor->name }}
+                                        </option>
+                                    @endif
+                                </select>
+                                @error('consignor_id')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                                <div class="invalid-feedback">Please select a consignor.</div>
+                            </div>
+                            <div class="lrf-party-meta">
+                                <div class="lrf-party-meta__item">
+                                    <span class="lrf-party-meta__label">Contact</span>
+                                    <span class="lrf-party-meta__value" id="consignorContactLabel">{{ old('consignor_contact_number') ?: '—' }}</span>
+                                </div>
+                                <div class="lrf-party-meta__item">
+                                    <span class="lrf-party-meta__label">City</span>
+                                    <span class="lrf-party-meta__value" id="sourceCityLabel">{{ old('source_city') ?: '—' }}</span>
+                                </div>
+                                <div class="lrf-party-meta__item">
+                                    <span class="lrf-party-meta__label">State</span>
+                                    <span class="lrf-party-meta__value" id="sourceStateLabel">{{ old('source_state') ?: '—' }}</span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="consignor_contact_number" name="consignor_contact_number" value="{{ old('consignor_contact_number') }}">
+                            <input type="hidden" id="source_city" name="source_city" value="{{ old('source_city') }}" required>
+                            <input type="hidden" id="source_state" name="source_state" value="{{ old('source_state') }}" required>
+                            <div class="lrf-pf mt-2">
+                                <label for="loading_station" class="lrf-pf__lbl">Loading Station</label>
+                                <input type="text" class="form-control" id="loading_station" name="loading_station"
+                                    value="{{ old('loading_station') }}" placeholder="Optional">
+                            </div>
+                        </div>
+
+                        <div class="lrf-goods-lane" id="lrGoodsLane" aria-hidden="true">
+                            <div class="lrf-goods-lane__track">
+                                <span class="lrf-goods-lane__dot lrf-goods-lane__dot--start"></span>
+                                <span class="lrf-goods-lane__line"></span>
+                                <span class="lrf-goods-lane__dot lrf-goods-lane__dot--end"></span>
+                                <span class="lrf-goods-lane__cargo" id="lrGoodsCargo">
+                                    <i class="bi bi-box-seam-fill"></i>
+                                </span>
+                            </div>
+                            <div class="lrf-goods-lane__label" id="lrRouteFlowLabel">Select parties to start route</div>
+                            <div class="lrf-goods-lane__sub" id="lrRouteFlowSub">Goods move from consignor → consignee</div>
+                        </div>
+
+                        <div class="lrf-party-card lrf-party-card--to" id="lrConsigneeCard">
+                            <div class="lrf-party-card__badge lrf-party-card__badge--to">TO</div>
+                            <div class="lrf-party-card__title">
+                                <i class="bi bi-geo-fill"></i> Consignee<span class="lrf-pf__req">*</span>
+                            </div>
+                            <div class="lrf-pf">
+                                <select class="form-select" id="consignee_id" name="consignee_id" required
+                                    data-placeholder="Search consignee...">
+                                    <option value="">Select Consignee</option>
+                                    @php($selectedConsignee = $consignees->firstWhere('id', old('consignee_id')))
+                                    @if($selectedConsignee)
+                                        <option value="{{ $selectedConsignee->id }}" selected>
+                                            {{ $selectedConsignee->name }}
+                                        </option>
+                                    @endif
+                                </select>
+                                @error('consignee_id')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                                <div class="invalid-feedback">Please select a consignee.</div>
+                            </div>
+                            <div class="lrf-party-meta">
+                                <div class="lrf-party-meta__item">
+                                    <span class="lrf-party-meta__label">Contact</span>
+                                    <span class="lrf-party-meta__value" id="consigneeContactLabel">{{ old('consignee_contact_number') ?: '—' }}</span>
+                                </div>
+                                <div class="lrf-party-meta__item">
+                                    <span class="lrf-party-meta__label">City</span>
+                                    <span class="lrf-party-meta__value" id="destinationCityLabel">{{ old('destination_city') ?: '—' }}</span>
+                                </div>
+                                <div class="lrf-party-meta__item">
+                                    <span class="lrf-party-meta__label">State</span>
+                                    <span class="lrf-party-meta__value" id="destinationStateLabel">{{ old('destination_state') ?: '—' }}</span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="consignee_contact_number" name="consignee_contact_number" value="{{ old('consignee_contact_number') }}">
+                            <input type="hidden" id="destination_city" name="destination_city" value="{{ old('destination_city') }}" required>
+                            <input type="hidden" id="destination_state" name="destination_state" value="{{ old('destination_state') }}" required>
+                            <div class="lrf-pf mt-2">
+                                <label for="unloading_station" class="lrf-pf__lbl">Unloading Station</label>
+                                <input type="text" class="form-control" id="unloading_station" name="unloading_station"
+                                    value="{{ old('unloading_station') }}" placeholder="Optional">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Section 3 — Goods & Charges --}}
+            <div class="lrf-section">
+                <div class="lrf-section__head lrf-section__head--summary">
+                    <div class="lrf-section__head-left">
+                        <div class="lrf-step-num lrf-step-num--summary">3</div>
+                        <div>
+                            <h2 class="lrf-section__title">Goods & Charges</h2>
+                            <p class="lrf-section__desc">Cargo details and auto-calculated freight amount</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="lrf-section__body">
+                    <input type="hidden" id="lane" name="lane" value="Road">
+
+                    <div class="lrf-grid lrf-grid--5">
+                        <div class="lrf-pf">
+                            <label for="good_type" class="lrf-pf__lbl">Goods Type<span class="lrf-pf__req">*</span></label>
+                            <div class="input-group flex-nowrap">
+                                <select class="form-select" id="good_type" name="good_type" required>
+                                    <option value="">Select Goods Type</option>
+                                    @foreach ($goodsTypes as $goodsType)
+                                        <option value="{{ $goodsType->name }}"
+                                            {{ old('good_type') == $goodsType->name ? 'selected' : '' }}>
+                                            {{ $goodsType->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="btn btn-success" data-bs-toggle="modal"
+                                    data-bs-target="#addGoodsTypeModal" title="Add New Goods Type">
+                                    <i class="bi bi-plus"></i>
+                                </button>
+                            </div>
+                            @error('good_type')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Please select a goods type.</div>
+                        </div>
+                        <div class="lrf-pf">
+                            <label for="no_of_units" class="lrf-pf__lbl">No. of Units</label>
+                            <input type="number" class="form-control" id="no_of_units" name="no_of_units"
+                                value="{{ old('no_of_units') }}" min="1" max="100000"
+                                title="Maximum 100,000 units allowed" placeholder="Optional">
+                            @error('no_of_units')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Please enter a valid number of units (max 100,000).</div>
+                        </div>
+                        <div class="lrf-pf">
+                            <label for="weight" class="lrf-pf__lbl">Weight (Tons)<span class="lrf-pf__req">*</span></label>
+                            <input type="number" step="0.001" class="form-control" id="weight" name="weight"
+                                required value="{{ old('weight') }}" min="0.1" max="100"
+                                title="Weight must be between 0.1 and 100 tons" placeholder="0.000">
+                            @error('weight')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Please enter a weight between 0.1 and 100 tons.</div>
+                        </div>
+                        <div class="lrf-pf">
+                            <label for="fr_rate" class="lrf-pf__lbl">Freight Rate (₹/Ton)<span class="lrf-pf__req">*</span></label>
+                            <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate"
+                                required value="{{ old('fr_rate') }}" min="1" max="20000"
+                                title="Freight rate must be between 1 and 20,000 per ton" placeholder="0.00">
+                            @error('fr_rate')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Please enter a freight rate between 1 and 20,000.</div>
+                        </div>
+                        <div class="lrf-pf">
+                            <label class="lrf-pf__lbl" for="amount">
+                                <span>Amount (₹)<span class="lrf-pf__req">*</span></span>
+                                <span class="lrf-amount-toggle">
+                                    <input class="form-check-input" type="checkbox" id="is_fixed_amount"
+                                        name="is_fixed_amount" value="1" {{ old('is_fixed_amount') ? 'checked' : '' }}>
+                                    <label class="form-check-label mb-0" for="is_fixed_amount">Fixed</label>
+                                </span>
+                            </label>
+                            <input type="number" step="0.01" class="form-control" id="amount" name="amount"
+                                required value="{{ old('amount') }}"
+                                title="Auto-calculated: Weight × Freight Rate (editable, or fixed when enabled)" placeholder="0.00">
+                            @error('amount')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Please enter an amount.</div>
+                            <div class="lrf-pf__hint" id="amountHelpText">Auto: Weight × Rate</div>
+                        </div>
+                    </div>
+
+                    <div class="lrf-summary-metrics">
+                        <div class="lrf-metric">
+                            <div class="lrf-metric__icon" style="--ic:#0d9488;--bg:#ecfeff"><i class="bi bi-speedometer2"></i></div>
+                            <div>
+                                <span class="lrf-metric__name">Weight</span>
+                                <span class="lrf-metric__val" id="lrSummaryWeight">—</span>
+                            </div>
+                        </div>
+                        <div class="lrf-metric">
+                            <div class="lrf-metric__icon" style="--ic:#7c3aed;--bg:#faf5ff"><i class="bi bi-currency-rupee"></i></div>
+                            <div>
+                                <span class="lrf-metric__name">Rate</span>
+                                <span class="lrf-metric__val" id="lrSummaryRate">—</span>
+                            </div>
+                        </div>
+                        <div class="lrf-metric lrf-metric--hero">
+                            <div class="lrf-metric__icon" style="--ic:#16a34a;--bg:#dcfce7"><i class="bi bi-cash-stack"></i></div>
+                            <div>
+                                <span class="lrf-metric__name">Total Amount</span>
+                                <span class="lrf-metric__val" id="lrSummaryAmount">—</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @php($lrOptionalOpen = filled(old('reference_by')) || filled(old('invoice_number')) || filled(old('gr_number')) || filled(old('goods_value')) || $errors->hasAny(['reference_by', 'invoice_number', 'gr_number', 'goods_value']))
+
+            {{-- Section 4 — Optional Details --}}
+            <div class="lrf-section lrf-section--collapsible{{ $lrOptionalOpen ? ' lrf-section--open' : '' }}" id="lrOptionalSection">
+                <button type="button" class="lrf-section__head lrf-section__head--plain lrf-section__head--toggle" id="lrOptionalToggle" aria-expanded="{{ $lrOptionalOpen ? 'true' : 'false' }}" aria-controls="lrOptionalBody">
+                    <div class="lrf-section__head-left">
+                        <div class="lrf-step-num lrf-step-num--gray">4</div>
+                        <div>
+                            <h2 class="lrf-section__title">Optional Details</h2>
+                            <p class="lrf-section__desc">GR number, invoice, goods value and reference</p>
+                        </div>
+                    </div>
+                    <div class="lrf-section__head-right">
+                        <span class="lrf-optional-chip"><i class="bi bi-plus-circle"></i> Expand if needed</span>
+                        <span class="lrf-collapse-arrow{{ $lrOptionalOpen ? ' lrf-collapse-arrow--open' : '' }}" aria-hidden="true">
+                            <i class="bi bi-chevron-down"></i>
+                        </span>
+                    </div>
+                </button>
+
+                <div class="lrf-section__body" id="lrOptionalBody" @unless($lrOptionalOpen) style="display: none;" @endunless>
+                    <div class="lrf-grid lrf-grid--4">
+                        <div class="lrf-pf">
+                            <label for="gr_number" class="lrf-pf__lbl">GR Number</label>
+                            <input type="text" class="form-control" id="gr_number" name="gr_number"
+                                value="{{ old('gr_number') }}" placeholder="Enter GR Number">
+                            @error('gr_number')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Please enter a valid GR number.</div>
+                            <div id="gr-number-feedback" class="mt-1"></div>
+                        </div>
+                        <div class="lrf-pf">
+                            <label for="invoice_number" class="lrf-pf__lbl">Invoice Number</label>
+                            <input type="text" class="form-control" id="invoice_number" name="invoice_number"
+                                value="{{ old('invoice_number') }}" placeholder="Enter Invoice Number">
+                            @error('invoice_number')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Please enter a valid invoice number.</div>
+                            <div id="invoice-number-feedback" class="mt-1"></div>
+                        </div>
+                        <div class="lrf-pf">
+                            <label for="goods_value" class="lrf-pf__lbl">Goods Value</label>
+                            <input type="number" step="0.01" class="form-control" id="goods_value" name="goods_value"
+                                value="{{ old('goods_value') }}" min="0" placeholder="">
+                            @error('goods_value')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="lrf-pf__hint">Value of goods</div>
+                        </div>
+                        <div class="lrf-pf">
+                            <label for="reference_by" class="lrf-pf__lbl">Reference By</label>
                             <div class="lr-payee-select-wrap">
                                 <select class="form-select" id="reference_by" name="reference_by">
                                     <option value="">Select Reference</option>
@@ -263,249 +552,24 @@
                             @enderror
                             <div class="invalid-feedback">Please select a reference.</div>
                         </div>
-                        <div class="col-md-4">
-                            <label for="invoice_number" class="form-label">Invoice Number <small
-                                    class="text-muted">(Optional)</small></label>
-                            <input type="text" class="form-control" id="invoice_number" name="invoice_number"
-                                value="{{ old('invoice_number') }}" placeholder="Enter Invoice Number">
-                            @error('invoice_number')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please enter a valid invoice number.</div>
-                            <div id="invoice-number-feedback" class="mt-1"></div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="gr_number" class="form-label">GR Number <small
-                                    class="text-muted">(Optional)</small></label>
-                            <input type="text" class="form-control" id="gr_number" name="gr_number"
-                                value="{{ old('gr_number') }}" placeholder="Enter GR Number">
-                            @error('gr_number')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please enter a valid GR number.</div>
-                            <div id="gr-number-feedback" class="mt-1"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Consignor & Consignee Details -->
-                <div class="card mb-4 p-3 bg-light">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="mb-3">Consignor & Consignee Details</h5>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="consignor_id" class="form-label">Consignor *</label>
-                            <select class="form-select" id="consignor_id" name="consignor_id" required
-                                data-placeholder="Search and select consignor...">
-                                <option value="">Select Consignor</option>
-                                @php($selectedConsignor = $consignees->firstWhere('id', old('consignor_id')))
-                                @if($selectedConsignor)
-                                    <option value="{{ $selectedConsignor->id }}" selected>
-                                        {{ $selectedConsignor->name }}
-                                    </option>
-                                @endif
-                            </select>
-                            @error('consignor_id')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please select a consignor.</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
-                            <input type="text" class="form-control" id="consignor_contact_number"
-                                name="consignor_contact_number" readonly value="{{ old('consignor_contact_number') }}">
-                        </div>
-
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="consignee_id" class="form-label">Consignee *</label>
-                            <select class="form-select" id="consignee_id" name="consignee_id" required
-                                data-placeholder="Search and select consignee...">
-                                <option value="">Select Consignee</option>
-                                @php($selectedConsignee = $consignees->firstWhere('id', old('consignee_id')))
-                                @if($selectedConsignee)
-                                    <option value="{{ $selectedConsignee->id }}" selected>
-                                        {{ $selectedConsignee->name }}
-                                    </option>
-                                @endif
-                            </select>
-                            @error('consignee_id')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please select a consignee.</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
-                            <input type="text" class="form-control" id="consignee_contact_number"
-                                name="consignee_contact_number" readonly value="{{ old('consignee_contact_number') }}">
-                        </div>
-                    </div>
-                </div>
-                <!-- Route Section -->
-                <div class="card mb-4 p-3 bg-light">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="mb-3">Route Details</h5>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="source_city" class="form-label">Source City *</label>
-                            <input type="text" class="form-control" id="source_city" name="source_city" required
-                                value="{{ old('source_city') }}" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="source_state" class="form-label">Source State *</label>
-                            <input type="text" class="form-control" id="source_state" name="source_state" required
-                                value="{{ old('source_state') }}" readonly>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="destination_city" class="form-label">Destination City *</label>
-                            <input type="text" class="form-control" id="destination_city" name="destination_city"
-                                required value="{{ old('destination_city') }}" readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="destination_state" class="form-label">Destination State *</label>
-                            <input type="text" class="form-control" id="destination_state" name="destination_state"
-                                required value="{{ old('destination_state') }}" readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="unloading_station" class="form-label">Unloading Station</label>
-                            <input type="text" class="form-control" id="unloading_station" name="unloading_station"
-                                 value="{{ old('unloading_station') }}">
-                        </div>
-                    </div>
-                </div>
-                <!-- Goods & Charges Section -->
-                <div class="card mb-4 p-3 bg-light">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="mb-3">Goods & Charges</h5>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <input type="hidden" id="lane" name="lane" value="Road">
-                        <div class="col-md-4">
-                            <label for="good_type" class="form-label">Goods Type *</label>
-                            <div class="input-group flex-nowrap">
-                                <select class="form-select" id="good_type" name="good_type" required>
-                                    <option value="">Select Goods Type</option>
-                                    @foreach ($goodsTypes as $goodsType)
-                                        <option value="{{ $goodsType->name }}"
-                                            {{ old('good_type') == $goodsType->name ? 'selected' : '' }}>
-                                            {{ $goodsType->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                    data-bs-target="#addGoodsTypeModal" title="Add New Goods Type">
-                                    <i class="bi bi-plus"></i>
-                                </button>
-                            </div>
-                            @error('good_type')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please select a goods type.</div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label for="no_of_units" class="form-label">No. of Units <small
-                                    class="text-muted">(Optional)</small></label>
-                            <input type="number" class="form-control" id="no_of_units" name="no_of_units"
-                                value="{{ old('no_of_units') }}" min="1" max="100000"
-                                title="Maximum 100,000 units allowed">
-                            @error('no_of_units')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please enter a valid number of units (max 100,000).</div>
-                            <small class="text-muted">📦 Max: 100,000 units</small>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="goods_value" class="form-label">Goods Value <small
-                                    class="text-muted">(Optional)</small></label>
-                            <input type="number" step="0.01" class="form-control" id="goods_value" name="goods_value"
-                                value="{{ old('goods_value') }}" min="0" placeholder="">
-                            @error('goods_value')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <small class="text-muted">Value of goods</small>
-                        </div>
-
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="weight" class="form-label">Weight * <small class="text-muted">(in
-                                    Tons)</small></label>
-                            <input type="number" step="0.001" class="form-control" id="weight" name="weight"
-                                required value="{{ old('weight') }}" min="0.1" max="100"
-                                title="Weight must be between 0.1 and 100 tons">
-                            @error('weight')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please enter a weight between 0.1 and 100 tons.</div>
-                            <small class="text-muted">📏 Range: 0.1 - 100 tons</small>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="fr_rate" class="form-label">Freight Rate * <small class="text-muted">( per
-                                    ton)</small></label>
-                            <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate"
-                                required value="{{ old('fr_rate') }}" min="1" max="20000"
-                                title="Freight rate must be between 1 and 20,000 per ton">
-                            @error('fr_rate')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please enter a freight rate between 1 and 20,000.</div>
-                            <small class="text-muted"><i class="bi bi-currency-rupee"></i> Range: 1 - 20,000 per ton</small>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label d-flex justify-content-between align-items-center">
-                                <span>Amount *</span>
-                                <span class="form-check form-check-inline mb-0">
-                                    <input class="form-check-input" type="checkbox" id="is_fixed_amount"
-                                        name="is_fixed_amount" value="1" {{ old('is_fixed_amount') ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="is_fixed_amount">Use fixed amount</label>
-                                </span>
-                            </label>
-                            <input type="number" step="0.01" class="form-control" id="amount" name="amount"
-                                required value="{{ old('amount') }}"
-                                title="Auto-calculated: Weight × Freight Rate (editable, or fixed when enabled)">
-                            @error('amount')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please enter an amount.</div>
-                            <small class="text-muted" id="amountHelpText">
-                                💡 Calculated as: Weight × Freight Rate (uncheck \"Use fixed amount\" to auto-calculate).
-                            </small>
-                        </div>
-                    </div>
-                </div>
-                <!-- Submit Actions -->
-                <div class="card mb-4 p-3 bg-light">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="mb-3">Submit Actions</h5>
-                        </div>
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-md-4 offset-md-4">
-                            <button class="btn btn-brand-primary w-100" type="submit">💾 Create Good Receipt (Bilty)</button>
-                        </div>
-
-                        <div class="col-md-4">
-                            <a href="{{ route('lorry_receipts.index') }}" class="btn btn-back w-100">📄 Back to
-                                List</a>
-                        </div>
                     </div>
                 </div>
             </div>
+
+            <div class="lrf-actions">
+                <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-x-lg me-1"></i> Cancel
+                </a>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="lrClearFormBtn">
+                    <i class="bi bi-eraser me-1"></i> Clear
+                </button>
+                <button class="btn btn-success btn-sm" type="submit">
+                    <i class="bi bi-floppy-fill me-1"></i> Save
+                </button>
+            </div>
         </form>
     </div>
+
     <!-- Add Goods Type Modal -->
     <div class="modal fade" id="addGoodsTypeModal" tabindex="-1" aria-labelledby="addGoodsTypeModalLabel"
         aria-hidden="true">
@@ -824,6 +888,43 @@
                 const truckSelectEl = document.getElementById('truck_id');
                 const transporterSelectEl = document.getElementById('transporter_id');
                 const transporterLabelEl = document.getElementById('transporterLabel');
+
+                function syncLrPayPillsFromSelect() {
+                    if (!transporterTypeSelectEl) {
+                        return;
+                    }
+                    const selectedType = transporterTypeSelectEl.value;
+                    document.querySelectorAll('.lrf-pay-pill').forEach((pill) => {
+                        const payType = pill.getAttribute('data-pay-type');
+                        pill.classList.toggle('is-active', payType === selectedType);
+                        if (payType === 'owner') {
+                            const ownerOption = transporterTypeSelectEl.querySelector('option[value="owner"]');
+                            pill.disabled = !!(ownerOption && ownerOption.disabled);
+                        }
+                    });
+                }
+
+                document.querySelectorAll('.lrf-pay-pill').forEach((pill) => {
+                    pill.addEventListener('click', function () {
+                        if (this.disabled || !transporterTypeSelectEl) {
+                            return;
+                        }
+                        const payType = this.getAttribute('data-pay-type');
+                        if (!payType || transporterTypeSelectEl.value === payType) {
+                            syncLrPayPillsFromSelect();
+                            return;
+                        }
+                        transporterTypeSelectEl.value = payType;
+                        transporterTypeSelectEl.dispatchEvent(new Event('change'));
+                        syncLrPayPillsFromSelect();
+                    });
+                });
+
+                if (transporterTypeSelectEl) {
+                    transporterTypeSelectEl.addEventListener('change', syncLrPayPillsFromSelect);
+                    syncLrPayPillsFromSelect();
+                }
+
                 if (transporterTypeSelectEl && truckSelectEl && transporterSelectEl && transporterLabelEl) {
                     window.LREntity.initLorryReceiptTransporterSelectionFlow({
                         transporterTypeSelect: transporterTypeSelectEl,
@@ -835,8 +936,14 @@
                         allowTransporterChanges: true,
                         afterTransporterTypeChange: function (selectedType) {
                             const mode = selectedType === 'owner' ? 'owner' : 'agency';
-                            if (typeof window.lrCreateRebindTransporterSelect2 === 'function') {
-                                window.lrCreateRebindTransporterSelect2(mode);
+                            if (selectedType === 'owner' || selectedType === 'agency') {
+                                if (typeof window.lrCreateRebindTransporterSelect2 === 'function') {
+                                    window.lrCreateRebindTransporterSelect2(mode);
+                                }
+                            }
+                            syncLrPayPillsFromSelect();
+                            if (typeof window.syncLrPayeeVisibility === 'function') {
+                                window.syncLrPayeeVisibility();
                             }
                         },
                     });
@@ -860,6 +967,100 @@
 
             const { showValidationError, clearValidationError } = window.LREntity;
 
+            function setPartyMetaLabel(labelId, value) {
+                const el = document.getElementById(labelId);
+                if (!el) {
+                    return;
+                }
+                const text = (value || '').toString().trim();
+                el.textContent = text || '—';
+                el.classList.toggle('is-empty', !text);
+            }
+
+            function syncConsignorLabels() {
+                setPartyMetaLabel('consignorContactLabel', consignorContactInput.value);
+                setPartyMetaLabel('sourceCityLabel', sourceCityInput.value);
+                setPartyMetaLabel('sourceStateLabel', sourceStateInput.value);
+                updateGoodsRouteFlow();
+            }
+
+            function syncConsigneeLabels() {
+                setPartyMetaLabel('consigneeContactLabel', consigneeContactInput.value);
+                setPartyMetaLabel('destinationCityLabel', destinationCityInput.value);
+                setPartyMetaLabel('destinationStateLabel', destinationStateInput.value);
+                updateGoodsRouteFlow();
+            }
+
+            function getSelect2Text(selectEl) {
+                if (!selectEl || !selectEl.value) {
+                    return '';
+                }
+                if (window.jQuery && jQuery(selectEl).hasClass('select2-hidden-accessible')) {
+                    const data = jQuery(selectEl).select2('data');
+                    if (data && data[0] && data[0].text) {
+                        return String(data[0].text).trim();
+                    }
+                }
+                const option = selectEl.options[selectEl.selectedIndex];
+                return option ? String(option.text).trim() : '';
+            }
+
+            function pulsePartyCard(cardEl) {
+                if (!cardEl) {
+                    return;
+                }
+                cardEl.classList.remove('is-pulse');
+                void cardEl.offsetWidth;
+                cardEl.classList.add('is-pulse');
+            }
+
+            function updateGoodsRouteFlow() {
+                const lane = document.getElementById('lrGoodsLane');
+                const label = document.getElementById('lrRouteFlowLabel');
+                const sub = document.getElementById('lrRouteFlowSub');
+                const fromCard = document.getElementById('lrConsignorCard');
+                const toCard = document.getElementById('lrConsigneeCard');
+                if (!lane || !label || !sub) {
+                    return;
+                }
+
+                const hasFrom = Boolean(consignorSelect && consignorSelect.value);
+                const hasTo = Boolean(consigneeSelect && consigneeSelect.value);
+                const fromCity = (sourceCityInput.value || '').trim();
+                const toCity = (destinationCityInput.value || '').trim();
+                const fromName = getSelect2Text(consignorSelect);
+                const toName = getSelect2Text(consigneeSelect);
+
+                if (fromCard) {
+                    fromCard.classList.toggle('is-filled', hasFrom);
+                }
+                if (toCard) {
+                    toCard.classList.toggle('is-filled', hasTo);
+                }
+
+                lane.classList.toggle('is-partial', hasFrom !== hasTo || (hasFrom && hasTo && (!fromCity || !toCity)));
+                lane.classList.toggle('is-ready', hasFrom && hasTo && Boolean(fromCity) && Boolean(toCity));
+
+                if (hasFrom && hasTo && fromCity && toCity) {
+                    label.textContent = `${fromCity} → ${toCity}`;
+                    sub.textContent = 'Goods moving to consignee';
+                } else if (hasFrom && hasTo) {
+                    label.textContent = fromName && toName
+                        ? `${fromName.split('(')[0].trim()} → ${toName.split('(')[0].trim()}`
+                        : 'Route almost ready';
+                    sub.textContent = 'Loading location details…';
+                } else if (hasFrom) {
+                    label.textContent = fromCity ? `From ${fromCity}` : 'Consignor selected';
+                    sub.textContent = 'Select consignee (TO)';
+                } else if (hasTo) {
+                    label.textContent = toCity ? `To ${toCity}` : 'Consignee selected';
+                    sub.textContent = 'Select consignor (FROM)';
+                } else {
+                    label.textContent = 'Select parties to start route';
+                    sub.textContent = 'Goods move from consignor → consignee';
+                }
+            }
+
             // Handle consignor contact number and location details
             const consignorSelect = document.getElementById('consignor_id');
             const consignorContactInput = document.getElementById('consignor_contact_number');
@@ -879,6 +1080,7 @@
                     consignorContactInput.value = '';
                     sourceCityInput.value = '';
                     sourceStateInput.value = '';
+                    syncConsignorLabels();
                     return;
                 } else {
                     clearValidationError(consignorSelect);
@@ -898,6 +1100,8 @@
                             // Use city and state names from the API response
                             sourceCityInput.value = data.city || '';
                             sourceStateInput.value = data.state || '';
+                            syncConsignorLabels();
+                            pulsePartyCard(document.getElementById('lrConsignorCard'));
                         })
                         .catch(error => {
                             console.error('❌ Error fetching consignor data:', error);
@@ -906,6 +1110,7 @@
                     consignorContactInput.value = '';
                     sourceCityInput.value = '';
                     sourceStateInput.value = '';
+                    syncConsignorLabels();
                 }
             }
 
@@ -940,6 +1145,7 @@
                     consigneeContactInput.value = '';
                     destinationCityInput.value = '';
                     destinationStateInput.value = '';
+                    syncConsigneeLabels();
                     return;
                 } else {
                     clearValidationError(consigneeSelect);
@@ -959,6 +1165,8 @@
                             // Use city and state names from the API response
                             destinationCityInput.value = data.city || '';
                             destinationStateInput.value = data.state || '';
+                            syncConsigneeLabels();
+                            pulsePartyCard(document.getElementById('lrConsigneeCard'));
                         })
                         .catch(error => {
                             console.error('❌ Error fetching consignee data:', error);
@@ -967,6 +1175,7 @@
                     consigneeContactInput.value = '';
                     destinationCityInput.value = '';
                     destinationStateInput.value = '';
+                    syncConsigneeLabels();
                 }
             }
 
@@ -982,27 +1191,198 @@
                 handleConsigneeSelection(consigneeId);
             });
 
-            // Handle truck selection for transporter info
-            const truckSelect = document.getElementById('truck_id');
-            if (truckSelect) {
-                truckSelect.addEventListener('change', function() {
-                    const truckId = this.value;
-                    const tdsRateDisplay = document.getElementById('tdsRateDisplay');
+            syncConsignorLabels();
+            syncConsigneeLabels();
+            updateGoodsRouteFlow();
 
-                    if (truckId) {
-                        fetch(`/api/trucks/${truckId}`)
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.transporter && tdsRateDisplay) {
-                                    tdsRateDisplay.textContent =
-                                        `TDS Rate: ${data.transporter.tds_rate || 'N/A'}%`;
-                                }
-                            });
-                    } else if (tdsRateDisplay) {
-                        tdsRateDisplay.textContent = '--';
+            // Truck / pay-to / payee visibility + owner/driver/TDS summary
+            const truckSelect = document.getElementById('truck_id');
+            const lrTruckSummary = document.getElementById('lrTruckSummary');
+            const lrTruckSummaryTds = document.getElementById('lrTruckSummaryTds');
+            const lrTruckSummaryDriver = document.getElementById('lrTruckSummaryDriver');
+            const lrTruckSummaryDriverItem = document.getElementById('lrTruckSummaryDriverItem');
+            const lrTruckSummaryDriverSep = document.getElementById('lrTruckSummaryDriverSep');
+            const tdsPercentageValue = document.getElementById('tdsPercentageValue');
+            const lrPayToField = document.getElementById('lrPayToField');
+            const lrPayeeRow = document.getElementById('lrPayeeRow');
+
+            function displayOrDash(value) {
+                const text = (value || '').toString().trim();
+                if (!text || text === 'No Truck Owner' || text === '--' || text === 'Loading...' || text === 'Error') {
+                    return '—';
+                }
+                return text;
+            }
+
+            function syncTruckSummaryTds() {
+                if (!lrTruckSummaryTds) {
+                    return;
+                }
+                lrTruckSummaryTds.textContent = displayOrDash(tdsPercentageValue ? tdsPercentageValue.textContent : '');
+            }
+
+            function syncPayeeVisibility() {
+                const hasTruck = !!(truckSelect && truckSelect.value);
+                const transporterTypeSelect = document.getElementById('transporter_type');
+                const transporterSelect = document.getElementById('transporter_id');
+                const payType = transporterTypeSelect ? transporterTypeSelect.value : '';
+                const hasPayType = payType === 'owner' || payType === 'agency';
+
+                if (lrPayToField) {
+                    lrPayToField.hidden = !hasTruck;
+                }
+                if (lrPayeeRow) {
+                    lrPayeeRow.hidden = !hasTruck || !hasPayType;
+                }
+                if (transporterTypeSelect) {
+                    transporterTypeSelect.required = hasTruck;
+                }
+                if (transporterSelect) {
+                    transporterSelect.required = hasTruck && hasPayType;
+                }
+            }
+            window.syncLrPayeeVisibility = syncPayeeVisibility;
+
+            function updateTruckMetaSummary(ownerName, driverName) {
+                const driver = displayOrDash(driverName);
+                const hasTruck = !!(truckSelect && truckSelect.value);
+                const hasDriver = driver !== '—';
+                const transporterTypeSelect = document.getElementById('transporter_type');
+                const transporterSelect = document.getElementById('transporter_id');
+                const wasTruckSelected = !!(lrPayToField && !lrPayToField.hidden);
+
+                if (lrTruckSummaryDriver) {
+                    lrTruckSummaryDriver.textContent = driver;
+                }
+                if (lrTruckSummaryDriverItem) {
+                    lrTruckSummaryDriverItem.hidden = !(hasTruck && hasDriver);
+                }
+                if (lrTruckSummaryDriverSep) {
+                    lrTruckSummaryDriverSep.hidden = !(hasTruck && hasDriver);
+                }
+                syncTruckSummaryTds();
+                syncPayeeVisibility();
+
+                if (!hasTruck && wasTruckSelected) {
+                    if (transporterTypeSelect) {
+                        transporterTypeSelect.value = '';
+                        transporterTypeSelect.dispatchEvent(new Event('change'));
                     }
+                    document.querySelectorAll('.lrf-pay-pill').forEach(function (pill) {
+                        pill.classList.remove('is-active');
+                        if (pill.getAttribute('data-pay-type') === 'owner') {
+                            pill.disabled = false;
+                        }
+                    });
+                    if (transporterSelect && window.jQuery && jQuery(transporterSelect).hasClass('select2-hidden-accessible')) {
+                        jQuery(transporterSelect).val(null).trigger('change');
+                    } else if (transporterSelect) {
+                        transporterSelect.value = '';
+                    }
+                    const tdsDisplay = document.getElementById('tdsRateDisplay');
+                    const tdsValue = document.getElementById('tdsPercentageValue');
+                    if (tdsDisplay) {
+                        tdsDisplay.style.display = 'none';
+                    }
+                    if (tdsValue) {
+                        tdsValue.textContent = '--';
+                    }
+                    if (typeof window.LREntity !== 'undefined' && typeof window.LREntity.showTdsPercentage === 'function') {
+                        window.LREntity.showTdsPercentage(null);
+                    }
+                    if (lrTruckSummaryDriverItem) {
+                        lrTruckSummaryDriverItem.hidden = true;
+                    }
+                    if (lrTruckSummaryDriverSep) {
+                        lrTruckSummaryDriverSep.hidden = true;
+                    }
+                    syncPayeeVisibility();
+                }
+            }
+            window.syncLrTruckMetaAfterClear = function () {
+                updateTruckMetaSummary('', '');
+                syncPayeeVisibility();
+            };
+
+            function readTruckMetaFromSelection() {
+                if (!truckSelect || !truckSelect.value) {
+                    updateTruckMetaSummary('', '');
+                    return;
+                }
+
+                let ownerName = '';
+                let driverName = '';
+
+                if (window.jQuery) {
+                    const selected = window.jQuery('#truck_id').select2('data');
+                    const data = selected && selected[0] ? selected[0] : null;
+                    if (data) {
+                        ownerName = data.transporter_name || '';
+                        driverName = data.driver_name || '';
+                        if (!ownerName && data.text) {
+                            const match = String(data.text).match(/\(([^)]+)\)$/);
+                            ownerName = match ? match[1].trim() : '';
+                        }
+                        if (!driverName && data.text) {
+                            const driverMatch = String(data.text).match(/Driver:\s*([^-—(]+)/i);
+                            driverName = driverMatch ? driverMatch[1].trim() : '';
+                        }
+                    }
+                }
+
+                const option = truckSelect.options[truckSelect.selectedIndex];
+                if (option) {
+                    if (!ownerName) {
+                        ownerName = option.getAttribute('data-transporter-name') || '';
+                    }
+                    if (!driverName) {
+                        driverName = option.getAttribute('data-driver-name') || '';
+                    }
+                }
+
+                updateTruckMetaSummary(ownerName, driverName);
+
+                if (truckSelect.value && (!ownerName || !driverName || ownerName === '—')) {
+                    fetch(`/api/trucks/${encodeURIComponent(truckSelect.value)}`)
+                        .then((response) => (response.ok ? response.json() : null))
+                        .then((data) => {
+                            if (!data || String(data.id) !== String(truckSelect.value)) {
+                                return;
+                            }
+                            const fetchedOwner = data.transporter
+                                ? (data.transporter.name || data.transporter.short_name || '')
+                                : '';
+                            const fetchedDriver = data.driver ? (data.driver.name || '') : '';
+                            updateTruckMetaSummary(
+                                ownerName && ownerName !== '—' ? ownerName : fetchedOwner,
+                                driverName && driverName !== '—' ? driverName : fetchedDriver
+                            );
+                        })
+                        .catch(() => {});
+                }
+            }
+
+            if (truckSelect && window.jQuery) {
+                window.jQuery('#truck_id')
+                    .on('select2:select.lrTruckMeta select2:clear.lrTruckMeta change.lrTruckMeta', function () {
+                        setTimeout(readTruckMetaFromSelection, 0);
+                    });
+            } else if (truckSelect) {
+                truckSelect.addEventListener('change', readTruckMetaFromSelection);
+            }
+
+            if (tdsPercentageValue && typeof MutationObserver !== 'undefined') {
+                const tdsObserver = new MutationObserver(syncTruckSummaryTds);
+                tdsObserver.observe(tdsPercentageValue, {
+                    childList: true,
+                    characterData: true,
+                    subtree: true,
                 });
             }
+
+            readTruckMetaFromSelection();
+            syncTruckSummaryTds();
+            syncPayeeVisibility();
 
             // Custom form validation function
             function validateConsignorConsignee() {
@@ -1040,6 +1420,13 @@
                                 );
                             }
                             form.classList.add('was-validated');
+                            const firstInvalid = form.querySelector('.is-invalid, :invalid');
+                            if (firstInvalid) {
+                                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                try {
+                                    firstInvalid.focus({ preventScroll: true });
+                                } catch (e) {}
+                            }
                             return;
                         }
 
@@ -1057,8 +1444,37 @@
             const isFixedAmountCheckbox = document.getElementById('is_fixed_amount');
             const amountHelpText = document.getElementById('amountHelpText');
 
+            function formatLrMoney(value) {
+                if (!value || isNaN(value) || value <= 0) {
+                    return '—';
+                }
+                return '₹' + Number(value).toLocaleString('en-IN', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+
+            function updateLrSummaryMetrics() {
+                const weight = parseFloat(weightInput.value) || 0;
+                const frRate = parseFloat(frRateInput.value) || 0;
+                const amount = parseFloat(amountInput.value) || 0;
+                const weightEl = document.getElementById('lrSummaryWeight');
+                const rateEl = document.getElementById('lrSummaryRate');
+                const amountEl = document.getElementById('lrSummaryAmount');
+                if (weightEl) {
+                    weightEl.textContent = weight > 0 ? `${weight} Ton` : '—';
+                }
+                if (rateEl) {
+                    rateEl.textContent = frRate > 0 ? formatLrMoney(frRate) + '/T' : '—';
+                }
+                if (amountEl) {
+                    amountEl.textContent = formatLrMoney(amount);
+                }
+            }
+
             function calculateAmount() {
                 if (isFixedAmountCheckbox && isFixedAmountCheckbox.checked) {
+                    updateLrSummaryMetrics();
                     return; // Do not auto-calculate when using fixed amount
                 }
                 const weight = parseFloat(weightInput.value) || 0;
@@ -1068,11 +1484,12 @@
                     const calculatedAmount = weight * frRate;
                     amountInput.value = calculatedAmount.toFixed(2);
 
-                    // Add visual feedback to show it's auto-calculated
-                    amountInput.style.backgroundColor = '#e8f5e8';
+                    amountInput.classList.add('is-auto');
+                    amountInput.style.backgroundColor = '';
                     amountInput.title = `Auto-calculated: ${weight} × ${frRate} = ${calculatedAmount.toFixed(2)}`;
 
                 }
+                updateLrSummaryMetrics();
             }
 
             // Add event listeners for weight and freight rate changes
@@ -1109,13 +1526,14 @@
 
             // Allow user to manually edit amount (remove auto-calculated styling when manually edited)
             amountInput.addEventListener('input', function() {
-                // Remove auto-calculated styling when user manually edits
+                this.classList.remove('is-auto');
                 this.style.backgroundColor = '';
                 if (!(isFixedAmountCheckbox && isFixedAmountCheckbox.checked)) {
                     this.title = 'Manually edited amount';
                 } else {
                     this.title = 'Fixed amount (manual)';
                 }
+                updateLrSummaryMetrics();
             });
 
             if (isFixedAmountCheckbox) {
@@ -1128,14 +1546,13 @@
 
                 isFixedAmountCheckbox.addEventListener('change', function() {
                     if (this.checked) {
-                        amountHelpText.textContent =
-                            '💡 Fixed amount mode: this value will be used instead of Weight × Freight Rate.';
+                        amountHelpText.textContent = 'Fixed amount mode';
+                        amountInput.classList.remove('is-auto');
                         amountInput.style.backgroundColor = '';
                         amountInput.title = 'Fixed amount (manual)';
                         amountInput.readOnly = false;
                     } else {
-                        amountHelpText.textContent =
-                            '💡 Calculated as: Weight × Freight Rate (uncheck \"Use fixed amount\" to auto-calculate).';
+                        amountHelpText.textContent = 'Auto: Weight × Rate';
                         amountInput.readOnly = true;
                         calculateAmount();
                     }
@@ -1145,6 +1562,90 @@
             // Calculate amount on page load if values exist
             if (weightInput.value && frRateInput.value) {
                 calculateAmount();
+            } else {
+                updateLrSummaryMetrics();
+            }
+
+            const lrClearFormBtn = document.getElementById('lrClearFormBtn');
+            if (lrClearFormBtn) {
+                lrClearFormBtn.addEventListener('click', function() {
+                    const form = document.getElementById('lorryReceiptForm');
+                    if (!form) {
+                        return;
+                    }
+                    form.reset();
+                    form.classList.remove('was-validated');
+                    ['customer_id', 'truck_id', 'transporter_id', 'reference_by', 'consignor_id', 'consignee_id', 'good_type']
+                        .forEach(function(id) {
+                            const el = document.getElementById(id);
+                            if (el && window.jQuery && jQuery(el).hasClass('select2-hidden-accessible')) {
+                                jQuery(el).val(null).trigger('change');
+                            }
+                        });
+                    ['source_city', 'source_state', 'destination_city', 'destination_state',
+                        'consignor_contact_number', 'consignee_contact_number', 'loading_station'].forEach(function(id) {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.value = '';
+                        }
+                    });
+                    if (typeof syncConsignorLabels === 'function') {
+                        syncConsignorLabels();
+                    }
+                    if (typeof syncConsigneeLabels === 'function') {
+                        syncConsigneeLabels();
+                    }
+                    if (typeof updateGoodsRouteFlow === 'function') {
+                        updateGoodsRouteFlow();
+                    }
+                    if (typeof updateTruckMetaSummary === 'function') {
+                        updateTruckMetaSummary('', '');
+                    }
+                    document.querySelectorAll('.lrf-pay-pill').forEach(function(pill) {
+                        pill.classList.remove('is-active');
+                        if (pill.getAttribute('data-pay-type') === 'owner') {
+                            pill.disabled = false;
+                        }
+                    });
+                    const lrFeedback = document.getElementById('lr-number-feedback');
+                    if (lrFeedback) {
+                        lrFeedback.innerHTML = '';
+                    }
+                    const tdsDisplay = document.getElementById('tdsRateDisplay');
+                    const tdsValue = document.getElementById('tdsPercentageValue');
+                    if (tdsDisplay) {
+                        tdsDisplay.style.display = 'none';
+                    }
+                    if (tdsValue) {
+                        tdsValue.textContent = '--';
+                    }
+                    amountInput.style.backgroundColor = '';
+                    amountInput.classList.remove('is-auto');
+                    amountInput.readOnly = true;
+                    if (isFixedAmountCheckbox) {
+                        isFixedAmountCheckbox.checked = false;
+                    }
+                    const warning = document.getElementById('declarationWarning');
+                    if (warning) {
+                        warning.style.display = 'none';
+                    }
+                    updateLrSummaryMetrics();
+                });
+            }
+
+            const lrOptionalToggle = document.getElementById('lrOptionalToggle');
+            const lrOptionalBody = document.getElementById('lrOptionalBody');
+            const lrOptionalSection = document.getElementById('lrOptionalSection');
+            if (lrOptionalToggle && lrOptionalBody && lrOptionalSection) {
+                lrOptionalToggle.addEventListener('click', function() {
+                    const isOpen = lrOptionalSection.classList.toggle('lrf-section--open');
+                    lrOptionalBody.style.display = isOpen ? '' : 'none';
+                    lrOptionalToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                    const arrow = lrOptionalToggle.querySelector('.lrf-collapse-arrow');
+                    if (arrow) {
+                        arrow.classList.toggle('lrf-collapse-arrow--open', isOpen);
+                    }
+                });
             }
 
             // LR Number uniqueness validation
@@ -1159,8 +1660,7 @@
                     return;
                 }
 
-                // Show loading state
-                lrNumberFeedback.innerHTML = '<small class="text-info">🔍 Checking availability...</small>';
+                lrNumberFeedback.innerHTML = '<span class="lrf-chip lrf-chip--info">Checking…</span>';
                 lrNumberInput.classList.remove('is-valid', 'is-invalid');
 
                 fetch('/api/check-lr-number-uniqueness', {
@@ -1177,23 +1677,23 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.valid) {
-                            lrNumberFeedback.innerHTML = '<small class="text-success">✅ ' + data.message +
-                                '</small>';
+                            lrNumberFeedback.innerHTML =
+                                '<span class="lrf-chip lrf-chip--ok">Available</span>';
                             lrNumberInput.classList.remove('is-invalid');
                             lrNumberInput.classList.add('is-valid');
                             lrNumberInput.setCustomValidity('');
                         } else {
-                            lrNumberFeedback.innerHTML = '<small class="text-danger">❌ ' + data.message +
-                                '</small>';
+                            lrNumberFeedback.innerHTML =
+                                '<span class="lrf-chip lrf-chip--bad">Already used</span>';
                             lrNumberInput.classList.remove('is-valid');
                             lrNumberInput.classList.add('is-invalid');
-                            lrNumberInput.setCustomValidity(data.message);
+                            lrNumberInput.setCustomValidity(data.message || 'LR number already used');
                         }
                     })
                     .catch(error => {
                         console.error('Error checking LR Number uniqueness:', error);
                         lrNumberFeedback.innerHTML =
-                            '<small class="text-warning">⚠️ Unable to check availability</small>';
+                            '<span class="lrf-chip lrf-chip--warn">Unable to check</span>';
                         lrNumberInput.classList.remove('is-valid', 'is-invalid');
                     });
             }
