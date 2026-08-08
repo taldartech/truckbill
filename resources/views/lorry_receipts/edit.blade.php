@@ -1,85 +1,16 @@
 @extends('layouts.app')
 
 @section('content')
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <!-- SweetAlert2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
-    @if (session('warning'))
-        <script>
-            Swal.fire({
-                icon: 'warning',
-                title: 'Warning',
-                text: "{{ session('warning') }}",
-                confirmButtonColor: '#f39c12'
-            });
-        </script>
-    @endif
     <style>
-        /* Prevent form expansion on validation errors */
-        .form-control,
-        .form-select {
-            min-height: 38px;
-            box-sizing: border-box;
-        }
-
         .text-danger {
             font-size: 0.875rem;
             margin-top: 0.25rem;
             word-wrap: break-word;
-        }
-
-        /* Ensure consistent column widths */
-        .row .col-md-4 {
-            flex: 0 0 33.333333%;
-            max-width: 33.333333%;
-        }
-
-        /* Prevent card from expanding */
-        .card {
-            overflow: hidden;
-        }
-
-        /* Consistent spacing for form groups */
-        .mb-3 {
-            margin-bottom: 1rem !important;
-        }
-
-        .card-body .select2-container {
-            width: 100% !important;
-            max-width: 100%;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection {
-            min-height: 38px;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single {
-            min-height: 38px;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-            display: block;
-            padding-left: 0.75rem;
-            padding-right: 2rem;
-            padding-top: 0.375rem;
-            padding-bottom: 0.375rem;
-            line-height: 1.35;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .select2-container--bootstrap-5.select2-container--focus .select2-selection--single,
-        .select2-container--bootstrap-5.select2-container--open .select2-selection--single {
-            border-color: var(--bs-primary);
-            box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
-            height: auto;
-            min-height: 36px;
-            top: 0;
-            right: 0.5rem;
         }
 
         .select2-result-truck {
@@ -93,62 +24,48 @@
 
         .select2-dropdown {
             border: 1px solid #dee2e6;
-            border-radius: 0.375rem;
+            border-radius: 0.5rem;
         }
 
         .select2-results__option--highlighted {
-            background-color: var(--bs-primary);
+            background-color: var(--brand-primary, var(--bs-primary));
             color: white;
         }
 
-        /* Highlight transporter input when declaration not given */
         #transporter_id.declaration-warning {
             border-color: #ffc107 !important;
             border-width: 2px !important;
             box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25) !important;
         }
 
-        /* Highlight Select2 container when declaration not given */
-        .select2-container.declaration-warning {
-            border-color: #ffc107 !important;
-            border-width: 2px !important;
-            box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25) !important;
+        .select2-container.declaration-warning .select2-selection {
+            border-color: #f59e0b !important;
+            box-shadow: 0 0 0 0.15rem rgba(245, 158, 11, 0.2) !important;
         }
 
         .select2-container.declaration-warning .select2-selection__rendered {
             background-color: #fff3cd !important;
         }
-
-        .lr-payee-select-wrap .select2-container {
-            width: 100% !important;
-            max-width: 100%;
-        }
-
-        .lr-payee-select-wrap .select2-container .select2-selection--single {
-            min-height: 38px;
-            height: auto;
-        }
-
-        .lr-payee-select-wrap .select2-selection--single .select2-selection__rendered {
-            white-space: normal;
-            word-break: break-word;
-            overflow-wrap: anywhere;
-            text-overflow: clip;
-        }
     </style>
-    <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-        <div class="card-header">
-            <div class="d-flex w-100">
-                <div class="card-title h4">📝 Edit Good Receipt (Bilty)</div>
-                <div class="ms-auto">
-                    <a href="{{ route('consignees.create') }}" class="btn btn-brand-primary">
-                        <i class="bi bi-plus"></i> Create Consignee/Consignor/Customer</a>
-                </div>
+    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}">
+    <div class="lrf-page app-index-page">
+        <div class="lrf-page__toolbar">
+            <div>
+                <h1 class="lrf-page__toolbar-title">Edit Good Receipt (Bilty)</h1>
+                <p class="lrf-page__toolbar-sub">Update receipt, route, and freight details.</p>
+            </div>
+            <div class="lrf-page__toolbar-actions">
+                <a href="{{ route('consignees.create') }}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                    <i class="bi bi-plus-lg me-1"></i> Create Consignee
+                </a>
+                <a href="{{ route('lorry_receipts.index') }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::LORRY_RECEIPT_KEYS) }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
             </div>
         </div>
-        <!--begin::Form-->
-        <form method="POST" action="{{ route('lorry_receipts.update', $lorry_receipt->id) }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::LORRY_RECEIPT_KEYS) }}" id="lorryReceiptForm"
-            class="needs-validation" novalidate="">
+
+        <form method="POST" action="{{ route('lorry_receipts.update', $lorry_receipt->id) }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::LORRY_RECEIPT_KEYS) }}" id="lorryReceiptForm" class="needs-validation lrf"
+            novalidate="">
             @csrf
             @method('PUT')
             <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
@@ -156,150 +73,517 @@
                 <input type="hidden" name="{{ $listingKey }}" value="{{ $listingValue }}">
             @endforeach
 
-            <div class="card-body">
-                <!-- Declaration Warning (shown at top when truck owner declaration not submitted) -->
-                <div id="declarationWarning" class="alert alert-warning mb-3" style="display: none;">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    <strong>Warning:</strong> Declaration is not submitted for the selected truck owner.
+            <div id="declarationWarning" class="alert alert-warning lrf-alert mb-3" style="display: none;">
+                <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                <div>
+                    <strong>Declaration missing</strong> for the selected truck owner.
                     <a href="#" id="editTruckOwnerLink" target="_blank" class="alert-link">
-                        <i class="bi bi-pencil-square"></i> Edit Truck Owner
+                        Edit Truck Owner
                     </a>
                 </div>
-                <!-- General Details -->
-                <div class="card mb-4 p-3 bg-light">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="mb-3">General Details</h5>
+            </div>
+
+            {{-- Section 1 — Receipt Details --}}
+            <div class="lrf-section">
+                <div class="lrf-section__head">
+                    <div class="lrf-section__head-left">
+                        <div class="lrf-step-num">1</div>
+                        <div>
+                            <h2 class="lrf-section__title">Receipt Details</h2>
+                            <p class="lrf-section__desc">Who is shipping, which truck, and who gets paid</p>
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="lr_number" class="form-label">LR Number * <small class="text-muted">(Must be
-                                    unique)</small></label>
-                            <input type="text" class="form-control" id="lr_number" name="lr_number"
-                                value="{{ old('lr_number', $lorry_receipt->lr_number) }}" required
-                                placeholder="Enter unique LR Number">
-                            @error('lr_number')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please enter a unique LR number.</div>
-                            <div id="lr-number-feedback" class="mt-1"></div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="gr_date" class="form-label">GR Date *</label>
-                            <input type="date" class="form-control" id="gr_date" name="gr_date" required
-                                value="{{ old('gr_date', $lorry_receipt->gr_date) }}">
-                            @error('gr_date')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please select a GR date.</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="customer_id" class="form-label">Customer *</label>
-                            @php($selectedCustomer = $customers->firstWhere('id', old('customer_id', $lorry_receipt->customer_id)))
-                            <select class="form-select" id="customer_id" name="customer_id" required>
-                                <option value="">Select Customer</option>
-                                @if ($selectedCustomer)
-                                    <option value="{{ $selectedCustomer->id }}" selected>
-                                        {{ $selectedCustomer->name }}
-                                    </option>
-                                @endif
-                            </select>
-                            <script>
-                                window.selectedCustomerId = @json(old('customer_id', $lorry_receipt->customer_id));
-                                window.selectedCustomerName = @json($selectedCustomer?->name ?? '');
-                            </script>
-                            @error('customer_id')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please select a customer.</div>
-                        </div>
-                    </div>
-                    @if ($lorry_receipt->delivery_status == 'Delivered')
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label for="memo_id" class="form-label">Memo ID</label>
-                                <input type="text" class="form-control @error('memo_id') is-invalid @enderror"
-                                    id="memo_id" name="memo_id" value="{{ old('memo_id', $lorry_receipt->memo_id) }}">
+                </div>
+                <div class="lrf-section__body">
+                    @php($selectedTruck = $trucks->firstWhere('id', old('truck_id', $lorry_receipt->truck_id)))
+                    @php($lrTruckSelected = filled(old('truck_id', $lorry_receipt->truck_id)) || ! empty($selectedTruck))
+                    @php($lrPayTypeSelected = in_array(old('transporter_type', $lorry_receipt->transporter_type), ['owner', 'agency'], true))
+                    @php($selectedTransporter = $transporters->firstWhere('id', old('transporter_id', $lorry_receipt->transporter_id)))
 
-                                {{-- Backend validation error --}}
-                                @error('memo_id')
-                                    <small class="text-danger">{{ $message }}</small>
-                                @enderror
-
-                                {{-- AJAX validation error/success --}}
-                                <small id="memo_id_feedback"></small>
+                    <div class="lrf-receipt-grid">
+                        <div class="lrf-receipt-card">
+                            <div class="lrf-receipt-card__title">Document</div>
+                            <div class="lrf-receipt-card__row lrf-grid lrf-grid--2">
+                                <div class="lrf-pf lrf-pf--feedback">
+                                    <label for="lr_number" class="lrf-pf__lbl">LR Number<span class="lrf-pf__req">*</span></label>
+                                    <input type="text" class="form-control" id="lr_number" name="lr_number"
+                                        value="{{ old('lr_number', $lorry_receipt->lr_number) }}" required placeholder="Enter unique LR Number" autocomplete="off">
+                                    @error('lr_number')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                    <div class="invalid-feedback">Please enter a unique LR number.</div>
+                                    <div id="lr-number-feedback" class="lrf-field-feedback" aria-live="polite"></div>
+                                </div>
+                                <div class="lrf-pf">
+                                    <label for="gr_date" class="lrf-pf__lbl">GR Date<span class="lrf-pf__req">*</span></label>
+                                    <input type="date" class="form-control" id="gr_date" name="gr_date" required
+                                        value="{{ old('gr_date', $lorry_receipt->gr_date) }}">
+                                    @error('gr_date')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                    <div class="invalid-feedback">Please select a GR date.</div>
+                                </div>
                             </div>
-                        </div>
-                    @endif
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="truck_id" class="form-label">Truck *</label>
-                            <select class="form-select" id="truck_id" name="truck_id" required
-                                data-placeholder="Search and select truck...">
-                                <option value="">Select Trucks</option>
-                                @php($selectedTruck = $trucks->firstWhere('id', old('truck_id', $lorry_receipt->truck_id)))
-                                @if($selectedTruck)
-                                    <option value="{{ $selectedTruck->id }}"
-                                        data-transporter-id="{{ $selectedTruck->transporter_id }}"
-                                        data-transporter-name="{{ $selectedTruck->transporter ? $selectedTruck->transporter->name : '' }}"
-                                        selected>
-                                        {{ $selectedTruck->truck_number }}
-                                        @if ($selectedTruck->driver)
-                                            - Driver: {{ $selectedTruck->driver->name }}
-                                        @endif
-                                        ({{ $selectedTruck->transporter ? $selectedTruck->transporter->name : 'No Truck Owner' }})
-                                    </option>
-                                @endif
-                            </select>
-                            @error('truck_id')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please select a truck.</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="transporter_type" class="form-label">Select Type *</label>
-                            <select class="form-select" id="transporter_type" name="transporter_type" required>
-                                <option value="">Select Type</option>
-                                <option value="owner" {{ old('transporter_type', $lorry_receipt->transporter_type) === 'owner' ? 'selected' : '' }}>
-                                    Truck Owner</option>
-                                <option value="agency"
-                                    {{ old('transporter_type', $lorry_receipt->transporter_type) === 'agency' ? 'selected' : '' }}>Agency</option>
-                            </select>
-                            <div class="invalid-feedback">Please select transporter type.</div>
-                        </div>
-                        <div class="col-md-4 min-w-0">
-                            <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
-                            <div class="lr-payee-select-wrap">
-                                <select class="form-select" id="transporter_id" name="transporter_id" required onchange="window.LREntity.showTdsPercentage(this.value)" {{ (!isset($canChangeTransporter) || !$canChangeTransporter) ? 'disabled' : '' }}>
-                                    <option value="">Select Transporter</option>
-                                    @php($selectedTransporter = $transporters->firstWhere('id', old('transporter_id', $lorry_receipt->transporter_id)))
-                                    @if($selectedTransporter)
-                                        <option value="{{ $selectedTransporter->id }}" selected>
-                                            {{ $selectedTransporter->displayNameWithShortName() }}
+                            <div class="lrf-receipt-card__row lrf-pf">
+                                <div class="lrf-pf__lbl-row">
+                                    <label for="customer_id" class="lrf-pf__lbl">Customer<span class="lrf-pf__req">*</span></label>
+                                    <a href="{{ route('consignees.create') }}" class="lrf-quick-add" target="_blank" rel="noopener">
+                                        <i class="bi bi-plus-lg"></i> Add
+                                    </a>
+                                </div>
+                                <select class="form-select" id="customer_id" name="customer_id" required
+                                    data-placeholder="Search and select customer...">
+                                    <option value="">Select Customer</option>
+                                    @php($selectedCustomer = $customers->firstWhere('id', old('customer_id', $lorry_receipt->customer_id)))
+                                    @if($selectedCustomer)
+                                        <option value="{{ $selectedCustomer->id }}" selected>
+                                            {{ $selectedCustomer->name }}
                                         </option>
                                     @endif
                                 </select>
+                                <script>
+                                    window.selectedCustomerId = @json(old('customer_id', $lorry_receipt->customer_id));
+                                    window.selectedCustomerName = @json($selectedCustomer?->name ?? '');
+                                </script>
+                                @error('customer_id')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                                <div class="invalid-feedback">Please select a customer.</div>
+                            </div>
+                            @if ($lorry_receipt->delivery_status === 'Delivered')
+                                <div class="lrf-receipt-card__row lrf-pf">
+                                    <label for="memo_id" class="lrf-pf__lbl">Memo ID</label>
+                                    <input type="text" class="form-control @error('memo_id') is-invalid @enderror" id="memo_id" name="memo_id" value="{{ old('memo_id', $lorry_receipt->memo_id) }}">
+                                    @error('memo_id') <div class="text-danger">{{ $message }}</div> @enderror
+                                    <div id="memo_id_feedback" class="lrf-field-feedback"></div>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="lrf-receipt-card">
+                            <div class="lrf-receipt-card__title">Vehicle &amp; Payee</div>
+                            <div class="lrf-receipt-card__row lrf-grid lrf-grid--2">
+                                <div class="lrf-pf">
+                                    <label for="truck_id" class="lrf-pf__lbl">Truck<span class="lrf-pf__req">*</span></label>
+                                    <select class="form-select" id="truck_id" name="truck_id" required
+                                        data-placeholder="Search and select truck...">
+                                        <option value="">Select Trucks</option>
+                                        @if($selectedTruck)
+                                            <option value="{{ $selectedTruck->id }}"
+                                                data-transporter-id="{{ $selectedTruck->transporter_id }}"
+                                                data-transporter-name="{{ $selectedTruck->transporter ? $selectedTruck->transporter->name : '' }}"
+                                                data-driver-name="{{ $selectedTruck->driver?->name ?? '' }}"
+                                                selected>
+                                                {{ $selectedTruck->truck_number }}
+                                                @if ($selectedTruck->driver)
+                                                    - Driver: {{ $selectedTruck->driver->name }}
+                                                @endif
+                                                ({{ $selectedTruck->transporter ? $selectedTruck->transporter->name : 'No Truck Owner' }})
+                                            </option>
+                                        @endif
+                                    </select>
+                                    @error('truck_id')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                    <div class="invalid-feedback">Please select a truck.</div>
+                                </div>
+
+                                <div class="lrf-pf" id="lrPayToField" @if(! $lrTruckSelected) hidden @endif>
+                                    <label class="lrf-pf__lbl" id="transporterTypeLabel">Pay to<span class="lrf-pf__req">*</span></label>
+                                    <div class="lrf-pay-pills" role="group" aria-label="Pay to">
+                                        <button type="button" class="lrf-pay-pill{{ old('transporter_type', $lorry_receipt->transporter_type) === 'owner' ? ' is-active' : '' }}"
+                                            data-pay-type="owner" id="lrPayPillOwner">Truck Owner</button>
+                                        <button type="button" class="lrf-pay-pill{{ old('transporter_type', $lorry_receipt->transporter_type) === 'agency' ? ' is-active' : '' }}"
+                                            data-pay-type="agency" id="lrPayPillAgency">Agency</button>
+                                    </div>
+                                    <select class="form-select lrf-pay-type-select" id="transporter_type" name="transporter_type"
+                                        @if($lrTruckSelected) required @endif
+                                        aria-hidden="true" tabindex="-1">
+                                        <option value="">Select Type</option>
+                                        <option value="owner" {{ old('transporter_type', $lorry_receipt->transporter_type) === 'owner' ? 'selected' : '' }}>Truck Owner</option>
+                                        <option value="agency" {{ old('transporter_type', $lorry_receipt->transporter_type) === 'agency' ? 'selected' : '' }}>Agency</option>
+                                    </select>
+                                    <div class="invalid-feedback">Please select who gets paid.</div>
+                                </div>
                             </div>
 
-                            @if (!isset($canChangeTransporter) || !$canChangeTransporter)
-                                <input type="hidden" name="transporter_id" value="{{ old('transporter_id', $lorry_receipt->transporter_id) }}">
-                                <small class="text-danger d-block mt-1">⚠️ Transporter cannot be changed because TDS has already been submitted.</small>
-                            @endif
-                            @error('transporter_id')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please select a transporter.</div>
-                            <div id="tdsRateDisplay" class="mt-2" style="display: none;">
-                                <span class="badge bg-warning text-dark fs-6">
-                                    🎯 TDS Rate: <span id="tdsPercentageValue">--</span>
-                                </span>
+                            <div id="lrPayeeRow" class="lrf-receipt-card__row lrf-grid lrf-grid--2 lrf-payee-row" @if(! $lrPayTypeSelected) hidden @endif>
+                                <div class="lrf-pf">
+                                    <div class="lrf-pf__lbl-row">
+                                        <label for="transporter_id" id="transporterLabel" class="lrf-pf__lbl">
+                                            @if(old('transporter_type', $lorry_receipt->transporter_type) === 'agency')
+                                                Agency<span class="lrf-pf__req">*</span>
+                                            @elseif(old('transporter_type', $lorry_receipt->transporter_type) === 'owner')
+                                                Truck Owner<span class="lrf-pf__req">*</span>
+                                            @else
+                                                Payee<span class="lrf-pf__req">*</span>
+                                            @endif
+                                        </label>
+                                        <span id="lr-add-transporter-wrap" class="d-none">
+                                            <a id="lr-add-transporter-btn"
+                                                href="{{ route('truck_owners.create') }}"
+                                                data-href-owner="{{ route('truck_owners.create') }}"
+                                                class="lrf-quick-add"
+                                                target="_blank"
+                                                rel="noopener">
+                                                <i class="bi bi-plus-lg"></i> Add
+                                            </a>
+                                        </span>
+                                    </div>
+                                    <div class="lr-payee-select-wrap">
+                                        <select class="form-select" id="transporter_id" name="transporter_id"
+                                            @if($lrPayTypeSelected) required @endif
+                                            onchange="window.LREntity.showTdsPercentage(this.value)" {{ (!isset($canChangeTransporter) || !$canChangeTransporter) ? 'disabled' : '' }}>
+                                            <option value="">Select Payee</option>
+                                            @if ($selectedTransporter)
+                                                <option value="{{ $selectedTransporter->id }}" selected>
+                                                    {{ $selectedTransporter->displayNameWithShortName() }}
+                                                </option>
+                                            @endif
+                                        </select>
+                                    </div>
+                                    @if (!isset($canChangeTransporter) || !$canChangeTransporter)
+                                        <input type="hidden" name="transporter_id" value="{{ old('transporter_id', $lorry_receipt->transporter_id) }}">
+                                        <div class="lrf-pf__hint text-danger">Transporter cannot be changed because TDS has already been submitted.</div>
+                                    @endif
+                                    @error('transporter_id')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                    <div class="invalid-feedback">Please select a payee.</div>
+                                    <div id="tdsRateDisplay" class="lrf-tds-source" hidden aria-hidden="true">
+                                        <span id="tdsPercentageValue">--</span>
+                                    </div>
+                                </div>
+
+                                <div class="lrf-pf lrf-pay-meta">
+                                    <div class="lrf-pf__lbl-row">
+                                        <span class="lrf-pf__lbl">Driver / TDS</span>
+                                        <span class="lrf-quick-add lrf-quick-add--spacer" aria-hidden="true">
+                                            <i class="bi bi-plus-lg"></i> Add
+                                        </span>
+                                    </div>
+                                    <div class="lrf-truck-summary lrf-truck-summary--field" id="lrTruckSummary" role="status">
+                                        <span class="lrf-truck-summary__item" id="lrTruckSummaryDriverItem" hidden>
+                                            <span class="lrf-truck-summary__k">Driver</span>
+                                            <span class="lrf-truck-summary__v" id="lrTruckSummaryDriver">—</span>
+                                        </span>
+                                        <span class="lrf-truck-summary__sep" id="lrTruckSummaryDriverSep" hidden aria-hidden="true">·</span>
+                                        <span class="lrf-truck-summary__item">
+                                            <span class="lrf-truck-summary__k">TDS</span>
+                                            <span class="lrf-truck-summary__v" id="lrTruckSummaryTds">—</span>
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4 min-w-0">
-                            <label for="reference_by" class="form-label">Reference By (Agency)</label>
+                </div>
+            </div>
+
+            {{-- Section 2 — Parties & Route --}}
+            <div class="lrf-section">
+                <div class="lrf-section__head lrf-section__head--green">
+                    <div class="lrf-section__head-left">
+                        <div class="lrf-step-num lrf-step-num--green">2</div>
+                        <div>
+                            <h2 class="lrf-section__title">Parties & Route</h2>
+                            <p class="lrf-section__desc">Goods travel from consignor to consignee</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="lrf-section__body">
+                    <div class="lrf-party-flow" id="lrPartyFlow">
+                        <div class="lrf-party-card lrf-party-card--from" id="lrConsignorCard">
+                            <div class="lrf-party-card__badge">FROM</div>
+                            <div class="lrf-party-card__title">
+                                <i class="bi bi-geo-alt-fill"></i> Consignor<span class="lrf-pf__req">*</span>
+                            </div>
+                            <div class="lrf-pf">
+                                <select class="form-select" id="consignor_id" name="consignor_id" required
+                                    data-placeholder="Search consignor...">
+                                    <option value="">Select Consignor</option>
+                                    @php($selectedConsignor = $consignors->firstWhere('id', old('consignor_id', $lorry_receipt->consignor_id)))
+                                    @if($selectedConsignor)
+                                        <option value="{{ $selectedConsignor->id }}" selected>
+                                            {{ $selectedConsignor->name }}
+                                        </option>
+                                    @endif
+                                </select>
+                                @error('consignor_id')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                                <div class="invalid-feedback">Please select a consignor.</div>
+                            </div>
+                            <div class="lrf-party-meta">
+                                <div class="lrf-party-meta__item">
+                                    <span class="lrf-party-meta__label">Contact</span>
+                                    <span class="lrf-party-meta__value" id="consignorContactLabel">{{ old('consignor_contact_number', $lorry_receipt->consignor?->contact_number) ?: '—' }}</span>
+                                </div>
+                                <div class="lrf-party-meta__item">
+                                    <span class="lrf-party-meta__label">City</span>
+                                    <span class="lrf-party-meta__value" id="sourceCityLabel">{{ old('source_city', $lorry_receipt->source_city) ?: '—' }}</span>
+                                </div>
+                                <div class="lrf-party-meta__item">
+                                    <span class="lrf-party-meta__label">State</span>
+                                    <span class="lrf-party-meta__value" id="sourceStateLabel">{{ old('source_state', $lorry_receipt->source_state) ?: '—' }}</span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="consignor_contact_number" name="consignor_contact_number" value="{{ old('consignor_contact_number', $lorry_receipt->consignor?->contact_number) }}">
+                            <input type="hidden" id="source_city" name="source_city" value="{{ old('source_city', $lorry_receipt->source_city) }}" required>
+                            <input type="hidden" id="source_state" name="source_state" value="{{ old('source_state', $lorry_receipt->source_state) }}" required>
+                            <div class="lrf-pf mt-2">
+                                <label for="loading_station" class="lrf-pf__lbl">Loading Station</label>
+                                <input type="text" class="form-control" id="loading_station" name="loading_station"
+                                    value="{{ old('loading_station', $lorry_receipt->loading_station) }}" placeholder="Optional">
+                            </div>
+                        </div>
+
+                        <div class="lrf-goods-lane" id="lrGoodsLane" aria-hidden="true">
+                            <div class="lrf-goods-lane__track">
+                                <span class="lrf-goods-lane__dot lrf-goods-lane__dot--start"></span>
+                                <span class="lrf-goods-lane__line"></span>
+                                <span class="lrf-goods-lane__dot lrf-goods-lane__dot--end"></span>
+                                <span class="lrf-goods-lane__cargo" id="lrGoodsCargo">
+                                    <i class="bi bi-box-seam-fill"></i>
+                                </span>
+                            </div>
+                            <div class="lrf-goods-lane__label" id="lrRouteFlowLabel">Select parties to start route</div>
+                            <div class="lrf-goods-lane__sub" id="lrRouteFlowSub">Goods move from consignor → consignee</div>
+                        </div>
+
+                        <div class="lrf-party-card lrf-party-card--to" id="lrConsigneeCard">
+                            <div class="lrf-party-card__badge lrf-party-card__badge--to">TO</div>
+                            <div class="lrf-party-card__title">
+                                <i class="bi bi-geo-fill"></i> Consignee<span class="lrf-pf__req">*</span>
+                            </div>
+                            <div class="lrf-pf">
+                                <select class="form-select" id="consignee_id" name="consignee_id" required
+                                    data-placeholder="Search consignee...">
+                                    <option value="">Select Consignee</option>
+                                    @php($selectedConsignee = $consignees->firstWhere('id', old('consignee_id', $lorry_receipt->consignee_id)))
+                                    @if($selectedConsignee)
+                                        <option value="{{ $selectedConsignee->id }}" selected>
+                                            {{ $selectedConsignee->name }}
+                                        </option>
+                                    @endif
+                                </select>
+                                @error('consignee_id')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                                <div class="invalid-feedback">Please select a consignee.</div>
+                            </div>
+                            <div class="lrf-party-meta">
+                                <div class="lrf-party-meta__item">
+                                    <span class="lrf-party-meta__label">Contact</span>
+                                    <span class="lrf-party-meta__value" id="consigneeContactLabel">{{ old('consignee_contact_number', $lorry_receipt->consignee?->contact_number) ?: '—' }}</span>
+                                </div>
+                                <div class="lrf-party-meta__item">
+                                    <span class="lrf-party-meta__label">City</span>
+                                    <span class="lrf-party-meta__value" id="destinationCityLabel">{{ old('destination_city', $lorry_receipt->destination_city) ?: '—' }}</span>
+                                </div>
+                                <div class="lrf-party-meta__item">
+                                    <span class="lrf-party-meta__label">State</span>
+                                    <span class="lrf-party-meta__value" id="destinationStateLabel">{{ old('destination_state', $lorry_receipt->destination_state) ?: '—' }}</span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="consignee_contact_number" name="consignee_contact_number" value="{{ old('consignee_contact_number', $lorry_receipt->consignee?->contact_number) }}">
+                            <input type="hidden" id="destination_city" name="destination_city" value="{{ old('destination_city', $lorry_receipt->destination_city) }}" required>
+                            <input type="hidden" id="destination_state" name="destination_state" value="{{ old('destination_state', $lorry_receipt->destination_state) }}" required>
+                            <div class="lrf-pf mt-2">
+                                <label for="unloading_station" class="lrf-pf__lbl">Unloading Station</label>
+                                <input type="text" class="form-control" id="unloading_station" name="unloading_station"
+                                    value="{{ old('unloading_station', $lorry_receipt->unloading_station) }}" placeholder="Optional">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Section 3 — Goods & Charges --}}
+            <div class="lrf-section">
+                <div class="lrf-section__head lrf-section__head--summary">
+                    <div class="lrf-section__head-left">
+                        <div class="lrf-step-num lrf-step-num--summary">3</div>
+                        <div>
+                            <h2 class="lrf-section__title">Goods & Charges</h2>
+                            <p class="lrf-section__desc">Cargo details and auto-calculated freight amount</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="lrf-section__body">
+                    <input type="hidden" id="lane" name="lane" value="{{ old('lane', $lorry_receipt->lane ?? 'Road') }}">
+
+                    <div class="lrf-grid lrf-grid--5">
+                        <div class="lrf-pf">
+                            <label for="good_type" class="lrf-pf__lbl">Goods Type<span class="lrf-pf__req">*</span></label>
+                            <div class="input-group flex-nowrap">
+                                <select class="form-select" id="good_type" name="good_type" required>
+                                    <option value="">Select Goods Type</option>
+                                    @foreach ($goodsTypes as $goodsType)
+                                        <option value="{{ $goodsType->name }}"
+                                            {{ old('good_type', $lorry_receipt->good_type) == $goodsType->name ? 'selected' : '' }}>
+                                            {{ $goodsType->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="btn btn-success" data-bs-toggle="modal"
+                                    data-bs-target="#addGoodsTypeModal" title="Add New Goods Type">
+                                    <i class="bi bi-plus"></i>
+                                </button>
+                            </div>
+                            @error('good_type')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Please select a goods type.</div>
+                        </div>
+                        <div class="lrf-pf">
+                            <label for="no_of_units" class="lrf-pf__lbl">No. of Units</label>
+                            <input type="number" class="form-control" id="no_of_units" name="no_of_units"
+                                value="{{ old('no_of_units', $lorry_receipt->no_of_units) }}" min="1" max="100000"
+                                title="Maximum 100,000 units allowed" placeholder="Optional">
+                            @error('no_of_units')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Please enter a valid number of units (max 100,000).</div>
+                        </div>
+                        <div class="lrf-pf">
+                            <label for="weight" class="lrf-pf__lbl">Weight (Tons)<span class="lrf-pf__req">*</span></label>
+                            <input type="number" step="0.001" class="form-control" id="weight" name="weight"
+                                required value="{{ old('weight', $lorry_receipt->weight) }}" min="0.1" max="100"
+                                title="Weight must be between 0.1 and 100 tons" placeholder="0.000">
+                            @error('weight')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Please enter a weight between 0.1 and 100 tons.</div>
+                        </div>
+                        <div class="lrf-pf">
+                            <label for="fr_rate" class="lrf-pf__lbl">Freight Rate (₹/Ton)<span class="lrf-pf__req">*</span></label>
+                            <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate"
+                                required value="{{ old('fr_rate', $lorry_receipt->fr_rate) }}" min="1" max="20000"
+                                title="Freight rate must be between 1 and 20,000 per ton" placeholder="0.00">
+                            @error('fr_rate')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Between 1 and 20,000.</div>
+                        </div>
+                        <div class="lrf-pf">
+                            <label class="lrf-pf__lbl" for="actual_amount">
+                                <span>Actual Amount (₹)<span class="lrf-pf__req">*</span></span>
+                                <span class="lrf-amount-toggle">
+                                    <input class="form-check-input" type="checkbox" id="is_fixed_amount"
+                                        name="is_fixed_amount" value="1" {{ old('is_fixed_amount', $lorry_receipt->is_fixed_amount ?? false) ? 'checked' : '' }}>
+                                    <label class="form-check-label mb-0" for="is_fixed_amount">Fixed</label>
+                                </span>
+                            </label>
+                            <input type="number" step="0.01" class="form-control" id="actual_amount" name="actual_amount"
+                                required value="{{ old('actual_amount', $lorry_receipt->actual_amount ?? $lorry_receipt->amount) }}"
+                                title="Auto-calculated: Weight × Freight Rate (editable, or fixed when enabled)" placeholder="0.00">
+                            @error('actual_amount')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Please enter an actual amount.</div>
+                            <input type="hidden" id="amount" name="amount" value="{{ old('amount', $lorry_receipt->amount) }}">
+                            <div class="lrf-pf__hint" id="amountHelpText">Auto: Weight × Rate</div>
+                        </div>
+                    </div>
+
+                    <div class="lrf-grid lrf-grid--3 mt-3">
+                        <div class="lrf-pf">
+                            <label for="unloading_weight" class="lrf-pf__lbl">Unloading Weight (Tons)</label>
+                            <input type="number" step="0.001" class="form-control" id="unloading_weight" value="{{ old('unloading_weight', $lorry_receipt->unloading_weight) }}" disabled>
+                            <div class="lrf-pf__hint">Synced from loading weight on save</div>
+                        </div>
+                        <div class="lrf-pf">
+                            <label for="shortage_amount_display" class="lrf-pf__lbl">Shortage Amount</label>
+                            <input type="hidden" name="shortage_amount" id="shortage_amount" value="{{ old('shortage_amount', $lorry_receipt->shortage_amount) }}">
+                            <input type="number" step="0.01" class="form-control" id="shortage_amount_display" value="{{ old('shortage_amount', $lorry_receipt->shortage_amount) }}" disabled>
+                        </div>
+                        <div class="lrf-pf">
+                            <label for="damage_amount_display" class="lrf-pf__lbl">Damage Amount</label>
+                            <input type="hidden" name="damage_amount" id="damage_amount" value="{{ old('damage_amount', $lorry_receipt->damage_amount) }}">
+                            <input type="number" step="0.01" class="form-control" id="damage_amount_display" value="{{ old('damage_amount', $lorry_receipt->damage_amount) }}" disabled>
+                        </div>
+                    </div>
+
+                    <div class="lrf-summary-metrics">
+                        <div class="lrf-metric">
+                            <div class="lrf-metric__icon" style="--ic:#0d9488;--bg:#ecfeff"><i class="bi bi-speedometer2"></i></div>
+                            <div>
+                                <span class="lrf-metric__name">Weight</span>
+                                <span class="lrf-metric__val" id="lrSummaryWeight">—</span>
+                            </div>
+                        </div>
+                        <div class="lrf-metric">
+                            <div class="lrf-metric__icon" style="--ic:#7c3aed;--bg:#faf5ff"><i class="bi bi-currency-rupee"></i></div>
+                            <div>
+                                <span class="lrf-metric__name">Rate</span>
+                                <span class="lrf-metric__val" id="lrSummaryRate">—</span>
+                            </div>
+                        </div>
+                        <div class="lrf-metric lrf-metric--hero">
+                            <div class="lrf-metric__icon" style="--ic:#16a34a;--bg:#dcfce7"><i class="bi bi-cash-stack"></i></div>
+                            <div>
+                                <span class="lrf-metric__name">Total Amount</span>
+                                <span class="lrf-metric__val" id="lrSummaryAmount">—</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @php($lrOptionalOpen = filled(old('reference_by', $lorry_receipt->reference_by)) || filled(old('invoice_number', $lorry_receipt->invoice_number)) || filled(old('gr_number', $lorry_receipt->gr_number)) || filled(old('goods_value', $lorry_receipt->goods_value)) || $errors->hasAny(['reference_by', 'invoice_number', 'gr_number', 'goods_value']))
+
+            {{-- Section 4 — Optional Details --}}
+            <div class="lrf-section lrf-section--collapsible{{ $lrOptionalOpen ? ' lrf-section--open' : '' }}" id="lrOptionalSection">
+                <button type="button" class="lrf-section__head lrf-section__head--plain lrf-section__head--toggle" id="lrOptionalToggle" aria-expanded="{{ $lrOptionalOpen ? 'true' : 'false' }}" aria-controls="lrOptionalBody">
+                    <div class="lrf-section__head-left">
+                        <div class="lrf-step-num lrf-step-num--gray">4</div>
+                        <div>
+                            <h2 class="lrf-section__title">Optional Details</h2>
+                            <p class="lrf-section__desc">GR number, invoice, goods value and reference</p>
+                        </div>
+                    </div>
+                    <div class="lrf-section__head-right">
+                        <span class="lrf-optional-chip"><i class="bi bi-plus-circle"></i> Expand if needed</span>
+                        <span class="lrf-collapse-arrow{{ $lrOptionalOpen ? ' lrf-collapse-arrow--open' : '' }}" aria-hidden="true">
+                            <i class="bi bi-chevron-down"></i>
+                        </span>
+                    </div>
+                </button>
+
+                <div class="lrf-section__body" id="lrOptionalBody" @unless($lrOptionalOpen) style="display: none;" @endunless>
+                    <div class="lrf-grid lrf-grid--4">
+                        <div class="lrf-pf">
+                            <label for="gr_number" class="lrf-pf__lbl">GR Number</label>
+                            <input type="text" class="form-control" id="gr_number" name="gr_number"
+                                value="{{ old('gr_number', $lorry_receipt->gr_number) }}" placeholder="Enter GR Number">
+                            @error('gr_number')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Please enter a valid GR number.</div>
+                            <div id="gr-number-feedback" class="mt-1"></div>
+                        </div>
+                        <div class="lrf-pf">
+                            <label for="invoice_number" class="lrf-pf__lbl">Invoice Number</label>
+                            <input type="text" class="form-control" id="invoice_number" name="invoice_number"
+                                value="{{ old('invoice_number', $lorry_receipt->invoice_number) }}" placeholder="Enter Invoice Number">
+                            @error('invoice_number')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Please enter a valid invoice number.</div>
+                            <div id="invoice-number-feedback" class="mt-1"></div>
+                        </div>
+                        <div class="lrf-pf">
+                            <label for="goods_value" class="lrf-pf__lbl">Goods Value</label>
+                            <input type="number" step="0.01" class="form-control" id="goods_value" name="goods_value"
+                                value="{{ old('goods_value', $lorry_receipt->goods_value) }}" min="0" placeholder="">
+                            @error('goods_value')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="lrf-pf__hint">Value of goods</div>
+                        </div>
+                        <div class="lrf-pf">
+                            <label for="reference_by" class="lrf-pf__lbl">Reference By</label>
                             <div class="lr-payee-select-wrap">
                                 <select class="form-select" id="reference_by" name="reference_by">
                                     <option value="">Select Reference</option>
@@ -314,287 +598,60 @@
                             @error('reference_by')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                            <div class="invalid-feedback">Please select a reference if applicable.</div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label for="invoice_number" class="form-label">Invoice Number <small
-                                    class="text-muted">(Optional)</small></label>
-                            <input type="text" class="form-control" id="invoice_number" name="invoice_number"
-                                value="{{ old('invoice_number', $lorry_receipt->invoice_number) }}"
-                                placeholder="Enter Invoice Number">
-                            @error('invoice_number')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please enter a valid invoice number.</div>
-                            <div id="invoice-number-feedback" class="mt-1"></div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="gr_number" class="form-label">GR Number <small
-                                    class="text-muted">(Optional)</small></label>
-                            <input type="text" class="form-control" id="gr_number" name="gr_number"
-                                value="{{ old('gr_number', $lorry_receipt->gr_number) }}"
-                                placeholder="Enter GR Number">
-                            @error('gr_number')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please enter a valid GR number.</div>
-                            <div id="gr-number-feedback" class="mt-1"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Consignor & Consignee Details -->
-                <div class="card mb-4 p-3 bg-light">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="mb-3">Consignor & Consignee Details</h5>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="consignor_id" class="form-label">Consignor *</label>
-                            <select class="form-select" id="consignor_id" name="consignor_id" required
-                                data-placeholder="Search and select consignor...">
-                                <option value="">Select Consignor</option>
-                                @php($selectedConsignor = $consignors->firstWhere('id', old('consignor_id', $lorry_receipt->consignor_id)))
-                                @if($selectedConsignor)
-                                    <option value="{{ $selectedConsignor->id }}" selected>
-                                        {{ $selectedConsignor->name }}
-                                    </option>
-                                @endif
-                            </select>
-                            @error('consignor_id')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please select a consignor.</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
-                            <input type="text" class="form-control" id="consignor_contact_number"
-                                name="consignor_contact_number"
-                                value="{{ old('consignor_contact_number', $selectedConsignor->contact_number ?? $lorry_receipt->consignor->contact_number ?? '') }}" readonly>
-                        </div>
-
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="consignee_id" class="form-label">Consignee *</label>
-                            <select class="form-select" id="consignee_id" name="consignee_id" required
-                                data-placeholder="Search and select consignee...">
-                                <option value="">Select Consignee</option>
-                                @php($selectedConsignee = $consignees->firstWhere('id', old('consignee_id', $lorry_receipt->consignee_id)))
-                                @if($selectedConsignee)
-                                    <option value="{{ $selectedConsignee->id }}" selected>
-                                        {{ $selectedConsignee->name }}
-                                    </option>
-                                @endif
-                            </select>
-                            @error('consignee_id')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please select a consignee.</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
-                            <input type="text" class="form-control" id="consignee_contact_number"
-                                name="consignee_contact_number"
-                                value="{{ old('consignee_contact_number', $selectedConsignee->contact_number ?? $lorry_receipt->consignee->contact_number ?? '') }}" readonly>
-                        </div>
-                    </div>
-                </div>
-                <!-- Route Section -->
-                <div class="card mb-4 p-3 bg-light">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="mb-3">Route Details</h5>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="source_city" class="form-label">Source City *</label>
-                            <input type="text" class="form-control" id="source_city" name="source_city" required
-                                value="{{ old('source_city', $lorry_receipt->source_city) }}" readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="source_state" class="form-label">Source State *</label>
-                            <input type="text" class="form-control" id="source_state" name="source_state" required
-                                value="{{ old('source_state', $lorry_receipt->source_state) }}" readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="loading_station" class="form-label">Loading Station</label>
-                            <input type="text" class="form-control" id="loading_station" name="loading_station"
-                                value="{{ old('loading_station', $lorry_receipt->loading_station) }}">
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="destination_city" class="form-label">Destination City *</label>
-                            <input type="text" class="form-control" id="destination_city" name="destination_city"
-                                required value="{{ old('destination_city', $lorry_receipt->destination_city) }}" readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="destination_state" class="form-label">Destination State *</label>
-                            <input type="text" class="form-control" id="destination_state" name="destination_state"
-                                required value="{{ old('destination_state', $lorry_receipt->destination_state) }}"
-                                readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="unloading_station" class="form-label">Unloading Station</label>
-                            <input type="text" class="form-control" id="unloading_station" name="unloading_station"
-                                 value="{{ old('unloading_station', $lorry_receipt->unloading_station) }}"
-                                >
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Goods & Charges Section -->
-                <div class="card mb-4 p-3 bg-light">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="mb-3">Goods & Charges</h5>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <input type="hidden" id="lane" name="lane" value="Road">
-                        <div class="col-md-3">
-                            <label for="good_type" class="form-label">Goods Type *</label>
-                            <select class="form-select" id="good_type" name="good_type" required>
-                                <option value="">Select Goods Type</option>
-                                @foreach ($goodsTypes as $goodsType)
-                                    <option value="{{ $goodsType->name }}"
-                                        {{ $goodsType->name == $lorry_receipt->good_type ? 'selected' : '' }}>
-                                        {{ $goodsType->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('good_type')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please select a goods type.</div>
-                        </div>
-
-                        <div class="col-md-3">
-                            <label for="no_of_units" class="form-label">No. of Units <small
-                                    class="text-muted">(Optional)</small></label>
-                            <input type="number" class="form-control" id="no_of_units" name="no_of_units"
-                                value="{{ old('no_of_units', $lorry_receipt->no_of_units) }}" min="1"
-                                max="100000" title="Maximum 100,000 units allowed">
-                            @error('no_of_units')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please enter a valid number of units (max 100,000).</div>
-                            <small class="text-muted">📦 Max: 100,000 units</small>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="goods_value" class="form-label">Goods Value <small
-                                    class="text-muted">(Optional)</small></label>
-                            <input type="number" step="0.01" class="form-control" id="goods_value" name="goods_value"
-                                value="{{ old('goods_value', $lorry_receipt->goods_value) }}" min="0" placeholder="">
-                            @error('goods_value')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <small class="text-muted">Value of goods</small>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="unloading_weight" class="form-label">Unloading Weight * <small class="text-muted">(in
-                                    Tons)</small></label>
-                            <input type="number" step="0.001" class="form-control" id="unloading_weight" name="unloading_weight"
-                                required value="{{ old('unloading_weight', $lorry_receipt->unloading_weight) }}" min="0.1"
-                                max="100" title="Unloading weight must be between 0.1 and 100 tons" disabled>
-                            @error('unloading_weight')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please enter an unloading weight between 0.1 and 100 tons.</div>
-                            <small class="text-muted">📏 Range: 0.1 - 100 tons</small>
-                        </div>
-
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="weight" class="form-label">Weight * <small class="text-muted">(in
-                                    Tons)</small></label>
-                            <input type="number" step="0.001" class="form-control" id="weight" name="weight"
-                                required value="{{ old('weight', $lorry_receipt->weight) }}" min="0.1"
-                                max="100" title="Weight must be between 0.1 and 100 tons">
-                            @error('weight')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please enter a weight between 0.1 and 100 tons.</div>
-                            <small class="text-muted">📏 Range: 0.1 - 100 tons</small>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="fr_rate" class="form-label">Freight Rate * <small class="text-muted">( per
-                                    ton)</small></label>
-                            <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate"
-                                required value="{{ old('fr_rate', $lorry_receipt->fr_rate) }}" min="1"
-                                max="20000" title="Freight rate must be between 1 and 20,000 per ton">
-                            @error('fr_rate')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please enter a freight rate between 1 and 20,000.</div>
-                            <small class="text-muted"><i class="bi bi-currency-rupee"></i> Range: 1 - 20,000 per ton</small>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label d-flex justify-content-between align-items-center">
-                                <span>Use Fixed Amount</span>
-                                <span class="form-check form-check-inline mb-0">
-                                    <input class="form-check-input" type="checkbox" id="is_fixed_amount"
-                                        name="is_fixed_amount" value="1"
-                                        {{ old('is_fixed_amount', $lorry_receipt->is_fixed_amount ?? false) ? 'checked' : '' }}>
-                                </span>
-                            </label>
-                            <input type="hidden" id="shortage_amount" name="shortage_amount"
-                                value="{{ old('shortage_amount', $lorry_receipt->shortage_amount) }}">
-                            <label for="shortage_amount" class="form-label">Shortage Amount</label>
-                            <input type="number" step="0.01" class="form-control" id="shortage_amount"
-                                value="{{ old('shortage_amount', $lorry_receipt->shortage_amount) }}" disabled>
-                            <small class="text-muted">🔒 Auto-filled</small>
-                        </div>
-
-                        <div class="col-md-2">
-                            <input type="hidden" id="damage_amount" name="damage_amount"
-                                value="{{ old('damage_amount', $lorry_receipt->damage_amount) }}">
-                            <label for="damage_amount" class="form-label">Damage Amount</label>
-                            <input type="number" step="0.01" class="form-control" id="damage_amount"
-                                value="{{ old('damage_amount', $lorry_receipt->damage_amount) }}" disabled>
-                            <small class="text-muted">🔒 Auto-filled</small>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="actual_amount" class="form-label">Actual Amount * <small
-                                    class="text-muted">(Weight × Freight Rate)</small></label>
-                            <input type="number" step="0.01" class="form-control" id="actual_amount" name="actual_amount"
-                                required value="{{ old('actual_amount', $lorry_receipt->actual_amount ?? $lorry_receipt->amount) }}"
-                                title="Actual Amount: Weight × Freight Rate (editable)">
-                            @error('actual_amount')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div class="invalid-feedback">Please enter an actual amount.</div>
-                            <small class="text-muted">💡 Actual Amount = Weight × Freight Rate</small>
-                            <input type="hidden" id="amount" name="amount" value="{{ old('amount', $lorry_receipt->amount) }}">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Submit Actions -->
-                <div class="card mb-4 p-3 bg-light">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="mb-3">Submit Actions</h5>
-                        </div>
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-md-4">
-                            <button class="btn btn-brand-primary w-100" type="submit">💾 Update Good Receipt (Bilty)</button>
-                        </div>
-                        <div class="col-md-4">
-                            <a href="{{ route('lorry_receipts.index') }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::LORRY_RECEIPT_KEYS) }}" class="btn btn-back w-100">📄 Back to List</a>
+                            <div class="invalid-feedback">Please select a reference.</div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <div class="lrf-actions">
+                <a href="{{ route('lorry_receipts.index') }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::LORRY_RECEIPT_KEYS) }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-x-lg me-1"></i> Cancel
+                </a>
+                <a href="{{ route('lorry_receipts.index') }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::LORRY_RECEIPT_KEYS) }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
+                <button class="btn btn-success btn-sm" type="submit">
+                    <i class="bi bi-floppy-fill me-1"></i> Update
+                </button>
+            </div>
         </form>
     </div>
+
+    <!-- Add Goods Type Modal -->
+    <div class="modal fade" id="addGoodsTypeModal" tabindex="-1" aria-labelledby="addGoodsTypeModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <form id="addGoodsTypeForm">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addGoodsTypeModalLabel">Add Goods Type</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div id="goodsTypeFormErrors" class="alert alert-danger d-none"></div>
+
+                        <div class="mb-3">
+                            <label for="goods_type_name" class="form-label">Goods Type Name *</label>
+                            <input type="text" class="form-control" id="goods_type_name" name="name" required>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-brand-primary">
+                            <span class="spinner-border spinner-border-sm d-none" role="status"
+                                aria-hidden="true"></span>
+                            Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         // Bootstrap form validation
@@ -623,6 +680,17 @@
 
     <!-- Common LR entity confirmation helpers -->
     <script src="/js/lr-entity.js"></script>
+
+    @if (session('warning'))
+        <script>
+            Swal.fire({
+                icon: 'warning',
+                title: 'Warning',
+                text: @json(session('warning')),
+                confirmButtonColor: '#f39c12'
+            });
+        </script>
+    @endif
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -816,7 +884,6 @@
         }
     </script>
 
-@endsection
 
 <!-- SweetAlert2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
@@ -1891,180 +1958,43 @@ if (grNumberInput) {
         function showConfirmationDialog(form) {
             const formData = new FormData(form);
 
-            // Get display values for dropdowns
-            const customerName = document.querySelector('#customer_id option:checked')?.textContent ||
-                'Not selected';
-            const consignorName = document.querySelector('#consignor_id option:checked')?.textContent ||
-                'Not selected';
-            const consigneeName = document.querySelector('#consignee_id option:checked')?.textContent ||
-                'Not selected';
-            const truckNumber = document.querySelector('#truck_id option:checked')?.textContent ||
-                'Not selected';
-            const transporterName = document.querySelector('#transporter_id option:checked')?.textContent ||
-                'Not selected';
-            const referenceBy = document.querySelector('#reference_by option:checked')?.textContent ||
-                'Not selected';
+            const customerName = document.querySelector('#customer_id option:checked')?.textContent || '';
+            const consignorName = document.querySelector('#consignor_id option:checked')?.textContent || '';
+            const consigneeName = document.querySelector('#consignee_id option:checked')?.textContent || '';
+            const truckNumber = document.querySelector('#truck_id option:checked')?.textContent || '';
+            const transporterName = document.querySelector('#transporter_id option:checked')?.textContent || '';
+            const referenceBy = document.querySelector('#reference_by option:checked')?.textContent || '';
+            const amountValue = formData.get('actual_amount') || formData.get('amount');
 
-            // Build confirmation message
-            const confirmationHTML = `
-            <div class="confirmation-details text-start">
-                <div class="alert alert-soft-primary bg-primary bg-opacity-10 border-0 mb-3 py-2 px-3 d-flex align-items-center rounded-3">
-                    <i class="fas fa-info-circle text-primary me-2"></i>
-                    <h6 class="mb-0 text-primary fw-bold" style="font-size:0.9rem;">Review Lorry Receipt Details</h6>
-                </div>
-
-                <div class="row g-2">
-                    <div class="col-md-6">
-                        <div class="card h-100 border-0 shadow-sm rounded-3 border-top border-3 border-primary">
-                            <div class="card-header bg-transparent border-bottom-0 pt-2 pb-0">
-                                <h6 class="fw-bold text-dark mb-0" style="font-size:0.9rem;"><i class="fas fa-file-invoice text-primary me-1"></i> Basic Info</h6>
-                            </div>
-                            <div class="card-body p-2">
-                                <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                    <span class="text-muted small">LR No.</span>
-                                    <span class="badge bg-primary bg-opacity-10 text-primary rounded px-2 py-0">${formData.get('lr_number') || 'Not entered'}</span>
-                                </div>
-                                <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                    <span class="text-muted small">GR Date</span>
-                                    <span class="fw-bold text-dark small">${formData.get('gr_date') || 'Not selected'}</span>
-                                </div>
-                                <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                    <span class="text-muted small">Customer</span>
-                                    <span class="fw-bold text-dark text-truncate ms-2 text-end small" style="max-width: 180px;" title="${customerName}">${customerName}</span>
-                                </div>
-                                <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                    <span class="text-muted small">Invoice</span>
-                                    <span class="fw-medium text-dark small">${formData.get('invoice_number') || '<span class="text-muted fst-italic">N/A</span>'}</span>
-                                </div>
-                                <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                    <span class="text-muted small">Ref By</span>
-                                    <span class="fw-medium text-dark text-truncate ms-2 text-end small" style="max-width: 180px;">${referenceBy}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="row g-2">
-                            <div class="col-12">
-                                <div class="card border-0 shadow-sm rounded-3 border-top border-3 border-info">
-                                    <div class="card-header bg-transparent border-bottom-0 pt-2 pb-0">
-                                        <h6 class="fw-bold text-dark mb-0" style="font-size:0.9rem;"><i class="fas fa-users text-info me-1"></i> Parties & Route</h6>
-                                    </div>
-                                    <div class="card-body p-2">
-                                        <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                            <span class="text-muted small">Consignor</span>
-                                            <span class="fw-medium text-dark text-truncate ms-2 text-end small" style="max-width: 180px;" title="${consignorName}">${consignorName}</span>
-                                        </div>
-                                        <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                            <span class="text-muted small">Consignee</span>
-                                            <span class="fw-medium text-dark text-truncate ms-2 text-end small" style="max-width: 180px;" title="${consigneeName}">${consigneeName}</span>
-                                        </div>
-                                        <div class="d-flex justify-content-between mt-1 text-center bg-light rounded p-1 align-items-center">
-                                            <div class="w-100 small fw-bold text-dark text-truncate px-1">${formData.get('source_city') || '-'}</div>
-                                            <i class="fas fa-arrow-right text-muted mx-1" style="font-size:0.7rem;"></i>
-                                            <div class="w-100 small fw-bold text-dark text-truncate px-1">${formData.get('destination_city') || '-'}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-12">
-                                <div class="card border-0 shadow-sm rounded-3 border-top border-3 border-warning">
-                                    <div class="card-header bg-transparent border-bottom-0 pt-2 pb-0">
-                                        <h6 class="fw-bold text-dark mb-0" style="font-size:0.9rem;"><i class="fas fa-truck text-warning me-1"></i> Transport Info</h6>
-                                    </div>
-                                    <div class="card-body p-2">
-                                        <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                            <span class="text-muted small">Truck</span>
-                                            <span class="badge bg-dark bg-opacity-10 text-dark fw-bold rounded px-2 py-0">${truckNumber}</span>
-                                        </div>
-                                        <div class="d-flex justify-content-between">
-                                            <span class="text-muted small">Transporter</span>
-                                            <span class="fw-medium text-dark text-truncate ms-2 text-end small" style="max-width: 180px;" title="${transporterName}">${transporterName}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-12">
-                        <div class="card border-0 shadow-sm rounded-3 bg-light border-top border-3 border-success mb-2">
-                            <div class="card-body p-2">
-                                <div class="row align-items-center g-2">
-                                    <div class="col-md-7">
-                                        <div class="d-flex align-items-center mb-1">
-                                            <div class="bg-success bg-opacity-10 rounded p-1 me-2">
-                                                <i class="fas fa-box-open text-success" style="font-size:0.9rem;"></i>
-                                            </div>
-                                            <span class="fw-bold text-dark" style="font-size:0.9rem;">${formData.get('good_type') || 'Not selected'}</span>
-                                        </div>
-                                        <div class="d-flex gap-2">
-                                            <span class="badge bg-white border border-secondary border-opacity-25 text-dark fw-medium" style="font-size:0.75rem;">
-                                                Wt: ${formData.get('weight') || '-'} t
-                                            </span>
-                                            <span class="badge bg-white border border-secondary border-opacity-25 text-dark fw-medium" style="font-size:0.75rem;">
-                                                Qty: ${formData.get('no_of_units') || '-'}
-                                            </span>
-                                            <span class="badge bg-white border border-secondary border-opacity-25 text-dark fw-medium" style="font-size:0.75rem;">
-                                                Rate: ${formData.get('fr_rate') || '-'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-5 d-flex justify-content-md-end align-items-center">
-                                        <div class="bg-success bg-opacity-10 px-3 py-1 rounded-3 border border-success border-opacity-25 text-end w-100">
-                                            <span class="text-success fw-bold text-uppercase d-block mb-0" style="font-size: 0.7rem;">Total Amount</span>
-                                            <h5 class="mb-0 text-success fw-bold">${formData.get('amount') || '0.00'}</h5>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-            // Show confirmation dialog using SweetAlert2 or Bootstrap modal
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: '📋 Confirm Good Receipt (Bilty) Details',
-                    html: confirmationHTML,
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#28a745',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: '✅ Yes, Submit',
-                    cancelButtonText: '❌ Cancel',
-                    width: '90%',
-                    customClass: {
-                        popup: 'swal-wide'
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Actually submit the form
-                        form.submit();
-                    }
-                });
-            } else {
-                // Fallback to native confirm dialog
-                const confirmText = `Please confirm the following details:\n\n` +
-                    `LR Number: ${formData.get('lr_number')}\n` +
-                    `Customer: ${customerName}\n` +
-                    `Consignor: ${consignorName}\n` +
-                    `Consignee: ${consigneeName}\n` +
-                    `Weight: ${formData.get('weight')} tons\n` +
-                    `Amount: ${formData.get('amount')}\n\n` +
-                    `Do you want to submit this good receipt (bilty)?`;
-
-                if (confirm(confirmText)) {
+            window.LREntity.showLorryReceiptConfirm({
+                title: 'Confirm Good Receipt Update',
+                note: 'Please review the good receipt details before confirming your update.',
+                details: {
+                    lrNumber: formData.get('lr_number'),
+                    grDate: formData.get('gr_date'),
+                    customer: customerName,
+                    invoice: formData.get('invoice_number'),
+                    referenceBy: referenceBy,
+                    consignor: consignorName,
+                    consignee: consigneeName,
+                    sourceCity: formData.get('source_city'),
+                    destinationCity: formData.get('destination_city'),
+                    truck: truckNumber,
+                    transporter: transporterName,
+                    goodsType: formData.get('good_type'),
+                    weight: formData.get('weight'),
+                    units: formData.get('no_of_units'),
+                    rate: formData.get('fr_rate'),
+                    amount: amountValue,
+                },
+                confirmText: 'Confirm Update',
+                cancelText: 'Cancel',
+                onConfirm: function () {
                     form.submit();
-                }
-            }
+                },
+            });
         }
-    });
-    // Handle Add Goods Type Form Submission
+
     const addGoodsTypeForm = document.getElementById('addGoodsTypeForm');
     if (addGoodsTypeForm) {
     addGoodsTypeForm.addEventListener('submit', function(e) {
@@ -2125,5 +2055,116 @@ if (grNumberInput) {
             });
     });
     }
+    });
 
 </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const partyFields = [
+                ['consignor_contact_number', 'consignorContactLabel'],
+                ['source_city', 'sourceCityLabel'],
+                ['source_state', 'sourceStateLabel'],
+                ['consignee_contact_number', 'consigneeContactLabel'],
+                ['destination_city', 'destinationCityLabel'],
+                ['destination_state', 'destinationStateLabel'],
+            ];
+
+            const syncPartyFlow = function () {
+                partyFields.forEach(function ([fieldId, labelId]) {
+                    const field = document.getElementById(fieldId);
+                    const label = document.getElementById(labelId);
+                    if (field && label) {
+                        label.textContent = field.value || '—';
+                    }
+                });
+
+                const consignor = document.querySelector('#consignor_id option:checked')?.textContent?.trim();
+                const consignee = document.querySelector('#consignee_id option:checked')?.textContent?.trim();
+                const routeLabel = document.getElementById('lrRouteFlowLabel');
+                if (routeLabel) {
+                    routeLabel.textContent = consignor && consignee
+                        ? `${consignor} → ${consignee}`
+                        : 'Select parties to start route';
+                }
+            };
+
+            const syncPayeeUi = function () {
+                const type = document.getElementById('transporter_type')?.value;
+                document.getElementById('lrPayPillOwner')?.classList.toggle('is-active', type === 'owner');
+                document.getElementById('lrPayPillAgency')?.classList.toggle('is-active', type === 'agency');
+
+                const row = document.getElementById('lrPayeeRow');
+                if (row) {
+                    row.hidden = !type;
+                }
+            };
+
+            const syncTruckSummary = function () {
+                const option = document.querySelector('#truck_id option:checked');
+                const driver = option?.dataset.driverName || '';
+                const driverValue = document.getElementById('lrTruckSummaryDriver');
+                const driverItem = document.getElementById('lrTruckSummaryDriverItem');
+                const driverSeparator = document.getElementById('lrTruckSummaryDriverSep');
+                if (driverValue) {
+                    driverValue.textContent = driver || '—';
+                }
+                driverItem?.toggleAttribute('hidden', !driver);
+                driverSeparator?.toggleAttribute('hidden', !driver);
+
+                const tds = document.getElementById('tdsPercentageValue')?.textContent?.trim();
+                const tdsValue = document.getElementById('lrTruckSummaryTds');
+                if (tdsValue) {
+                    tdsValue.textContent = tds && tds !== '--' ? tds : '—';
+                }
+            };
+
+            const syncSummaryMetrics = function () {
+                const weight = document.getElementById('weight')?.value;
+                const rate = document.getElementById('fr_rate')?.value;
+                const actualAmount = document.getElementById('actual_amount')?.value;
+                const netAmount = document.getElementById('amount')?.value;
+                const formatAmount = function (value) {
+                    return value ? `₹${Number(value).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—';
+                };
+
+                document.getElementById('lrSummaryWeight').textContent = weight ? `${weight} Tons` : '—';
+                document.getElementById('lrSummaryRate').textContent = formatAmount(rate);
+                document.getElementById('lrSummaryAmount').textContent = formatAmount(actualAmount || netAmount);
+            };
+
+            document.querySelectorAll('[data-pay-type]').forEach(function (pill) {
+                pill.addEventListener('click', function () {
+                    const select = document.getElementById('transporter_type');
+                    if (select) {
+                        select.value = pill.dataset.payType;
+                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            });
+
+            ['consignor_id', 'consignee_id', 'transporter_type', 'truck_id', 'weight', 'fr_rate', 'actual_amount', 'amount'].forEach(function (id) {
+                document.getElementById(id)?.addEventListener('change', function () {
+                    syncPartyFlow();
+                    syncPayeeUi();
+                    syncTruckSummary();
+                    syncSummaryMetrics();
+                });
+                document.getElementById(id)?.addEventListener('input', syncSummaryMetrics);
+            });
+
+            document.getElementById('lrOptionalToggle')?.addEventListener('click', function () {
+                const section = document.getElementById('lrOptionalSection');
+                const body = document.getElementById('lrOptionalBody');
+                const isOpen = section.classList.toggle('lrf-section--open');
+                body.style.display = isOpen ? '' : 'none';
+                this.setAttribute('aria-expanded', String(isOpen));
+                section.querySelector('.lrf-collapse-arrow')?.classList.toggle('lrf-collapse-arrow--open', isOpen);
+            });
+
+            syncPartyFlow();
+            syncPayeeUi();
+            syncTruckSummary();
+            syncSummaryMetrics();
+        });
+    </script>
+@endsection

@@ -257,24 +257,24 @@ class LorryReceiptController extends Controller
 
     private function getActionButtons(LorryReceipt $lorryReceipt, Company $company, bool $canActAsAdmin, string $listingQuerySuffix = ''): string
     {
-        $buttons = '<div class="d-flex gap-1 justify-content-center">';
+        $buttons = '<div class="app-index-table-actions">';
 
         $freight_booking_id = $lorryReceipt->freight_booking_id;
         $freightBooking = $lorryReceipt->freightBooking;
         $planExpired = $company ? ! $company->subscriptionCanWrite() : false;
 
         if ($freight_booking_id) {
-            $buttons .= '<a href="'.route('freight_bookings.edit', $freight_booking_id).$listingQuerySuffix.'" class="btn btn-sm btn-warning" title="Edit Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
+            $buttons .= '<a href="'.route('freight_bookings.edit', $freight_booking_id).$listingQuerySuffix.'" class="btn btn-sm btn-icon btn-action-complete" title="Edit Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
             $buttons .= '<i class="bi bi-truck"></i></a>';
         } else {
             if ($company->lrCreditsRemaining() <= 0) {
-                $buttons .= '<button class="btn btn-sm btn-secondary" title="Insufficient Credits" data-bs-toggle="tooltip" onclick="alert(\'Insufficient credits\')">';
+                $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-add" title="Insufficient Credits" data-bs-toggle="tooltip" disabled onclick="alert(\'Insufficient credits\')">';
                 $buttons .= '<i class="bi bi-truck"></i></button>';
             } elseif ($planExpired) {
-                $buttons .= '<button class="btn btn-sm btn-secondary" title="Plan Expired" data-bs-toggle="tooltip" onclick="alert(\'Plan expired\')">';
+                $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-add" title="Plan Expired" data-bs-toggle="tooltip" disabled onclick="alert(\'Plan expired\')">';
                 $buttons .= '<i class="bi bi-truck"></i></button>';
             } else {
-                $buttons .= '<a href="'.route('freight_bookings.create').'?lorry_receipt_id='.$lorryReceipt->id.'" class="btn btn-sm btn-success" title="Create Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
+                $buttons .= '<a href="'.route('freight_bookings.create').'?lorry_receipt_id='.$lorryReceipt->id.'" class="btn btn-sm btn-icon btn-action-add" title="Create Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
                 $buttons .= '<i class="bi bi-truck"></i></a>';
             }
         }
@@ -283,7 +283,7 @@ class LorryReceiptController extends Controller
         $editUrl = route('lorry_receipts.edit', $lorryReceipt->id).$listingQuerySuffix;
         if ($lorryReceipt->invoice_generated == 0 && $canActAsAdmin) {
             $confirmMsg = $freightBooking ? ' onclick="return confirm(\'A good hire (lorry hire) already exists. Continue?\')"' : '';
-            $buttons .= '<a href="'.$editUrl.'" class="btn-action btn-edit" title="Edit" data-bs-toggle="tooltip"'.$confirmMsg.'>';
+            $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-action-edit" title="Edit" data-bs-toggle="tooltip"'.$confirmMsg.'>';
             $buttons .= '<i class="bi bi-pencil"></i></a>';
         }
 
@@ -292,14 +292,14 @@ class LorryReceiptController extends Controller
             $confirmMsg = $lorryReceipt->linked_lr_id
                 ? 'This will delete all linked good receipts in this group. Are you sure?'
                 : 'Are you sure you want to delete this good receipt (bilty)?';
-            $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\''.$confirmMsg.'\')">';
+            $buttons .= '<form action="'.$deleteUrl.'" method="POST" onsubmit="return confirm(\''.$confirmMsg.'\')">';
             $buttons .= csrf_field().method_field('DELETE');
-            $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete" data-bs-toggle="tooltip">';
+            $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete" data-bs-toggle="tooltip">';
             $buttons .= '<i class="bi bi-trash"></i></button></form>';
         }
 
         // LR Copy button
-        $buttons .= '<button type="button" class="btn btn-sm btn-info lr-copy-btn" title="LR Copy" data-bs-toggle="modal" data-bs-target="#lrCopyModal" data-lr-id="'.$lorryReceipt->id.'">';
+        $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-bilty lr-copy-btn" title="LR Copy" data-bs-toggle="modal" data-bs-target="#lrCopyModal" data-lr-id="'.$lorryReceipt->id.'">';
         $buttons .= '<i class="bi bi-file-earmark-text"></i></button>';
 
         $buttons .= '</div>';

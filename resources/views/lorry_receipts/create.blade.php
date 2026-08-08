@@ -1897,191 +1897,48 @@ grNumberInput.addEventListener('blur', function() {
             function showConfirmationDialog(form) {
                 const formData = new FormData(form);
 
-                // Get display values for dropdowns
-                const customerName = document.querySelector('#customer_id option:checked')?.textContent ||
-                    'Not selected';
-                const consignorName = document.querySelector('#consignor_id option:checked')?.textContent ||
-                    'Not selected';
-                const consigneeName = document.querySelector('#consignee_id option:checked')?.textContent ||
-                    'Not selected';
-                const truckNumber = document.querySelector('#truck_id option:checked')?.textContent ||
-                    'Not selected';
-                const transporterName = document.querySelector('#transporter_id option:checked')?.textContent ||
-                    'Not selected';
-                const referenceBy = document.querySelector('#reference_by option:checked')?.textContent?.trim() ||
-                    '—';
+                const customerName = document.querySelector('#customer_id option:checked')?.textContent || '';
+                const consignorName = document.querySelector('#consignor_id option:checked')?.textContent || '';
+                const consigneeName = document.querySelector('#consignee_id option:checked')?.textContent || '';
+                const truckNumber = document.querySelector('#truck_id option:checked')?.textContent || '';
+                const transporterName = document.querySelector('#transporter_id option:checked')?.textContent || '';
+                const referenceBy = document.querySelector('#reference_by option:checked')?.textContent || '';
 
-                // Format dates
                 const formattedGrDate = formatDate(formData.get('gr_date'));
                 const currentDateTime = getCurrentDateTime();
 
-                // Build confirmation message
-                const confirmationHTML = `
-            <div class="confirmation-details text-start">
-                <div class="alert alert-soft-primary bg-primary bg-opacity-10 border-0 mb-3 py-2 px-3 d-flex align-items-center rounded-3">
-                    <i class="fas fa-info-circle text-primary me-2"></i>
-                    <h6 class="mb-0 text-primary fw-bold" style="font-size:0.9rem;">Review Lorry Receipt Details</h6>
-                </div>
-
-                <div class="row g-2">
-                    <div class="col-md-6">
-                        <div class="card h-100 border-0 shadow-sm rounded-3 border-top border-3 border-primary">
-                            <div class="card-header bg-transparent border-bottom-0 pt-2 pb-0">
-                                <h6 class="fw-bold text-dark mb-0" style="font-size:0.9rem;"><i class="fas fa-file-invoice text-primary me-1"></i> Basic Info</h6>
-                            </div>
-                            <div class="card-body p-2">
-                                <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                    <span class="text-muted small">LR No.</span>
-                                    <span class="badge bg-primary bg-opacity-10 text-primary rounded px-2 py-0">${formData.get('lr_number') || 'Not entered'}</span>
-                                </div>
-                                <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                    <span class="text-muted small">GR Date</span>
-                                    <span class="fw-bold text-dark small">${formattedGrDate}</span>
-                                </div>
-                                <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                    <span class="text-muted small">Created</span>
-                                    <span class="fw-medium text-dark small">${currentDateTime}</span>
-                                </div>
-                                <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                    <span class="text-muted small">Customer</span>
-                                    <span class="fw-bold text-dark text-truncate ms-2 text-end small" style="max-width: 180px;" title="${customerName}">${customerName}</span>
-                                </div>
-                                <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                    <span class="text-muted small">Invoice</span>
-                                    <span class="fw-medium text-dark small">${formData.get('invoice_number') || '<span class="text-muted fst-italic">N/A</span>'}</span>
-                                </div>
-                                <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                    <span class="text-muted small">Reference By</span>
-                                    <span class="fw-medium text-dark text-truncate ms-2 text-end small" style="max-width: 180px;" title="${referenceBy}">${referenceBy}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="row g-2">
-                            <div class="col-12">
-                                <div class="card border-0 shadow-sm rounded-3 border-top border-3 border-info">
-                                    <div class="card-header bg-transparent border-bottom-0 pt-2 pb-0">
-                                        <h6 class="fw-bold text-dark mb-0" style="font-size:0.9rem;"><i class="fas fa-users text-info me-1"></i> Parties & Route</h6>
-                                    </div>
-                                    <div class="card-body p-2">
-                                        <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                            <span class="text-muted small">Consignor</span>
-                                            <span class="fw-medium text-dark text-truncate ms-2 text-end small" style="max-width: 180px;" title="${consignorName}">${consignorName}</span>
-                                        </div>
-                                        <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                            <span class="text-muted small">Consignee</span>
-                                            <span class="fw-medium text-dark text-truncate ms-2 text-end small" style="max-width: 180px;" title="${consigneeName}">${consigneeName}</span>
-                                        </div>
-                                        <div class="d-flex justify-content-between mt-1 text-center bg-light rounded p-1 align-items-center">
-                                            <div class="w-100 small fw-bold text-dark text-truncate px-1">${formData.get('source_city') || '-'}</div>
-                                            <i class="fas fa-arrow-right text-muted mx-1" style="font-size:0.7rem;"></i>
-                                            <div class="w-100 small fw-bold text-dark text-truncate px-1">${formData.get('destination_city') || '-'}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-12">
-                                <div class="card border-0 shadow-sm rounded-3 border-top border-3 border-warning">
-                                    <div class="card-header bg-transparent border-bottom-0 pt-2 pb-0">
-                                        <h6 class="fw-bold text-dark mb-0" style="font-size:0.9rem;"><i class="fas fa-truck text-warning me-1"></i> Transport Info</h6>
-                                    </div>
-                                    <div class="card-body p-2">
-                                        <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                            <span class="text-muted small">Truck</span>
-                                            <span class="badge bg-dark bg-opacity-10 text-dark fw-bold rounded px-2 py-0">${truckNumber}</span>
-                                        </div>
-                                        <div class="d-flex justify-content-between">
-                                            <span class="text-muted small">Transporter</span>
-                                            <span class="fw-medium text-dark text-truncate ms-2 text-end small" style="max-width: 180px;" title="${transporterName}">${transporterName}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-12">
-                        <div class="card border-0 shadow-sm rounded-3 bg-light border-top border-3 border-success mb-2">
-                            <div class="card-body p-2">
-                                <div class="row align-items-center g-2">
-                                    <div class="col-md-7">
-                                        <div class="d-flex align-items-center mb-1">
-                                            <div class="bg-success bg-opacity-10 rounded p-1 me-2">
-                                                <i class="fas fa-box-open text-success" style="font-size:0.9rem;"></i>
-                                            </div>
-                                            <span class="fw-bold text-dark" style="font-size:0.9rem;">${formData.get('good_type') || 'Not selected'}</span>
-                                        </div>
-                                        <div class="d-flex gap-2">
-                                            <span class="badge bg-white border border-secondary border-opacity-25 text-dark fw-medium" style="font-size:0.75rem;">
-                                                Wt: ${formData.get('weight') || '-'} t
-                                            </span>
-                                            <span class="badge bg-white border border-secondary border-opacity-25 text-dark fw-medium" style="font-size:0.75rem;">
-                                                Qty: ${formData.get('no_of_units') || '-'}
-                                            </span>
-                                            <span class="badge bg-white border border-secondary border-opacity-25 text-dark fw-medium" style="font-size:0.75rem;">
-                                                Rate: ${formData.get('fr_rate') || '-'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-5 d-flex justify-content-md-end align-items-center">
-                                        <div class="bg-success bg-opacity-10 px-3 py-1 rounded-3 border border-success border-opacity-25 text-end w-100">
-                                            <span class="text-success fw-bold text-uppercase d-block mb-0" style="font-size: 0.7rem;">Total Amount</span>
-                                            <h5 class="mb-0 text-success fw-bold">${formData.get('amount') || '0.00'}</h5>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-                // Show confirmation dialog using SweetAlert2 or Bootstrap modal
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        title: '📋 Confirm Good Receipt (Bilty) Details',
-                        html: confirmationHTML,
-                        icon: 'question',
-                        showCancelButton: true,
-                        showDenyButton: true,
-                        confirmButtonColor: '#28a745',
-                        cancelButtonColor: '#6c757d',
-                        denyButtonColor: '#28a745',
-                        denyButtonText: '💾 Save & Create FR',
-                        confirmButtonText: '✅ Yes, Submit',
-                        cancelButtonText: '❌ Cancel',
-                        width: '90%',
-                        customClass: {
-                            popup: 'swal-wide'
-                        }
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            // Actually submit the form
-                            form.submit();
-                        } else if (result.isDenied) {
-                            // Save & Create FR
-                            saveAndRedirect();
-                        }
-                    });
-                } else {
-                    // Fallback to native confirm dialog
-                    const confirmText = `Please confirm the following details:\n\n` +
-                        `LR Number: ${formData.get('lr_number')}\n` +
-                        `Customer: ${customerName}\n` +
-                        `Consignor: ${consignorName}\n` +
-                        `Consignee: ${consigneeName}\n` +
-                        `Weight: ${formData.get('weight')} tons\n` +
-                        `Amount: ${formData.get('amount')}\n\n` +
-                        `Do you want to submit this good receipt (bilty)?`;
-
-                    if (confirm(confirmText)) {
+                window.LREntity.showLorryReceiptConfirm({
+                    title: 'Confirm Good Receipt',
+                    note: 'Please review the good receipt details before submitting.',
+                    details: {
+                        lrNumber: formData.get('lr_number'),
+                        grDate: formattedGrDate,
+                        createdAt: currentDateTime,
+                        customer: customerName,
+                        invoice: formData.get('invoice_number'),
+                        referenceBy: referenceBy,
+                        consignor: consignorName,
+                        consignee: consigneeName,
+                        sourceCity: formData.get('source_city'),
+                        destinationCity: formData.get('destination_city'),
+                        truck: truckNumber,
+                        transporter: transporterName,
+                        goodsType: formData.get('good_type'),
+                        weight: formData.get('weight'),
+                        units: formData.get('no_of_units'),
+                        rate: formData.get('fr_rate'),
+                        amount: formData.get('amount'),
+                    },
+                    confirmText: 'Confirm & Submit',
+                    cancelText: 'Cancel',
+                    denyText: 'Save & Create FR',
+                    onConfirm: function () {
                         form.submit();
-                    }
-                }
+                    },
+                    onDeny: function () {
+                        saveAndRedirect();
+                    },
+                });
             }
 
             function saveAndRedirect() {

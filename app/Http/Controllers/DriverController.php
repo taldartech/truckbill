@@ -111,9 +111,9 @@ class DriverController extends Controller
 
     private function getActionButtons($driver)
     {
-        $buttons = '<div class="d-flex gap-1">';
+        $buttons = '<div class="app-index-table-actions">';
 
-        $buttons .= '<button type="button" class="btn btn-sm btn-edit edit-driver-btn" title="Edit Driver" ';
+        $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-edit edit-driver-btn" title="Edit Driver" data-bs-toggle="tooltip" ';
         $buttons .= 'data-driver-id="'.$driver->id.'" ';
         $buttons .= 'data-driver-name="'.htmlspecialchars($driver->name).'" ';
         $buttons .= 'data-driver-mobile="'.htmlspecialchars($driver->mobile ?? '').'" ';
@@ -121,9 +121,9 @@ class DriverController extends Controller
         $buttons .= 'data-driver-address="'.htmlspecialchars($driver->address ?? '').'">';
         $buttons .= '<i class="bi bi-pencil"></i></button>';
 
-        $buttons .= '<form action="'.route('drivers.destroy', $driver->id).'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this driver?\')">';
+        $buttons .= '<form action="'.route('drivers.destroy', $driver->id).'" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this driver?\')">';
         $buttons .= csrf_field().method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Driver">';
+        $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete Driver" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
         $buttons .= '</div>';

@@ -1,16 +1,39 @@
 @extends('layouts.app')
 
 @section('content')
+    @php
+        $lr = $freightBooking->lr;
+        $listingSuffix = \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS);
+        $weight = $lr->weight ?? 0;
+        $lrAmount = $lr->amount ?? 0;
+        $tdsPct = (float) ($freightBooking->transporter_tds_percentage ?? ($lr?->transporter?->tds_percentage ?? 0));
+        $is_delivered = $freightBooking->is_delivered;
+        $is_invoice_generated = $lr && $lr->invoice_generated;
+        $fbOptionalOpen = filled(old('eway_bill_number', $freightBooking->eway_bill_number))
+            || filled(old('eway_bill_expiry', $freightBooking->eway_bill_expiry))
+            || filled(old('remark', $freightBooking->remark))
+            || $errors->hasAny(['eway_bill_number', 'eway_bill_expiry', 'remark']);
+        $customAmountRows = old('custom_amounts');
+        if ($customAmountRows === null) {
+            $customAmountRows = $freightBooking->customAmounts->map(fn ($row) => [
+                'id' => $row->id,
+                'description' => $row->description,
+                'amount' => $row->amount,
+            ])->values()->all();
+        }
+        $rateReadonly = ! $is_admin || $freightBooking->is_cancelled;
+        $amountReadonly = ! $is_admin || $freightBooking->is_cancelled;
+        $disabledAttr = $freightBooking->is_cancelled ? 'disabled' : '';
+    @endphp
+
     <style>
         #tr_amount.tr-amount-exceeds-lr {
-            background-color: #fff3cd;
+            background-color: #fff3cd !important;
+            border-color: #f59e0b !important;
         }
 
-        /* Prevent form expansion on validation errors */
-        .form-control,
-        .form-select {
-            min-height: 38px;
-            box-sizing: border-box;
+        .lrf-pf__lbl.tr-amount-exceeds-lr {
+            color: #b45309;
         }
 
         .text-danger {
@@ -18,786 +41,857 @@
             margin-top: 0.25rem;
             word-wrap: break-word;
         }
-
-        /* Ensure consistent column widths */
-        .row .col-md-4 {
-            flex: 0 0 33.333333%;
-            max-width: 33.333333%;
-        }
-
-        /* Prevent card from expanding */
-        .card {
-            overflow: hidden;
-        }
-
-        /* Consistent spacing for form groups */
-        .mb-3 {
-            margin-bottom: 1rem !important;
-        }
     </style>
 
-    <!-- LR Information Card -->
-    <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-        <div class="card-header">
-            <div class="card-title h5">Good Receipt (Bilty) Information</div>
+    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}">
+
+    <div class="lrf-page app-index-page">
+        <div class="lrf-page__toolbar">
+            <div>
+                <h1 class="lrf-page__toolbar-title">
+                    Edit Good Hire (Lorry Hire)
+                    @if ($freightBooking->is_cancelled)
+                        <span class="badge bg-danger ms-1">Cancelled</span>
+                    @endif
+                </h1>
+                <p class="lrf-page__toolbar-sub">Linked bilty is read-only. Update hire charges and optional details below.</p>
+            </div>
+            <div class="lrf-page__toolbar-actions">
+                @if ($freightBooking->linked_freight_booking_id)
+                    <button class="btn btn-outline-warning btn-sm" type="button" data-bs-toggle="modal"
+                        data-bs-target="#viewCancelledModal">
+                        <i class="bi bi-info-circle me-1"></i> View Cancelled
+                    </button>
+                @endif
+                <a href="{{ route('freight_bookings.index') }}{{ $listingSuffix }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
+            </div>
         </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-2">
-                    <div class="mb-2">
-                        <strong>LR Number:</strong><br>
-                        <span class="text-primary">{{ $freightBooking->lr ? $freightBooking->lr->lr_number : 'N/A' }}</span>
-                    </div>
+
+        @if ($freightBooking->is_cancelled)
+            <div class="alert alert-danger lrf-alert mb-3" role="alert">
+                <i class="bi bi-x-circle-fill mt-1"></i>
+                <div>
+                    <strong>Cancelled good hire</strong>
+                    <div class="small mb-0">This booking cannot be modified. All form fields are disabled.</div>
                 </div>
-                <div class="col-md-2">
-                    <div class="mb-2">
-                        <strong>Transporter:</strong><br>
-                        <span>{{ $freightBooking->transporter_name ?? 'N/A' }}</span>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="mb-2">
-                        <strong>Transporter Type:</strong><br>
-                        @if ($freightBooking->lr && $freightBooking->lr->transporter)
-                            @if ($freightBooking->lr->transporter->is_owner)
-                                <span class="badge bg-primary text-white fs-6">Truck Owner</span>
-                            @else
-                                <span class="badge bg-info text-white fs-6">Agency</span>
-                            @endif
-                        @else
-                            <span>N/A</span>
+            </div>
+        @endif
+
+        {{-- Linked Bilty --}}
+        <div class="lrf-section lrf-linked">
+            <div class="lrf-linked__head">
+                <div class="lrf-linked__head-main">
+                    <div class="lrf-linked__eyebrow">Linked Bilty</div>
+                    <div class="lrf-linked__title-row">
+                        <span class="lrf-linked__lr" title="Good Receipt number">{{ $lr?->lr_number ?? 'N/A' }}</span>
+                        @if ($lr && $lr->transporter)
+                            <span class="lrf-chip {{ $lr->transporter->is_owner ? 'lrf-chip--info' : 'lrf-chip--ok' }}">
+                                {{ $lr->transporter->is_owner ? 'Owner payee' : 'Agency payee' }}
+                            </span>
                         @endif
                     </div>
                 </div>
-                <div class="col-md-2">
-                    <div class="mb-2">
-                        <strong>TDS Percentage:</strong><br>
-                        <span
-                            class="badge bg-warning text-dark fs-6">{{ number_format($freightBooking->transporter_tds_percentage ?? 0, 2) }}%</span>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="mb-2">
-                        <strong>Truck:</strong><br>
-                        <span>{{ $freightBooking->lr && $freightBooking->lr->truck ? $freightBooking->lr->truck->truck_number : 'N/A' }}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="mb-2">
-                        <strong>Customer:</strong><br>
-                        <span>{{ $freightBooking->lr && $freightBooking->lr->customer ? $freightBooking->lr->customer->name : 'N/A' }}</span>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="mb-2">
-                        <strong>Consignor:</strong><br>
-                        <span>{{ $freightBooking->lr && $freightBooking->lr->consignor ? $freightBooking->lr->consignor->name : 'N/A' }}</span>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="mb-2">
-                        <strong>Consignee:</strong><br>
-                        <span>{{ $freightBooking->lr && $freightBooking->lr->consignee ? $freightBooking->lr->consignee->name : 'N/A' }}</span>
-                    </div>
+                <div class="lrf-linked__route-pill" title="Route">
+                    <span>{{ $lr?->source_city ?? '—' }}</span>
+                    <i class="bi bi-arrow-right"></i>
+                    <span>{{ $lr?->destination_city ?? '—' }}</span>
                 </div>
             </div>
 
-            <!-- Goods Type Details Section -->
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="mb-2">
-                        <strong>Goods Type:</strong><br>
-                        <span
-                            class="badge bg-secondary text-white fs-6">{{ $freightBooking->lr ? $freightBooking->lr->good_type : 'N/A' }}</span>
+            <div class="lrf-section__body">
+                <div class="lrf-linked__kpis">
+                    <div class="lrf-linked__kpi">
+                        <span class="lrf-linked__kpi-label">Goods</span>
+                        <span class="lrf-linked__kpi-value">{{ $lr?->good_type ?? ($freightBooking->good_type ?? '—') }}</span>
+                    </div>
+                    <div class="lrf-linked__kpi">
+                        <span class="lrf-linked__kpi-label">Weight</span>
+                        <span class="lrf-linked__kpi-value">{{ number_format($weight, 3) }} <small>MT</small></span>
+                    </div>
+                    <div class="lrf-linked__kpi">
+                        <span class="lrf-linked__kpi-label">LR Rate</span>
+                        <span class="lrf-linked__kpi-value">₹{{ number_format($lr?->fr_rate ?? 0, 2) }}</span>
+                    </div>
+                    <div class="lrf-linked__kpi lrf-linked__kpi--accent">
+                        <span class="lrf-linked__kpi-label">LR Amount</span>
+                        <span class="lrf-linked__kpi-value">₹{{ number_format($lrAmount, 2) }}</span>
                     </div>
                 </div>
-                    <div class="col-md-3">
-                    <div class="mb-2">
-                        <strong>Loading Weight:</strong><br>
-                        <span
-                            class="badge bg-info text-white fs-6">{{ $freightBooking->lr ? number_format($freightBooking->lr->weight ?? 0, 3) : '0.00' }}
-                            MT</span>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="mb-2">
-                        <strong>LR Amount:</strong><br>
-                        <span
-                            class="badge bg-brand-primary text-white fs-6">{{ $freightBooking->lr ? number_format($freightBooking->lr->amount ?? 0, 2) : '0.00' }}</span>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="mb-2">
-                        <strong>Rate:</strong><br>
-                        <span
-                            class="badge bg-brand-primary text-white fs-6">{{ $freightBooking->lr ? number_format($freightBooking->lr->fr_rate ?? 0, 2) : '0.00' }}</span>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Route Details Section -->
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-2">
-                        <strong>Route:</strong><br>
-                        <span class="text-muted">
-                            {{ $freightBooking->lr ? $freightBooking->lr->source_city : 'N/A' }},
-                            {{ $freightBooking->lr ? $freightBooking->lr->source_state : 'N/A' }}
-                            <i class="fas fa-arrow-right mx-2"></i>
-                            {{ $freightBooking->lr ? $freightBooking->lr->destination_city : 'N/A' }},
-                            {{ $freightBooking->lr ? $freightBooking->lr->destination_state : 'N/A' }}
-                        </span>
+                <div class="lrf-linked__panels">
+                    <div class="lrf-linked__panel">
+                        <div class="lrf-linked__panel-title">
+                            <i class="bi bi-people"></i> Parties
+                        </div>
+                        <div class="lrf-linked__facts">
+                            <div class="lrf-linked__fact">
+                                <span class="lrf-linked__fact-label">Customer</span>
+                                <span class="lrf-linked__fact-value">{{ $lr && $lr->customer ? $lr->customer->name : 'N/A' }}</span>
+                            </div>
+                            <div class="lrf-linked__fact">
+                                <span class="lrf-linked__fact-label">Payee</span>
+                                <span class="lrf-linked__fact-value">
+                                    {{ $freightBooking->transporter_name ?? ($lr && $lr->transporter ? $lr->transporter->name : 'N/A') }}
+                                    @if ($lr && $lr->transporter)
+                                        <span class="lrf-chip {{ $lr->transporter->is_owner ? 'lrf-chip--info' : 'lrf-chip--ok' }}">
+                                            {{ $lr->transporter->is_owner ? 'Owner' : 'Agency' }}
+                                        </span>
+                                    @endif
+                                </span>
+                            </div>
+                            <div class="lrf-linked__fact">
+                                <span class="lrf-linked__fact-label">Consignor</span>
+                                <span class="lrf-linked__fact-value">{{ $lr && $lr->consignor ? $lr->consignor->name : 'N/A' }}</span>
+                            </div>
+                            <div class="lrf-linked__fact">
+                                <span class="lrf-linked__fact-label">Consignee</span>
+                                <span class="lrf-linked__fact-value">{{ $lr && $lr->consignee ? $lr->consignee->name : 'N/A' }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lrf-linked__panel">
+                        <div class="lrf-linked__panel-title">
+                            <i class="bi bi-truck"></i> Vehicle &amp; Route
+                        </div>
+                        <div class="lrf-linked__facts">
+                            <div class="lrf-linked__fact">
+                                <span class="lrf-linked__fact-label">Truck</span>
+                                <span class="lrf-linked__fact-value">{{ $lr && $lr->truck ? $lr->truck->truck_number : 'N/A' }}</span>
+                            </div>
+                            <div class="lrf-linked__fact">
+                                <span class="lrf-linked__fact-label">TDS %</span>
+                                <span class="lrf-linked__fact-value">{{ number_format($tdsPct, 2) }}%</span>
+                            </div>
+                            <div class="lrf-linked__fact">
+                                <span class="lrf-linked__fact-label">From</span>
+                                <span class="lrf-linked__fact-value">
+                                    {{ $lr?->source_city ?? 'N/A' }}{{ $lr && ! empty($lr->source_state) ? ', '.$lr->source_state : '' }}
+                                </span>
+                            </div>
+                            <div class="lrf-linked__fact">
+                                <span class="lrf-linked__fact-label">To</span>
+                                <span class="lrf-linked__fact-value">
+                                    {{ $lr?->destination_city ?? 'N/A' }}{{ $lr && ! empty($lr->destination_state) ? ', '.$lr->destination_state : '' }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    @if ($freightBooking->is_cancelled)
-        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert"
-            style="max-width: 1000px; margin: 0 auto;">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-times-circle fa-2x me-3"></i>
-                <div>
-                    <h5 class="alert-heading mb-1">
-                        <i class="fas fa-exclamation-triangle"></i> CANCELLED FREIGHT BOOKING
-                    </h5>
-                    <p class="mb-0">This good hire (lorry hire) has been cancelled and cannot be modified. All form fields are
-                        disabled.</p>
-                </div>
-            </div>
-        </div>
-    @endif
-
-    <div class="card {{ $freightBooking->is_cancelled ? 'border-danger' : 'card-info' }} card-outline mb-4"
-        style="max-width: 1000px; margin: 0 auto; {{ $freightBooking->is_cancelled ? 'opacity: 0.8;' : '' }}">
-        <div class="card-header {{ $freightBooking->is_cancelled ? 'bg-danger-subtle' : '' }}">
-            <div class="card-title h4 d-flex justify-content-between align-items-center w-100">
-                <div>
-                    Edit Good Hire (Lorry Hire)
-                    @if ($freightBooking->is_cancelled)
-                        <span class="badge bg-danger ms-2">
-                            <i class="fas fa-times-circle"></i> CANCELLED
-                        </span>
-                    @endif
-                </div>
-                @if ($freightBooking->linked_freight_booking_id)
-                    <div class="card-toolbar">
-                        <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#viewCancelledModal">
-                            View Cancelled
-                        </button>
-                    </div>
-                @endif
-            </div>
-        </div>
-        <!--begin::Form-->
         <form
-            action="{{ route('freight_bookings.update', $freightBooking->id) }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}"
+            action="{{ route('freight_bookings.update', $freightBooking->id) }}{{ $listingSuffix }}"
             method="POST"
+            class="needs-validation lrf"
             {{ $freightBooking->is_cancelled ? 'onsubmit="return false;"' : '' }}>
             @csrf
-            @php
-                $is_delivered = $freightBooking->is_delivered;
-                $is_invoice_generated = $freightBooking->lr && $freightBooking->lr->invoice_generated;
-            @endphp
             @method('PUT')
             @foreach (\App\Support\ListingQueryString::params(request(), \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) as $listingKey => $listingValue)
                 <input type="hidden" name="{{ $listingKey }}" value="{{ $listingValue }}">
             @endforeach
-            <div class="card-body">
-                <!-- Financial Information Section -->
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="tr_fr_rate" class="form-label">TR Freight Rate *</label>
-                        <input type="number" step="0.01" min="1" max="20000"
-                            class="form-control @error('tr_fr_rate') is-invalid @enderror" name="tr_fr_rate" id="tr_fr_rate"
-                            value="{{ old('tr_fr_rate', $freightBooking->tr_fr_rate) }}"
-                            placeholder="Enter freight rate (1 - 20,000 per ton)" required
-                            {{ ! $is_admin ? 'readonly style=background-color:#e9ecef;' : '' }}
-                            {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                        <small class="form-text text-muted">
-                            <i class="fas fa-info-circle"></i> Rate must be between 1 and 20,000 per ton
-                        </small>
-                        @error('tr_fr_rate')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="tr_amount" class="form-label" id="tr_amount_label">TR Amount *</label>
-                        <input type="number" step="0.01" min="0.01"
-                            class="form-control @error('tr_amount') is-invalid @enderror" name="tr_amount" id="tr_amount"
-                            value="{{ old('tr_amount', $freightBooking->tr_amount) }}"
-                            placeholder="Auto-calculated (editable)" required
-                            {{ ! $is_admin ? 'readonly style=background-color:#e9ecef;' : '' }}
-                            {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                        <div id="tr_amount_lr_warning" class="form-text text-warning fw-semibold d-none">
-                            <i class="fas fa-exclamation-triangle"></i> TR Amount exceeds LR Amount.
-                        </div>
-                        <small class="form-text text-muted">
-                            <i class="fas fa-info-circle"></i> Auto-calculated: TR Freight Rate × Min(Loading Weight, Unloading Weight). Must be greater
-                            than 0.
-                        </small>
-                        @error('tr_amount')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                        <div class="form-check mt-1">
-                            <input class="form-check-input" type="checkbox" value="1" id="is_fixed_amount"
-                                name="is_fixed_amount"
-                                {{ old('is_fixed_amount', $freightBooking->is_fixed_amount ?? false) ? 'checked' : '' }}
-                                {{ ! $is_admin ? 'disabled' : '' }}
-                                {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                            <label class="form-check-label" for="is_fixed_amount">
-                                Use fixed amount (do not auto-calculate)
-                            </label>
+
+            <input type="hidden" name="advance_amount" id="advance_amount" value="0">
+            <input type="hidden" name="memo_id" id="memo_id"
+                value="{{ $lr && $lr->memo_id ? $lr->memo_id : '' }}">
+            <input type="hidden" id="weight" value="{{ $weight }}">
+            <input type="hidden" id="lr_amount" value="{{ $lrAmount }}">
+            <input type="hidden" id="transporter_tds_percentage" name="transporter_tds_percentage"
+                value="{{ old('transporter_tds_percentage', $freightBooking->transporter_tds_percentage) }}">
+            <input type="hidden" id="pan_verified" name="pan_verified"
+                value="{{ old('pan_verified', $freightBooking->pan_verified) }}">
+            <input type="hidden" id="good_type" name="good_type"
+                value="{{ old('good_type', $freightBooking->good_type) }}">
+            <input type="hidden" name="lr_id" value="{{ $freightBooking->lr_id }}">
+
+            {{-- Step 1 Hire Charges --}}
+            <div class="lrf-section">
+                <div class="lrf-section__head lrf-section__head--summary">
+                    <div class="lrf-section__head-left">
+                        <div class="lrf-step-num lrf-step-num--summary">1</div>
+                        <div>
+                            <h2 class="lrf-section__title">Hire Charges</h2>
+                            <p class="lrf-section__desc">TR rate, amount, advance and adjustments</p>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <label for="tds_amount" class="form-label">TDS Amount *</label>
-                        <input type="number" step="0.01"
-                            class="form-control @error('tds_amount') is-invalid @enderror" name="tds_amount"
-                            id="tds_amount" value="{{ old('tds_amount', $freightBooking->tds_amount) }}" readonly
-                            style="background-color: #f8f9fa;" {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                        @if(isset($canChangeTds) && !$canChangeTds)
-                        <small class="form-text text-muted text-warning">
-                            <i class="fas fa-lock"></i> TDS already submitted; amount cannot be changed.
-                        </small>
-                        @else
-                        <small class="form-text text-muted">
-                            <i class="fas fa-percentage"></i> Auto-calculated based on transporter TDS percentage
-                        </small>
-                        @endif
-                        @error('tds_amount')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <!-- Hidden advance amount field with default value 0 -->
-                    <input type="hidden" name="advance_amount" id="advance_amount" value="0">
-                    <!-- Hidden memo_id field -->
-                    <input type="hidden" name="memo_id" id="memo_id"
-                        value="{{ $freightBooking->lr && $freightBooking->lr->memo_id ? $freightBooking->lr->memo_id : '' }}">
                 </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="eway_bill_number" class="form-label">E-Way Bill Number</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control @error('eway_bill_number') is-invalid @enderror"
-                                name="eway_bill_number" id="eway_bill_number"
-                                value="{{ old('eway_bill_number', $freightBooking->eway_bill_number) }}"
-                                placeholder="Enter E-way bill number"
-                                {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
-                                {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                            <a href="https://ewaybillgst.gov.in/Login.aspx" target="_blank" class="btn btn-info"
-                                title="Check E-way Bill Status">
-                                <i class="fas fa-external-link-alt"></i> Check Status
-                            </a>
+                <div class="lrf-section__body">
+                    <div class="lrf-grid lrf-grid--4">
+                        <div class="lrf-pf">
+                            <label for="tr_fr_rate" class="lrf-pf__lbl">TR Freight Rate<span class="lrf-pf__req">*</span></label>
+                            <input type="number" step="0.01" min="1" max="20000"
+                                class="form-control @error('tr_fr_rate') is-invalid @enderror" name="tr_fr_rate"
+                                id="tr_fr_rate" value="{{ old('tr_fr_rate', $freightBooking->tr_fr_rate) }}"
+                                placeholder="1 – 20,000" required
+                                {{ $rateReadonly ? 'readonly style=background-color:#e9ecef;' : '' }}
+                                {{ $disabledAttr }}>
+                            <div class="lrf-pf__hint">Between 1 and 20,000 / ton</div>
+                            @error('tr_fr_rate')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
                         </div>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="eway_bill_expiry" class="form-label">E-Way Bill Expiry Date</label>
-                        <input type="date" class="form-control @error('eway_bill_expiry') is-invalid @enderror"
-                            name="eway_bill_expiry" id="eway_bill_expiry"
-                            value="{{ old('eway_bill_expiry', $freightBooking->eway_bill_expiry ? $freightBooking->eway_bill_expiry : '') }}"
-                            {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
-                            {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                        @error('eway_bill_expiry')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="advance_amount_main" class="form-label">Advance Amount</label>
-                            <input type="number" step="0.01" class="form-control" id="advance_amount_main"
+                        <div class="lrf-pf">
+                            <label class="lrf-pf__lbl" for="tr_amount" id="tr_amount_label">
+                                <span>TR Amount<span class="lrf-pf__req">*</span></span>
+                                <span class="lrf-amount-toggle">
+                                    <input class="form-check-input" type="checkbox" value="1" id="is_fixed_amount"
+                                        name="is_fixed_amount"
+                                        {{ old('is_fixed_amount', $freightBooking->is_fixed_amount ?? false) ? 'checked' : '' }}
+                                        {{ ! $is_admin || $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                                    <label class="form-check-label mb-0" for="is_fixed_amount">Fixed</label>
+                                </span>
+                            </label>
+                            <input type="number" step="0.01" min="0.01"
+                                class="form-control @error('tr_amount') is-invalid @enderror" name="tr_amount"
+                                id="tr_amount" value="{{ old('tr_amount', $freightBooking->tr_amount) }}"
+                                placeholder="Auto-calculated" required
+                                {{ $amountReadonly ? 'readonly style=background-color:#e9ecef;' : '' }}
+                                {{ $disabledAttr }}>
+                            <div id="tr_amount_lr_warning" class="form-text text-warning fw-semibold d-none">
+                                <i class="bi bi-exclamation-triangle"></i> TR Amount exceeds LR Amount.
+                            </div>
+                            <div class="lrf-pf__hint">Auto: Rate × min(load, unload) MT</div>
+                            @error('tr_amount')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="lrf-pf">
+                            <label for="advance_amount_main" class="lrf-pf__lbl">Advance Amount</label>
+                            <input type="number" step="0.01" class="form-control is-auto" id="advance_amount_main"
                                 name="advance_amount"
-                                value="{{ old('advance_amount', $freightBooking->advance_amount) }}" readonly
-                                style="background-color: #f8f9fa;">
-                            <small class="form-text text-muted">
-                                <i class="fas fa-info-circle"></i> Read-only field
-                            </small>
+                                value="{{ old('advance_amount', $freightBooking->advance_amount) }}" readonly>
+                            <div class="lrf-pf__hint">Read-only</div>
                         </div>
-                        <div class="col-md-4">
-                            <label for="negative_adjusted_amount_display" class="form-label">Negative Adjusted Amount</label>
-                            <input type="number" step="0.01" class="form-control {{ ($freightBooking->negative_adjusted_amount ?? 0) > 0 ? '' : 'text-muted' }}"
+                        <div class="lrf-pf">
+                            <label for="negative_adjusted_amount_display" class="lrf-pf__lbl">Negative Adjusted</label>
+                            <input type="number" step="0.01"
+                                class="form-control is-auto {{ ($freightBooking->negative_adjusted_amount ?? 0) > 0 ? '' : 'text-muted' }}"
                                 id="negative_adjusted_amount_display"
                                 value="{{ number_format((float) ($freightBooking->negative_adjusted_amount ?? 0), 2, '.', '') }}"
-                                readonly style="background-color: #f8f9fa;">
+                                readonly>
                             <input type="hidden" id="negative_adjusted_amount"
                                 value="{{ number_format((float) ($freightBooking->negative_adjusted_amount ?? 0), 2, '.', '') }}">
-                            <small class="form-text text-muted">
-                                <i class="fas fa-info-circle"></i> Overpayment moved to transporter advance (system-managed)
-                            </small>
+                            <div class="lrf-pf__hint">System-managed</div>
                         </div>
-                        <div class="col-md-4">
-                            <label for="balance_amount" class="form-label">Balance Amount *</label>
+                    </div>
+
+                    <input type="hidden" name="tds_amount" id="tds_amount"
+                        value="{{ old('tds_amount', $freightBooking->tds_amount) }}">
+                    <input type="hidden" name="balance_amount" id="balance_amount"
+                        value="{{ old('balance_amount', $freightBooking->balance_amount) }}">
+                    @error('tds_amount')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
+                    @error('balance_amount')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
+
+                    <div class="lrf-summary-metrics">
+                        <div class="lrf-metric">
+                            <div class="lrf-metric__icon" style="--ic:#7c3aed;--bg:#faf5ff"><i class="bi bi-currency-rupee"></i></div>
+                            <div>
+                                <span class="lrf-metric__name">TR Rate</span>
+                                <span class="lrf-metric__val" id="fbSummaryRate">₹{{ number_format(old('tr_fr_rate', $freightBooking->tr_fr_rate), 2) }}</span>
+                            </div>
+                        </div>
+                        <div class="lrf-metric">
+                            <div class="lrf-metric__icon" style="--ic:#b45309;--bg:#fffbeb"><i class="bi bi-percent"></i></div>
+                            <div>
+                                <span class="lrf-metric__name">TDS</span>
+                                <span class="lrf-metric__val" id="fbSummaryTds">₹{{ number_format(old('tds_amount', $freightBooking->tds_amount), 2) }}</span>
+                            </div>
+                        </div>
+                        <div class="lrf-metric lrf-metric--hero">
+                            <div class="lrf-metric__icon" style="--ic:#16a34a;--bg:#dcfce7"><i class="bi bi-wallet2"></i></div>
+                            <div>
+                                <span class="lrf-metric__name">Balance</span>
+                                <span class="lrf-metric__val" id="fbSummaryBalance">₹{{ number_format(old('balance_amount', $freightBooking->balance_amount), 2) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (! $freightBooking->is_cancelled)
+                <div class="lrf-section" id="custom-amounts-section">
+                    <div class="lrf-section__head lrf-section__head--plain">
+                        <div class="lrf-section__head-left">
+                            <div>
+                                <h2 class="lrf-section__title">Custom Amounts</h2>
+                                <p class="lrf-section__desc">Positive or negative adjustments that affect balance</p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-brand-primary btn-sm" id="addCustomAmountRow">
+                            <i class="bi bi-plus-lg me-1"></i> Add amount
+                        </button>
+                    </div>
+                    <div class="lrf-section__body lrf-section__body--flush">
+                        <div class="lrf-custom-table-wrap">
+                            <table class="lrf-custom-table">
+                                <thead>
+                                    <tr>
+                                        <th class="lrf-custom-table__desc">Description</th>
+                                        <th class="lrf-custom-table__amt">Amount (+/−)</th>
+                                        <th class="lrf-custom-table__act">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="custom-amounts-body">
+                                    @forelse ($customAmountRows as $index => $customAmountRow)
+                                        <tr class="custom-amount-row">
+                                            <td>
+                                                @if (! empty($customAmountRow['id']))
+                                                    <input type="hidden" name="custom_amounts[{{ $index }}][id]"
+                                                        value="{{ $customAmountRow['id'] }}">
+                                                @endif
+                                                <input type="text" class="form-control custom-amount-description"
+                                                    name="custom_amounts[{{ $index }}][description]"
+                                                    value="{{ $customAmountRow['description'] ?? '' }}"
+                                                    maxlength="255" required placeholder="e.g. Loading charge">
+                                            </td>
+                                            <td>
+                                                <input type="number" step="0.01"
+                                                    class="form-control custom-amount-value"
+                                                    name="custom_amounts[{{ $index }}][amount]"
+                                                    value="{{ $customAmountRow['amount'] ?? '' }}"
+                                                    required placeholder="0.00">
+                                            </td>
+                                            <td class="lrf-custom-table__act-cell">
+                                                <button type="button"
+                                                    class="btn btn-sm lrf-custom-remove remove-custom-amount-row"
+                                                    title="Remove amount">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                    @endforelse
+                                </tbody>
+                            </table>
+                            <div class="lrf-custom-empty{{ count($customAmountRows) ? ' d-none' : '' }}"
+                                id="custom-amounts-empty">
+                                <i class="bi bi-plus-slash-minus"></i>
+                                <span>No custom amounts yet. Click <strong>Add amount</strong> to create one.</span>
+                            </div>
+                        </div>
+                        <div class="lrf-custom-total">
+                            <span>Custom amounts total</span>
+                            <strong id="custom-amounts-total">₹0.00</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <template id="custom-amount-row-template">
+                    <tr class="custom-amount-row">
+                        <td>
+                            <input type="text" class="form-control custom-amount-description"
+                                maxlength="255" required placeholder="e.g. Loading charge">
+                        </td>
+                        <td>
                             <input type="number" step="0.01"
-                                class="form-control @error('balance_amount') is-invalid @enderror" name="balance_amount"
-                                id="balance_amount" value="{{ old('balance_amount', $freightBooking->balance_amount) }}"
-                                required readonly style="background-color: #f8f9fa;"
-                                {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                            <small class="form-text text-muted">
-                                <i class="fas fa-calculator"></i> Auto-calculated
-                            </small>
-                            @error('balance_amount')
+                                class="form-control custom-amount-value"
+                                required placeholder="0.00">
+                        </td>
+                        <td class="lrf-custom-table__act-cell">
+                            <button type="button"
+                                class="btn btn-sm lrf-custom-remove remove-custom-amount-row"
+                                title="Remove amount">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </template>
+            @endif
+
+            {{-- Step 2 Optional --}}
+            <div class="lrf-section lrf-section--collapsible{{ $fbOptionalOpen ? ' lrf-section--open' : '' }}" id="fbOptionalSection">
+                <button type="button" class="lrf-section__head lrf-section__head--plain lrf-section__head--toggle"
+                    id="fbOptionalToggle" aria-expanded="{{ $fbOptionalOpen ? 'true' : 'false' }}"
+                    aria-controls="fbOptionalBody">
+                    <div class="lrf-section__head-left">
+                        <div class="lrf-step-num lrf-step-num--gray">2</div>
+                        <div>
+                            <h2 class="lrf-section__title">Optional Details</h2>
+                            <p class="lrf-section__desc">E-way bill and remarks</p>
+                        </div>
+                    </div>
+                    <i class="bi bi-chevron-down lrf-collapse-arrow{{ $fbOptionalOpen ? ' lrf-collapse-arrow--open' : '' }}"></i>
+                </button>
+                <div class="lrf-section__body" id="fbOptionalBody" @if (! $fbOptionalOpen) style="display: none;" @endif>
+                    <div class="lrf-grid lrf-grid--4">
+                        <div class="lrf-pf">
+                            <label for="eway_bill_number" class="lrf-pf__lbl">E-Way Bill Number</label>
+                            <div class="input-group flex-nowrap">
+                                <input type="text" class="form-control @error('eway_bill_number') is-invalid @enderror"
+                                    name="eway_bill_number" id="eway_bill_number"
+                                    value="{{ old('eway_bill_number', $freightBooking->eway_bill_number) }}"
+                                    placeholder="Optional"
+                                    {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
+                                    {{ $disabledAttr }}>
+                                <a href="https://ewaybillgst.gov.in/Login.aspx" target="_blank" rel="noopener"
+                                    class="btn btn-outline-secondary" title="Check E-way Bill Status">
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                </a>
+                            </div>
+                            @error('eway_bill_number')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="lrf-pf">
+                            <label for="eway_bill_expiry" class="lrf-pf__lbl">E-Way Bill Expiry</label>
+                            <input type="date" class="form-control @error('eway_bill_expiry') is-invalid @enderror"
+                                name="eway_bill_expiry" id="eway_bill_expiry"
+                                value="{{ old('eway_bill_expiry', $freightBooking->eway_bill_expiry ?: '') }}"
+                                {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
+                                {{ $disabledAttr }}>
+                            @error('eway_bill_expiry')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="lrf-pf" style="grid-column: span 2;">
+                            <label for="remark" class="lrf-pf__lbl">Remark</label>
+                            <input type="text" name="remark" id="remark"
+                                class="form-control @error('remark') is-invalid @enderror"
+                                value="{{ old('remark', $freightBooking->remark) }}" placeholder="Optional"
+                                {{ $disabledAttr }}>
+                            @error('remark')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    @if (! $freightBooking->is_cancelled)
-                        @php
-                            $customAmountRows = old('custom_amounts');
-                            if ($customAmountRows === null) {
-                                $customAmountRows = $freightBooking->customAmounts->map(fn ($row) => [
-                                    'id' => $row->id,
-                                    'description' => $row->description,
-                                    'amount' => $row->amount,
-                                ])->values()->all();
-                            }
-                        @endphp
-                        <div class="row mb-3" id="custom-amounts-section">
-                            <div class="col-12">
-                                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
-                                    <h5 class="text-primary mb-0">
-                                        <i class="fas fa-list-ul"></i> Custom Amounts
-                                    </h5>
-                                    <button type="button" class="btn btn-sm btn-outline-primary" id="addCustomAmountRow">
-                                        <i class="fas fa-plus"></i> Add amount
-                                    </button>
-                                </div>
-                                <p class="small text-muted mb-2">Add positive or negative adjustments with a description. These affect the booking balance.</p>
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-bordered align-middle mb-2">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th style="width: 55%;">Description</th>
-                                                <th style="width: 30%;">Amount (+/−)</th>
-                                                <th style="width: 15%;" class="text-center">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="custom-amounts-body">
-                                            @forelse ($customAmountRows as $index => $customAmountRow)
-                                                <tr class="custom-amount-row">
-                                                    <td>
-                                                        @if (! empty($customAmountRow['id']))
-                                                            <input type="hidden" name="custom_amounts[{{ $index }}][id]"
-                                                                value="{{ $customAmountRow['id'] }}">
-                                                        @endif
-                                                        <input type="text" class="form-control form-control-sm"
-                                                            name="custom_amounts[{{ $index }}][description]"
-                                                            value="{{ $customAmountRow['description'] ?? '' }}"
-                                                            maxlength="255" required placeholder="e.g. Loading charge">
-                                                    </td>
-                                                    <td>
-                                                        <input type="number" step="0.01"
-                                                            class="form-control form-control-sm custom-amount-value"
-                                                            name="custom_amounts[{{ $index }}][amount]"
-                                                            value="{{ $customAmountRow['amount'] ?? '' }}"
-                                                            required placeholder="0.00">
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-custom-amount-row">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="d-flex justify-content-end small">
-                                    <span class="text-muted me-2">Custom amounts total:</span>
-                                    <strong id="custom-amounts-total">0.00</strong>
-                                </div>
-                            </div>
-                        </div>
-
-                        <template id="custom-amount-row-template">
-                            <tr class="custom-amount-row">
-                                <td>
-                                    <input type="text" class="form-control form-control-sm custom-amount-description"
-                                        maxlength="255" required placeholder="e.g. Loading charge">
-                                </td>
-                                <td>
-                                    <input type="number" step="0.01"
-                                        class="form-control form-control-sm custom-amount-value"
-                                        required placeholder="0.00">
-                                </td>
-                                <td class="text-center">
-                                    <button type="button" class="btn btn-sm btn-outline-danger remove-custom-amount-row">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        </template>
-                    @endif
-
-                    <!-- Additional Charges & Status Section -->
-                    <div class="row">
-                        <div class="col-12">
-                            <h5 class="text-primary border-bottom pb-2 mb-3">
-                                <i class="fas fa-plus-circle"></i> Additional Charges & Status
-                            </h5>
+            {{-- Step 3 Status & additional --}}
+            <div class="lrf-section">
+                <div class="lrf-section__head lrf-section__head--plain">
+                    <div class="lrf-section__head-left">
+                        <div class="lrf-step-num lrf-step-num--gray">3</div>
+                        <div>
+                            <h2 class="lrf-section__title">Status &amp; Additional Charges</h2>
+                            <p class="lrf-section__desc">Delivery / cancel flags and post-delivery charges</p>
                         </div>
                     </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Delivery Status</label>
-                            <div class="d-flex gap-4">
-                                <div class="form-check form-switch">
-                                    <input type="hidden" name="is_delivered"
-                                        value="{{ $freightBooking->is_delivered }}">
-                                    <input class="form-check-input" type="checkbox" id="is_delivered"
-                                        name="is_delivered" value="1"
-                                        {{ old('is_delivered', $freightBooking->is_delivered) ? 'checked' : '' }}
-                                        {{ ($freightBooking->is_delivered && $freightBooking->lr) || $freightBooking->lr->memo_id || $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                                    <label class="form-check-label" for="is_delivered">
-                                        <i class="fas fa-truck"></i> Delivered
-                                        @if (($freightBooking->is_delivered && $freightBooking->lr) || $freightBooking->lr->memo_id)
-                                            <small class="text-muted ms-2">
-                                                <i class="fas fa-lock"></i> Locked (Memo ID:
-                                                {{ $freightBooking->lr->memo_id ?? 'N/A' }})
-                                            </small>
-                                        @endif
-                                    </label>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input type="hidden" name="is_cancelled"
-                                        value="{{ $freightBooking->is_cancelled }}">
-                                    <input class="form-check-input" type="checkbox" id="is_cancelled"
-                                        name="is_cancelled" value="1"
-                                        {{ old('is_cancelled', $freightBooking->is_cancelled) ? 'checked' : '' }}
-                                        {{ $freightBooking->is_delivered || $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                                    <label class="form-check-label" for="is_cancelled">
-                                        <i class="fas fa-times-circle"></i> Cancelled
-                                        @if ($freightBooking->is_delivered)
-                                            <small class="text-muted ms-2">
-                                                <i class="fas fa-lock"></i> Cannot cancel after delivery
-                                            </small>
-                                        @else
-                                            <small class="text-muted ms-2">
-                                                <i class="fas fa-exclamation-triangle"></i> Will move LR to Pending status
-                                            </small>
-                                        @endif
-                                    </label>
-                                </div>
-                            </div>
+                </div>
+                <div class="lrf-section__body">
+                    <div class="d-flex flex-wrap gap-4 mb-3">
+                        <div class="form-check form-switch">
+                            <input type="hidden" name="is_delivered" value="{{ $freightBooking->is_delivered }}">
+                            <input class="form-check-input" type="checkbox" id="is_delivered" name="is_delivered"
+                                value="1"
+                                {{ old('is_delivered', $freightBooking->is_delivered) ? 'checked' : '' }}
+                                {{ ($freightBooking->is_delivered && $lr) || ($lr && $lr->memo_id) || $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                            <label class="form-check-label" for="is_delivered">
+                                Delivered
+                                @if (($freightBooking->is_delivered && $lr) || ($lr && $lr->memo_id))
+                                    <small class="text-muted ms-1">Locked (Memo: {{ $lr->memo_id ?? 'N/A' }})</small>
+                                @endif
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input type="hidden" name="is_cancelled" value="{{ $freightBooking->is_cancelled }}">
+                            <input class="form-check-input" type="checkbox" id="is_cancelled" name="is_cancelled"
+                                value="1"
+                                {{ old('is_cancelled', $freightBooking->is_cancelled) ? 'checked' : '' }}
+                                {{ $freightBooking->is_delivered || $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                            <label class="form-check-label" for="is_cancelled">
+                                Cancelled
+                                @if ($freightBooking->is_delivered)
+                                    <small class="text-muted ms-1">Cannot cancel after delivery</small>
+                                @else
+                                    <small class="text-muted ms-1">Moves LR to Pending</small>
+                                @endif
+                            </label>
                         </div>
                     </div>
 
                     <div id="additional-charges-section"
                         style="display: {{ $freightBooking->is_delivered ? 'block' : 'none' }};">
-                        <div class="row mb-2">
-                            <div class="col-md-2">
-                                <label for="detention" class="form-label">Detention</label>
+                        <div class="lrf-grid lrf-grid--6">
+                            <div class="lrf-pf">
+                                <label for="detention" class="lrf-pf__lbl">Detention</label>
                                 <input type="number" step="0.01" min="0"
-                                    class="form-control form-control-sm @error('detention') is-invalid @enderror"
-                                    name="detention" id="detention"
-                                    value="{{ old('detention', $freightBooking->detention) }}"
-                                    placeholder="Enter detention amount"
-                                    {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                                <small class="form-text text-muted">
-                                    <i class="fas fa-info-circle"></i> ≥ 0 and < TR Amount </small>
-                                        @error('detention')
-                                            <div class="text-danger">{{ $message }}</div>
-                                        @enderror
+                                    class="form-control @error('detention') is-invalid @enderror" name="detention"
+                                    id="detention" value="{{ old('detention', $freightBooking->detention) }}"
+                                    {{ $disabledAttr }}>
+                                @error('detention')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
                             </div>
-                            <div class="col-md-2">
-                                <label for="deviation" class="form-label">Deviation</label>
+                            <div class="lrf-pf">
+                                <label for="deviation" class="lrf-pf__lbl">Deviation</label>
                                 <input type="number" step="0.01" min="0"
-                                    class="form-control form-control-sm @error('deviation') is-invalid @enderror"
-                                    name="deviation" id="deviation"
-                                    value="{{ old('deviation', $freightBooking->deviation) }}"
-                                    placeholder="Enter deviation amount"
-                                    {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                                <small class="form-text text-muted">
-                                    <i class="fas fa-info-circle"></i> ≥ 0 and < TR Amount </small>
-                                        @error('deviation')
-                                            <div class="text-danger">{{ $message }}</div>
-                                        @enderror
+                                    class="form-control @error('deviation') is-invalid @enderror" name="deviation"
+                                    id="deviation" value="{{ old('deviation', $freightBooking->deviation) }}"
+                                    {{ $disabledAttr }}>
+                                @error('deviation')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
                             </div>
-                            <div class="col-md-2">
-                                <label for="misc_expense" class="form-label">Misc. Expense</label>
+                            <div class="lrf-pf">
+                                <label for="misc_expense" class="lrf-pf__lbl">Misc. Expense</label>
                                 <input type="number" step="0.01" min="0"
-                                    class="form-control form-control-sm @error('misc_expense') is-invalid @enderror"
+                                    class="form-control @error('misc_expense') is-invalid @enderror"
                                     name="misc_expense" id="misc_expense"
                                     value="{{ old('misc_expense', $freightBooking->misc_expense) }}"
-                                    placeholder="Enter misc expense"
-                                    {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                                <small class="form-text text-muted">
-                                    <i class="fas fa-info-circle"></i> ≥ 0 and < TR Amount </small>
-                                        @error('misc_expense')
-                                            <div class="text-danger">{{ $message }}</div>
-                                        @enderror
+                                    {{ $disabledAttr }}>
+                                @error('misc_expense')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
                             </div>
-                            <div class="col-md-2">
-                                <label for="unloading_weight" class="form-label">Unloading Weight *</label>
+                            <div class="lrf-pf">
+                                <label for="unloading_weight" class="lrf-pf__lbl">Unloading Weight<span class="lrf-pf__req">*</span></label>
                                 <input type="number" step="0.001" min="0"
-                                    class="form-control form-control-sm @error('unloading_weight') is-invalid @enderror"
+                                    class="form-control @error('unloading_weight') is-invalid @enderror"
                                     name="unloading_weight" id="unloading_weight"
-                                    value="{{ old('unloading_weight', $freightBooking->lr ? ($freightBooking->lr->unloading_weight ?? $freightBooking->lr->weight ?? 0) : 0) }}"
-                                    placeholder="Enter unloading weight" required
+                                    value="{{ old('unloading_weight', $lr ? ($lr->unloading_weight ?? $lr->weight ?? 0) : 0) }}"
+                                    required
                                     {{ $is_invoice_generated ? 'readonly style=background-color:#e9ecef;' : '' }}
-                                    {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                                    {{ $disabledAttr }}>
                                 @error('unloading_weight')
                                     <div class="text-danger">{{ $message }}</div>
                                 @enderror
                             </div>
-                            <div class="col-md-2">
-                                <label for="damage_amount" class="form-label">Damage Amount</label>
-                                <input type="number" step="0.01" min="0"
-                                    class="form-control form-control-sm @error('damage_amount') is-invalid @enderror"
+                            <div class="lrf-pf">
+                                <label for="damage_amount" class="lrf-pf__lbl">Damage Amount</label>
+                                <input type="number" step="0.01"
+                                    class="form-control @error('damage_amount') is-invalid @enderror"
                                     name="damage_amount" id="damage_amount"
                                     value="{{ old('damage_amount', $freightBooking->damage_amount) }}"
-                                    placeholder="Enter damage amount"
-                                    {{ $freightBooking->is_cancelled ? 'disabled' : '' }}
-                                    {{ $is_invoice_generated ? 'readonly style=background-color:#e9ecef;' : '' }}>
-                                {{-- <small class="form-text text-muted">
-                            <i class="fas fa-info-circle"></i> Must be ≥ 0 and < TR Amount
-                        </small> --}}
+                                    {{ $disabledAttr }}>
                                 @error('damage_amount')
                                     <div class="text-danger">{{ $message }}</div>
                                 @enderror
                             </div>
-                            <div class="col-md-2">
-                                <label for="shortage_amount" class="form-label">Shortage Amount</label>
-                                <input type="number" step="0.01" min="0"
-                                    class="form-control form-control-sm @error('shortage_amount') is-invalid @enderror"
+                            <div class="lrf-pf">
+                                <label for="shortage_amount" class="lrf-pf__lbl">Shortage Amount</label>
+                                <input type="number" step="0.01"
+                                    class="form-control @error('shortage_amount') is-invalid @enderror"
                                     name="shortage_amount" id="shortage_amount"
                                     value="{{ old('shortage_amount', $freightBooking->shortage_amount) }}"
-                                    placeholder="Enter shortage amount"
-                                    {{ $freightBooking->is_cancelled ? 'disabled' : '' }}
-                                    {{ $is_invoice_generated ? 'readonly style=background-color:#e9ecef;' : '' }}>
-                                {{-- <small class="form-text text-muted">
-                            <i class="fas fa-info-circle"></i> Must be ≥ 0 and < TR Amount
-                        </small> --}}
+                                    {{ $disabledAttr }}>
                                 @error('shortage_amount')
                                     <div class="text-danger">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
                     </div>
-
-                    <!-- Hidden weight input and transporter TDS percentage -->
-                    <input type="hidden" id="weight"
-                        value="{{ $freightBooking->lr ? $freightBooking->lr->weight : 0 }}">
-                    <input type="hidden" id="lr_amount"
-                        value="{{ $freightBooking->lr ? ($freightBooking->lr->amount ?? 0) : 0 }}">
-                    <input type="hidden" id="transporter_tds_percentage" name="transporter_tds_percentage"
-                        value="{{ old('transporter_tds_percentage', $freightBooking->transporter_tds_percentage) }}">
-                    <input type="hidden" id="pan_verified" name="pan_verified"
-                        value="{{ old('pan_verified', $freightBooking->pan_verified) }}">
-                    <input type="hidden" id="good_type" name="good_type"
-                        value="{{ old('good_type', $freightBooking->good_type) }}">
-                    <input type="hidden" name="lr_id" value="{{ $freightBooking->lr_id }}">
-
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <label for="remark" class="form-label">Remark</label>
-                            <textarea name="remark" id="remark" class="form-control @error('remark') is-invalid @enderror" rows="3"
-                                placeholder="Enter any additional remarks or notes" {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>{{ old('remark', $freightBooking->remark) }}</textarea>
-                            @error('remark')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-
                 </div>
+            </div>
 
-                <div class="card-footer">
-                    <div>
-                        @if ($freightBooking->is_cancelled)
-                            <button class="btn btn-secondary me-2" type="button" disabled>
-                                <i class="bi bi-x-circle"></i> Cannot Update - Cancelled
-                            </button>
-                        @else
-                            <button class="btn btn-brand-primary me-2" type="button" id="showConfirmationBtn">
-                                <i class="bi bi-check-circle"></i> Update Good Hire (Lorry Hire)
-                            </button>
-                        @endif
-                        <a href="{{ route('freight_bookings.index') }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" class="btn btn-back">
-                            <i class="bi bi-arrow-left"></i> Back to List
-                        </a>
-                    </div>
-                </div>
+            <div class="lrf-actions">
+                <a href="{{ route('freight_bookings.index') }}{{ $listingSuffix }}"
+                    class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Back to List
+                </a>
+                @if ($freightBooking->is_cancelled)
+                    <button class="btn btn-secondary btn-sm" type="button" disabled>
+                        <i class="bi bi-x-circle me-1"></i> Cannot Update — Cancelled
+                    </button>
+                @else
+                    <button class="btn btn-success btn-sm" type="button" id="showConfirmationBtn">
+                        <i class="bi bi-check-lg me-1"></i> Update Good Hire
+                    </button>
+                @endif
             </div>
         </form>
     </div>
 
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const fbOptionalToggle = document.getElementById('fbOptionalToggle');
+            const fbOptionalBody = document.getElementById('fbOptionalBody');
+            const fbOptionalSection = document.getElementById('fbOptionalSection');
+            if (fbOptionalToggle && fbOptionalBody && fbOptionalSection) {
+                fbOptionalToggle.addEventListener('click', function() {
+                    const isOpen = fbOptionalSection.classList.toggle('lrf-section--open');
+                    fbOptionalBody.style.display = isOpen ? '' : 'none';
+                    fbOptionalToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                    const arrow = fbOptionalToggle.querySelector('.lrf-collapse-arrow');
+                    if (arrow) {
+                        arrow.classList.toggle('lrf-collapse-arrow--open', isOpen);
+                    }
+                });
+            }
+        });
+    </script>
+
+
     <!-- Confirmation Modal for Good Hire (Lorry Hire) Update -->
-    <div class="modal fade" id="updateConfirmationModal" tabindex="-1" aria-labelledby="updateConfirmationModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+    <div class="modal fade fb-pay-modal" id="updateConfirmationModal" tabindex="-1"
+        aria-labelledby="updateConfirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header bg-info text-white">
+                <div class="modal-header">
                     <h5 class="modal-title" id="updateConfirmationModalLabel">
-                        <i class="fas fa-info-circle me-2"></i> Confirm Good Hire (Lorry Hire) Update
+                        <i class="bi bi-check2-circle"></i>
+                        Confirm Good Hire Update
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i> Please review the booking details below before confirming
-                        your update.
+                    <div class="fb-confirm-note">
+                        <i class="bi bi-info-circle"></i>
+                        Please review the booking details below before confirming your update.
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <h6 class="border-bottom pb-2"><i class="fas fa-truck me-2"></i> Good Receipt (Bilty) Information
-                            </h6>
+                    <div class="fb-pay-panel">
+                        <div class="fb-pay-panel__head">
+                            <i class="bi bi-receipt"></i> Good Receipt (Bilty)
                         </div>
-                        <div class="col-md-4">
-                            <p class="mb-1"><strong>LR Number:</strong> <span id="confirm-lr-number"></span></p>
-                        </div>
-                        <div class="col-md-4">
-                            <p class="mb-1"><strong>Transporter:</strong> <span id="confirm-transporter"></span></p>
-                        </div>
-                        <div class="col-md-4">
-                            <p class="mb-1"><strong>Truck:</strong> <span id="confirm-truck"></span></p>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <h6 class="border-bottom pb-2"><i class="fas fa-indian-rupee-sign me-2"></i> Financial Details
-                            </h6>
-                        </div>
-                        <div class="col-md-3">
-                            <p class="mb-1"><strong>TR Freight Rate:</strong> <span id="confirm-tr-rate"></span></p>
-                        </div>
-                        <div class="col-md-3">
-                            <p class="mb-1"><strong>TR Amount:</strong> <span id="confirm-tr-amount"></span></p>
-                        </div>
-                        <div class="col-md-3">
-                            <p class="mb-1"><strong>TDS Amount:</strong> <span id="confirm-tds-amount"></span></p>
-                        </div>
-                        <div class="col-md-3">
-                            <p class="mb-1"><strong>Balance Amount:</strong> <span id="confirm-balance-amount"></span>
-                            </p>
-                        </div>
-                        <div class="col-md-3" id="confirm-negative-adjusted-wrap">
-                            <p class="mb-1"><strong>Negative Adjusted:</strong> <span id="confirm-negative-adjusted"></span>
-                            </p>
+                        <div class="fb-pay-panel__body">
+                            <div class="fb-pay-facts fb-pay-facts--3">
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">LR Number</span>
+                                    <div class="fb-pay-fact__value" id="confirm-lr-number"></div>
+                                </div>
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">Transporter</span>
+                                    <div class="fb-pay-fact__value" id="confirm-transporter"></div>
+                                </div>
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">Truck</span>
+                                    <div class="fb-pay-fact__value" id="confirm-truck"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="row mb-3" id="confirm-custom-amounts-row" style="display: none;">
-                        <div class="col-12">
-                            <h6 class="border-bottom pb-2"><i class="fas fa-list-ul me-2"></i> Custom Amounts</h6>
-                            <div id="confirm-custom-amounts-list"></div>
-                            <p class="mb-0 mt-2"><strong>Custom amounts total:</strong> <span id="confirm-custom-amounts-total"></span></p>
+                    <div class="fb-pay-panel fb-pay-panel--alloc">
+                        <div class="fb-pay-panel__head">
+                            <i class="bi bi-currency-rupee"></i> Financial Details
+                        </div>
+                        <div class="fb-pay-panel__body">
+                            <div class="fb-pay-facts fb-pay-facts--4">
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">TR Freight Rate</span>
+                                    <div class="fb-pay-fact__value" id="confirm-tr-rate"></div>
+                                </div>
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">TR Amount</span>
+                                    <div class="fb-pay-fact__value fb-pay-fact__value--accent" id="confirm-tr-amount"></div>
+                                </div>
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">TDS Amount</span>
+                                    <div class="fb-pay-fact__value" id="confirm-tds-amount"></div>
+                                </div>
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">Balance Amount</span>
+                                    <div class="fb-pay-fact__value fb-pay-fact__value--accent" id="confirm-balance-amount"></div>
+                                </div>
+                                <div class="fb-pay-fact" id="confirm-negative-adjusted-wrap" style="display: none;">
+                                    <span class="fb-pay-fact__label">Negative Adjusted</span>
+                                    <div class="fb-pay-fact__value fb-pay-fact__value--warn" id="confirm-negative-adjusted"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="row mb-3" id="confirm-delivery-status-row">
-                        <div class="col-12">
-                            <h6 class="border-bottom pb-2"><i class="fas fa-clipboard-check me-2"></i> Status</h6>
+                    <div class="fb-pay-panel" id="confirm-custom-amounts-row" style="display: none;">
+                        <div class="fb-pay-panel__head">
+                            <i class="bi bi-list-ul"></i> Custom Amounts
                         </div>
-                        <div class="col-md-6">
-                            <p class="mb-1"><strong>Delivery Status:</strong> <span id="confirm-delivery-status"></span>
-                            </p>
+                        <div class="fb-pay-panel__body">
+                            <div class="fb-pay-facts fb-pay-facts--3" id="confirm-custom-amounts-list"></div>
                         </div>
-                        <div class="col-md-6">
-                            <p class="mb-1"><strong>Cancellation Status:</strong> <span
-                                    id="confirm-cancellation-status"></span></p>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3" id="confirm-additional-charges-row">
-                        <div class="col-12">
-                            <h6 class="border-bottom pb-2"><i class="fas fa-plus-circle me-2"></i> Additional Charges</h6>
-                        </div>
-                        <div class="col-md-4">
-                            <p class="mb-1"><strong>Detention:</strong> <span id="confirm-detention"></span></p>
-                        </div>
-                        <div class="col-md-4">
-                            <p class="mb-1"><strong>Deviation:</strong> <span id="confirm-deviation"></span></p>
-                        </div>
-                        <div class="col-md-4">
-                            <p class="mb-1"><strong>Misc Expense:</strong> <span id="confirm-misc-expense"></span></p>
-                        </div>
-                        <div class="col-md-6">
-                            <p class="mb-1"><strong>Damage Amount:</strong> <span id="confirm-damage-amount"></span></p>
-                        </div>
-                        <div class="col-md-6">
-                            <p class="mb-1"><strong>Shortage Amount:</strong> <span id="confirm-shortage-amount"></span>
-                            </p>
+                        <div class="fb-pay-total">
+                            <span>Custom amounts total</span>
+                            <strong id="confirm-custom-amounts-total"></strong>
                         </div>
                     </div>
 
-                    <div class="row mb-3" id="confirm-remark-row">
-                        <div class="col-12">
-                            <h6 class="border-bottom pb-2"><i class="fas fa-comment-alt me-2"></i> Remarks</h6>
-                            <p class="mb-1" id="confirm-remark"></p>
+                    <div class="fb-pay-panel" id="confirm-delivery-status-row">
+                        <div class="fb-pay-panel__head">
+                            <i class="bi bi-clipboard-check"></i> Status
+                        </div>
+                        <div class="fb-pay-panel__body">
+                            <div class="fb-pay-facts fb-pay-facts--2">
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">Delivery Status</span>
+                                    <div class="fb-pay-fact__value" id="confirm-delivery-status"></div>
+                                </div>
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">Cancellation Status</span>
+                                    <div class="fb-pay-fact__value" id="confirm-cancellation-status"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="fb-pay-panel" id="confirm-additional-charges-row" style="display: none;">
+                        <div class="fb-pay-panel__head">
+                            <i class="bi bi-plus-circle"></i> Additional Charges
+                        </div>
+                        <div class="fb-pay-panel__body">
+                            <div class="fb-pay-facts fb-pay-facts--5">
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">Detention</span>
+                                    <div class="fb-pay-fact__value" id="confirm-detention"></div>
+                                </div>
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">Deviation</span>
+                                    <div class="fb-pay-fact__value" id="confirm-deviation"></div>
+                                </div>
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">Misc Expense</span>
+                                    <div class="fb-pay-fact__value" id="confirm-misc-expense"></div>
+                                </div>
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">Damage Amount</span>
+                                    <div class="fb-pay-fact__value" id="confirm-damage-amount"></div>
+                                </div>
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">Shortage Amount</span>
+                                    <div class="fb-pay-fact__value" id="confirm-shortage-amount"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="fb-pay-panel" id="confirm-remark-row" style="display: none;">
+                        <div class="fb-pay-panel__head">
+                            <i class="bi bi-chat-left-text"></i> Remarks
+                        </div>
+                        <div class="fb-pay-panel__body">
+                            <div class="fb-pay-fact__value" id="confirm-remark"></div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i> Cancel
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg me-1"></i> Cancel
                     </button>
                     <button type="button" class="btn btn-brand-primary" id="confirmUpdateBtn">
-                        <i class="fas fa-check-circle me-1"></i> Confirm Update
+                        <i class="bi bi-check-lg me-1"></i> Confirm Update
                     </button>
                 </div>
             </div>
         </div>
     </div>
+
     <!-- Step 1: Confirmation Modal -->
-    <div class="modal fade" id="askMemoModal" tabindex="-1" aria-labelledby="askMemoModalLabel" aria-hidden="true">
+    <div class="modal fade fb-pay-modal" id="askMemoModal" tabindex="-1" aria-labelledby="askMemoModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="askMemoModalLabel">Memo ID Confirmation</h5>
+                    <h5 class="modal-title" id="askMemoModalLabel">
+                        <i class="bi bi-journal-text"></i>
+                        Memo ID Confirmation
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Do you want to enter a Memo ID for this delivery?</p>
+                    <div class="fb-confirm-note mb-0">
+                        <i class="bi bi-info-circle"></i>
+                        Do you want to enter a Memo ID for this delivery?
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" id="noMemoBtn">No, Continue Without Memo</button>
-                    <button type="button" class="btn btn-primary" id="yesMemoBtn">Yes, Enter Memo ID</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-outline-danger" id="noMemoBtn">No, Continue Without Memo</button>
+                    <button type="button" class="btn btn-brand-primary" id="yesMemoBtn">Yes, Enter Memo ID</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Modal for Memo ID Entry -->
-    <div class="modal fade" id="memoIdModal" tabindex="-1" aria-labelledby="memoIdModalLabel" aria-hidden="true"
-        data-bs-backdrop="false">
+    <div class="modal fade fb-pay-modal" id="memoIdModal" tabindex="-1" aria-labelledby="memoIdModalLabel"
+        aria-hidden="true" data-bs-backdrop="false">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="memoIdModalLabel">Enter Memo ID for Delivery</h5>
+                    <h5 class="modal-title" id="memoIdModalLabel">
+                        <i class="bi bi-pencil-square"></i>
+                        Enter Memo ID for Delivery
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> A Memo ID is required to mark this good hire (lorry hire) as delivered.
+                    <div class="fb-confirm-note">
+                        <i class="bi bi-info-circle"></i>
+                        A Memo ID is required to mark this good hire as delivered.
                     </div>
-                    <form id="memoIdForm">
-                        <div class="mb-3">
-                            <label for="deliveryMemoId" class="form-label">Memo ID *</label>
-                            <input type="text" class="form-control" id="deliveryMemoId" name="memo_id" required
-                                placeholder="Enter memo ID" pattern="[A-Za-z0-9\-\/]+">
-                            <small class="form-text text-muted">This will be saved to the good receipt (bilty) record.</small>
+                    <div class="fb-pay-panel">
+                        <div class="fb-pay-panel__head">
+                            <i class="bi bi-hash"></i> Memo Details
                         </div>
-                    </form>
-                </div>
-                <div class="modal-body" id="memoModalError" style="display: none;">
-                    <div class="alert alert-danger" id="memoErrorMessage"></div>
+                        <div class="fb-pay-panel__body">
+                            <form id="memoIdForm">
+                                <div class="fb-pay-fields" style="grid-template-columns: 1fr;">
+                                    <div>
+                                        <label for="deliveryMemoId" class="form-label">Memo ID *</label>
+                                        <input type="text" class="form-control" id="deliveryMemoId" name="memo_id"
+                                            required placeholder="Enter memo ID" pattern="[A-Za-z0-9\-\/]+">
+                                        <div class="lrf-pf__hint mt-1">Saved to the good receipt (bilty) record.</div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div id="memoModalError" style="display: none;">
+                        <div class="alert alert-danger mb-0" id="memoErrorMessage"></div>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="saveMemoId()" id="saveMemoBtn">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-brand-primary" onclick="saveMemoId()" id="saveMemoBtn">
                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"
                             style="display: none;"></span>
                         Save Memo ID
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Custom Amount Confirmation -->
+    <div class="modal fade fb-pay-modal" id="deleteCustomAmountModal" tabindex="-1"
+        aria-labelledby="deleteCustomAmountModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteCustomAmountModalLabel">
+                        <i class="bi bi-trash"></i>
+                        Remove Custom Amount
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="fb-confirm-note">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        This adjustment will be removed from the balance calculation. You can still cancel without saving.
+                    </div>
+                    <div class="fb-pay-panel fb-pay-panel--alloc">
+                        <div class="fb-pay-panel__head">
+                            <i class="bi bi-plus-slash-minus"></i> Amount to remove
+                        </div>
+                        <div class="fb-pay-panel__body">
+                            <div class="fb-pay-facts fb-pay-facts--2">
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">Description</span>
+                                    <div class="fb-pay-fact__value" id="deleteCustomAmountDesc">—</div>
+                                </div>
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">Amount</span>
+                                    <div class="fb-pay-fact__value fb-pay-fact__value--warn" id="deleteCustomAmountValue">₹0.00</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg me-1"></i> Keep it
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" id="confirmDeleteCustomAmountBtn">
+                        <i class="bi bi-trash me-1"></i> Remove
                     </button>
                 </div>
             </div>
@@ -972,20 +1066,20 @@
                     const tdsAmount = document.getElementById('tds_amount').value;
                     const balanceAmount = document.getElementById('balance_amount').value;
 
-                    document.getElementById('confirm-tr-rate').textContent = '' + parseFloat(trRate)
-                        .toFixed(2) + ' per ton';
-                    document.getElementById('confirm-tr-amount').textContent = '' + parseFloat(trAmount)
+                    document.getElementById('confirm-tr-rate').textContent = '₹' + parseFloat(trRate)
+                        .toFixed(2) + ' / ton';
+                    document.getElementById('confirm-tr-amount').textContent = '₹' + parseFloat(trAmount)
                         .toFixed(2);
-                    document.getElementById('confirm-tds-amount').textContent = '' + parseFloat(tdsAmount)
+                    document.getElementById('confirm-tds-amount').textContent = '₹' + parseFloat(tdsAmount)
                         .toFixed(2);
-                    document.getElementById('confirm-balance-amount').textContent = '' + parseFloat(
+                    document.getElementById('confirm-balance-amount').textContent = '₹' + parseFloat(
                         balanceAmount).toFixed(2);
 
                     const negativeAdjustedAmount = parseFloat(document.getElementById('negative_adjusted_amount')?.value || 0) || 0;
                     const negativeAdjustedWrap = document.getElementById('confirm-negative-adjusted-wrap');
                     if (negativeAdjustedWrap) {
-                        negativeAdjustedWrap.style.display = negativeAdjustedAmount > 0 ? 'block' : 'none';
-                        document.getElementById('confirm-negative-adjusted').textContent = '' + negativeAdjustedAmount.toFixed(2);
+                        negativeAdjustedWrap.style.display = negativeAdjustedAmount > 0 ? '' : 'none';
+                        document.getElementById('confirm-negative-adjusted').textContent = '₹' + negativeAdjustedAmount.toFixed(2);
                     }
 
                     const customAmountRows = document.querySelectorAll('#custom-amounts-body .custom-amount-row');
@@ -993,7 +1087,7 @@
                     const customAmountsList = document.getElementById('confirm-custom-amounts-list');
                     if (customAmountsRow && customAmountsList) {
                         if (customAmountRows.length > 0) {
-                            customAmountsRow.style.display = 'flex';
+                            customAmountsRow.style.display = 'block';
                             customAmountsList.innerHTML = '';
                             let customTotal = 0;
 
@@ -1002,13 +1096,15 @@
                                 const amount = parseFloat(row.querySelector('.custom-amount-value')?.value || 0) || 0;
                                 customTotal += amount;
 
-                                const item = document.createElement('p');
-                                item.className = 'mb-1';
-                                item.innerHTML = '<strong>' + description + ':</strong> ' + amount.toFixed(2);
+                                const item = document.createElement('div');
+                                item.className = 'fb-pay-fact';
+                                item.innerHTML = '<span class="fb-pay-fact__label"></span><div class="fb-pay-fact__value"></div>';
+                                item.querySelector('.fb-pay-fact__label').textContent = description || 'Custom amount';
+                                item.querySelector('.fb-pay-fact__value').textContent = '₹' + amount.toFixed(2);
                                 customAmountsList.appendChild(item);
                             });
 
-                            document.getElementById('confirm-custom-amounts-total').textContent = '' + customTotal.toFixed(2);
+                            document.getElementById('confirm-custom-amounts-total').textContent = '₹' + customTotal.toFixed(2);
                         } else {
                             customAmountsRow.style.display = 'none';
                             customAmountsList.innerHTML = '';
@@ -1030,7 +1126,7 @@
                     // Additional charges (only show if delivered)
                     const additionalChargesRow = document.getElementById('confirm-additional-charges-row');
                     if (isDelivered) {
-                        additionalChargesRow.style.display = 'flex';
+                        additionalChargesRow.style.display = 'block';
 
                         const detention = document.getElementById('detention').value || '0.00';
                         const deviation = document.getElementById('deviation').value || '0.00';
@@ -1038,15 +1134,15 @@
                         const damageAmount = document.getElementById('damage_amount').value || '0.00';
                         const shortageAmount = document.getElementById('shortage_amount').value || '0.00';
 
-                        document.getElementById('confirm-detention').textContent = '' + parseFloat(
+                        document.getElementById('confirm-detention').textContent = '₹' + parseFloat(
                             detention).toFixed(2);
-                        document.getElementById('confirm-deviation').textContent = '' + parseFloat(
+                        document.getElementById('confirm-deviation').textContent = '₹' + parseFloat(
                             deviation).toFixed(2);
-                        document.getElementById('confirm-misc-expense').textContent = '' + parseFloat(
+                        document.getElementById('confirm-misc-expense').textContent = '₹' + parseFloat(
                             miscExpense).toFixed(2);
-                        document.getElementById('confirm-damage-amount').textContent = '' + parseFloat(
+                        document.getElementById('confirm-damage-amount').textContent = '₹' + parseFloat(
                             damageAmount).toFixed(2);
-                        document.getElementById('confirm-shortage-amount').textContent = '' + parseFloat(
+                        document.getElementById('confirm-shortage-amount').textContent = '₹' + parseFloat(
                             shortageAmount).toFixed(2);
                     } else {
                         additionalChargesRow.style.display = 'none';
@@ -1058,7 +1154,7 @@
                     const remarkElement = document.getElementById('confirm-remark');
 
                     if (remark && remark.trim() !== '') {
-                        remarkRow.style.display = 'flex';
+                        remarkRow.style.display = 'block';
                         remarkElement.textContent = remark;
                     } else {
                         remarkRow.style.display = 'none';
@@ -1135,10 +1231,21 @@
 
                 const totalDisplay = document.getElementById('custom-amounts-total');
                 if (totalDisplay) {
-                    totalDisplay.textContent = total.toFixed(2);
+                    totalDisplay.textContent = '₹' + total.toFixed(2);
                 }
 
                 return total;
+            }
+
+            function syncCustomAmountsEmptyState() {
+                const body = document.getElementById('custom-amounts-body');
+                const empty = document.getElementById('custom-amounts-empty');
+                if (!body || !empty) {
+                    return;
+                }
+
+                const hasRows = body.querySelectorAll('.custom-amount-row').length > 0;
+                empty.classList.toggle('d-none', hasRows);
             }
 
             function reindexCustomAmountRows() {
@@ -1163,15 +1270,21 @@
                 const addBtn = document.getElementById('addCustomAmountRow');
                 const body = document.getElementById('custom-amounts-body');
                 const template = document.getElementById('custom-amount-row-template');
+                const deleteModalEl = document.getElementById('deleteCustomAmountModal');
+                const confirmDeleteBtn = document.getElementById('confirmDeleteCustomAmountBtn');
+                let pendingDeleteRow = null;
 
                 if (!addBtn || !body || !template) {
                     return;
                 }
 
+                const deleteModal = deleteModalEl ? new bootstrap.Modal(deleteModalEl) : null;
+
                 addBtn.addEventListener('click', function() {
                     const clone = template.content.cloneNode(true);
                     body.appendChild(clone);
                     reindexCustomAmountRows();
+                    syncCustomAmountsEmptyState();
                     getCustomAmountsTotal();
                     calculateTdsAndBalance();
                 });
@@ -1182,11 +1295,47 @@
                         return;
                     }
 
-                    removeBtn.closest('.custom-amount-row')?.remove();
-                    reindexCustomAmountRows();
-                    getCustomAmountsTotal();
-                    calculateTdsAndBalance();
+                    const row = removeBtn.closest('.custom-amount-row');
+                    if (!row) {
+                        return;
+                    }
+
+                    if (!deleteModal) {
+                        row.remove();
+                        reindexCustomAmountRows();
+                        syncCustomAmountsEmptyState();
+                        getCustomAmountsTotal();
+                        calculateTdsAndBalance();
+                        return;
+                    }
+
+                    pendingDeleteRow = row;
+                    const description = row.querySelector('[name*="[description]"], .custom-amount-description')?.value?.trim() || 'Untitled';
+                    const amount = parseFloat(row.querySelector('.custom-amount-value')?.value || 0) || 0;
+                    document.getElementById('deleteCustomAmountDesc').textContent = description;
+                    document.getElementById('deleteCustomAmountValue').textContent = '₹' + amount.toFixed(2);
+                    deleteModal.show();
                 });
+
+                if (confirmDeleteBtn) {
+                    confirmDeleteBtn.addEventListener('click', function() {
+                        if (pendingDeleteRow) {
+                            pendingDeleteRow.remove();
+                            pendingDeleteRow = null;
+                            reindexCustomAmountRows();
+                            syncCustomAmountsEmptyState();
+                            getCustomAmountsTotal();
+                            calculateTdsAndBalance();
+                        }
+                        deleteModal?.hide();
+                    });
+                }
+
+                if (deleteModalEl) {
+                    deleteModalEl.addEventListener('hidden.bs.modal', function() {
+                        pendingDeleteRow = null;
+                    });
+                }
 
                 body.addEventListener('input', function(event) {
                     if (event.target.classList.contains('custom-amount-value')) {
@@ -1195,6 +1344,7 @@
                     }
                 });
 
+                syncCustomAmountsEmptyState();
                 getCustomAmountsTotal();
             }
 

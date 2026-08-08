@@ -174,13 +174,13 @@ class TransporterMasterController extends Controller
 
         return '
             <div class="d-flex gap-1 justify-content-center">
-                <a href="'.$editUrl.'" class="btn btn-sm btn-edit" title="Edit">
+                <a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-action-edit" title="Edit">
                     <i class="bi bi-pencil"></i>
                 </a>
                 <form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Delete this transporter master?\')">
                     '.csrf_field().'
                     '.method_field('DELETE').'
-                    <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                    <button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete">
                         <i class="bi bi-trash"></i>
                     </button>
                 </form>

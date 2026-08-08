@@ -1209,10 +1209,10 @@ lrItemsContainer.addEventListener('blur', function(e) {
                         '—';
 
                     const confirmationHTML = `
-            <div class="confirmation-details text-start">
-                <div class="alert alert-soft-primary bg-primary bg-opacity-10 border-0 mb-3 py-2 px-3 d-flex align-items-center rounded-3">
-                    <i class="fas fa-info-circle text-primary me-2"></i>
-                    <h6 class="mb-0 text-primary fw-bold" style="font-size:0.9rem;">Review Linked Lorry Receipts</h6>
+            <div class="lrf-receipt-confirm text-start">
+                <div class="lrf-receipt-confirm__note">
+                    <i class="bi bi-info-circle"></i>
+                    <span>Please review linked good receipt details before confirming.</span>
                 </div>
 
                 <div class="row g-2 mb-3">
@@ -1298,15 +1298,24 @@ lrItemsContainer.addEventListener('blur', function(e) {
             </div>`;
 
                     if (typeof Swal !== 'undefined') {
+                        window.LREntity?.ensureConfirmModalStyles?.();
                         Swal.fire({
-                            title: 'Confirm Linked LR Updates',
+                            title: 'Confirm Linked Good Receipts',
                             html: confirmationHTML,
-                            icon: 'question',
                             showCancelButton: true,
-                            confirmButtonColor: '#28a745',
-                            confirmButtonText: '✅ Update',
-                            cancelButtonText: '❌ Cancel',
-                            width: '90%'
+                            confirmButtonText: 'Confirm Update',
+                            cancelButtonText: 'Cancel',
+                            reverseButtons: true,
+                            allowOutsideClick: false,
+                            width: 'auto',
+                            customClass: {
+                                popup: 'lrf-swal-popup lrf-swal-popup--wide',
+                                title: 'lrf-swal-title',
+                                htmlContainer: 'lrf-swal-html',
+                                actions: 'lrf-swal-actions',
+                                confirmButton: 'lrf-swal-confirm',
+                                cancelButton: 'lrf-swal-cancel'
+                            }
                         }).then((result) => {
                             if (result.isConfirmed) {
                                 compileAndSubmit(form);

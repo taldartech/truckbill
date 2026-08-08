@@ -412,21 +412,21 @@ class FreightBookingController extends Controller
                 })
                 ->addColumn('actions', function (FreightBooking $booking) use ($request) {
                     $listingQuerySuffix = ListingQueryString::suffix($request, ListingQueryString::FREIGHT_BOOKING_KEYS);
-                    $html = '<div class="d-flex justify-content-center gap-1">';
-                    $html .= '<a href="'.e(route('freight_bookings.show', $booking->id).$listingQuerySuffix).'" class="btn-action btn-action-info" title="View"><i class="bi bi-eye"></i></a>';
-                    $html .= '<a href="'.e(route('freight_bookings.edit', $booking->id).$listingQuerySuffix).'" class="btn-action btn-action-primary" title="Edit"><i class="bi bi-pencil"></i></a>';
+                    $html = '<div class="app-index-table-actions">';
+                    $html .= '<a href="'.e(route('freight_bookings.show', $booking->id).$listingQuerySuffix).'" class="btn btn-sm btn-icon btn-action-view" title="View" data-bs-toggle="tooltip"><i class="bi bi-eye"></i></a>';
+                    $html .= '<a href="'.e(route('freight_bookings.edit', $booking->id).$listingQuerySuffix).'" class="btn btn-sm btn-icon btn-action-edit" title="Edit" data-bs-toggle="tooltip"><i class="bi bi-pencil"></i></a>';
 
                     $lr = $booking->lr;
                     if ($lr) {
                         $printTitle = $booking->voucher_last_printed_at
                             ? 'Last printed: '.$booking->voucher_last_printed_at->format('d-m-Y h:i A')
                             : 'Print voucher challan';
-                        $btnClass = $booking->voucher_printed ? 'btn-action-success' : 'btn-action-outline-success';
+                        $printedClass = $booking->voucher_printed ? ' is-printed' : '';
                         $html .= '<a href="'.e(route('reports.voucher-receipt-export', ['lr_id' => $lr->id])).'" ';
-                        $html .= 'class="btn-action voucher-print-btn '.$btnClass.'" ';
+                        $html .= 'class="btn btn-sm btn-icon btn-action-print voucher-print-btn'.$printedClass.'" ';
                         $html .= 'data-freight-booking-id="'.e((string) $booking->id).'" ';
                         $html .= 'data-mark-url="'.e(route('reports.voucher-receipt-mark-printed')).'" ';
-                        $html .= 'title="'.e($printTitle).'"><i class="bi bi-file-earmark-text"></i></a>';
+                        $html .= 'title="'.e($printTitle).'" data-bs-toggle="tooltip"><i class="bi bi-file-earmark-text"></i></a>';
                     }
 
                     $html .= '</div>';

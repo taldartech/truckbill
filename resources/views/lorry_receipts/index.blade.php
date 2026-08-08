@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}">
     <style>
         :root {
             --glass-bg: rgba(255, 255, 255, 0.75);
@@ -22,95 +23,135 @@
         }
 
         .table td, .table th {
-            padding: 6px 8px !important;
-            font-size: 11.5px !important;
+            padding: 3px 3px !important;
+            font-size: 12.5px !important;
+            line-height: 1.25 !important;
             vertical-align: middle;
             border-color: rgba(0,0,0,0.05) !important;
         }
 
-        /* Horizontal Scrolling & Layout */
-        .table-responsive {
-            overflow-x: auto !important;
-            scrollbar-width: thin;
+        .app-index-table > :not(caption) > * > * {
+            padding: 3px 3px !important;
+        }
+
+        .lorry-receipts-index .table-responsive {
+            max-height: none !important;
+            overflow-x: visible !important;
+            overflow-y: visible !important;
         }
 
         #lorryReceiptsTable {
-            min-width: 1200px; /* Force overflow on smaller screens */
+            width: 100% !important;
+            min-width: 0 !important;
+            table-layout: fixed;
+            border-collapse: collapse;
+            border-spacing: 0;
         }
 
         #lorryReceiptsTable th,
         #lorryReceiptsTable td {
-            white-space: nowrap !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-left: 3px !important;
+            padding-right: 3px !important;
         }
 
-        /* Sticky Header Fix for Horizontal Scroll */
         #lorryReceiptsTable thead th {
             position: sticky;
             top: 0;
             background: var(--brand-table-header-bg) !important;
             z-index: 20;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            padding-top: 4px !important;
+            padding-bottom: 4px !important;
+            padding-left: 3px !important;
+            padding-right: 3px !important;
+            font-size: 11.5px !important;
+            font-weight: 700;
+            letter-spacing: 0;
+        }
+
+        /* Compact column widths so the row fits without horizontal scroll */
+        #lorryReceiptsTable th:nth-child(1),
+        #lorryReceiptsTable td:nth-child(1) { width: 6.5%; }  /* GR Date */
+        #lorryReceiptsTable th:nth-child(2),
+        #lorryReceiptsTable td:nth-child(2) { width: 9.5%; }  /* LR Details */
+        #lorryReceiptsTable th:nth-child(3),
+        #lorryReceiptsTable td:nth-child(3) { width: 12%; }   /* Customer */
+        #lorryReceiptsTable th:nth-child(4),
+        #lorryReceiptsTable td:nth-child(4) { width: 11%; }   /* Consignor */
+        #lorryReceiptsTable th:nth-child(5),
+        #lorryReceiptsTable td:nth-child(5) { width: 11%; }   /* Consignee */
+        #lorryReceiptsTable th:nth-child(6),
+        #lorryReceiptsTable td:nth-child(6) { width: 7.5%; }  /* Status */
+        #lorryReceiptsTable th:nth-child(7),
+        #lorryReceiptsTable td:nth-child(7) { width: 9%; }    /* Truck */
+        #lorryReceiptsTable th:nth-child(8),
+        #lorryReceiptsTable td:nth-child(8) { width: 6%; }    /* Weight */
+        #lorryReceiptsTable th:nth-child(9),
+        #lorryReceiptsTable td:nth-child(9) { width: 6%; }    /* Rate */
+        #lorryReceiptsTable th:nth-child(10),
+        #lorryReceiptsTable td:nth-child(10) { width: 8%; }   /* Amount */
+        #lorryReceiptsTable th:nth-child(11),
+        #lorryReceiptsTable td:nth-child(11) { width: 13.5%; } /* Action */
+
+        #lorryReceiptsTable td:nth-child(11),
+        #lorryReceiptsTable th:nth-child(11) {
+            overflow: visible;
+            text-overflow: clip;
+            padding-left: 2px !important;
+            padding-right: 2px !important;
+        }
+
+        .lorry-receipts-index .city-label {
+            font-size: 11px;
+        }
+
+        .lorry-receipts-index .status-pill {
+            font-size: 9.5px !important;
+            padding: 1px 5px !important;
+        }
+
+        .lorry-receipts-index .lr-number-link {
+            font-size: 12.5px;
+        }
+
+        .lorry-receipts-index .dataTables_wrapper,
+        .lorry-receipts-index .dataTables_scroll,
+        .lorry-receipts-index .dataTables_scrollHead,
+        .lorry-receipts-index .dataTables_scrollBody {
+            overflow-x: hidden !important;
+        }
+
+        .lorry-receipts-index .dataTables_scrollBody {
+            overflow-y: visible !important;
         }
 
         /* Status Dots */
         .status-dot {
-            width: 7px;
-            height: 7px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             display: inline-block;
-            margin-right: 6px;
+            margin-right: 4px;
         }
 
         .status-pill {
             display: inline-flex;
             align-items: center;
-            padding: 2px 8px !important;
+            padding: 1px 6px !important;
             border-radius: 50px !important;
             font-weight: 600 !important;
             text-transform: uppercase;
-            font-size: 9px !important;
-            letter-spacing: 0.05em;
+            font-size: 8.5px !important;
+            letter-spacing: 0.04em;
         }
 
         .status-delivered { background: var(--brand-active-bg); color: var(--brand-primary-dark); }
         .status-delivered .status-dot { background: var(--brand-success); }
         .status-pending { background: #FFF7ED; color: #9A3412; } /* Derived from Amber */
         .status-pending .status-dot { background: var(--brand-warning); }
-
-        /* Action Buttons */
-        .btn-action {
-            width: 28px;
-            height: 28px;
-            padding: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            border: none;
-            background: white;
-            color: var(--slate-600);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .btn-action:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            opacity: 0.9;
-        }
-
-        .btn-action i {
-            color: white !important;
-            font-size: 14px;
-        }
-
-        /* Semantic Button Colors */
-        .btn-action-warning { background: var(--warning-brand) !important; }
-        .btn-action-success { background: var(--success-brand) !important; }
-        .btn-action-info    { background: var(--brand-info) !important; }
-        .btn-action-primary { background: var(--primary-brand) !important; }
-        .btn-action-danger  { background: var(--danger-brand) !important; }
-        .btn-action-muted   { background: var(--brand-text-muted) !important; }
 
         .lr-number-link {
             color: var(--brand-primary) !important;
@@ -125,20 +166,20 @@
 
         .route-visual {
             color: #94a3b8;
-            font-size: 10px;
-            margin: 0 4px;
+            font-size: 9px;
+            margin: 0 3px;
         }
 
         .city-label {
-            font-size: 10.5px;
+            font-size: 10px;
             color: var(--slate-600);
             font-weight: 500;
         }
 
         .filter-action-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 10px;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -154,8 +195,8 @@
 
         .input-group-custom {
             background: white;
-            border-radius: 10px;
-            padding: 2px 8px;
+            border-radius: 8px;
+            padding: 1px 6px;
             border: 1px solid rgba(0,0,0,0.08);
             display: flex;
             align-items: center;
@@ -163,43 +204,60 @@
         }
 
         .input-group-custom span {
-            font-size: 10px;
+            font-size: 9px;
             text-transform: uppercase;
             font-weight: 700;
             color: var(--slate-600);
-            margin-right: 8px;
+            margin-right: 6px;
         }
 
         .input-group-custom input {
             border: none !important;
-            font-size: 12px !important;
-            padding: 2px 0 !important;
+            font-size: 11px !important;
+            padding: 1px 0 !important;
             background: transparent !important;
             outline: none !important;
             box-shadow: none !important;
+        }
+
+        .lorry-receipts-index .app-index-list-card {
+            margin-bottom: 0.75rem !important;
+        }
+
+        .lorry-receipts-index .app-index-list-card > .card-header {
+            padding: 0.4rem 0.75rem !important;
+            min-height: 0;
+        }
+
+        .lorry-receipts-index .app-index-dt-toolbar {
+            padding: 0.4rem 0.75rem !important;
+        }
+
+        .lorry-receipts-index .app-index-partload-pagination {
+            padding: 0.4rem 0.75rem !important;
         }
 
     </style>
 @endpush
 
 @section('content')
-    <div class="container-fluid mt-4 app-index-page app-index-page--standard">
+    <div class="container-fluid mt-2 pt-1 app-index-page app-index-page--standard lorry-receipts-index">
         @if (session('success'))
-            <div class="mb-3">
+            <div class="mb-2">
                 <span class="badge text-bg-dark border app-index-flash">
                     <i class="bi bi-check-circle-fill text-success"></i> {{ session('success') }}
                 </span>
             </div>
         @endif
         @if (session('error'))
-            <div class="mb-3">
+            <div class="mb-2">
                 <span class="badge text-bg-dark border app-index-flash">
                     <i class="bi bi-exclamation-triangle-fill text-danger"></i> {{ session('error') }}
                 </span>
             </div>
         @endif
 
-        <div class="card app-index-list-card mb-4">
+        <div class="card app-index-list-card mb-2">
             <div class="card-header">
                 <h3 class="card-title mb-0">Good Receipts (Bilty)</h3>
                 <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
@@ -212,7 +270,7 @@
                 </div>
             </div>
 
-            <div class="app-index-dt-toolbar d-flex flex-wrap justify-content-end align-items-center gap-3">
+            <div class="app-index-dt-toolbar d-flex flex-wrap justify-content-end align-items-center gap-2">
                 <div class="d-flex flex-wrap align-items-center gap-2">
                     <div class="input-group-custom">
                         <span>From</span>
@@ -234,7 +292,7 @@
             </div>
 
             <div class="card-body">
-                <div class="table-responsive" style="max-height: calc(100vh - 250px); overflow-y: auto;">
+                <div class="table-responsive">
                     <table id="lorryReceiptsTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
                         <thead class="table-light">
                             <tr>
@@ -257,28 +315,57 @@
         </div>
     </div>
     <!-- LR Copy Modal -->
-    <div class="modal fade" id="lrCopyModal" tabindex="-1" aria-labelledby="lrCopyModalLabel" aria-hidden="true">
+    <div class="modal fade fb-pay-modal" id="lrCopyModal" tabindex="-1" aria-labelledby="lrCopyModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="lrCopyModalLabel">
-                        <i class="bi bi-file-earmark-text"></i> LR Copy
+                        <i class="bi bi-file-earmark-pdf"></i>
+                        LR Copy
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body text-center">
-                    <p class="mb-2 small text-muted">
+                <div class="modal-body">
+                    <div class="fb-confirm-note">
+                        <i class="bi bi-info-circle"></i>
                         PDF layout (A / B / C) uses the Good Receipt LR copy template saved in Company settings.
-                    </p>
-                    <p class="mb-4">Select the type of LR copy you want to generate:</p>
-                    <div class="d-flex gap-3 justify-content-center">
-                        <button type="button" class="btn btn-primary btn-lg" onclick="generateLrCopy(true)">
-                            <i class="bi bi-truck"></i> With Freight
-                        </button>
-                        <button type="button" class="btn btn-primary btn-lg" onclick="generateLrCopy(false)">
-                            <i class="bi bi-file-text"></i> Without Freight
-                        </button>
                     </div>
+
+                    <div class="fb-pay-panel">
+                        <div class="fb-pay-panel__head">
+                            <i class="bi bi-printer"></i> Choose copy type
+                        </div>
+                        <div class="fb-pay-panel__body">
+                            <div class="lr-copy-choices">
+                                <button type="button" class="lr-copy-choice" data-with-freight="1">
+                                    <span class="lr-copy-choice__icon">
+                                        <i class="bi bi-currency-rupee"></i>
+                                    </span>
+                                    <span class="lr-copy-choice__text">
+                                        <span class="lr-copy-choice__title">With Freight</span>
+                                        <span class="lr-copy-choice__desc">Include freight charges on the PDF</span>
+                                    </span>
+                                    <i class="bi bi-chevron-right lr-copy-choice__arrow"></i>
+                                </button>
+                                <button type="button" class="lr-copy-choice" data-with-freight="0">
+                                    <span class="lr-copy-choice__icon lr-copy-choice__icon--muted">
+                                        <i class="bi bi-file-text"></i>
+                                    </span>
+                                    <span class="lr-copy-choice__text">
+                                        <span class="lr-copy-choice__title">Without Freight</span>
+                                        <span class="lr-copy-choice__desc">Hide freight charges on the PDF</span>
+                                    </span>
+                                    <i class="bi bi-chevron-right lr-copy-choice__arrow"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg me-1"></i> Cancel
+                    </button>
                 </div>
             </div>
         </div>
@@ -736,8 +823,8 @@
                     ],
                     order: [[0, 'desc']],
                     pageLength: 25,
-                    responsive: false, // Disable responsive collapse
-                    scrollX: true, // Enable DataTables horizontal scroll
+                    responsive: false,
+                    scrollX: false,
                     autoWidth: false,
                     dom: '<"app-index-dt-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2"<"d-flex flex-wrap align-items-center gap-2"l><"d-flex flex-wrap align-items-center gap-2"f>>' +
                         't' +
@@ -966,9 +1053,13 @@
             // LR Copy functionality
             let currentLrId = null;
 
-            // Handle LR Copy button click
             $(document).on('click', '.lr-copy-btn', function() {
                 currentLrId = $(this).data('lr-id');
+            });
+
+            $(document).on('click', '.lr-copy-choice', function() {
+                const withFreight = String($(this).data('with-freight')) === '1';
+                generateLrCopy(withFreight);
             });
 
             function generateLrCopy(withFreight) {
@@ -977,30 +1068,26 @@
                     return;
                 }
 
-                const url = '{{ route("reports.lr-copy-export") }}?lr_id=' + currentLrId + '&show_freight=' + (withFreight ? '1' : '0');
+                const url = '{{ route("reports.lr-copy-export") }}?lr_id=' + currentLrId +
+                    '&show_freight=' + (withFreight ? '1' : '0');
                 window.open(url, '_blank');
 
-                // Close modal and remove backdrop
                 const modalElement = document.getElementById('lrCopyModal');
                 const modal = bootstrap.Modal.getInstance(modalElement);
 
                 if (modal) {
-                    // Hide modal
                     modal.hide();
 
-                    // Remove backdrop immediately
                     setTimeout(function() {
                         const backdrop = document.querySelector('.modal-backdrop');
                         if (backdrop) {
                             backdrop.remove();
                         }
-                        // Remove modal-open class and styles from body
                         document.body.classList.remove('modal-open');
                         document.body.style.overflow = '';
                         document.body.style.paddingRight = '';
                     }, 100);
                 } else {
-                    // If modal instance doesn't exist, manually remove backdrop
                     const backdrop = document.querySelector('.modal-backdrop');
                     if (backdrop) {
                         backdrop.remove();
@@ -1010,6 +1097,8 @@
                     document.body.style.paddingRight = '';
                 }
             }
+
+            window.generateLrCopy = generateLrCopy;
         </script>
     @endpush
 @endsection

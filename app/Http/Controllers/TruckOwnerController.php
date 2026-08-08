@@ -194,25 +194,25 @@ class TruckOwnerController extends Controller
     private function getActionButtons($truckOwner)
     {
         $is_admin = Auth::user()->canActAsAdmin();
-        $buttons = '<div class="d-flex gap-1">';
+        $buttons = '<div class="app-index-table-actions">';
 
         // Add Truck Button (modal trigger for truck owners)
-        $buttons .= '<button type="button" class="btn btn-sm btn-view add-truck-btn" aria-label="Add Truck" title="Add Truck" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="'.$truckOwner->id.'" data-transporter-name="'.htmlspecialchars($truckOwner->name).'">';
+        $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-add add-truck-btn" aria-label="Add Truck" title="Add Truck" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="'.$truckOwner->id.'" data-transporter-name="'.htmlspecialchars($truckOwner->name).'">';
         $buttons .= '<i class="bi bi-truck"></i></button>';
 
         if ($is_admin) {
             // Advance Payment Button (same as transporters)
-            $buttons .= '<button type="button" class="btn btn-sm btn-view advance-payment-btn" aria-label="Advance Payment" title="Advance Payment" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="'.$truckOwner->id.'" data-transporter-name="'.htmlspecialchars($truckOwner->name).'">';
+            $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-advance advance-payment-btn" aria-label="Advance Payment" title="Advance Payment" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="'.$truckOwner->id.'" data-transporter-name="'.htmlspecialchars($truckOwner->name).'">';
             $buttons .= '<i class="bi bi-currency-rupee"></i>';
             $buttons .= '</button>';
 
             // Edit Button (same as transporters)
             $editUrl = route('truck_owners.edit', $truckOwner->id);
-            $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-edit" title="Edit Truck Owner" aria-label="Edit Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip">';
+            $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-action-edit" title="Edit Truck Owner" aria-label="Edit Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip">';
             $buttons .= '<i class="bi bi-pencil"></i></a>';
 
             // Delete Button (AJAX-based)
-            $buttons .= '<button type="button" class="btn btn-sm btn-danger delete-truck-owner-btn" aria-label="Delete Truck Owner" title="Delete Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip" data-truck-owner-id="'.$truckOwner->id.'" data-truck-owner-name="'.htmlspecialchars($truckOwner->name).'">';
+            $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-delete delete-truck-owner-btn" aria-label="Delete Truck Owner" title="Delete Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip" data-truck-owner-id="'.$truckOwner->id.'" data-truck-owner-name="'.htmlspecialchars($truckOwner->name).'">';
             $buttons .= '<i class="bi bi-trash"></i></button>';
         }
         $buttons .= '</div>';

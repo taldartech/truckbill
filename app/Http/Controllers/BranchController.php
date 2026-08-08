@@ -103,16 +103,16 @@ class BranchController extends Controller
      */
     private function getActionButtons(Branch $branch): string
     {
-        $buttons = '<div class="d-flex gap-1">';
+        $buttons = '<div class="app-index-table-actions">';
 
         $editUrl = route('branches.edit', $branch->id);
-        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-edit me-1" title="Edit Branch">';
+        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-icon btn-action-edit" title="Edit Branch">';
         $buttons .= '<i class="bi bi-pencil"></i></a>';
 
         $deleteUrl = route('branches.destroy', $branch->id);
         $buttons .= '<form action="' . $deleteUrl . '" method="POST" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete this branch?\')">';
         $buttons .= csrf_field() . method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Branch">';
+        $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete Branch">';
         $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
         $buttons .= '</div>';

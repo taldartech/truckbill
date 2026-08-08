@@ -222,14 +222,13 @@ class TruckController extends Controller
 
     private function getActionButtons($truck)
     {
-        $buttons = '<div class="d-flex gap-1">';
+        $buttons = '<div class="app-index-table-actions">';
 
         // Assign Driver button
-        $buttons .= '<button type="button" class="btn btn-sm btn-success assign-driver-btn" title="Assign Driver" data-bs-toggle="tooltip" ';
+        $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-driver assign-driver-btn" title="Assign Driver" data-bs-toggle="tooltip" ';
         $buttons .= 'data-truck-id="'.$truck->id.'" ';
         $buttons .= 'data-truck-number="'.htmlspecialchars($truck->truck_number).'" ';
         $buttons .= 'data-truck-type="'.htmlspecialchars($truck->truck_type).'" ';
-        // $buttons .= 'data-transporter-name="' . htmlspecialchars($truck->transporter->name) . '":"-" ';
         $buttons .= 'data-transporter-name="'.htmlspecialchars($truck->transporter_name ?? '-').'" ';
 
         $buttons .= 'data-current-driver-id="'.($truck->driver_id ?: '').'" ';
@@ -238,14 +237,14 @@ class TruckController extends Controller
 
         // Delete button
         $deleteUrl = route('trucks.destroy', $truck->id);
-        $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this truck?\')">';
+        $buttons .= '<form action="'.$deleteUrl.'" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this truck?\')">';
         $buttons .= csrf_field().method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Truck" data-bs-toggle="tooltip">';
+        $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete Truck" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
         // show button to assign truck owner for those whose transporter_id is null
         if ($truck->transporter_id == null) {
-            $buttons .= '<button type="button" class="btn btn-sm btn-view assign-owner-btn" title="Assign Truck Owner" data-bs-toggle="tooltip" ';
+            $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-view assign-owner-btn" title="Assign Truck Owner" data-bs-toggle="tooltip" ';
             $buttons .= 'data-truck-id="'.$truck->id.'" ';
             $buttons .= 'data-truck-number="'.htmlspecialchars($truck->truck_number).'" ';
             $buttons .= 'data-truck-type="'.htmlspecialchars($truck->truck_type).'" ';

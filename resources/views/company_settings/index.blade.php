@@ -38,9 +38,8 @@
                                     <div class="text-nowrap">{{ $company->pan_number }}</div>
                                 </td>
                                 <td class="app-index-actions-cell text-end">
-                                    <a href="{{ route('company_settings.edit', $company) }}" class="btn btn-sm btn-edit">
-                                        <i class="bi bi-pencil-square"></i>
-                                        <span class="d-none d-sm-inline">Edit</span>
+                                    <a href="{{ route('company_settings.edit', $company) }}" class="btn btn-sm btn-icon btn-action-edit" title="Edit" data-bs-toggle="tooltip">
+                                        <i class="bi bi-pencil"></i>
                                     </a>
                                 </td>
                             </tr>

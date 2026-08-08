@@ -155,18 +155,18 @@ class ConsigneeController extends Controller
 
     private function getActionButtons($consignee)
     {
-        $buttons = '<div class="d-flex gap-1">';
+        $buttons = '<div class="app-index-table-actions">';
 
         // Edit button
         $editUrl = route('consignees.edit', $consignee->id);
-        $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-edit" title="Edit Consignee">';
+        $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-action-edit" title="Edit Consignee" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-pencil"></i></a>';
 
         // Delete button
         $deleteUrl = route('consignees.destroy', $consignee->id);
-        $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this consignee?\')">';
+        $buttons .= '<form action="'.$deleteUrl.'" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this consignee?\')">';
         $buttons .= csrf_field().method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Consignee">';
+        $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete Consignee" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
         $buttons .= '</div>';

@@ -155,24 +155,24 @@ class InvoiceController extends Controller
 
     private function getActionButtons($invoice)
     {
-        $actions = '<div class="d-flex gap-1">';
+        $actions = '<div class="app-index-table-actions">';
 
-        $actions .= '<a href="'.route('invoices.show', $invoice->id).'" class="btn btn-sm btn-primary" title="View Invoice" data-bs-toggle="tooltip" target="_blank">';
+        $actions .= '<a href="'.route('invoices.show', $invoice->id).'" class="btn btn-sm btn-icon btn-action-view" title="View Invoice" data-bs-toggle="tooltip" target="_blank">';
         $actions .= '<i class="bi bi-eye"></i></a>';
 
-        $actions .= '<a href="'.route('reports.party-bill-export', ['invoice_number' => $invoice->id, 'type' => 'pdf']).'" class="btn btn-sm btn-primary" title="View PDF" data-bs-toggle="tooltip" target="_blank">';
+        $actions .= '<a href="'.route('reports.party-bill-export', ['invoice_number' => $invoice->id, 'type' => 'pdf']).'" class="btn btn-sm btn-icon btn-action-download" title="View PDF" data-bs-toggle="tooltip" target="_blank">';
         $actions .= '<i class="bi bi-file-earmark-text"></i></a>';
 
         if (Auth::user()->canActAsAdmin() && $invoice->payment_status === 'pending') {
-            $actions .= '<a href="'.route('invoices.edit', $invoice->id).'" class="btn btn-sm btn-edit" title="Edit Invoice" data-bs-toggle="tooltip">';
+            $actions .= '<a href="'.route('invoices.edit', $invoice->id).'" class="btn btn-sm btn-icon btn-action-edit" title="Edit Invoice" data-bs-toggle="tooltip">';
             $actions .= '<i class="bi bi-pencil"></i></a>';
         }
 
         if ($invoice->payment_status === 'pending' && $this->invoiceRowIsLatestForCompany($invoice)) {
-            $actions .= '<form method="POST" action="'.route('invoices.destroy', $invoice->id).'" style="display: inline;">';
+            $actions .= '<form method="POST" action="'.route('invoices.destroy', $invoice->id).'">';
             $actions .= csrf_field();
             $actions .= method_field('DELETE');
-            $actions .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm(\'Are you sure you want to delete this invoice?\')">';
+            $actions .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete" data-bs-toggle="tooltip" onclick="return confirm(\'Are you sure you want to delete this invoice?\')">';
             $actions .= '<i class="bi bi-trash"></i>';
             $actions .= '</button>';
             $actions .= '</form>';
@@ -190,7 +190,7 @@ class InvoiceController extends Controller
                 ? $invoice->invoice_number.($invoice->manual_invoice_number ? ' ('.$invoice->manual_invoice_number.')' : '')
                 : $invoice->manual_invoice_number;
 
-            $actions .= '<button type="button" class="btn btn-sm btn-view add-payment-btn" title="Add Payment" data-bs-toggle="tooltip"';
+            $actions .= '<button type="button" class="btn btn-sm btn-icon btn-action-mark-paid add-payment-btn" title="Add Payment" data-bs-toggle="tooltip"';
             $actions .= ' data-invoice-id="'.$invoice->id.'"';
             $actions .= ' data-invoice-number="'.e($invoiceLabel).'"';
             $actions .= ' data-total-amount="'.(float) $invoice->total_amount.'"';

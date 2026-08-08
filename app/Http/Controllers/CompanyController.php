@@ -219,26 +219,26 @@ class CompanyController extends Controller
 
     private function getActionButtons($company)
     {
-        $buttons = '<div class="d-flex gap-1">';
+        $buttons = '<div class="app-index-table-actions">';
 
         // Enter button (super_admin only) - company listing only, for companies they own
         if (auth()->check() && auth()->user()->userRole->name === 'super_admin' && $company->user_id === auth()->id() && ! $company->is_blocked) {
             $enterUrl = route('company.enter', $company);
-            $buttons .= '<a href="'.$enterUrl.'" class="btn btn-sm btn-success" title="Enter company panel">
+            $buttons .= '<a href="'.$enterUrl.'" class="btn btn-sm btn-icon btn-action-complete" title="Enter company panel">
                             <i class="bi bi-box-arrow-in-right"></i></a>';
         }
 
         // Edit button - always allow edit; GST scheme change restricted in edit form when invoices exist
         if (auth()->user()->userRole->name !== 'master_admin') {
             $editUrl = route('company.edit', $company->id);
-            $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-edit" title="Edit Company">
+            $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-action-edit" title="Edit Company">
                     <i class="bi bi-pencil"></i></a>';
 
             // Delete button
             $deleteUrl = route('company.destroy', $company->id);
             $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this company?\')">';
             $buttons .= csrf_field().method_field('DELETE');
-            $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Company">';
+            $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete Company">';
             $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
             $buttons .= '</div>';
@@ -247,12 +247,12 @@ class CompanyController extends Controller
         } else {
             if ($company->is_blocked) {
                 $unblockUrl = route('company.unblock', $company->id);
-                $buttons .= '<a href="'.$unblockUrl.'" class="btn btn-sm btn-danger" title="Unblock User"
+                $buttons .= '<a href="'.$unblockUrl.'" class="btn btn-sm btn-icon btn-action-restore" title="Unblock User"
                           onclick="return confirm(\'Are you sure you want to unblock this company?\');">
                           <i class="bi bi-unlock"></i></a>';
             } else {
                 $blockUrl = route('company.block', $company->id);
-                $buttons .= '<a href="'.$blockUrl.'" class="btn btn-sm btn-edit" title="Block User"
+                $buttons .= '<a href="'.$blockUrl.'" class="btn btn-sm btn-icon btn-action-cancel" title="Block User"
                           onclick="return confirm(\'Are you sure you want to block this company?\');">
                           <i class="bi bi-lock"></i></a>';
             }

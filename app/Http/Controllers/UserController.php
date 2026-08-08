@@ -179,16 +179,16 @@ class UserController extends Controller
      */
     private function getActionButtons(User $user): string
     {
-        $buttons = '<div class="d-flex gap-1">';
+        $buttons = '<div class="app-index-table-actions">';
 
         $editUrl = route('users.edit', $user->id);
-        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-edit" title="Edit User">';
+        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-icon btn-action-edit" title="Edit User">';
         $buttons .= '<i class="bi bi-pencil"></i></a>';
 
         $deleteUrl = route('users.destroy', $user->id);
         $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this user?\')">';
         $buttons .= csrf_field() . method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete User">';
+        $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete User">';
         $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
         if ($this->isMasterAdmin(Auth::user())) {
@@ -197,13 +197,13 @@ class UserController extends Controller
                 $buttons .= '<form action="' . $unblockUrl . '" method="POST" style="display:inline-block;" onsubmit="return handleUserStatusAction(this, \'unblock\')">';
                 $buttons .= csrf_field();
                 $buttons .= '<input type="hidden" name="reason" value="">';
-                $buttons .= '<button type="submit" class="btn btn-sm btn-warning" title="Unblock User"><i class="bi bi-unlock"></i></button></form>';
+                $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-restore" title="Unblock User"><i class="bi bi-unlock"></i></button></form>';
             } else {
                 $blockUrl = route('users.block', $user->id);
                 $buttons .= '<form action="' . $blockUrl . '" method="POST" style="display:inline-block;" onsubmit="return handleUserStatusAction(this, \'block\')">';
                 $buttons .= csrf_field();
                 $buttons .= '<input type="hidden" name="reason" value="">';
-                $buttons .= '<button type="submit" class="btn btn-sm btn-secondary" title="Block User"><i class="bi bi-lock"></i></button></form>';
+                $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-cancel" title="Block User"><i class="bi bi-lock"></i></button></form>';
             }
         }
 

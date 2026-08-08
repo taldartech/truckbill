@@ -95,14 +95,14 @@ class GoodsTypeController extends Controller
         $deleteUrl = route('master.goods-types.destroy', $goodsType->id);
 
         return '
-            <div class="d-flex gap-1">
-                <a href="' . $editUrl . '" class="btn btn-sm btn-edit">
+            <div class="app-index-table-actions">
+                <a href="' . $editUrl . '" class="btn btn-sm btn-icon btn-action-edit">
                     <i class="bi bi-pencil"></i>
                 </a>
                 <form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Delete this goods type?\')">
                     ' . csrf_field() . '
                     ' . method_field('DELETE') . '
-                    <button type="submit" class="btn btn-sm btn-danger">
+                    <button type="submit" class="btn btn-sm btn-icon btn-action-delete">
                         <i class="bi bi-trash"></i>
                     </button>
                 </form>

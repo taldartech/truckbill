@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}">
     <style>
         :root {
             --glass-bg: rgba(255, 255, 255, 0.75);
@@ -403,6 +404,47 @@
                 <div class="modal-footer">
                     <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" form="bulkMemoIdForm" class="btn btn-primary">Assign Memo ID</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voucher Print Confirmation -->
+    <div class="modal fade fb-pay-modal" id="voucherPrintConfirmModal" tabindex="-1"
+        aria-labelledby="voucherPrintConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="voucherPrintConfirmModalLabel">
+                        <i class="bi bi-printer"></i>
+                        Print Confirmation
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="fb-confirm-note">
+                        <i class="bi bi-info-circle"></i>
+                        Did you print voucher challan successfully?
+                    </div>
+                    <div class="fb-pay-panel">
+                        <div class="fb-pay-panel__head">
+                            <i class="bi bi-check2-circle"></i> Mark as printed
+                        </div>
+                        <div class="fb-pay-panel__body">
+                            <p class="mb-0" style="font-size: 0.84rem; color: #475569;">
+                                Choose <strong>Yes, Printed</strong> to record this print on the booking.
+                                Choose <strong>No</strong> if the print did not complete.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg me-1"></i> No
+                    </button>
+                    <button type="button" class="btn btn-brand-primary" id="voucherPrintConfirmYesBtn">
+                        <i class="bi bi-check-lg me-1"></i> Yes, Printed
+                    </button>
                 </div>
             </div>
         </div>
@@ -2788,63 +2830,80 @@
         });
     </script>
     <script>
-        document.addEventListener('click', function(event) {
-            const printButton = event.target.closest('.voucher-print-btn');
-            if (!printButton) {
-                return;
-            }
+        (function() {
+            let pendingPrintButton = null;
+            const confirmModalElement = document.getElementById('voucherPrintConfirmModal');
+            const confirmYesBtn = document.getElementById('voucherPrintConfirmYesBtn');
 
-            event.preventDefault();
-            const printUrl = printButton.getAttribute('href');
-            window.open(printUrl, '_blank');
-
-            Swal.fire({
-                icon: 'question',
-                title: 'Print Confirmation',
-                text: 'Did you print voucher challan successfully?',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, Printed',
-                cancelButtonText: 'No',
-                confirmButtonColor: '#198754',
-            }).then((result) => {
-                if (!result.isConfirmed) {
+            document.addEventListener('click', function(event) {
+                const printButton = event.target.closest('.voucher-print-btn');
+                if (!printButton) {
                     return;
                 }
 
-                fetch(printButton.dataset.markUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
-                                'content'),
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            freight_booking_id: printButton.dataset.freightBookingId
-                        }),
-                    })
-                    .then(async (response) => {
-                        const data = await response.json();
-                        if (!response.ok) {
-                            throw new Error(data.message || 'Failed to update print status.');
-                        }
-                        return data;
-                    })
-                    .then((data) => {
-                        printButton.classList.remove('btn-action-outline-success');
-                        printButton.classList.add('btn-action-success');
-                        printButton.setAttribute('title',
-                            `Last printed: ${data.voucher_last_printed_at}`);
-                    })
-                    .catch((error) => {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Update Failed',
-                            text: error.message || 'Could not update print status.',
-                        });
-                    });
+                event.preventDefault();
+                const printUrl = printButton.getAttribute('href');
+                window.open(printUrl, '_blank');
+
+                pendingPrintButton = printButton;
+                if (confirmModalElement && typeof bootstrap !== 'undefined') {
+                    bootstrap.Modal.getOrCreateInstance(confirmModalElement).show();
+                }
             });
-        });
+
+            if (confirmYesBtn) {
+                confirmYesBtn.addEventListener('click', function() {
+                    const printButton = pendingPrintButton;
+                    pendingPrintButton = null;
+
+                    if (confirmModalElement && typeof bootstrap !== 'undefined') {
+                        bootstrap.Modal.getOrCreateInstance(confirmModalElement).hide();
+                    }
+
+                    if (!printButton) {
+                        return;
+                    }
+
+                    fetch(printButton.dataset.markUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                    .getAttribute('content'),
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                freight_booking_id: printButton.dataset.freightBookingId
+                            }),
+                        })
+                        .then(async (response) => {
+                            const data = await response.json();
+                            if (!response.ok) {
+                                throw new Error(data.message || 'Failed to update print status.');
+                            }
+                            return data;
+                        })
+                        .then((data) => {
+                            printButton.classList.add('is-printed');
+                            printButton.setAttribute('title',
+                                `Last printed: ${data.voucher_last_printed_at}`);
+                        })
+                        .catch((error) => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Update Failed',
+                                text: error.message || 'Could not update print status.',
+                            });
+                        });
+                });
+            }
+
+            if (confirmModalElement) {
+                confirmModalElement.addEventListener('hidden.bs.modal', function() {
+                    pendingPrintButton = null;
+                });
+            }
+        })();
     </script>
 @endpush

@@ -131,14 +131,14 @@ class CityController extends Controller
         $deleteUrl = route('master.cities.destroy', $city->id);
         
         return '
-            <div class="d-flex gap-1">
-                <a href="' . $editUrl . '" class="btn btn-sm btn-edit">
+            <div class="app-index-table-actions">
+                <a href="' . $editUrl . '" class="btn btn-sm btn-icon btn-action-edit">
                     <i class="bi bi-pencil"></i>
                 </a>
                 <form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Delete this city?\')">
                     ' . csrf_field() . '
                     ' . method_field('DELETE') . '
-                    <button type="submit" class="btn btn-sm btn-danger">
+                    <button type="submit" class="btn btn-sm btn-icon btn-action-delete">
                         <i class="bi bi-trash"></i>
                     </button>
                 </form>

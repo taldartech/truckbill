@@ -344,8 +344,438 @@
           grid-template-columns: 1fr;
         }
       }
+
+      .lrf-swal-popup--wide {
+        width: min(720px, 96vw) !important;
+      }
+
+      .lrf-swal-deny {
+        flex: 1 1 0 !important;
+        margin: 0 !important;
+        border-radius: 10px !important;
+        font-weight: 700 !important;
+        font-size: 0.875rem !important;
+        padding: 0.65rem 0.9rem !important;
+        box-shadow: none !important;
+        background: #0ea5e9 !important;
+      }
+
+      .lrf-swal-deny:hover {
+        background: #0284c7 !important;
+      }
+
+      .lrf-receipt-confirm {
+        font-family: inherit;
+        color: #334155;
+      }
+
+      .lrf-receipt-confirm__note {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.45rem;
+        margin-bottom: 0.85rem;
+        padding: 0.65rem 0.8rem;
+        border: 1px solid #d8e9df;
+        border-radius: 10px;
+        background: #f6fbf8;
+        font-size: 0.84rem;
+        color: #334155;
+      }
+
+      .lrf-receipt-confirm__note i {
+        margin-top: 0.1rem;
+        color: #2fb36f;
+      }
+
+      .lrf-receipt-confirm__panel {
+        margin-bottom: 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #fff;
+        overflow: hidden;
+      }
+
+      .lrf-receipt-confirm__panel:last-child {
+        margin-bottom: 0;
+      }
+
+      .lrf-receipt-confirm__head {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.55rem 0.85rem;
+        border-bottom: 1px solid #eef2f7;
+        background: #f8fafc;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #475569;
+      }
+
+      .lrf-receipt-confirm__head i {
+        color: #2fb36f;
+        font-size: 0.95rem;
+      }
+
+      .lrf-receipt-confirm__panel--total .lrf-receipt-confirm__head {
+        background: linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%);
+        color: #166534;
+      }
+
+      .lrf-receipt-confirm__body {
+        padding: 0.75rem 0.85rem;
+      }
+
+      .lrf-receipt-confirm__facts {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.65rem 0.85rem;
+      }
+
+      .lrf-receipt-confirm__facts--3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .lrf-receipt-confirm__facts--4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .lrf-receipt-confirm__fact {
+        min-width: 0;
+      }
+
+      .lrf-receipt-confirm__label {
+        display: block;
+        margin-bottom: 0.1rem;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #94a3b8;
+      }
+
+      .lrf-receipt-confirm__value {
+        font-size: 0.84rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.35;
+        word-break: break-word;
+      }
+
+      .lrf-receipt-confirm__value.is-muted {
+        color: #94a3b8;
+        font-weight: 600;
+      }
+
+      .lrf-receipt-confirm__value.is-accent {
+        color: #23965c;
+        font-weight: 800;
+      }
+
+      .lrf-receipt-confirm__route {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.65rem;
+        padding: 0.55rem 0.7rem;
+        border-radius: 8px;
+        background: #f8fafc;
+        border: 1px dashed #e2e8f0;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #0f172a;
+      }
+
+      .lrf-receipt-confirm__route i {
+        color: #94a3b8;
+        font-size: 0.75rem;
+      }
+
+      .lrf-receipt-confirm__route span {
+        flex: 1 1 0;
+        min-width: 0;
+        word-break: break-word;
+      }
+
+      .lrf-receipt-confirm__route span:last-child {
+        text-align: right;
+      }
+
+      .lrf-receipt-confirm__total {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.75rem 0.85rem;
+        border-top: 1px dashed #d8e9df;
+        background: #f6fbf8;
+      }
+
+      .lrf-receipt-confirm__total-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+      }
+
+      .lrf-receipt-confirm__pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.5rem;
+        border-radius: 999px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #475569;
+      }
+
+      .lrf-receipt-confirm__total-amount {
+        text-align: right;
+      }
+
+      .lrf-receipt-confirm__total-amount span {
+        display: block;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #64748b;
+      }
+
+      .lrf-receipt-confirm__total-amount strong {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #23965c;
+      }
+
+      @media (max-width: 640px) {
+        .lrf-receipt-confirm__facts,
+        .lrf-receipt-confirm__facts--3,
+        .lrf-receipt-confirm__facts--4 {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      @media (max-width: 420px) {
+        .lrf-receipt-confirm__facts,
+        .lrf-receipt-confirm__facts--3,
+        .lrf-receipt-confirm__facts--4 {
+          grid-template-columns: 1fr;
+        }
+
+        .lrf-receipt-confirm__total {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .lrf-receipt-confirm__total-amount {
+          text-align: left;
+        }
+      }
     `;
     document.head.appendChild(style);
+  }
+
+  function cleanConfirmText(value) {
+    const text = String(value ?? '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (
+      text === '' ||
+      text === '—' ||
+      /^select\b/i.test(text) ||
+      /^not selected$/i.test(text) ||
+      /^n\/a$/i.test(text)
+    ) {
+      return null;
+    }
+
+    return text;
+  }
+
+  function confirmFact(label, value, options = {}) {
+    const cleaned = cleanConfirmText(value);
+    const display = cleaned ?? '—';
+    const classes = ['lrf-receipt-confirm__value'];
+    if (!cleaned) {
+      classes.push('is-muted');
+    }
+    if (options.accent && cleaned) {
+      classes.push('is-accent');
+    }
+
+    return `
+      <div class="lrf-receipt-confirm__fact">
+        <span class="lrf-receipt-confirm__label">${escapeHtml(label)}</span>
+        <div class="${classes.join(' ')}" title="${escapeHtml(display)}">${escapeHtml(display)}</div>
+      </div>
+    `;
+  }
+
+  function formatConfirmMoney(value) {
+    const amount = Number.parseFloat(value);
+    if (!Number.isFinite(amount)) {
+      return cleanConfirmText(value) ?? '0.00';
+    }
+
+    return amount.toLocaleString('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
+  function buildLorryReceiptConfirmHtml(details = {}) {
+    const note = details.note || 'Please review the booking details below before confirming.';
+    const amountDisplay = formatConfirmMoney(details.amount);
+    const goodsType = cleanConfirmText(details.goodsType) || 'Not selected';
+
+    return `
+      <div class="lrf-receipt-confirm">
+        <div class="lrf-receipt-confirm__note">
+          <i class="bi bi-info-circle"></i>
+          <span>${escapeHtml(note)}</span>
+        </div>
+
+        <div class="lrf-receipt-confirm__panel">
+          <div class="lrf-receipt-confirm__head">
+            <i class="bi bi-receipt"></i> Basic Info
+          </div>
+          <div class="lrf-receipt-confirm__body">
+            <div class="lrf-receipt-confirm__facts lrf-receipt-confirm__facts--3">
+              ${confirmFact('LR Number', details.lrNumber)}
+              ${confirmFact('GR Date', details.grDate)}
+              ${confirmFact('Customer', details.customer)}
+              ${confirmFact('Invoice', details.invoice)}
+              ${confirmFact('Reference By', details.referenceBy)}
+              ${details.createdAt ? confirmFact('Created', details.createdAt) : ''}
+            </div>
+          </div>
+        </div>
+
+        <div class="lrf-receipt-confirm__panel">
+          <div class="lrf-receipt-confirm__head">
+            <i class="bi bi-geo-alt"></i> Parties &amp; Route
+          </div>
+          <div class="lrf-receipt-confirm__body">
+            <div class="lrf-receipt-confirm__facts">
+              ${confirmFact('Consignor', details.consignor)}
+              ${confirmFact('Consignee', details.consignee)}
+            </div>
+            <div class="lrf-receipt-confirm__route">
+              <span>${escapeHtml(cleanConfirmText(details.sourceCity) || '—')}</span>
+              <i class="bi bi-arrow-right" aria-hidden="true"></i>
+              <span>${escapeHtml(cleanConfirmText(details.destinationCity) || '—')}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="lrf-receipt-confirm__panel">
+          <div class="lrf-receipt-confirm__head">
+            <i class="bi bi-truck"></i> Transport
+          </div>
+          <div class="lrf-receipt-confirm__body">
+            <div class="lrf-receipt-confirm__facts">
+              ${confirmFact('Truck', details.truck)}
+              ${confirmFact('Payee', details.transporter)}
+            </div>
+          </div>
+        </div>
+
+        <div class="lrf-receipt-confirm__panel lrf-receipt-confirm__panel--total">
+          <div class="lrf-receipt-confirm__head">
+            <i class="bi bi-box-seam"></i> Goods &amp; Charges
+          </div>
+          <div class="lrf-receipt-confirm__body">
+            <div class="lrf-receipt-confirm__facts lrf-receipt-confirm__facts--4">
+              ${confirmFact('Goods Type', goodsType)}
+              ${confirmFact('Weight', details.weight ? `${details.weight} MT` : null)}
+              ${confirmFact('Units', details.units)}
+              ${confirmFact('Rate', details.rate ? `₹${formatConfirmMoney(details.rate)}` : null)}
+            </div>
+          </div>
+          <div class="lrf-receipt-confirm__total">
+            <div class="lrf-receipt-confirm__total-meta">
+              <span class="lrf-receipt-confirm__pill">${escapeHtml(goodsType)}</span>
+              <span class="lrf-receipt-confirm__pill">Wt ${escapeHtml(cleanConfirmText(details.weight) || '—')} t</span>
+              <span class="lrf-receipt-confirm__pill">Qty ${escapeHtml(cleanConfirmText(details.units) || '—')}</span>
+            </div>
+            <div class="lrf-receipt-confirm__total-amount">
+              <span>Total Amount</span>
+              <strong>₹${escapeHtml(amountDisplay)}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function showLorryReceiptConfirm(options = {}) {
+    ensureConfirmModalStyles();
+
+    const {
+      title = 'Confirm Good Receipt',
+      note,
+      details = {},
+      confirmText = 'Confirm & Submit',
+      cancelText = 'Cancel',
+      denyText = null,
+      onConfirm = null,
+      onDeny = null,
+      onCancel = null,
+    } = options;
+
+    const html = buildLorryReceiptConfirmHtml({
+      ...details,
+      note: note || details.note,
+    });
+
+    if (typeof Swal === 'undefined' || !Swal || typeof Swal.fire !== 'function') {
+      const ok = window.confirm(`${title}\n\nProceed?`);
+      if (ok && typeof onConfirm === 'function') {
+        onConfirm();
+      } else if (!ok && typeof onCancel === 'function') {
+        onCancel();
+      }
+      return Promise.resolve({ isConfirmed: ok, isDenied: false, isDismissed: !ok });
+    }
+
+    const swalOptions = {
+      title,
+      html,
+      showCancelButton: true,
+      showDenyButton: Boolean(denyText),
+      confirmButtonText: confirmText,
+      cancelButtonText: cancelText,
+      denyButtonText: denyText || undefined,
+      focusCancel: false,
+      allowOutsideClick: false,
+      reverseButtons: true,
+      buttonsStyling: true,
+      width: 'auto',
+      customClass: {
+        popup: 'lrf-swal-popup lrf-swal-popup--wide',
+        title: 'lrf-swal-title',
+        htmlContainer: 'lrf-swal-html',
+        actions: 'lrf-swal-actions',
+        confirmButton: 'lrf-swal-confirm',
+        cancelButton: 'lrf-swal-cancel',
+        denyButton: 'lrf-swal-deny',
+      },
+    };
+
+    return Swal.fire(swalOptions).then((result) => {
+      if (result.isConfirmed && typeof onConfirm === 'function') {
+        onConfirm();
+      } else if (result.isDenied && typeof onDeny === 'function') {
+        onDeny();
+      } else if (result.isDismissed && typeof onCancel === 'function') {
+        onCancel();
+      }
+
+      return result;
+    });
   }
 
   function ConfirmEntitySelectionModal({ title, detailsHtml, onConfirm, onCancel }) {
@@ -1144,6 +1574,9 @@
     escapeHtml,
     renderDetailsHtmlFromObject,
     ConfirmEntitySelectionModal,
+    buildLorryReceiptConfirmHtml,
+    showLorryReceiptConfirm,
+    ensureConfirmModalStyles,
     showTdsPercentage,
     initLorryReceiptTransporterSelectionFlow,
     showValidationError,
