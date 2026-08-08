@@ -369,7 +369,7 @@
     </div>
 
     @if ($cancelledBookings)
-        <div class="modal fade" id="cancelBookingModal" tabindex="-1" aria-labelledby="cancelBookingModalLabel"
+        <div class="modal fade fb-pay-modal" id="cancelBookingModal" tabindex="-1" aria-labelledby="cancelBookingModalLabel"
             aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">

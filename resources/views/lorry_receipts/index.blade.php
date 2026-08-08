@@ -104,6 +104,50 @@
             padding-right: 2px !important;
         }
 
+        @media (max-width: 991.98px) {
+            .lorry-receipts-index .table-responsive {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .lorry-receipts-index .dataTables_wrapper,
+            .lorry-receipts-index .dataTables_scroll,
+            .lorry-receipts-index .dataTables_scrollHead,
+            .lorry-receipts-index .dataTables_scrollBody {
+                overflow-x: auto !important;
+            }
+
+            #lorryReceiptsTable {
+                table-layout: auto !important;
+                min-width: 920px !important;
+            }
+
+            #lorryReceiptsTable th:nth-child(n),
+            #lorryReceiptsTable td:nth-child(n) {
+                width: auto !important;
+            }
+
+            #lorryReceiptsTable th:nth-child(11),
+            #lorryReceiptsTable td:nth-child(11) {
+                min-width: 118px;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .lorry-receipts-index .status-pill {
+                font-size: 9px !important;
+            }
+
+            .app-index-list-card > .card-header .d-flex.gap-2 {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .app-index-list-card > .card-header .app-index-header-btn {
+                flex: 1 1 auto;
+            }
+        }
+
         .lorry-receipts-index .city-label {
             font-size: 11px;
         }
@@ -372,7 +416,7 @@
     </div>
 
     <!-- Good Receipt (Bilty) Details Modal -->
-    <div class="modal fade" id="lrDetailsModal" tabindex="-1" aria-labelledby="lrDetailsModalLabel" aria-hidden="true">
+    <div class="modal fade fb-pay-modal" id="lrDetailsModal" tabindex="-1" aria-labelledby="lrDetailsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">

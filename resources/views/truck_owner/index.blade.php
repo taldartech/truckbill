@@ -68,7 +68,7 @@
     </div>
 
     <!-- Truck Owner Details Modal -->
-    <div class="modal fade" id="truckOwnerDetailsModal" tabindex="-1" aria-labelledby="truckOwnerDetailsModalLabel"
+    <div class="modal fade fb-pay-modal" id="truckOwnerDetailsModal" tabindex="-1" aria-labelledby="truckOwnerDetailsModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -100,7 +100,7 @@
     </div>
 
     <!-- Advance Payment Modal -->
-    <div class="modal fade" id="advancePaymentModal" tabindex="-1" aria-labelledby="advancePaymentModalLabel"
+    <div class="modal fade fb-pay-modal" id="advancePaymentModal" tabindex="-1" aria-labelledby="advancePaymentModalLabel"
         aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -157,7 +157,7 @@
     </div>
 
     <!-- Add Truck Modal -->
-    <div class="modal fade" id="addTruckModal" tabindex="-1" aria-labelledby="addTruckModalLabel" aria-hidden="true">
+    <div class="modal fade fb-pay-modal" id="addTruckModal" tabindex="-1" aria-labelledby="addTruckModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">

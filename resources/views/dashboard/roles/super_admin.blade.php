@@ -1,15 +1,8 @@
-{{-- SUPER ADMIN DASHBOARD - KPI Cards --}}
-<div class="row mb-4 align-items-center">
-    <div class="col-md-8">
-        <h2 class="fw-bold mb-1"><i class="fas fa-user-shield text-brand-primary"></i> Super Admin Dashboard</h2>
-        <p class="text-muted mb-0">Company management and multi-company revenue overview.</p>
-    </div>
-    <div class="col-md-4 text-md-end">
-        <div class="badge bg-brand-active text-brand-primary px-3 py-2 rounded-pill">
-            <i class="fas fa-calendar-alt me-1"></i> {{ now()->format('d M, Y') }}
-        </div>
-    </div>
-</div>
+@include('dashboard.partials.hero', [
+    'subtitle' => 'Company management and multi-company revenue overview.',
+    'quickActions' => [],
+    'showPeriodFilter' => false,
+])
 
 @if (! session('super_admin_company_id') && isset($ownedCompanies) && $ownedCompanies->isNotEmpty())
     <div class="row mb-4">

@@ -52,7 +52,7 @@
     </div>
 
     <!-- Transporter Details Modal -->
-    <div class="modal fade" id="transporterDetailsModal" tabindex="-1" aria-labelledby="transporterDetailsModalLabel"
+    <div class="modal fade fb-pay-modal" id="transporterDetailsModal" tabindex="-1" aria-labelledby="transporterDetailsModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -84,7 +84,7 @@
     </div>
 
     <!-- Advance Payment Modal -->
-    <div class="modal fade" id="advancePaymentModal" tabindex="-1" aria-labelledby="advancePaymentModalLabel"
+    <div class="modal fade fb-pay-modal" id="advancePaymentModal" tabindex="-1" aria-labelledby="advancePaymentModalLabel"
         aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">

@@ -10,32 +10,36 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-sm-8">
-                <h3 class="mb-0">Daily Payments</h3>
-            </div>
-        </div>
-
+    <div class="container-fluid mt-4 app-index-page app-index-page--standard">
         @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+            <div class="mb-3">
+                <span class="badge text-bg-dark border app-index-flash">
+                    <i class="bi bi-check-circle-fill text-success"></i> {{ session('success') }}
+                </span>
+            </div>
         @endif
         @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="mb-3">
+                <span class="badge text-bg-dark border app-index-flash">
+                    <i class="bi bi-exclamation-triangle-fill text-danger"></i> {{ session('error') }}
+                </span>
             </div>
         @endif
 
+        <div class="card app-index-list-card mb-4">
+            <div class="card-header">
+                <h3 class="card-title mb-0">Daily Payments</h3>
+            </div>
+
         <!-- Search and Filter Section -->
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Search & Filter</h5>
-                <button type="button" class="btn btn-sm btn-secondary" onclick="toggleAdvancedSearch()">
+        <div class="app-index-dt-toolbar">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                <h5 class="mb-0" style="font-size: 0.9rem;">Search & Filter</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleAdvancedSearch()">
                     <i class="bi bi-funnel"></i> Toggle Filters
                 </button>
             </div>
-            <div class="card-body">
+            <div>
                 <form method="GET" action="{{ route('voucher_payments.daily') }}" id="searchForm">
                     <div class="row mb-3">
                         <div class="col-md-4">
@@ -144,24 +148,20 @@
         </div>
 
         <!-- Payments List -->
-        <div class="card mb-4">
+        <div class="card app-index-list-card mb-4">
             <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h3 class="card-title mb-0">Voucher Payments -
-                            {{ \Carbon\Carbon::parse($selectedDate)->format('d M Y') }}</h3>
+                <h3 class="card-title mb-0">Voucher Payments —
+                    {{ \Carbon\Carbon::parse($selectedDate)->format('d M Y') }}</h3>
+                @if (auth()->user()->canActAsAdmin())
+                    <div class="app-index-card-toolbar">
+                        <button id="bulkActionBtn" class="btn app-index-header-btn d-none">
+                            <i class="bi bi-arrow-up-circle"></i> Update Status
+                        </button>
                     </div>
-                    @if (auth()->user()->canActAsAdmin())
-                        <div class="d-flex">
-                            <button id="bulkActionBtn" class="btn btn-primary d-none">
-                                <i class="bi bi-arrow-up-circle"></i> Update Status
-                            </button>
-                        </div>
-                    @endif
-                </div>
+                @endif
             </div>
             <div class="card-body" style="overflow-x: auto;">
-                <table class="table table-bordered" id="paymentsTable">
+                <table class="table table-bordered app-index-table" id="paymentsTable">
                     <thead>
                         <tr>
                             @if (auth()->user()->canActAsAdmin())
@@ -448,7 +448,7 @@
 @endsection
 
 <!-- Bulk Action Modal -->
-<div class="modal fade" id="bulkActionModal" tabindex="-1" aria-labelledby="bulkActionModalLabel"
+<div class="modal fade fb-pay-modal" id="bulkActionModal" tabindex="-1" aria-labelledby="bulkActionModalLabel"
     aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">

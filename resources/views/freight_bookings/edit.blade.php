@@ -898,7 +898,7 @@
         </div>
     </div>
 
-    <div class="modal fade" id="viewCancelledModal" tabindex="-1" aria-labelledby="viewCancelledModalLabel"
+    <div class="modal fade fb-pay-modal" id="viewCancelledModal" tabindex="-1" aria-labelledby="viewCancelledModalLabel"
         aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">

@@ -1764,3 +1764,145 @@
         width: auto;
     }
 }
+
+/* —— Mobile polish for redesigned LR / Hire forms —— */
+@media (max-width: 991px) {
+    .lrf-page {
+        padding: 14px 12px 28px;
+    }
+
+    .lrf-section__head {
+        flex-wrap: wrap;
+        align-items: flex-start;
+        min-height: 0;
+        padding: 10px 12px;
+    }
+
+    .lrf-section__head-left,
+    .lrf-section__head-right {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .lrf-section__head-right {
+        margin-top: 0.15rem;
+    }
+
+    .lrf-amount-toggle {
+        margin-left: 0;
+        white-space: normal;
+    }
+
+    .lrf-linked__head {
+        padding: 12px;
+    }
+
+    .lrf-page__toolbar-actions {
+        width: 100%;
+    }
+
+    .lrf-page__toolbar-actions .btn {
+        flex: 1 1 auto;
+    }
+}
+
+@media (max-width: 767px) {
+    .lrf-page {
+        padding: 12px 10px 24px;
+    }
+
+    .lrf-page__toolbar-title {
+        font-size: 1.05rem;
+        line-height: 1.3;
+    }
+
+    .lrf-page__toolbar-sub {
+        font-size: 0.74rem;
+    }
+
+    .lrf-section__body {
+        padding: 12px;
+    }
+
+    .lrf-pay-pills {
+        flex-wrap: wrap;
+    }
+
+    .lrf-pay-pill {
+        flex: 1 1 calc(50% - 3px);
+        font-size: 0.74rem;
+        padding: 0.4rem 0.35rem;
+    }
+
+    .lrf-truck-summary--field {
+        height: auto !important;
+        max-height: none !important;
+        min-height: var(--input-h) !important;
+        flex-wrap: wrap;
+        line-height: 1.35;
+        padding-top: 0.45rem;
+        padding-bottom: 0.45rem;
+    }
+
+    .lrf-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .lrf-actions .btn {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .lrf-linked__route-pill {
+        max-width: 100%;
+    }
+
+    .lrf-custom-table {
+        min-width: 480px;
+    }
+}
+
+@media (max-width: 575px) {
+    .lrf-page {
+        padding: 10px 8px 20px;
+    }
+
+    .lrf-step-num {
+        width: 26px;
+        height: 26px;
+        font-size: 0.75rem;
+    }
+
+    .lrf-section__title {
+        font-size: 0.84rem;
+    }
+
+    .lrf-section__desc {
+        font-size: 0.68rem;
+    }
+
+    .lrf-pay-pill {
+        flex: 1 1 100%;
+    }
+
+    .lrf-pf__lbl-row {
+        flex-wrap: wrap;
+        gap: 0.25rem 0.5rem;
+    }
+
+    .lrf-quick-add {
+        white-space: normal;
+    }
+
+    .lrf-lr-badge {
+        margin-left: 0.25rem;
+        font-size: 0.75rem;
+        padding: 0.15rem 0.5rem;
+    }
+
+    .lrf-goods-lane__label,
+    .lrf-goods-lane__sub {
+        max-width: 100%;
+    }
+}

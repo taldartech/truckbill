@@ -231,12 +231,12 @@
                 </div>
                 <form method="GET" action="{{ route('freight_bookings.index') }}" id="searchForm">
                     <div class="row g-2 align-items-end">
-                        <div class="col-md-5">
+                        <div class="col-12 col-md-5">
                             <input type="text" class="form-control form-control-sm" name="search"
                                 value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'search', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" placeholder="LR, Customer, Truck, City...">
                         </div>
-                        <div class="col-md-3">
-                            <div class="d-flex gap-2">
+                        <div class="col-12 col-md-3">
+                            <div class="d-flex flex-wrap gap-2">
                                 <div class="input-group-custom flex-grow-1">
                                     <span>From</span>
                                     <input type="date" name="start_date" value="{{ $startDate }}">
@@ -247,7 +247,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-2 d-flex align-items-end">
+                        <div class="col-12 col-sm-6 col-md-2 d-flex align-items-end">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" name="pending_memo" value="1"
                                     id="pendingMemoFilter" {{ request('pending_memo') ? 'checked' : '' }}>
@@ -256,7 +256,7 @@
                                 </label>
                             </div>
                         </div>
-                        <div class="col-md-1 d-flex gap-2 justify-content-end">
+                        <div class="col-12 col-sm-6 col-md-1 d-flex gap-2 justify-content-sm-end">
                             <button type="submit" class="filter-action-btn" style="background: var(--brand-primary); color: white;" title="Filter" data-bs-toggle="tooltip">
                                 <i class="bi bi-funnel-fill"></i>
                             </button>
@@ -302,7 +302,7 @@
     </div>
 
     <!-- Combined Payment Modal -->
-    <div class="modal fade" id="combinedPaymentModal" tabindex="-1" aria-labelledby="combinedPaymentModalLabel"
+    <div class="modal fade fb-pay-modal" id="combinedPaymentModal" tabindex="-1" aria-labelledby="combinedPaymentModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
@@ -326,7 +326,7 @@
     </div>
 
     <!-- LR Details Modal -->
-    <div class="modal fade" id="lrDetailsModal" tabindex="-1" aria-labelledby="lrDetailsModalLabel"
+    <div class="modal fade fb-pay-modal" id="lrDetailsModal" tabindex="-1" aria-labelledby="lrDetailsModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -348,7 +348,7 @@
     </div>
 
     <!-- Voucher Payment Modal -->
-    <div class="modal fade" id="voucherPaymentModal" tabindex="-1" aria-labelledby="voucherPaymentModalLabel"
+    <div class="modal fade fb-pay-modal" id="voucherPaymentModal" tabindex="-1" aria-labelledby="voucherPaymentModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
@@ -369,7 +369,7 @@
     </div>
 
     <!-- Individual Voucher Payment Modal -->
-    <div class="modal fade" id="individualPaymentModal" tabindex="-1" aria-labelledby="individualPaymentModalLabel"
+    <div class="modal fade fb-pay-modal" id="individualPaymentModal" tabindex="-1" aria-labelledby="individualPaymentModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -390,7 +390,7 @@
     </div>
 
     <!-- Bulk Memo ID Modal -->
-    <div class="modal fade" id="bulkMemoIdModal" tabindex="-1" aria-labelledby="bulkMemoIdModalLabel"
+    <div class="modal fade fb-pay-modal" id="bulkMemoIdModal" tabindex="-1" aria-labelledby="bulkMemoIdModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-lg">
             <div class="modal-content">

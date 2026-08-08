@@ -572,6 +572,26 @@
         .lrf-receipt-confirm__total-amount {
           text-align: left;
         }
+
+        .lrf-swal-actions {
+          flex-direction: column-reverse !important;
+        }
+
+        .lrf-swal-confirm,
+        .lrf-swal-cancel,
+        .lrf-swal-deny {
+          width: 100% !important;
+          flex: 1 1 auto !important;
+        }
+
+        .lrf-swal-title {
+          font-size: 0.95rem !important;
+          padding: 0.85rem 0.9rem 0.3rem !important;
+        }
+
+        .lrf-swal-html {
+          padding: 0 0.9rem 0.3rem !important;
+        }
       }
     `;
     document.head.appendChild(style);

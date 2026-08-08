@@ -84,7 +84,7 @@
                                 </td>
                             </tr>
 
-                            <div class="modal fade" id="beneficiaryModal{{ $transporter->id }}" tabindex="-1">
+                            <div class="modal fade fb-pay-modal" id="beneficiaryModal{{ $transporter->id }}" tabindex="-1">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">

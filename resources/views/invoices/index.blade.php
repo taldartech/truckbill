@@ -219,7 +219,7 @@
     </div>
 
     <!-- Add Payment Modal -->
-    <div class="modal fade" id="addPaymentModal" tabindex="-1" aria-labelledby="addPaymentModalLabel"
+    <div class="modal fade fb-pay-modal" id="addPaymentModal" tabindex="-1" aria-labelledby="addPaymentModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -291,7 +291,7 @@
     </div>
 
     <!-- Invoice Details Modal -->
-    <div class="modal fade" id="invoiceDetailsModal" tabindex="-1" aria-labelledby="invoiceDetailsModalLabel"
+    <div class="modal fade fb-pay-modal" id="invoiceDetailsModal" tabindex="-1" aria-labelledby="invoiceDetailsModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">

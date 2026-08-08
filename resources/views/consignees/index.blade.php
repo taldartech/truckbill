@@ -50,7 +50,7 @@
 </div>
 
 <!-- Consignee Details Modal -->
-<div class="modal fade" id="consigneeDetailsModal" tabindex="-1" aria-labelledby="consigneeDetailsModalLabel" aria-hidden="true">
+<div class="modal fade fb-pay-modal" id="consigneeDetailsModal" tabindex="-1" aria-labelledby="consigneeDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">

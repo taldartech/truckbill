@@ -52,6 +52,8 @@
     <link rel="stylesheet" href="/css/brand.css">
     <link rel="stylesheet" href="/css/crud-action-buttons.css">
     <link rel="stylesheet" href="/css/app-index-page.css">
+    <link rel="stylesheet" href="/css/theme-overlays.css">
+    <link rel="stylesheet" href="/css/fb-show-redesigned.css">
     <!-- apexcharts -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.css"
         integrity="sha256-4MX+61mt9NVvvuPjUWdUdyfZfxSB1/Rf9WtqRHgG5S0=" crossorigin="anonymous" />
@@ -1155,6 +1157,8 @@
 
     {{-- bootstrap.bundle includes Popper; do not also load popper + bootstrap.min.js --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/theme-ui.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/browser/overlayscrollbars.browser.es6.min.js"
         integrity="sha256-dghWARbRe2eLlIJ56wNB+b760ywulqK3DzZYEpsg2fQ=" crossorigin="anonymous"></script>

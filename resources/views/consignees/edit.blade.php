@@ -401,7 +401,7 @@
 </script>
 
 <!-- Add Country Modal -->
-<div class="modal fade" id="addCountryModal" tabindex="-1" aria-labelledby="addCountryModalLabel" aria-hidden="true">
+<div class="modal fade fb-pay-modal" id="addCountryModal" tabindex="-1" aria-labelledby="addCountryModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form action="{{ route('master.countries.store') }}" method="POST">
@@ -433,7 +433,7 @@
 </div>
 
 <!-- Add State Modal -->
-<div class="modal fade" id="addStateModal" tabindex="-1" aria-labelledby="addStateModalLabel" aria-hidden="true">
+<div class="modal fade fb-pay-modal" id="addStateModal" tabindex="-1" aria-labelledby="addStateModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form action="{{ route('master.states.store') }}" method="POST">
@@ -474,7 +474,7 @@
 </div>
 
 <!-- Add City Modal -->
-<div class="modal fade" id="addCityModal" tabindex="-1" aria-labelledby="addCityModalLabel" aria-hidden="true">
+<div class="modal fade fb-pay-modal" id="addCityModal" tabindex="-1" aria-labelledby="addCityModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form action="{{ route('master.cities.store') }}" method="POST">

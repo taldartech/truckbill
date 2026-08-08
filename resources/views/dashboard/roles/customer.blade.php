@@ -1,16 +1,8 @@
-<div class="row mb-4 align-items-center">
-    <div class="col-md-8">
-        <h2 class="fw-bold mb-1"><i class="fas fa-user text-brand-primary"></i> Customer Dashboard</h2>
-        <p class="text-muted mb-0">
-            Overview across all linked customer accounts.
-        </p>
-    </div>
-    <div class="col-md-4 text-md-end">
-        <div class="badge bg-brand-active text-brand-primary px-3 py-2 rounded-pill">
-            <i class="fas fa-calendar-alt me-1"></i> {{ now()->format('d M, Y') }}
-        </div>
-    </div>
-</div>
+@include('dashboard.partials.hero', [
+    'subtitle' => 'Overview across all linked customer accounts.',
+    'quickActions' => [],
+    'showPeriodFilter' => false,
+])
 
 <div class="row g-3">
     <div class="col-12 col-sm-6 col-md-3">

@@ -11,7 +11,7 @@
     @endif
 
     @if (($part ?? 'both') === 'modal' || ($part ?? 'both') === 'both')
-        <div class="modal fade" id="tdsRefreshModal" tabindex="-1" aria-labelledby="tdsRefreshModalLabel" aria-hidden="true">
+        <div class="modal fade fb-pay-modal" id="tdsRefreshModal" tabindex="-1" aria-labelledby="tdsRefreshModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header bg-warning">

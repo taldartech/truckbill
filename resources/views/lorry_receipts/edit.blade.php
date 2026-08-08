@@ -619,7 +619,7 @@
     </div>
 
     <!-- Add Goods Type Modal -->
-    <div class="modal fade" id="addGoodsTypeModal" tabindex="-1" aria-labelledby="addGoodsTypeModalLabel"
+    <div class="modal fade fb-pay-modal" id="addGoodsTypeModal" tabindex="-1" aria-labelledby="addGoodsTypeModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-md">
             <div class="modal-content">

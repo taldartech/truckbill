@@ -224,9 +224,18 @@ class DashboardController extends Controller
 
     private function adminDashboard()
     {
+        $period = request('period', 'month');
+        if (! in_array($period, ['7d', '30d', 'month'], true)) {
+            $period = 'month';
+        }
+
         $now = Carbon::now();
-        $startOfMonth = $now->copy()->startOfMonth();
-        $endOfMonth = $now->copy()->endOfMonth();
+        [$rangeStart, $rangeEnd, $periodLabel] = match ($period) {
+            '7d' => [$now->copy()->subDays(6)->startOfDay(), $now->copy()->endOfDay(), 'Last 7 days'],
+            '30d' => [$now->copy()->subDays(29)->startOfDay(), $now->copy()->endOfDay(), 'Last 30 days'],
+            default => [$now->copy()->startOfMonth(), $now->copy()->endOfMonth(), 'This month'],
+        };
+
         $companyId = auth()->user()->company_id;
 
         $companyInvoices = Invoice::where('company_id', $companyId)
@@ -268,11 +277,10 @@ class DashboardController extends Controller
             ->take(5)
             ->values();
 
-        // Calculate Admin KPIs
         $today = now()->startOfDay();
 
         $monthlyStats = [
-            'total_bookings' => Booking::whereBetween('freight_bookings.created_at', [$startOfMonth, $endOfMonth])
+            'total_bookings' => Booking::whereBetween('freight_bookings.created_at', [$rangeStart, $rangeEnd])
                 ->where('freight_bookings.company_id', $companyId)
                 ->count(),
             'active_trips' => Booking::where('is_delivered', false)
@@ -303,9 +311,59 @@ class DashboardController extends Controller
                 ->where('eway_bill_expiry', '<', $today)
                 ->count(),
             'outstanding_amount' => $outstandingAmount,
+            'period_revenue' => $this->sumInvoiceTotalRevenue([$companyId], $rangeStart, $rangeEnd),
         ];
 
-        // Expired Eway bills
+        $bookingStatuses = [
+            'in_progress' => Booking::where('is_delivered', false)
+                ->where('is_cancelled', false)
+                ->where('company_id', $companyId)
+                ->count(),
+            'delivered' => Booking::where('is_delivered', true)
+                ->where('company_id', $companyId)
+                ->whereBetween('updated_at', [$rangeStart, $rangeEnd])
+                ->count(),
+            'cancelled' => Booking::where('is_cancelled', true)
+                ->where('company_id', $companyId)
+                ->whereBetween('updated_at', [$rangeStart, $rangeEnd])
+                ->count(),
+            'created' => Booking::where('company_id', $companyId)
+                ->whereBetween('created_at', [$rangeStart, $rangeEnd])
+                ->count(),
+        ];
+
+        $lrStatusCounts = [
+            'Pending' => LorryReceipt::where('company_id', $companyId)->whereNull('deleted_at')->where('delivery_status', 'Pending')->count(),
+            'In-Progress' => LorryReceipt::where('company_id', $companyId)->whereNull('deleted_at')->where('delivery_status', 'In-Progress')->count(),
+            'Delivered' => LorryReceipt::where('company_id', $companyId)->whereNull('deleted_at')->where('delivery_status', 'Delivered')->count(),
+            'Cancelled' => LorryReceipt::where('company_id', $companyId)->whereNull('deleted_at')->where('delivery_status', 'Cancelled')->count(),
+        ];
+
+        $monthlyTrendLabels = [];
+        $monthlyTrendBookings = [];
+        $monthlyTrendRevenue = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $monthStart = $now->copy()->subMonths($i)->startOfMonth();
+            $monthEnd = $now->copy()->subMonths($i)->endOfMonth();
+            $monthlyTrendLabels[] = $monthStart->format('M Y');
+            $monthlyTrendBookings[] = Booking::where('company_id', $companyId)
+                ->whereBetween('created_at', [$monthStart, $monthEnd])
+                ->count();
+            $monthlyTrendRevenue[] = round($this->sumInvoiceTotalRevenue([$companyId], $monthStart, $monthEnd), 2);
+        }
+
+        $chartPayload = [
+            'periodLabel' => $periodLabel,
+            'bookingStatuses' => $bookingStatuses,
+            'lrStatusCounts' => $lrStatusCounts,
+            'invoicePaymentStatuses' => $invoicePaymentStatuses,
+            'monthlyTrend' => [
+                'labels' => $monthlyTrendLabels,
+                'bookings' => $monthlyTrendBookings,
+                'revenue' => $monthlyTrendRevenue,
+            ],
+        ];
+
         $expiredEwayBills = FreightBooking::with('lr.truck.driver')
             ->where('company_id', $companyId)
             ->where('is_delivered', 0)
@@ -314,11 +372,19 @@ class DashboardController extends Controller
             ->orderBy('eway_bill_expiry', 'asc')
             ->get();
 
+        $dashboardPeriod = $period;
+        $showPeriodFilter = true;
+
         return view('dashboard', compact(
             'monthlyStats',
             'expiredEwayBills',
             'pendingInvoices',
-            'invoicePaymentStatuses'
+            'invoicePaymentStatuses',
+            'bookingStatuses',
+            'chartPayload',
+            'dashboardPeriod',
+            'showPeriodFilter',
+            'periodLabel'
         ));
     }
 

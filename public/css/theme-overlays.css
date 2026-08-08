@@ -1,0 +1,268 @@
+/* Global theme overlays — modals, Swals, glass cards */
+
+/* —— Bootstrap modals (all pages) —— */
+.modal.fade .modal-content,
+.fb-pay-modal .modal-content {
+    border: none;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.18);
+}
+
+.modal.fade .modal-header,
+.fb-pay-modal .modal-header {
+    padding: 0.85rem 1.1rem;
+    border-bottom: 1px solid rgba(47, 179, 111, 0.2);
+    background: linear-gradient(135deg, rgba(47, 179, 111, 0.18) 0%, rgba(45, 140, 255, 0.08) 52%, #f8fafc 100%) !important;
+    color: #0f172a !important;
+}
+
+.modal.fade .modal-header.bg-primary,
+.modal.fade .modal-header.bg-danger,
+.modal.fade .modal-header.bg-warning,
+.modal.fade .modal-header.bg-info,
+.modal.fade .modal-header.bg-success,
+.modal.fade .modal-header.bg-gradient-primary,
+.modal.fade .modal-header.text-white {
+    background: linear-gradient(135deg, rgba(47, 179, 111, 0.18) 0%, rgba(45, 140, 255, 0.08) 52%, #f8fafc 100%) !important;
+    color: #0f172a !important;
+}
+
+.modal.fade .modal-header .btn-close-white {
+    filter: none;
+}
+
+.modal.fade .modal-title,
+.fb-pay-modal .modal-title {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a !important;
+}
+
+.modal.fade .modal-title i,
+.fb-pay-modal .modal-title i {
+    color: var(--brand-primary, #2fb36f);
+}
+
+.modal.fade .modal-body,
+.fb-pay-modal .modal-body {
+    padding: 1rem 1.1rem;
+    background: #f8fafc;
+}
+
+.modal.fade .modal-footer,
+.fb-pay-modal .modal-footer {
+    padding: 0.75rem 1.1rem;
+    border-top: 1px solid #e2e8f0;
+    background: #fff;
+    gap: 0.45rem;
+}
+
+.modal.fade .modal-footer .btn,
+.fb-pay-modal .modal-footer .btn {
+    min-height: 36px;
+    font-size: 0.84rem;
+    font-weight: 650;
+    border-radius: 0.5rem;
+}
+
+.modal.fade .modal-footer .btn-brand-primary,
+.modal.fade .modal-footer .btn-success,
+.fb-pay-modal .modal-footer .btn-brand-primary,
+.fb-pay-modal .modal-footer .btn-success {
+    background: var(--brand-gradient, linear-gradient(135deg, #2fb36f 0%, #23965c 100%));
+    border: none;
+}
+
+.modal.fade .modal-footer .btn-secondary,
+.modal.fade .modal-footer .btn-outline-secondary {
+    background: #fff;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+@media (max-width: 575.98px) {
+    .modal.fade .modal-footer,
+    .fb-pay-modal .modal-footer {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .modal.fade .modal-footer .btn,
+    .fb-pay-modal .modal-footer .btn {
+        width: 100%;
+    }
+}
+
+/* —— SweetAlert2 theme —— */
+.swal2-popup.tb-swal-popup,
+.swal2-popup.lrf-swal-popup {
+    border-radius: 16px !important;
+    padding: 0 !important;
+    width: min(520px, 94vw) !important;
+    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.18) !important;
+    overflow: hidden;
+}
+
+.swal2-popup.tb-swal-popup .swal2-title,
+.tb-swal-title {
+    margin: 0 !important;
+    padding: 1rem 1.15rem 0.35rem !important;
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    text-align: left !important;
+}
+
+.swal2-popup.tb-swal-popup .swal2-html-container,
+.tb-swal-html {
+    margin: 0 !important;
+    padding: 0 1.15rem 0.35rem !important;
+    text-align: left !important;
+    color: #475569 !important;
+    font-size: 0.9rem !important;
+}
+
+.swal2-popup.tb-swal-popup .swal2-actions,
+.tb-swal-actions {
+    margin: 0 !important;
+    padding: 0.85rem 1.15rem 1.1rem !important;
+    gap: 0.55rem !important;
+    width: 100% !important;
+}
+
+.tb-swal-confirm,
+.tb-swal-cancel,
+.tb-swal-deny,
+.lrf-swal-confirm,
+.lrf-swal-cancel,
+.lrf-swal-deny {
+    flex: 1 1 0 !important;
+    margin: 0 !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 0.875rem !important;
+    padding: 0.65rem 0.9rem !important;
+    box-shadow: none !important;
+}
+
+.tb-swal-confirm,
+.lrf-swal-confirm {
+    background: #2fb36f !important;
+}
+
+.tb-swal-confirm:hover,
+.lrf-swal-confirm:hover {
+    background: #23965c !important;
+}
+
+.tb-swal-cancel,
+.lrf-swal-cancel {
+    background: #fff !important;
+    color: #475569 !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.tb-swal-cancel:hover,
+.lrf-swal-cancel:hover {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+}
+
+.tb-swal-deny,
+.lrf-swal-deny {
+    background: #0ea5e9 !important;
+}
+
+.swal2-popup.tb-swal-popup .swal2-icon {
+    margin: 1rem auto 0.25rem !important;
+    transform: scale(0.85);
+}
+
+.tb-swal-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    margin: 0.35rem 0 0.75rem;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid #d8e9df;
+    border-radius: 10px;
+    background: #f6fbf8;
+    font-size: 0.84rem;
+    color: #334155;
+}
+
+.tb-swal-note i {
+    margin-top: 0.1rem;
+    color: var(--brand-primary, #2fb36f);
+}
+
+.tb-swal-note--warn {
+    border-color: #fde68a;
+    background: #fffbeb;
+}
+
+.tb-swal-note--warn i {
+    color: #d97706;
+}
+
+.tb-swal-note--danger {
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+
+.tb-swal-note--danger i {
+    color: #dc2626;
+}
+
+/* —— Soft-align legacy glass cards to theme —— */
+.glass-card.info-box,
+.card.glass-card {
+    border: 1px solid rgba(226, 232, 240, 0.85) !important;
+    border-radius: 1.15rem !important;
+    background: linear-gradient(185deg, #ffffff 0%, #f8fafc 100%) !important;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.02) !important;
+    overflow: hidden;
+}
+
+.glass-card .card-body {
+    padding: 1.1rem 1.15rem !important;
+}
+
+.glass-card .icon-circle {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.8rem !important;
+}
+
+/* —— Confirm note reuse —— */
+.fb-confirm-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    margin-bottom: 0.85rem;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid #d8e9df;
+    border-radius: 10px;
+    background: #f6fbf8;
+    font-size: 0.84rem;
+    color: #334155;
+}
+
+/* Soft-align card headers with brand gradient when using old bg-primary */
+.card > .card-header.bg-primary,
+.card > .card-header.bg-info,
+.card > .card-header.bg-success,
+.card > .card-header.bg-gradient-primary {
+    background: var(--brand-gradient) !important;
+    color: var(--brand-text-on-green, #fff) !important;
+    border-bottom: none !important;
+}
+
+.app-index-page .card:not(.app-index-list-card):not(.fb-financial-summary) > .card-header:not(.fb-detail-card-header):not(.fb-route-header) {
+    border-bottom: 1px solid rgba(47, 179, 111, 0.18);
+}

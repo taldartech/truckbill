@@ -1,23 +1,58 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container mt-4">
+    <div class="fb-detail-page app-index-page">
         @if (! empty($companyLogoUrl))
-            <div class="d-flex flex-wrap align-items-center gap-3 mb-3 p-3 rounded border bg-light">
-                <div class="bg-white border rounded p-2 shadow-sm" style="max-width: 220px;">
-                    <img src="{{ $companyLogoUrl }}" alt="{{ $invoice->company->name }}" class="d-block mx-auto"
-                        style="max-height: 72px; max-width: 200px; width: auto; height: auto; object-fit: contain;">
-                </div>
-                <div>
-                    <h2 class="h4 mb-1">Invoice Details</h2>
-                    <div class="text-muted small">{{ $invoice->company->name }}</div>
+            <div class="dashboard-page__hero mb-3" style="padding: 1rem 1.15rem;">
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <div class="bg-white border rounded p-2 shadow-sm" style="max-width: 200px;">
+                        <img src="{{ $companyLogoUrl }}" alt="{{ $invoice->company->name }}" class="d-block mx-auto"
+                            style="max-height: 64px; max-width: 180px; width: auto; height: auto; object-fit: contain;">
+                    </div>
+                    <div>
+                        <div class="dashboard-page__live-badge mb-1">
+                            <span class="dashboard-page__live-dot"></span>
+                            <span class="dashboard-page__live-text">Invoice</span>
+                        </div>
+                        <h1 class="dashboard-page__title" style="font-size: 1.35rem;">Invoice Details</h1>
+                        <p class="dashboard-page__subtitle mb-0">{{ $invoice->company->name }}</p>
+                    </div>
                 </div>
             </div>
-        @else
-            <h2>Invoice Details</h2>
         @endif
+
         <div class="card">
+            <div class="card-header fb-detail-card-header">
+                <strong class="fb-detail-card-title">
+                    Invoice
+                    <span class="text-muted fw-semibold">
+                        #{{ $invoice->invoice_number
+                            ? $invoice->invoice_number.($invoice->manual_invoice_number ? ' ('.$invoice->manual_invoice_number.')' : '')
+                            : $invoice->manual_invoice_number }}
+                    </span>
+                </strong>
+                <div class="fb-detail-actions ms-auto">
+                    <a href="{{ route('invoices.index') }}" class="btn btn-sm btn-icon btn-action-back" title="Back to list">
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                    @if (auth()->user()->canAccessCompanyPanel() && $invoice->remaining_amount > 0)
+                        <button type="button" class="btn btn-sm btn-icon btn-action-pay" data-bs-toggle="modal"
+                            data-bs-target="#addPaymentModal" title="Add payment">
+                            <i class="bi bi-wallet2"></i>
+                        </button>
+                    @endif
+                    @if ($invoice->payment_status != 'paid' && Auth::user()->canActAsAdmin())
+                        <a href="{{ route('invoices.edit', $invoice->id) }}" class="btn btn-sm btn-icon btn-action-edit"
+                            title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    @endif
+                </div>
+            </div>
             <div class="card-body">
+                @if (empty($companyLogoUrl))
+                    <h2 class="h5 mb-3">Invoice Details</h2>
+                @endif
                 <div class="row">
                     <div class="col-md-6">
                         <h4>Basic Information</h4>
@@ -327,14 +362,14 @@
     </div>
 
     <!-- Add Payment Modal -->
-    <div class="modal fade" id="addPaymentModal" tabindex="-1" aria-labelledby="addPaymentModalLabel" aria-hidden="true">
+    <div class="modal fade fb-pay-modal" id="addPaymentModal" tabindex="-1" aria-labelledby="addPaymentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-brand-primary text-white">
+                <div class="modal-header">
                     <h5 class="modal-title" id="addPaymentModalLabel">
                         <i class="bi bi-currency-rupee"></i> Add Payment
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form id="addPaymentForm">
                     <div class="modal-body">

@@ -299,7 +299,7 @@
 </div>
 
 <!-- Confirmation Modal -->
-<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+<div class="modal fade fb-pay-modal" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-gradient-primary text-white">
@@ -384,7 +384,7 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="addCountryModal" tabindex="-1" aria-labelledby="addCountryModalLabel" aria-hidden="true">
+<div class="modal fade fb-pay-modal" id="addCountryModal" tabindex="-1" aria-labelledby="addCountryModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <form id="addCountryForm">
@@ -421,7 +421,7 @@
     </div>
   </div>
   <!-- Add State Modal -->
-<div class="modal fade" id="addStateModal" tabindex="-1" aria-labelledby="addStateModalLabel" aria-hidden="true">
+<div class="modal fade fb-pay-modal" id="addStateModal" tabindex="-1" aria-labelledby="addStateModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <form id="addStateForm">
@@ -468,7 +468,7 @@
     </div>
   </div>
   <!-- Add City Modal -->
-<div class="modal fade" id="addCityModal" tabindex="-1" aria-labelledby="addCityModalLabel" aria-hidden="true">
+<div class="modal fade fb-pay-modal" id="addCityModal" tabindex="-1" aria-labelledby="addCityModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <form id="addCityForm">

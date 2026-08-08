@@ -44,8 +44,9 @@
     function buildSummaryShell(title, bodyHtml) {
         return `
             <div class="text-start">
-                <div class="alert alert-soft-primary bg-primary bg-opacity-10 border-0 mb-3 py-2 px-3 rounded-3">
-                    <div class="fw-semibold text-primary mb-0">${escapeHtml(title)}</div>
+                <div class="tb-swal-note mb-3">
+                    <i class="bi bi-info-circle"></i>
+                    <span>${escapeHtml(title)}</span>
                 </div>
                 ${bodyHtml}
             </div>
@@ -62,12 +63,17 @@
             html: options.html,
             icon: options.icon || 'question',
             showCancelButton: true,
-            confirmButtonColor: '#198754',
-            cancelButtonColor: '#6c757d',
             confirmButtonText: options.confirmText || 'Confirm',
             cancelButtonText: options.cancelText || 'Cancel',
             width: options.width || '560px',
-            customClass: options.customClass || {},
+            customClass: options.customClass || (window.TruckbillUI && window.TruckbillUI.swalClasses) || {
+                popup: 'tb-swal-popup',
+                title: 'tb-swal-title',
+                htmlContainer: 'tb-swal-html',
+                actions: 'tb-swal-actions',
+                confirmButton: 'tb-swal-confirm',
+                cancelButton: 'tb-swal-cancel',
+            },
         }).then(function (result) {
             return Boolean(result.isConfirmed);
         });

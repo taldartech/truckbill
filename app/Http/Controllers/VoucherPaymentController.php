@@ -461,8 +461,11 @@ class VoucherPaymentController extends Controller
             'freight_booking.lr.consignor.city',
             'freight_booking.lr.consignee.city',
             'freight_booking.lr.truck',
+            'freight_booking.lr.transporter',
             'freight_booking.company',
             'pump',
+            'creator.branch',
+            'updater.branch',
         ])->where('voucher_number', $voucherNumber)
             ->orderBy('created_at', 'desc')
             ->get();

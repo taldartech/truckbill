@@ -97,7 +97,7 @@
                                         </td>
                                     </tr>
 
-                                    <div class="modal fade" id="beneficiaryModal{{ $truckOwner->id }}" tabindex="-1">
+                                    <div class="modal fade fb-pay-modal" id="beneficiaryModal{{ $truckOwner->id }}" tabindex="-1">
                                         <div class="modal-dialog">
                                             <div class="modal-content">
                                                 <div class="modal-header">
