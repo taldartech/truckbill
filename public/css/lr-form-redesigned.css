@@ -315,16 +315,29 @@
 .lrf-receipt-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto auto auto;
     gap: 12px;
+    align-items: stretch;
 }
 
 @media (max-width: 991px) {
     .lrf-receipt-grid {
         grid-template-columns: 1fr;
+        grid-template-rows: none;
+    }
+
+    .lrf-receipt-card {
+        display: flex;
+        flex-direction: column;
+        grid-row: auto;
     }
 }
 
 .lrf-receipt-card {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 3;
+    gap: 12px;
     border: 1px solid var(--border);
     border-radius: 12px;
     background: #f8fafc;
@@ -333,26 +346,135 @@
 }
 
 .lrf-receipt-card__title {
-    margin: 0 0 10px;
+    margin: 0;
     font-size: 0.72rem;
     font-weight: 800;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #64748b;
+    align-self: end;
+}
+
+.lrf-receipt-card__row {
+    min-width: 0;
+    align-self: start;
+}
+
+.lrf-receipt-card .lrf-pf__lbl-row {
+    min-height: 18px;
+}
+
+.lrf-pf--feedback {
+    position: relative;
+    padding-bottom: 1.25rem;
+}
+
+.lrf-pf--feedback .lrf-field-feedback {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin-top: 0;
+    min-height: 1.1rem;
 }
 
 .lrf-payee-row {
-    margin-top: 12px;
-    align-items: start;
+    margin-top: 0;
+    align-items: stretch;
 }
 
-.lrf-payee-row .lrf-truck-summary--panel {
-    margin-top: 23px;
-    margin-bottom: 0;
-    min-height: var(--input-h);
-    height: auto;
-    align-content: center;
+.lrf-payee-row > .lrf-pf {
+    min-width: 0;
+}
+
+.lrf-payee-row .lrf-pf__lbl-row {
+    min-height: 22px;
+    align-items: center;
+}
+
+.lrf-quick-add--spacer {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.lrf-truck-summary--field {
+    margin-top: 0 !important;
+    width: 100%;
+    min-height: var(--input-h) !important;
+    height: var(--input-h) !important;
+    max-height: var(--input-h) !important;
     box-sizing: border-box;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.35rem 0.55rem;
+    padding: 0 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background-color: #fff;
+    font-size: var(--fs-input);
+    line-height: calc(var(--input-h) - 2px);
+    color: #334155;
+}
+
+.lrf-truck-summary--field .lrf-truck-summary__k {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #94a3b8;
+}
+
+.lrf-truck-summary--field .lrf-truck-summary__v {
+    font-size: var(--fs-input);
+    font-weight: 600;
+    color: #334155;
+    text-transform: none;
+}
+
+.lrf-truck-summary--field .lrf-truck-summary__sep {
+    color: #cbd5e1;
+    font-weight: 700;
+}
+
+.lrf-payee-row .lr-payee-select-wrap,
+.lrf-payee-row .lr-payee-select-wrap .select2-container {
+    height: var(--input-h);
+}
+
+.lrf-payee-row .lr-payee-select-wrap .select2-container--bootstrap-5 .select2-selection,
+.lrf-payee-row .lr-payee-select-wrap .select2-container--bootstrap-5 .select2-selection--single {
+    min-height: var(--input-h) !important;
+    height: var(--input-h) !important;
+    max-height: var(--input-h) !important;
+    box-sizing: border-box !important;
+    border-radius: 8px !important;
+    border: 1px solid #e2e8f0 !important;
+    background-color: #fff !important;
+}
+
+.lrf-payee-row .lr-payee-select-wrap .select2-container--bootstrap-5.select2-container--disabled .select2-selection,
+.lrf-payee-row .lr-payee-select-wrap .select2-container--bootstrap-5.select2-container--disabled .select2-selection--single {
+    background-color: #f1f5f9 !important;
+}
+
+.lrf-payee-row.is-payee-locked .lrf-truck-summary--field {
+    background-color: #f1f5f9;
+}
+
+.lrf-pf__lbl-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+}
+
+.lrf-truck-summary--inline {
+    margin-top: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    gap: 0.3rem 0.4rem;
 }
 
 .lrf-pay-pills {

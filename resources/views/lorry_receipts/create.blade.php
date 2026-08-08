@@ -91,11 +91,15 @@
                     </div>
                 </div>
                 <div class="lrf-section__body">
+                    @php($selectedTruck = $trucks->firstWhere('id', old('truck_id')))
+                    @php($lrTruckSelected = filled(old('truck_id')) || ! empty($selectedTruck))
+                    @php($lrPayTypeSelected = in_array(old('transporter_type'), ['owner', 'agency'], true))
+
                     <div class="lrf-receipt-grid">
                         <div class="lrf-receipt-card">
                             <div class="lrf-receipt-card__title">Document</div>
-                            <div class="lrf-grid lrf-grid--2">
-                                <div class="lrf-pf">
+                            <div class="lrf-receipt-card__row lrf-grid lrf-grid--2">
+                                <div class="lrf-pf lrf-pf--feedback">
                                     <label for="lr_number" class="lrf-pf__lbl">LR Number<span class="lrf-pf__req">*</span></label>
                                     <input type="text" class="form-control" id="lr_number" name="lr_number"
                                         value="{{ old('lr_number') }}" required placeholder="Enter unique LR Number" autocomplete="off">
@@ -115,7 +119,7 @@
                                     <div class="invalid-feedback">Please select a GR date.</div>
                                 </div>
                             </div>
-                            <div class="lrf-pf mt-2">
+                            <div class="lrf-receipt-card__row lrf-pf">
                                 <div class="lrf-pf__lbl-row">
                                     <label for="customer_id" class="lrf-pf__lbl">Customer<span class="lrf-pf__req">*</span></label>
                                     <a href="{{ route('consignees.create') }}" class="lrf-quick-add" target="_blank" rel="noopener">
@@ -141,11 +145,7 @@
 
                         <div class="lrf-receipt-card">
                             <div class="lrf-receipt-card__title">Vehicle &amp; Payee</div>
-                            @php($selectedTruck = $trucks->firstWhere('id', old('truck_id')))
-                            @php($lrTruckSelected = filled(old('truck_id')) || ! empty($selectedTruck))
-                            @php($lrPayTypeSelected = in_array(old('transporter_type'), ['owner', 'agency'], true))
-
-                            <div class="lrf-grid lrf-grid--2">
+                            <div class="lrf-receipt-card__row lrf-grid lrf-grid--2">
                                 <div class="lrf-pf">
                                     <label for="truck_id" class="lrf-pf__lbl">Truck<span class="lrf-pf__req">*</span></label>
                                     <select class="form-select" id="truck_id" name="truck_id" required
@@ -190,7 +190,7 @@
                                 </div>
                             </div>
 
-                            <div id="lrPayeeRow" class="lrf-grid lrf-grid--2 lrf-payee-row" @if(! $lrPayTypeSelected) hidden @endif>
+                            <div id="lrPayeeRow" class="lrf-receipt-card__row lrf-grid lrf-grid--2 lrf-payee-row" @if(! $lrPayTypeSelected) hidden @endif>
                                 <div class="lrf-pf">
                                     <div class="lrf-pf__lbl-row">
                                         <label for="transporter_id" id="transporterLabel" class="lrf-pf__lbl">
@@ -234,16 +234,24 @@
                                     </div>
                                 </div>
 
-                                <div class="lrf-truck-summary lrf-truck-summary--panel" id="lrTruckSummary">
-                                    <span class="lrf-truck-summary__item" id="lrTruckSummaryDriverItem" hidden>
-                                        <span class="lrf-truck-summary__k">Driver</span>
-                                        <span class="lrf-truck-summary__v" id="lrTruckSummaryDriver">—</span>
-                                    </span>
-                                    <span class="lrf-truck-summary__sep" id="lrTruckSummaryDriverSep" hidden aria-hidden="true">·</span>
-                                    <span class="lrf-truck-summary__item">
-                                        <span class="lrf-truck-summary__k">TDS</span>
-                                        <span class="lrf-truck-summary__v" id="lrTruckSummaryTds">—</span>
-                                    </span>
+                                <div class="lrf-pf lrf-pay-meta">
+                                    <div class="lrf-pf__lbl-row">
+                                        <span class="lrf-pf__lbl">Driver / TDS</span>
+                                        <span class="lrf-quick-add lrf-quick-add--spacer" aria-hidden="true">
+                                            <i class="bi bi-plus-lg"></i> Add
+                                        </span>
+                                    </div>
+                                    <div class="lrf-truck-summary lrf-truck-summary--field" id="lrTruckSummary" role="status">
+                                        <span class="lrf-truck-summary__item" id="lrTruckSummaryDriverItem" hidden>
+                                            <span class="lrf-truck-summary__k">Driver</span>
+                                            <span class="lrf-truck-summary__v" id="lrTruckSummaryDriver">—</span>
+                                        </span>
+                                        <span class="lrf-truck-summary__sep" id="lrTruckSummaryDriverSep" hidden aria-hidden="true">·</span>
+                                        <span class="lrf-truck-summary__item">
+                                            <span class="lrf-truck-summary__k">TDS</span>
+                                            <span class="lrf-truck-summary__v" id="lrTruckSummaryTds">—</span>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1221,6 +1229,14 @@
                 lrTruckSummaryTds.textContent = displayOrDash(tdsPercentageValue ? tdsPercentageValue.textContent : '');
             }
 
+            function syncPayeeFieldLockStyle() {
+                const transporterSelect = document.getElementById('transporter_id');
+                if (!lrPayeeRow || !transporterSelect) {
+                    return;
+                }
+                lrPayeeRow.classList.toggle('is-payee-locked', !!transporterSelect.disabled);
+            }
+
             function syncPayeeVisibility() {
                 const hasTruck = !!(truckSelect && truckSelect.value);
                 const transporterTypeSelect = document.getElementById('transporter_type');
@@ -1240,8 +1256,10 @@
                 if (transporterSelect) {
                     transporterSelect.required = hasTruck && hasPayType;
                 }
+                syncPayeeFieldLockStyle();
             }
             window.syncLrPayeeVisibility = syncPayeeVisibility;
+            window.syncLrPayeeFieldLockStyle = syncPayeeFieldLockStyle;
 
             function updateTruckMetaSummary(ownerName, driverName) {
                 const driver = displayOrDash(driverName);
@@ -1380,9 +1398,28 @@
                 });
             }
 
+            const transporterSelectForLock = document.getElementById('transporter_id');
+            if (transporterSelectForLock && typeof MutationObserver !== 'undefined') {
+                const payeeLockObserver = new MutationObserver(syncPayeeFieldLockStyle);
+                payeeLockObserver.observe(transporterSelectForLock, {
+                    attributes: true,
+                    attributeFilter: ['disabled'],
+                });
+            }
+            if (window.jQuery) {
+                window.jQuery(document).on(
+                    'select2:select.lrPayeeLock select2:clear.lrPayeeLock change.lrPayeeLock',
+                    '#transporter_id',
+                    function () {
+                        setTimeout(syncPayeeFieldLockStyle, 0);
+                    }
+                );
+            }
+
             readTruckMetaFromSelection();
             syncTruckSummaryTds();
             syncPayeeVisibility();
+            syncPayeeFieldLockStyle();
 
             // Custom form validation function
             function validateConsignorConsignee() {
