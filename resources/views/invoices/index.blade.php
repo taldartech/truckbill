@@ -49,6 +49,97 @@
             background-color: var(--brand-primary);
             color: white;
         }
+
+        .invoice-stats {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .invoice-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            min-width: 0;
+            padding: 0.55rem 0.65rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            background: linear-gradient(185deg, #fff 0%, #f8fafc 100%);
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+            border-top: 3px solid #94a3b8;
+        }
+
+        .invoice-stat--total { border-top-color: #2d8cff; }
+        .invoice-stat--paid { border-top-color: #2fb36f; }
+        .invoice-stat--partial { border-top-color: #0ea5e9; }
+        .invoice-stat--unpaid { border-top-color: #d97706; }
+        .invoice-stat--amount { border-top-color: #6366f1; }
+
+        .invoice-stat__icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.85rem;
+            height: 1.85rem;
+            flex-shrink: 0;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .invoice-stat--total .invoice-stat__icon { background: rgba(45, 140, 255, 0.12); color: #2d8cff; }
+        .invoice-stat--paid .invoice-stat__icon { background: rgba(47, 179, 111, 0.12); color: #2fb36f; }
+        .invoice-stat--partial .invoice-stat__icon { background: rgba(14, 165, 233, 0.12); color: #0284c7; }
+        .invoice-stat--unpaid .invoice-stat__icon { background: rgba(217, 119, 6, 0.12); color: #d97706; }
+        .invoice-stat--amount .invoice-stat__icon { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
+
+        .invoice-stat__meta {
+            min-width: 0;
+            line-height: 1.15;
+        }
+
+        .invoice-stat__label {
+            display: block;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            color: #94a3b8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .invoice-stat__value {
+            display: block;
+            margin-top: 0.1rem;
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #0f172a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @media (max-width: 1199.98px) {
+            .invoice-stats {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .invoice-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 420px) {
+            .invoice-stats {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 @endpush
 
@@ -88,26 +179,41 @@
 
             <div class="app-index-dt-toolbar">
                 {{-- Quick Stats --}}
-                <div class="row g-2 mb-3">
-                    <div class="col-md-3">
-                        <div class="card text-bg-primary mb-0">
-                            <div class="card-body p-2">Total Invoices: <b>{{ $totalInvoices }}</b></div>
-                        </div>
+                <div class="invoice-stats">
+                    <div class="invoice-stat invoice-stat--total">
+                        <span class="invoice-stat__icon"><i class="bi bi-receipt"></i></span>
+                        <span class="invoice-stat__meta">
+                            <span class="invoice-stat__label">Total Invoices</span>
+                            <span class="invoice-stat__value">{{ number_format($totalInvoices) }}</span>
+                        </span>
                     </div>
-                    <div class="col-md-3">
-                        <div class="card bg-brand-primary text-white mb-0">
-                            <div class="card-body p-2">Paid: <b>{{ $paidCount }}</b></div>
-                        </div>
+                    <div class="invoice-stat invoice-stat--paid">
+                        <span class="invoice-stat__icon"><i class="bi bi-check2-circle"></i></span>
+                        <span class="invoice-stat__meta">
+                            <span class="invoice-stat__label">Paid</span>
+                            <span class="invoice-stat__value">{{ number_format($paidCount) }}</span>
+                        </span>
                     </div>
-                    <div class="col-md-3">
-                        <div class="card text-bg-warning mb-0">
-                            <div class="card-body p-2">Unpaid: <b>{{ $unpaidCount }}</b></div>
-                        </div>
+                    <div class="invoice-stat invoice-stat--partial">
+                        <span class="invoice-stat__icon"><i class="bi bi-pie-chart"></i></span>
+                        <span class="invoice-stat__meta">
+                            <span class="invoice-stat__label">Partial Paid</span>
+                            <span class="invoice-stat__value">{{ number_format($partialCount ?? 0) }}</span>
+                        </span>
                     </div>
-                    <div class="col-md-3">
-                        <div class="card text-bg-info mb-0">
-                            <div class="card-body p-2">Total Amount: <b>&#8377;{{ number_format($totalAmount, 2) }}</b></div>
-                        </div>
+                    <div class="invoice-stat invoice-stat--unpaid">
+                        <span class="invoice-stat__icon"><i class="bi bi-hourglass-split"></i></span>
+                        <span class="invoice-stat__meta">
+                            <span class="invoice-stat__label">Unpaid</span>
+                            <span class="invoice-stat__value">{{ number_format($unpaidCount) }}</span>
+                        </span>
+                    </div>
+                    <div class="invoice-stat invoice-stat--amount">
+                        <span class="invoice-stat__icon"><i class="bi bi-currency-rupee"></i></span>
+                        <span class="invoice-stat__meta">
+                            <span class="invoice-stat__label">Total Amount</span>
+                            <span class="invoice-stat__value">₹{{ number_format($totalAmount, 2) }}</span>
+                        </span>
                     </div>
                 </div>
 

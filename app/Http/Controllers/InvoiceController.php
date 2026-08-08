@@ -38,8 +38,12 @@ class InvoiceController extends Controller
 
         $stats = (clone $summaryQuery)
             ->selectRaw(
-                'COUNT(*) as total_invoices, COALESCE(SUM(total_amount), 0) as total_amount, SUM(CASE WHEN payment_status = ? THEN 1 ELSE 0 END) as paid_count, SUM(CASE WHEN payment_status = ? THEN 1 ELSE 0 END) as unpaid_count',
-                ['paid', 'pending']
+                'COUNT(*) as total_invoices,
+                 COALESCE(SUM(total_amount), 0) as total_amount,
+                 SUM(CASE WHEN payment_status = ? THEN 1 ELSE 0 END) as paid_count,
+                 SUM(CASE WHEN payment_status = ? THEN 1 ELSE 0 END) as unpaid_count,
+                 SUM(CASE WHEN payment_status = ? THEN 1 ELSE 0 END) as partial_count',
+                ['paid', 'pending', 'partial']
             )
             ->first();
 
@@ -47,8 +51,15 @@ class InvoiceController extends Controller
         $totalAmount = (float) ($stats->total_amount ?? 0);
         $paidCount = (int) ($stats->paid_count ?? 0);
         $unpaidCount = (int) ($stats->unpaid_count ?? 0);
+        $partialCount = (int) ($stats->partial_count ?? 0);
 
-        return view('invoices.index', compact('totalInvoices', 'totalAmount', 'paidCount', 'unpaidCount'));
+        return view('invoices.index', compact(
+            'totalInvoices',
+            'totalAmount',
+            'paidCount',
+            'unpaidCount',
+            'partialCount'
+        ));
     }
 
     public function getInvoicesData(Request $request)
