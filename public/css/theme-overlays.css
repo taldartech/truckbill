@@ -56,6 +56,9 @@
 
 .modal.fade .modal-footer,
 .fb-pay-modal .modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     padding: 0.75rem 1.1rem;
     border-top: 1px solid #e2e8f0;
     background: #fff;
@@ -63,11 +66,46 @@
 }
 
 .modal.fade .modal-footer .btn,
-.fb-pay-modal .modal-footer .btn {
+.fb-pay-modal .modal-footer .btn,
+.modal.fade .modal-body .btn,
+.fb-pay-modal .modal-body .btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.35rem;
     min-height: 36px;
+    padding: 0.45rem 0.85rem;
     font-size: 0.84rem;
     font-weight: 650;
+    line-height: 1.2;
     border-radius: 0.5rem;
+    vertical-align: middle;
+}
+
+.modal.fade .modal-footer .btn i,
+.fb-pay-modal .modal-footer .btn i,
+.modal.fade .modal-body .btn i,
+.fb-pay-modal .modal-body .btn i,
+.modal.fade .modal-footer .btn .bi,
+.fb-pay-modal .modal-footer .btn .bi,
+.modal.fade .modal-footer .btn .fas,
+.fb-pay-modal .modal-footer .btn .fas {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    margin: 0;
+    font-size: 0.95em;
+    position: relative;
+    top: 0;
+}
+
+.modal.fade .modal-footer .btn .me-1,
+.fb-pay-modal .modal-footer .btn .me-1,
+.modal.fade .modal-footer .btn .me-2,
+.fb-pay-modal .modal-footer .btn .me-2 {
+    margin-right: 0.35rem !important;
+    margin-left: 0 !important;
 }
 
 .modal.fade .modal-footer .btn-brand-primary,

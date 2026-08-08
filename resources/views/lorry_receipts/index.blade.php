@@ -419,11 +419,11 @@
     <div class="modal fade fb-pay-modal" id="lrDetailsModal" tabindex="-1" aria-labelledby="lrDetailsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
+                <div class="modal-header">
                     <h5 class="modal-title" id="lrDetailsModalLabel">
-                        <i class="bi bi-file-text me-2"></i>Good Receipt (Bilty) Details
+                        <i class="bi bi-file-text"></i> Good Receipt (Bilty) Details
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-0" id="lrDetailsContent">
