@@ -148,8 +148,13 @@ class CityController extends Controller
 
     public function create()
     {
-        $countries = Country::all();
-        return view('master.cities-form', compact('countries'));
+        $countries = Country::query()->orderBy('name')->get();
+        $india = Country::query()->where('code', 'IN')->first()
+            ?? Country::query()->where('name', 'India')->first();
+        $selectedCountryId = old('country_id', $india?->id);
+        $selectedStateId = old('state_id');
+
+        return view('master.cities-form', compact('countries', 'selectedCountryId', 'selectedStateId'));
     }
 
     public function store(Request $request)
@@ -218,9 +223,12 @@ class CityController extends Controller
 
     public function edit(City $city)
     {
-        $states = State::with('country')->get();
-        $countries = Country::all();
-        return view('master.cities-form', compact('city', 'states', 'countries'));
+        $city->loadMissing('state');
+        $countries = Country::query()->orderBy('name')->get();
+        $selectedCountryId = old('country_id', $city->state?->country_id ?? $city->country_id);
+        $selectedStateId = old('state_id', $city->state_id);
+
+        return view('master.cities-form', compact('city', 'countries', 'selectedCountryId', 'selectedStateId'));
     }
 
     public function update(Request $request, City $city)

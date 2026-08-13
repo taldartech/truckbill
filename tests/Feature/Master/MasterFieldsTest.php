@@ -212,6 +212,40 @@ class MasterFieldsTest extends TestCase
         return [$country, $state, $city];
     }
 
+    public function test_state_create_defaults_country_to_india_and_shows_confirmation(): void
+    {
+        $india = Country::create(['name' => 'India', 'code' => 'IN']);
+        Country::create(['name' => 'United States', 'code' => 'US']);
+        $admin = $this->makeUser('admin');
+
+        $response = $this->actingAs($admin)->get(route('master.states.create'));
+
+        $response->assertOk()
+            ->assertViewIs('master.states-form')
+            ->assertViewHas('selectedCountryId', $india->id)
+            ->assertSee('value="'.$india->id.'" selected', false)
+            ->assertSee('id="stateForm"', false)
+            ->assertSee('data-confirm-mode="create"', false)
+            ->assertSee('js/state-form.js', false);
+    }
+
+    public function test_city_create_defaults_country_to_india_and_shows_confirmation(): void
+    {
+        $india = Country::create(['name' => 'India', 'code' => 'IN']);
+        Country::create(['name' => 'United States', 'code' => 'US']);
+        $admin = $this->makeUser('admin');
+
+        $response = $this->actingAs($admin)->get(route('master.cities.create'));
+
+        $response->assertOk()
+            ->assertViewIs('master.cities-form')
+            ->assertViewHas('selectedCountryId', $india->id)
+            ->assertSee('value="'.$india->id.'" selected', false)
+            ->assertSee('id="cityForm"', false)
+            ->assertSee('data-confirm-mode="create"', false)
+            ->assertSee('js/city-form.js', false);
+    }
+
     public function test_countries_index_disables_create_button(): void
     {
         $admin = $this->makeUser('admin');

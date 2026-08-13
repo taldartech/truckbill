@@ -131,8 +131,12 @@ class StateController extends Controller
 
     public function create()
     {
-        $countries = Country::all();
-        return view('master.states-form', compact('countries'));
+        $countries = Country::query()->orderBy('name')->get();
+        $india = Country::query()->where('code', 'IN')->first()
+            ?? Country::query()->where('name', 'India')->first();
+        $selectedCountryId = old('country_id', $india?->id);
+
+        return view('master.states-form', compact('countries', 'selectedCountryId'));
     }
 
     public function store(Request $request)
@@ -198,8 +202,10 @@ class StateController extends Controller
 
     public function edit(State $state)
     {
-        $countries = Country::all();
-        return view('master.states-form', compact('state', 'countries'));
+        $countries = Country::query()->orderBy('name')->get();
+        $selectedCountryId = old('country_id', $state->country_id);
+
+        return view('master.states-form', compact('state', 'countries', 'selectedCountryId'));
     }
 
     public function update(Request $request, State $state)
