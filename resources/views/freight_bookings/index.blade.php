@@ -177,6 +177,10 @@
 @endpush
 
 @section('content')
+
+
+
+
     <div class="container-fluid mt-4 app-index-page app-index-page--standard">
         @if (session('success'))
             <div class="mb-3">
@@ -196,6 +200,7 @@
         <div class="card app-index-list-card mb-4">
             <div class="card-header">
                 <h3 class="card-title mb-0">Good Hires (Lorry Hire)</h3>
+               
             </div>
 
             <div class="app-index-dt-toolbar">
@@ -294,6 +299,7 @@
                             </tr>
                         </thead>
                         <tbody>
+
                         </tbody>
                     </table>
                 </div>
@@ -1768,6 +1774,44 @@
                         name: 'transporter',
                         orderable: false
                     },
+
+
+//                     {
+//     data: 'transporter',
+//     name: 'transporter',
+//     orderable: false,
+//     render: function(data, type, row) {
+//         if (type !== 'display') {
+//             return data;
+//         }
+
+//         const checkboxHtml = row.checkbox || '';
+//         const temp = $('<div>').html(checkboxHtml);
+//         const checkbox = temp.find('.row-checkbox');
+
+//         const shortName =
+//             checkbox.attr('data-lr-transporter-short-name') || '';
+
+//         const beneficiaryId =
+//             checkbox.attr('data-lr-transporter-beneficiary-id') || '';
+
+//         return `
+//             <div>
+//                 <div>${data || '-'}</div>
+
+//                 <small class="text-muted">
+//                     ${shortName || '-'}
+//                 </small>
+
+//                 <br>
+
+//                 <span class="badge bg-success">
+//                     ${beneficiaryId || 'Not Set'}
+//                 </span>
+//             </div>
+//         `;
+//     }
+// },
                     {
                         data: 'truck_number',
                         name: 'truck_number',

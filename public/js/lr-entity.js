@@ -716,11 +716,7 @@
             </div>
           </div>
           <div class="lrf-receipt-confirm__total">
-            <div class="lrf-receipt-confirm__total-meta">
-              <span class="lrf-receipt-confirm__pill">${escapeHtml(goodsType)}</span>
-              <span class="lrf-receipt-confirm__pill">Wt ${escapeHtml(cleanConfirmText(details.weight) || '—')} t</span>
-              <span class="lrf-receipt-confirm__pill">Qty ${escapeHtml(cleanConfirmText(details.units) || '—')}</span>
-            </div>
+           
             <div class="lrf-receipt-confirm__total-amount">
               <span>Total Amount</span>
               <strong>₹${escapeHtml(amountDisplay)}</strong>

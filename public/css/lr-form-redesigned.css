@@ -87,7 +87,7 @@
     border-bottom-color: #ffd8a8;
 }
 
-.lrf-section__head-left {
+.d-left {
     display: flex;
     align-items: center;
     gap: 12px;
