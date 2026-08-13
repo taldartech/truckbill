@@ -17,12 +17,13 @@ use App\Models\Transporter;
 use App\Models\TransporterMaster;
 use App\Models\Truck;
 use App\Services\Notifications\CompanyLifecycleNotificationService;
+use App\Services\SubscriptionPricingService;
 use App\Support\FreightChallanTemplate;
 use App\Support\LrCopyPdfTemplate;
 use App\Support\MpdfDocument;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Services\SubscriptionPricingService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
@@ -83,9 +84,10 @@ class CompanyController extends Controller
 
     private function getCompaniesData(Request $request)
     {
+        $isMasterAdmin = auth()->user()->userRole->name === 'master_admin';
 
         // Master admin can access all companies; others see only owned records.
-        if (auth()->user()->userRole->name === 'master_admin') {
+        if ($isMasterAdmin) {
             $query = Company::query();
         } else {
             $query = Company::query()->where('user_id', auth()->user()->id);
@@ -106,107 +108,70 @@ class CompanyController extends Controller
             });
         }
 
-        // Handle column-specific search
+        $sortableColumns = [
+            'id' => 'id',
+            'name' => 'name',
+            'gst_number' => 'gst_number',
+            'pan_number' => 'pan_number',
+            'dummy_pan_number' => 'dummy_pan_number',
+            'address' => 'address',
+            'contact_person' => 'contact_person',
+            'contact_number' => 'contact_number',
+        ];
+
         if ($request->has('columns')) {
-            foreach ($request->columns as $index => $column) {
-                if (! empty($column['search']['value'])) {
-                    $searchValue = $column['search']['value'];
-                    switch ($index) {
-                        case 1: // Name
-                            $query->where('name', 'like', "%{$searchValue}%");
-                            break;
-                        case 2: // GST Number
-                            $query->where('gst_number', 'like', "%{$searchValue}%");
-                            break;
-                        case 3: // PAN Number
-                            $query->where('pan_number', 'like', "%{$searchValue}%");
-                            break;
-                        case 4: // GST Scheme
-                            $query->where('gst_scheme', 'like', "%{$searchValue}%");
-                            break;
-                        case 5: // GST Type
-                            $query->where('gst_type', 'like', "%{$searchValue}%");
-                            break;
-                        case 6: // Address
-                            $query->where('address', 'like', "%{$searchValue}%");
-                            break;
-                        case 7: // Contact Person
-                            $query->where('contact_person', 'like', "%{$searchValue}%");
-                            break;
-                        case 8: // Contact Number
-                            $query->where('contact_number', 'like', "%{$searchValue}%");
-                            break;
-                    }
+            foreach ($request->columns as $column) {
+                $searchValue = $column['search']['value'] ?? null;
+                $columnName = $column['name'] ?? $column['data'] ?? null;
+
+                if ($searchValue === null || $searchValue === '' || ! isset($sortableColumns[$columnName]) || $columnName === 'id') {
+                    continue;
                 }
+
+                $query->where($sortableColumns[$columnName], 'like', "%{$searchValue}%");
             }
         }
 
-        // Handle sorting
         if ($request->has('order')) {
-            $orderColumn = $request->order[0]['column'];
-            $orderDirection = $request->order[0]['dir'];
+            $orderColumnIndex = (int) ($request->order[0]['column'] ?? 0);
+            $orderDirection = ($request->order[0]['dir'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
+            $orderColumnName = $request->columns[$orderColumnIndex]['name'] ?? 'id';
 
-            switch ($orderColumn) {
-                case 0: // ID
-                    $query->orderBy('id', $orderDirection);
-                    break;
-                case 1: // Name
-                    $query->orderBy('name', $orderDirection);
-                    break;
-                case 2: // GST Number
-                    $query->orderBy('gst_number', $orderDirection);
-                    break;
-                case 3: // PAN Number
-                    $query->orderBy('pan_number', $orderDirection);
-                    break;
-                case 4: // GST Scheme
-                    $query->orderBy('gst_scheme', $orderDirection);
-                    break;
-                case 5: // GST Type
-                    $query->orderBy('gst_type', $orderDirection);
-                    break;
-                case 6: // Address
-                    $query->orderBy('address', $orderDirection);
-                    break;
-                case 7: // Contact Person
-                    $query->orderBy('contact_person', $orderDirection);
-                    break;
-                case 8: // Contact Number
-                    $query->orderBy('contact_number', $orderDirection);
-                    break;
-                default:
-                    $query->orderBy('created_at', 'desc');
+            if (isset($sortableColumns[$orderColumnName])) {
+                $query->orderBy($sortableColumns[$orderColumnName], $orderDirection);
+            } else {
+                $query->orderBy('created_at', 'desc');
             }
         } else {
             $query->orderBy('created_at', 'desc');
         }
 
-        // Get total count before pagination
-        $totalRecords = Company::where('user_id', auth()->user()->id)->count();
+        $totalRecords = $isMasterAdmin
+            ? Company::query()->count()
+            : Company::query()->where('user_id', auth()->user()->id)->count();
         $filteredRecords = $query->count();
 
-        // Handle pagination
         $start = $request->start ?? 0;
         $length = $request->length ?? 10;
         $companies = $query->skip($start)->take($length)->get();
 
-        // Format data for DataTables
-        $data = $companies->map(function ($company, $index) use ($start) {
-            return [
+        $data = $companies->map(function ($company, $index) use ($start, $isMasterAdmin) {
+            $row = [
                 'id' => $index + $start + 1,
-                'name' => $company->name,
+                'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold company-name-link" data-id="'.$company->id.'" style="cursor: pointer; text-decoration: none;">'.e($company->name ?: '-').'</a>',
                 'gst_number' => $company->gst_number ?: '-',
                 'pan_number' => $company->pan_number ?: '-',
-                'dummy_pan_number' => auth()->check() && auth()->user()->userRole?->name === 'master_admin'
-                    ? ($company->dummy_pan_number ?: '-')
-                    : '-',
-                'gst_scheme' => $company->gst_scheme ? ucfirst($company->gst_scheme) : '-',
-                'gst_type' => $company->gst_type ? ucfirst($company->gst_type) : '-',
                 'address' => $company->address ?: '-',
                 'contact_person' => $company->contact_person ?: '-',
                 'contact_number' => $company->contact_number ?: '-',
                 'actions' => $this->getActionButtons($company),
             ];
+
+            if ($isMasterAdmin) {
+                $row['dummy_pan_number'] = $company->dummy_pan_number ?: '-';
+            }
+
+            return $row;
         });
 
         return response()->json([
@@ -215,6 +180,59 @@ class CompanyController extends Controller
             'recordsFiltered' => $filteredRecords,
             'data' => $data,
         ]);
+    }
+
+    public function show(Company $company): JsonResponse
+    {
+        $user = Auth::user();
+        $roleName = $user->userRole->name ?? null;
+        $isMasterAdmin = $roleName === 'master_admin';
+
+        if (! $isMasterAdmin && (int) $company->user_id !== (int) $user->id) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $company->load(['country', 'state', 'city']);
+
+        $display = function (?string $value): string {
+            $value = trim((string) $value);
+
+            return $value !== '' ? $value : 'Not provided';
+        };
+
+        $payload = [
+            'id' => $company->id,
+            'name' => $display($company->name),
+            'short_name' => $display($company->short_name),
+            'company_type' => $display($company->company_type),
+            'contact_person' => $display($company->contact_person),
+            'contact_number' => $display($company->contact_number),
+            'gst_number' => $display($company->gst_number),
+            'pan_number' => $display($company->pan_number),
+            'gst_scheme' => $company->gst_scheme ? ucfirst($company->gst_scheme) : 'Not provided',
+            'gst_type' => $company->gst_type ? ucfirst($company->gst_type) : 'Not provided',
+            'gst_slab' => $company->gst_slab !== null && $company->gst_slab !== ''
+                ? rtrim((string) $company->gst_slab, '%').'%'
+                : 'Not provided',
+            'address' => $display($company->address),
+            'country' => $display($company->country?->name),
+            'state' => $display($company->state?->name),
+            'city' => $display($company->city?->name),
+            'pin_code' => $display($company->pin_code),
+            'bank' => $display($company->bank),
+            'account_number' => $display($company->account_number),
+            'ifsc' => $display($company->ifsc),
+            'logo_url' => $company->logoPublicUrl(),
+            'is_blocked' => (bool) $company->is_blocked,
+            'can_edit' => ! $isMasterAdmin,
+            'edit_url' => $isMasterAdmin ? null : route('company.edit', $company),
+        ];
+
+        if ($isMasterAdmin) {
+            $payload['dummy_pan_number'] = $display($company->dummy_pan_number);
+        }
+
+        return response()->json($payload);
     }
 
     private function getActionButtons($company)

@@ -18,12 +18,12 @@ use App\Http\Controllers\GoodsTypeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LorryReceiptController;
 use App\Http\Controllers\MasterPanelSummaryController;
-use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\PumpController;
 use App\Http\Controllers\Report\PartyLedgerReportController;
 use App\Http\Controllers\Report\PartyPendingInvoiceReportController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StateController;
+use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TransporterBankAccountController;
 use App\Http\Controllers\TransporterController;
 use App\Http\Controllers\TransporterDashboardController;
@@ -64,7 +64,7 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('invoice-template-demo', [CompanyController::class, 'invoiceTemplateDemo'])->name('invoice.template.demo');
         Route::get('lr-copy-template-demo', [CompanyController::class, 'lrCopyTemplateDemo'])->name('lr-copy.template.demo');
         Route::get('freight-challan-template-demo', [CompanyController::class, 'freightChallanTemplateDemo'])->name('freight-challan.template.demo');
-        Route::resource('company', CompanyController::class)->except(['show']);
+        Route::resource('company', CompanyController::class);
     });
     // Master Admin only routes
     Route::group(['middleware' => 'role:master_admin'], function () {

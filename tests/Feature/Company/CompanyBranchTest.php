@@ -59,7 +59,7 @@ class CompanyBranchTest extends TestCase
     protected function createCompanyFor(User $owner, array $overrides = []): Company
     {
         return Company::create(array_merge([
-            'name' => 'Company ' . $owner->id,
+            'name' => 'Company '.$owner->id,
             'gst_slab' => config('payments.gst_slabs')[0],
             'user_id' => $owner->id,
             'is_blocked' => false,
@@ -97,7 +97,83 @@ class CompanyBranchTest extends TestCase
         $response->assertOk();
         $response->assertJsonFragment(['recordsTotal' => 1]);
         $response->assertJsonFragment(['recordsFiltered' => 1]);
-        $this->assertSame($owned->name, $response->json('data.0.name'));
+        $this->assertStringContainsString($owned->name, (string) $response->json('data.0.name'));
+        $this->assertStringContainsString('company-name-link', (string) $response->json('data.0.name'));
+        $this->assertArrayNotHasKey('gst_scheme', $response->json('data.0'));
+        $this->assertArrayNotHasKey('gst_type', $response->json('data.0'));
+    }
+
+    public function test_company_index_hides_gst_scheme_and_gst_type_columns(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $this->createCompanyFor($super);
+
+        $response = $this->actingAs($super)->get(route('company.index'));
+
+        $response->assertOk();
+        $response->assertDontSee('>GST Scheme<', false);
+        $response->assertDontSee('>GST Type<', false);
+        $response->assertSee('companyDetailsModal', false);
+    }
+
+    public function test_company_show_returns_details_json_for_owner(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($super, [
+            'name' => 'Detail Co',
+            'short_name' => 'DCO',
+            'gst_number' => '27AABCU9603R1ZM',
+            'pan_number' => 'AABCU9603R',
+            'gst_scheme' => 'forward charge',
+            'gst_type' => 'regular',
+            'address' => '12 MG Road',
+            'contact_person' => 'Amit',
+            'contact_number' => '9876543210',
+            'bank' => 'HDFC Bank',
+            'account_number' => '123456789012',
+            'ifsc' => 'HDFC0001234',
+        ]);
+
+        $response = $this->actingAs($super)->get(route('company.show', $company));
+
+        $response->assertOk()->assertJsonFragment([
+            'id' => $company->id,
+            'name' => 'Detail Co',
+            'short_name' => 'DCO',
+            'gst_number' => '27AABCU9603R1ZM',
+            'gst_scheme' => 'Forward charge',
+            'gst_type' => 'Regular',
+            'bank' => 'HDFC Bank',
+            'can_edit' => true,
+        ]);
+        $this->assertArrayNotHasKey('dummy_pan_number', $response->json());
+    }
+
+    public function test_company_show_is_forbidden_for_non_owner(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $other = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($other, ['name' => 'Other Co']);
+
+        $this->actingAs($super)
+            ->get(route('company.show', $company))
+            ->assertForbidden();
+    }
+
+    public function test_master_admin_can_view_any_company_details(): void
+    {
+        $master = $this->makeMasterAdmin();
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($super, ['name' => 'Visible Co']);
+
+        $response = $this->actingAs($master)->get(route('company.show', $company));
+
+        $response->assertOk()->assertJsonFragment([
+            'id' => $company->id,
+            'name' => 'Visible Co',
+            'can_edit' => false,
+        ]);
+        $this->assertArrayHasKey('dummy_pan_number', $response->json());
     }
 
     public function test_company_datatable_master_admin_sees_their_companies(): void
@@ -288,4 +364,3 @@ class CompanyBranchTest extends TestCase
         ]);
     }
 }
-

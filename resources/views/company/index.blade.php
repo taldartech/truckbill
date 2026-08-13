@@ -50,8 +50,6 @@
                             @if (auth()->check() && auth()->user()->userRole?->name === 'master_admin')
                                 <th>Dummy PAN (System)</th>
                             @endif
-                            <th>GST Scheme</th>
-                            <th>GST Type</th>
                             <th>Address</th>
                             <th>Contact Person</th>
                             <th>Contact Number</th>
@@ -59,6 +57,37 @@
                         </tr>
                     </thead>
                 </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade fb-pay-modal" id="companyDetailsModal" tabindex="-1" aria-labelledby="companyDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="companyDetailsModalLabel">
+                    <i class="bi bi-building"></i> Company Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="companyDetailsContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading company details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> Close
+                </button>
+                @if (auth()->user()->userRole->name !== 'master_admin')
+                    <a href="#" id="editCompanyBtn" class="btn btn-brand-primary" style="display: none;">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
+                @endif
             </div>
         </div>
     </div>
@@ -115,16 +144,6 @@ $(document).ready(function() {
             },
             @endif
             {
-                data: 'gst_scheme',
-                name: 'gst_scheme',
-                width: '120px'
-            },
-            {
-                data: 'gst_type',
-                name: 'gst_type',
-                width: '100px'
-            },
-            {
                 data: 'address',
                 name: 'address'
             },
@@ -178,18 +197,141 @@ $(document).ready(function() {
         responsive: true,
         autoWidth: false,
         stateSave: true,
+        stateSaveCallback: function (settings, data) {
+            localStorage.setItem('dt_companies_index_v2', JSON.stringify(data));
+        },
+        stateLoadCallback: function () {
+            try {
+                return JSON.parse(localStorage.getItem('dt_companies_index_v2'));
+            } catch (e) {
+                return null;
+            }
+        },
         searchDelay: 500,
         scrollX: true
     });
 
-    // Handle delete confirmation
+    function escapeHtml(value) {
+        if (value === null || value === undefined) {
+            return '';
+        }
+
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function fact(label, value) {
+        return `
+            <div class="fb-pay-fact">
+                <span class="fb-pay-fact__label">${escapeHtml(label)}</span>
+                <span class="fb-pay-fact__value">${value}</span>
+            </div>
+        `;
+    }
+
+    function panel(icon, title, factsHtml) {
+        return `
+            <div class="fb-pay-panel">
+                <div class="fb-pay-panel__head">
+                    <i class="${icon}"></i> ${escapeHtml(title)}
+                </div>
+                <div class="fb-pay-panel__body">
+                    <div class="fb-pay-facts fb-pay-facts--2">
+                        ${factsHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    $(document).on('click', '.company-name-link', function(e) {
+        e.preventDefault();
+        var companyId = $(this).data('id');
+
+        $('#companyDetailsModal').modal('show');
+        $('#companyDetailsContent').html(`
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading company details...</p>
+            </div>
+        `);
+        $('#editCompanyBtn').hide();
+
+        $.ajax({
+            url: '/company/' + companyId,
+            type: 'GET',
+            success: function(data) {
+                var logoHtml = data.logo_url
+                    ? `<img src="${escapeHtml(data.logo_url)}" alt="Company logo" style="max-height: 56px; width: auto; object-fit: contain;">`
+                    : escapeHtml('Not provided');
+
+                var taxFacts = fact('GST Number', escapeHtml(data.gst_number))
+                    + fact('PAN Number', escapeHtml(data.pan_number))
+                    + fact('GST Scheme', escapeHtml(data.gst_scheme))
+                    + fact('GST Type', escapeHtml(data.gst_type))
+                    + fact('GST Slab', escapeHtml(data.gst_slab));
+
+                if (data.dummy_pan_number) {
+                    taxFacts += fact('Dummy PAN (System)', escapeHtml(data.dummy_pan_number));
+                }
+
+                var detailsHtml = panel('bi bi-building', 'Company',
+                    fact('Name', escapeHtml(data.name))
+                    + fact('Short Name', escapeHtml(data.short_name))
+                    + fact('Type', escapeHtml(data.company_type))
+                    + fact('Status', data.is_blocked
+                        ? '<span class="badge text-bg-danger">Blocked</span>'
+                        : '<span class="badge text-bg-success">Active</span>')
+                    + fact('Contact Person', escapeHtml(data.contact_person))
+                    + fact('Contact Number', escapeHtml(data.contact_number))
+                    + fact('Logo', logoHtml)
+                )
+                + panel('bi bi-receipt', 'GST & Tax', taxFacts)
+                + panel('bi bi-geo-alt', 'Location',
+                    fact('Address', escapeHtml(data.address))
+                    + fact('Country', escapeHtml(data.country))
+                    + fact('State', escapeHtml(data.state))
+                    + fact('City', escapeHtml(data.city))
+                    + fact('Pin Code', escapeHtml(data.pin_code))
+                )
+                + panel('bi bi-bank', 'Bank Details',
+                    fact('Bank', escapeHtml(data.bank))
+                    + fact('Account Number', escapeHtml(data.account_number))
+                    + fact('IFSC', escapeHtml(data.ifsc))
+                );
+
+                $('#companyDetailsContent').html(detailsHtml);
+
+                if (data.can_edit && data.edit_url) {
+                    $('#editCompanyBtn').attr('href', data.edit_url).show();
+                } else {
+                    $('#editCompanyBtn').hide();
+                }
+            },
+            error: function() {
+                $('#companyDetailsContent').html(`
+                    <div class="alert alert-danger mb-0">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Error!</strong> Failed to load company details. Please try again.
+                    </div>
+                `);
+                $('#editCompanyBtn').hide();
+            }
+        });
+    });
+
     $(document).on('submit', 'form[action*="destroy"]', function(e) {
         if (!confirm('Are you sure you want to delete this company?')) {
             e.preventDefault();
             return false;
         }
     });
-
 });
 </script>
 @endpush
