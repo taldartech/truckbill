@@ -67,6 +67,16 @@
     color: var(--brand-primary-dark, #23965c) !important;
 }
 
+.app-index-page--standard .app-index-list-card > .card-header .app-index-header-btn:disabled,
+.app-index-list-card > .card-header .app-index-header-btn:disabled,
+.app-index-page--standard .app-index-list-card > .card-header .app-index-header-btn.disabled,
+.app-index-list-card > .card-header .app-index-header-btn.disabled {
+    opacity: 0.55 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+    pointer-events: none;
+}
+
 .app-index-list-card > .card-header .app-index-header-btn i,
 .app-index-list-card > .card-header .app-index-header-btn .fas,
 .app-index-list-card > .card-header .app-index-header-btn .bi {
@@ -204,6 +214,120 @@
     align-items: center;
     gap: 0.35rem;
     font-size: 0.8125rem;
+}
+
+.app-index-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.app-index-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.95rem 1.05rem;
+    border: 1px solid var(--brand-border, #e5e7eb);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border-top: 4px solid var(--brand-primary, #2fb36f);
+}
+
+.app-index-stat--success {
+    border-top-color: #16a34a;
+}
+
+.app-index-stat--danger {
+    border-top-color: #ef4444;
+}
+
+.app-index-stat--info {
+    border-top-color: #2d8cff;
+}
+
+.app-index-stat__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+    flex-shrink: 0;
+    background: rgba(47, 179, 111, 0.12);
+    color: var(--brand-primary, #2fb36f);
+    font-size: 1rem;
+}
+
+.app-index-stat--success .app-index-stat__icon {
+    background: rgba(22, 163, 74, 0.12);
+    color: #16a34a;
+}
+
+.app-index-stat--danger .app-index-stat__icon {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+}
+
+.app-index-stat--info .app-index-stat__icon {
+    background: rgba(45, 140, 255, 0.12);
+    color: #2d8cff;
+}
+
+.app-index-stat__label {
+    margin: 0 0 0.15rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--brand-text-muted, #64748b);
+}
+
+.app-index-stat__value {
+    font-size: 1.5rem;
+    line-height: 1.1;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.app-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.28rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.app-status-badge--active,
+.app-status-badge--trial {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.app-status-badge--expired,
+.app-status-badge--cancelled {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.app-status-badge--grace {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.app-status-badge--none {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+@media (max-width: 767.98px) {
+    .app-index-stats {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Create / edit form pages (ownfleet-aligned) */

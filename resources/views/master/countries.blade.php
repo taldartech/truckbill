@@ -19,9 +19,9 @@
         <div class="card-header">
             <h3 class="card-title mb-0">Country Management</h3>
             <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
-                <a href="{{ route('master.countries.create') }}" class="btn app-index-header-btn" aria-label="Create country">
+                <button type="button" class="btn app-index-header-btn" disabled aria-label="Create country" title="Country creation is disabled">
                     <i class="fas fa-plus"></i> Create
-                </a>
+                </button>
             </div>
         </div>
         <div class="card-body">

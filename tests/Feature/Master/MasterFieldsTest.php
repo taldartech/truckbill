@@ -212,6 +212,18 @@ class MasterFieldsTest extends TestCase
         return [$country, $state, $city];
     }
 
+    public function test_countries_index_disables_create_button(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $response = $this->actingAs($admin)->get(route('master.countries.index'));
+
+        $response->assertOk()
+            ->assertSee('aria-label="Create country"', false)
+            ->assertSee('disabled', false)
+            ->assertDontSee('href="'.route('master.countries.create').'"', false);
+    }
+
     public function test_accountant_can_view_masters_but_not_create(): void
     {
         $accountant = $this->makeUser('accountant');
