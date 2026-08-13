@@ -119,6 +119,42 @@ class UserManagementTest extends TestCase
         $this->assertSame('owned@example.com', $response->json('data')[0]['email']);
     }
 
+    public function test_user_create_page_uses_redesigned_form_shell(): void
+    {
+        $actor = $this->makeSuperAdmin();
+        $this->createCompanyFor($actor, ['name' => 'Acme Logistics']);
+
+        $response = $this->actingAs($actor)->get(route('users.create'));
+
+        $response->assertOk()
+            ->assertViewIs('users.create')
+            ->assertSee('app-create-page', false)
+            ->assertSee('app-form-section', false)
+            ->assertSee('Create User')
+            ->assertSee('Login Credentials')
+            ->assertSee('Acme Logistics')
+            ->assertSee('id="userForm"', false)
+            ->assertSee('data-confirm-mode="create"', false)
+            ->assertSee('js/user-form.js', false)
+            ->assertDontSee('Add New User');
+    }
+
+    public function test_master_admin_create_page_hides_company_and_branch(): void
+    {
+        $actor = $this->makeMasterAdmin();
+
+        $response = $this->actingAs($actor)->get(route('users.create'));
+
+        $response->assertOk()
+            ->assertViewIs('users.create')
+            ->assertSee('app-create-page', false)
+            ->assertSee('Super Admin')
+            ->assertSee('name="role"', false)
+            ->assertSee('value="super_admin"', false)
+            ->assertDontSee('name="company_id"', false)
+            ->assertDontSee('name="branch_id"', false);
+    }
+
     public function test_store_creates_admin_with_company_and_branch(): void
     {
         // Super admin can create company users
@@ -182,6 +218,35 @@ class UserManagementTest extends TestCase
         $response->assertRedirect(route('users.create'));
         $response->assertSessionHasErrors(['company_id', 'branch_id']);
         $this->assertDatabaseMissing('users', ['email' => 'nocompany@example.com']);
+    }
+
+    public function test_user_edit_page_uses_redesigned_form_shell(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($super, ['name' => 'Acme Logistics']);
+        $branch = $this->createBranch($company, ['branch_name' => 'Main Branch']);
+        $target = User::factory()->create([
+            'name' => 'Existing Admin',
+            'user_role_id' => 3,
+            'company_id' => $company->id,
+            'branch_id' => $branch->id,
+        ]);
+
+        $response = $this->actingAs($super)->get(route('users.edit', $target));
+
+        $response->assertOk()
+            ->assertViewIs('users.edit')
+            ->assertSee('app-create-page', false)
+            ->assertSee('app-form-section', false)
+            ->assertSee('Edit User')
+            ->assertSee('User Details')
+            ->assertSee('Login Credentials')
+            ->assertSee('Existing Admin')
+            ->assertSee('Acme Logistics')
+            ->assertSee('Leave blank to keep the current password')
+            ->assertSee('id="userForm"', false)
+            ->assertSee('data-confirm-mode="update"', false)
+            ->assertSee('js/user-form.js', false);
     }
 
     public function test_edit_forbidden_when_user_not_in_owned_company(): void

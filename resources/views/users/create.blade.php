@@ -1,227 +1,160 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container mt-4">
-        <div class="row justify-content-center">
-            <div class="col-12 col-lg-10 col-xl-8">
-                <div class="card card-info card-outline mb-4">
-                    <!--begin::Header-->
-                    <div class="card-header">
-                        <div class="card-title">Add New User</div>
+@php
+    $selectedCompanyId = old('company_id', (! $isMasterAdmin && $companies->count() === 1) ? $companies->first()->id : '');
+@endphp
+<div class="container mt-4 pb-5 app-index-page app-create-page">
+    <form id="userForm" data-confirm-mode="create" data-old-branch-id="{{ old('branch_id') }}" action="{{ route('users.store') }}" method="POST" class="needs-validation" novalidate>
+        @csrf
+
+        <div class="card app-index-list-card mb-3">
+            <div class="card-header">
+                <h3 class="card-title mb-0">
+                    <i class="bi bi-person-plus me-1"></i> Create User
+                </h3>
+                <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+                    <a href="{{ route('users.index') }}" class="btn app-index-header-btn" aria-label="Back to users">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                </div>
+            </div>
+
+            <div class="card-body">
+                @if(session('success'))
+                    <div class="mb-3">
+                        <span class="badge text-bg-dark border app-index-flash">
+                            <i class="bi bi-check-circle-fill text-success"></i> {{ session('success') }}
+                        </span>
                     </div>
-                    <!--end::Header-->
-                    <!--begin::Form-->
-                    <form action="{{ route('users.store') }}" method="POST" class="needs-validation" novalidate="">
-                        @csrf
-                        <!--begin::Body-->
-                        <div class="card-body">
-                            <!--begin::Row-->
-                            <div class="row g-3">
-                                <!--begin::Col-->
-                                <div class="col-md-6">
-                                    <label for="name" class="form-label">Name *</label>
-                                    <input type="text" class="form-control" id="name" name="name" required
-                                        value="{{ old('name') }}">
-                                    @error('name')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                    <div class="valid-feedback">Looks good!</div>
-                                </div>
-                                <!--end::Col-->
-                                <!--begin::Col-->
-                                <div class="col-md-6">
-                                    <label for="email" class="form-label">Email *</label>
-                                    <input type="email" class="form-control" id="email" name="email" required
-                                        value="{{ old('email') }}">
-                                    @error('email')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                    <div class="valid-feedback">Looks good!</div>
-                                </div>
-                                <!--end::Col-->
-                                <!--begin::Col-->
-                                <div class="col-md-6">
-                                    <label for="password" class="form-label">Password *</label>
-                                    <input type="password" class="form-control" id="password" name="password" required>
-                                    @error('password')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                    <div class="valid-feedback">Looks good!</div>
-                                </div>
-                                <!--end::Col-->
-                                <!--begin::Col-->
-                                <div class="col-md-6">
-                                    <label for="password_confirmation" class="form-label">Confirm Password *</label>
-                                    <input type="password" class="form-control" id="password_confirmation"
-                                        name="password_confirmation" required>
-                                    <div class="valid-feedback">Looks good!</div>
-                                </div>
-                                <!--end::Col-->
-                                @if ($isMasterAdmin)
-                                    <input type="hidden" name="role" value="super_admin">
-                                @else
-                                    <!-- Role Input -->
-                                    <div class="col-md-6">
-                                        <label for="role" class="form-label">Role *</label>
-                                        <select class="form-select" id="role" name="role" required>
-                                            <option value="">Select</option>
-                                            @foreach ($roles as $role)
-                                                <option value="{{ $role }}"
-                                                    {{ old('role') == $role ? 'selected' : '' }}>
-                                                    {{ ucfirst($role) }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('role')
-                                            <div class="text-danger">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                @endif
+                @endif
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
 
-                                <!-- Company and Branch Inputs (only for non-customer company users) -->
-                                @if (!$isMasterAdmin)
-                                    <div class="col-md-6 company-branch-field">
-                                        <label for="company_id" class="form-label">Company *</label>
-                                        <select class="form-select" id="company_id" name="company_id" required>
-                                            <option value="">Select</option>
-                                            @foreach ($companies as $company)
-                                                <option value="{{ $company->id }}"
-                                                    {{ old('company_id') == $company->id ? 'selected' : '' }}>
-                                                    {{ $company->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('company_id')
-                                            <div class="text-danger">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                    <div class="col-md-6 company-branch-field">
-                                        <label for="branch_id" class="form-label">Branch *</label>
-                                        <select class="form-select" id="branch_id" name="branch_id" required>
-                                            <option value="">Select Branch</option>
-                                            @foreach ($branches as $branch)
-                                                <option value="{{ $branch->id }}"
-                                                    data-company="{{ $branch->company_id }}"
-                                                    {{ old('branch_id') == $branch->id ? 'selected' : '' }}
-                                                    style="display: none;">
-                                                    {{ $branch->branch_name }}({{ $branch->head_office == 1 ? 'Head Office' : 'Branch' }})
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('branch_id')
-                                            <div class="text-danger">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                @endif
-
+                <div class="app-form-section">
+                    <div class="app-form-section__header">
+                        <h5 class="app-form-section__title"><i class="bi bi-person-vcard"></i> User Details</h5>
+                    </div>
+                    <div class="app-form-section__body">
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">Name *</label>
+                                <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" required value="{{ old('name') }}">
+                                @error('name') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>
-                            <!--end::Col-->
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" required value="{{ old('email') }}">
+                                @error('email') <div class="text-danger">{{ $message }}</div> @enderror
+                            </div>
                         </div>
-                        <!--end::Row-->
+                        <div class="row g-2">
+                            @if ($isMasterAdmin)
+                                <div class="col-md-6">
+                                    <label for="role_display" class="form-label">Role *</label>
+                                    <input type="text" class="form-control" id="role_display" value="Super Admin" readonly>
+                                    <input type="hidden" id="role" name="role" value="super_admin">
+                                </div>
+                            @else
+                                <div class="col-md-4">
+                                    <label for="role" class="form-label">Role *</label>
+                                    <select class="form-select @error('role') is-invalid @enderror" id="role" name="role" required>
+                                        <option value="">Select role</option>
+                                        @foreach ($roles as $role)
+                                            <option value="{{ $role }}" {{ old('role') == $role ? 'selected' : '' }}>
+                                                {{ \Illuminate\Support\Str::headline($role) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('role') <div class="text-danger">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-md-4 company-branch-field">
+                                    <label for="company_id" class="form-label">Company *</label>
+                                    <select class="form-select @error('company_id') is-invalid @enderror" id="company_id" name="company_id" required>
+                                        <option value="">Select company</option>
+                                        @foreach ($companies as $company)
+                                            <option value="{{ $company->id }}" {{ (string) $selectedCompanyId === (string) $company->id ? 'selected' : '' }}>
+                                                {{ $company->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-md-4 company-branch-field">
+                                    <label for="branch_id" class="form-label">Branch *</label>
+                                    <select class="form-select @error('branch_id') is-invalid @enderror" id="branch_id" name="branch_id" required>
+                                        <option value="">Select branch</option>
+                                        @foreach ($branches as $branch)
+                                            <option value="{{ $branch->id }}" data-company="{{ $branch->company_id }}" hidden>
+                                                {{ $branch->branch_name }} ({{ $branch->head_office == 1 ? 'Head Office' : 'Branch' }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('branch_id') <div class="text-danger">{{ $message }}</div> @enderror
+                                </div>
+                            @endif
+                        </div>
+                    </div>
                 </div>
-                <!--end::Body-->
-                <!--begin::Footer-->
-                <div class="card-footer">
-                    <button class="btn btn-brand-primary" type="submit">Submit form</button>
-                    <a href="{{ route('users.index') }}" class="btn btn-back">Back to List</a>
+
+                <div class="app-form-section">
+                    <div class="app-form-section__header">
+                        <h5 class="app-form-section__title"><i class="bi bi-shield-lock"></i> Login Credentials</h5>
+                    </div>
+                    <div class="app-form-section__body">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label for="password" class="form-label">Password *</label>
+                                <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" required minlength="6" autocomplete="new-password">
+                                @error('password') <div class="text-danger">{{ $message }}</div> @enderror
+                                <div class="app-form-section__hint mt-1 mb-0">Minimum 6 characters.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="password_confirmation" class="form-label">Confirm Password *</label>
+                                <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required minlength="6" autocomplete="new-password">
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <!--end::Footer-->
-                </form>
-                <!--end::Form-->
-                <!--begin::JavaScript-->
-                <script>
-                    // Load branches when the page loads if a company is already selected
-                    document.addEventListener('DOMContentLoaded', function() {
-                        const companySelect = document.getElementById('company_id');
-                        const branchSelect = document.getElementById('branch_id');
-
-                        // Skip if elements don't exist (for master_admin)
-                        if (!companySelect || !branchSelect) {
-                            return;
-                        }
-
-                        function filterBranches(companyId) {
-                            const options = branchSelect.querySelectorAll('option');
-                            let hasVisibleOptions = false;
-
-                            options.forEach(option => {
-                                if (option.value === '') return; // Skip the "Select Branch" option
-
-                                const branchCompanyId = option.getAttribute('data-company');
-                                if (companyId && branchCompanyId === companyId) {
-                                    option.style.display = 'block';
-                                    hasVisibleOptions = true;
-                                } else {
-                                    option.style.display = 'none';
-                                    if (option.selected) {
-                                        option.selected = false;
-                                    }
-                                }
-                            });
-
-                            // Show a message if no branches are available for the selected company
-                            const noBranchOption = document.getElementById('no-branch-option');
-                            if (!hasVisibleOptions) {
-                                if (!noBranchOption) {
-                                    const newOption = document.createElement('option');
-                                    newOption.id = 'no-branch-option';
-                                    newOption.value = '';
-                                    newOption.textContent = 'No branches available';
-                                    branchSelect.appendChild(newOption);
-                                }
-                            } else if (noBranchOption) {
-                                noBranchOption.remove();
-                            }
-
-                            // Reset to "Select Branch" when company changes
-                            branchSelect.value = '';
-                        }
-
-                        // Add event listener for company change
-                        companySelect.addEventListener('change', function() {
-                            filterBranches(this.value);
-                        });
-
-                        // Initialize with the selected company if any
-                        if (companySelect.value) {
-                            filterBranches(companySelect.value);
-                        } else if ("{{ old('company_id') }}") {
-                            filterBranches("{{ old('company_id') }}");
-                        }
-
-                    });
-                </script>
-
-                <script>
-                    // Example starter JavaScript for disabling form submissions if there are invalid fields
-                    (() => {
-                        'use strict';
-
-                        // Fetch all the forms we want to apply custom Bootstrap validation styles to
-                        const forms = document.querySelectorAll('.needs-validation');
-
-                        // Loop over them and prevent submission
-                        Array.from(forms).forEach((form) => {
-                            form.addEventListener(
-                                'submit',
-                                (event) => {
-                                    if (!form.checkValidity()) {
-                                        event.preventDefault();
-                                        event.stopPropagation();
-                                    }
-
-                                    form.classList.add('was-validated');
-                                },
-                                false,
-                            );
-                        });
-                    })();
-                </script>
-                <!--end::JavaScript-->
             </div>
         </div>
-    </div>
-    </div>
+
+        <div class="app-form-actions card">
+            <div class="card-body">
+                <a href="{{ route('users.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-x-lg me-1"></i> Cancel
+                </a>
+                <button class="btn btn-brand-primary" type="submit">
+                    <i class="bi bi-floppy-fill me-1"></i> Create User
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+    (() => {
+        'use strict';
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach((form) => {
+            form.addEventListener('submit', (event) => {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
+<script src="{{ asset('js/user-form.js') }}"></script>
+@endpush

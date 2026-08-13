@@ -68,8 +68,12 @@ class CompanySettingsTest extends TestCase
 
         $response->assertOk();
         $response->assertViewIs('company_settings.edit');
+        $response->assertSee('app-create-page', false);
+        $response->assertSee('app-form-section', false);
         $response->assertSee('Print header', false);
         $response->assertSee('Document designs', false);
+        $response->assertSee('id="companySettingsForm"', false);
+        $response->assertSee('js/company-settings-form.js', false);
     }
 
     public function test_super_admin_can_update_company_settings(): void

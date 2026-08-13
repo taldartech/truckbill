@@ -341,8 +341,11 @@ class UserController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
+        $isMasterAdmin = $this->isMasterAdmin($authUser);
+        $isSuperAdmin = $this->isSuperAdmin($authUser);
+
         // Determine available roles
-        if ($this->isMasterAdmin($authUser)) {
+        if ($isMasterAdmin) {
             // Master admin can only edit super_admin users
             $roles = ['super_admin'];
             $companies = collect(); // Master admin doesn't need companies
@@ -354,7 +357,7 @@ class UserController extends Controller
             $branches = Branch::whereIn('company_id', $companies->pluck('id'))->get();
         }
 
-        return view('users.edit', compact('user', 'companies', 'roles', 'branches'));
+        return view('users.edit', compact('user', 'companies', 'roles', 'branches', 'isMasterAdmin', 'isSuperAdmin'));
     }
 
     /**
