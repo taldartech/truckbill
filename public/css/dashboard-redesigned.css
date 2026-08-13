@@ -535,3 +535,23 @@ button.dashboard-stat-card:focus-visible {
         overflow-x: auto;
     }
 }
+
+.company-enter-tile {
+    overflow: hidden;
+    max-width: 100%;
+}
+
+.company-enter-tile__inner {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    width: 100%;
+}
+
+.company-enter-tile__name {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

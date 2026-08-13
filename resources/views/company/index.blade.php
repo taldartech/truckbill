@@ -284,7 +284,6 @@ $(document).ready(function() {
                 var detailsHtml = panel('bi bi-building', 'Company',
                     fact('Name', escapeHtml(data.name))
                     + fact('Short Name', escapeHtml(data.short_name))
-                    + fact('Type', escapeHtml(data.company_type))
                     + fact('Status', data.is_blocked
                         ? '<span class="badge text-bg-danger">Blocked</span>'
                         : '<span class="badge text-bg-success">Active</span>')

@@ -187,6 +187,22 @@ class CompanyEnterExitTest extends TestCase
         $response->assertSee($company->name);
     }
 
+    public function test_enter_company_panel_shows_full_name_on_hover(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($super, [
+            'name' => 'Very Long Transport And Logistics Company Private Limited',
+        ]);
+
+        $response = $this->actingAs($super)->get(route('dashboard'));
+
+        $response->assertOk()
+            ->assertSee('Enter Company Panel')
+            ->assertSee('company-enter-tile', false)
+            ->assertSee('company-enter-tile__name', false)
+            ->assertSee('title="'.$company->name.'"', false);
+    }
+
     public function test_super_admin_with_context_can_access_company_resources(): void
     {
         $super = $this->makeSuperAdmin();

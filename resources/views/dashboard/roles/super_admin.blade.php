@@ -24,17 +24,17 @@
                         @foreach ($ownedCompanies as $company)
                             <div class="col-12 col-sm-6 col-md-4 col-lg-3 company-enter-item" data-company-name="{{ strtolower($company->name) }}">
                                 @if ($company->is_blocked)
-                                    <span class="btn btn-danger w-100 text-start py-2 px-3 disabled opacity-75" title="This company is blocked">
-                                        <span class="d-flex align-items-center">
-                                            <i class="fas fa-building me-2"></i>
-                                            <span class="text-truncate fw-semibold">{{ $company->name }}</span>
+                                    <span class="btn btn-danger w-100 text-start py-2 px-3 disabled opacity-75 company-enter-tile" title="{{ $company->name }}">
+                                        <span class="company-enter-tile__inner">
+                                            <i class="fas fa-building me-2 flex-shrink-0"></i>
+                                            <span class="company-enter-tile__name fw-semibold">{{ $company->name }}</span>
                                         </span>
                                     </span>
                                 @else
-                                    <a href="{{ route('company.enter', $company) }}" class="btn btn-primary w-100 text-start py-2 px-3 company-enter-tile">
-                                        <span class="d-flex align-items-center">
-                                            <i class="fas fa-building me-2"></i>
-                                            <span class="text-truncate fw-semibold">{{ $company->name }}</span>
+                                    <a href="{{ route('company.enter', $company) }}" class="btn btn-primary w-100 text-start py-2 px-3 company-enter-tile" title="{{ $company->name }}">
+                                        <span class="company-enter-tile__inner">
+                                            <i class="fas fa-building me-2 flex-shrink-0"></i>
+                                            <span class="company-enter-tile__name fw-semibold">{{ $company->name }}</span>
                                         </span>
                                     </a>
                                 @endif

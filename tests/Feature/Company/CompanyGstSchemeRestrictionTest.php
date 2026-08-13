@@ -74,8 +74,13 @@ class CompanyGstSchemeRestrictionTest extends TestCase
         $response = $this->actingAs($admin)->get("/company/{$company->id}/edit");
 
         $response->assertOk()
+            ->assertViewIs('company.edit')
+            ->assertSee('app-create-page', false)
+            ->assertSee('app-form-section', false)
+            ->assertSee('Edit Company')
             ->assertSee('Cannot change GST scheme')
-            ->assertSee('Invoices have been created for the current financial year');
+            ->assertSee('Invoices have been created for the current financial year')
+            ->assertSee('id="companyForm"', false);
 
         Carbon::setTestNow();
     }
@@ -89,7 +94,13 @@ class CompanyGstSchemeRestrictionTest extends TestCase
         $response = $this->actingAs($admin)->get("/company/{$company->id}/edit");
 
         $response->assertOk()
-            ->assertDontSee('Cannot change GST scheme');
+            ->assertViewIs('company.edit')
+            ->assertSee('app-create-page', false)
+            ->assertSee('Bank Details')
+            ->assertDontSee('Cannot change GST scheme')
+            ->assertDontSee('Company Type')
+            ->assertSee('id="companyForm"', false)
+            ->assertSee('js/company-form.js', false);
     }
 
     public function test_update_blocks_gst_scheme_change_when_invoices_exist_in_fy(): void

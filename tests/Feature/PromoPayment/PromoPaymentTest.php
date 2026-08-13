@@ -3,7 +3,6 @@
 namespace Tests\Feature\PromoPayment;
 
 use App\Models\Company;
-use App\Models\PaymentLedger;
 use App\Models\PromoCode;
 use App\Models\User;
 use App\Models\UserRole;
@@ -38,10 +37,9 @@ class PromoPaymentTest extends TestCase
     protected function createCompanyFor(User $owner, array $overrides = []): Company
     {
         return Company::create(array_merge([
-            'name' => 'Company ' . $owner->id,
+            'name' => 'Company '.$owner->id,
             'gst_slab' => config('payments.gst_slabs')[0],
             'user_id' => $owner->id,
-            'company_type' => 'Both',
             'plan_end_date' => now()->addMonth(),
             'truck_credits' => 0,
             'lr_credits' => 0,
@@ -145,28 +143,35 @@ class PromoPaymentTest extends TestCase
         ]);
 
         // Mock Razorpay API (simple stub)
-        $fakeOrder = new class(['id' => 'order_123', 'amount' => 1000]) implements \ArrayAccess {
+        $fakeOrder = new class(['id' => 'order_123', 'amount' => 1000]) implements \ArrayAccess
+        {
             public array $data;
+
             public function __construct(array $data)
             {
                 $this->data = $data;
             }
+
             public function offsetExists(mixed $offset): bool
             {
                 return array_key_exists($offset, $this->data);
             }
+
             public function offsetGet(mixed $offset): mixed
             {
                 return $this->data[$offset] ?? null;
             }
+
             public function offsetSet(mixed $offset, mixed $value): void
             {
                 $this->data[$offset] = $value;
             }
+
             public function offsetUnset(mixed $offset): void
             {
                 unset($this->data[$offset]);
             }
+
             public function toArray(): array
             {
                 return $this->data;
@@ -195,4 +200,3 @@ class PromoPaymentTest extends TestCase
         $this->assertDatabaseCount('payment_ledgers', 0);
     }
 }
-

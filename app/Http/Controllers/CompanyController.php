@@ -204,7 +204,6 @@ class CompanyController extends Controller
             'id' => $company->id,
             'name' => $display($company->name),
             'short_name' => $display($company->short_name),
-            'company_type' => $display($company->company_type),
             'contact_person' => $display($company->contact_person),
             'contact_number' => $display($company->contact_number),
             'gst_number' => $display($company->gst_number),
@@ -301,11 +300,19 @@ class CompanyController extends Controller
     public function edit($id)
     {
         $company = Company::findOrFail($id);
-        $countries = Country::all();
-        $countryId = old('country_id', $company->country_id);
+        $countries = Country::query()->orderBy('name')->get();
+
+        $india = Country::query()->where('code', 'IN')->first()
+            ?? Country::query()->where('name', 'India')->first();
+
+        $selectedCountryId = old('country_id', $company->country_id ?: $india?->id);
         $stateId = old('state_id', $company->state_id);
-        $states = State::where('country_id', $countryId)->get();
-        $cities = City::where('state_id', $stateId)->get();
+        $states = $selectedCountryId
+            ? State::query()->where('country_id', $selectedCountryId)->orderBy('name')->get()
+            : collect();
+        $cities = $stateId
+            ? City::query()->where('state_id', $stateId)->orderBy('name')->get()
+            : collect();
         $companySlabs = config('payments.gst_slabs');
 
         $now = Carbon::now();
@@ -324,7 +331,17 @@ class CompanyController extends Controller
             ->whereBetween('generated_date', [$fyStart->toDateString(), $fyEnd->toDateString()])
             ->exists();
 
-        return view('company.edit', compact('company', 'countries', 'states', 'cities', 'companySlabs', 'hasInvoicesInFy', 'fyStart', 'fyEnd'));
+        return view('company.edit', compact(
+            'company',
+            'countries',
+            'states',
+            'cities',
+            'companySlabs',
+            'hasInvoicesInFy',
+            'fyStart',
+            'fyEnd',
+            'selectedCountryId',
+        ));
     }
 
     public function update(Request $request, $id)
@@ -387,7 +404,6 @@ class CompanyController extends Controller
                     }
                 },
             ],
-            'company_type' => 'nullable|in:Broker,Agency,Both',
             'company_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
             'bank' => 'nullable|string|max:255',
             'account_number' => 'nullable|string|max:34',
@@ -452,18 +468,28 @@ class CompanyController extends Controller
         $companySlabs = config('payments.gst_slabs');
         $countries = Country::query()->orderBy('name')->get();
 
+        $india = Country::query()->where('code', 'IN')->first()
+            ?? Country::query()->where('name', 'India')->first();
+
+        $selectedCountryId = old('country_id', $india?->id);
+
         $states = collect();
         $cities = collect();
-        $countryId = old('country_id');
-        if ($countryId) {
-            $states = State::query()->where('country_id', $countryId)->orderBy('name')->get();
+        if ($selectedCountryId) {
+            $states = State::query()->where('country_id', $selectedCountryId)->orderBy('name')->get();
         }
         $stateId = old('state_id');
         if ($stateId) {
             $cities = City::query()->where('state_id', $stateId)->orderBy('name')->get();
         }
 
-        return view('company.create', compact('companySlabs', 'countries', 'states', 'cities'));
+        return view('company.create', compact(
+            'companySlabs',
+            'countries',
+            'states',
+            'cities',
+            'selectedCountryId',
+        ));
     }
 
     public function store(Request $request)
@@ -531,7 +557,6 @@ class CompanyController extends Controller
                     }
                 },
             ],
-            'company_type' => 'nullable|in:Broker,Agency,Both',
             'company_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
             'bank' => 'nullable|string|max:255',
             'account_number' => 'nullable|string|max:34',

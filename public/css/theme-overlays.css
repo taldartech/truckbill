@@ -257,6 +257,55 @@
     color: #dc2626;
 }
 
+.tb-swal-note--compact {
+    margin: 0 0 0.65rem;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.8rem;
+}
+
+.swal2-popup.tb-swal-popup.tb-swal-popup--company {
+    width: min(760px, 94vw) !important;
+    max-height: none !important;
+    overflow: hidden !important;
+}
+
+.swal2-popup.tb-swal-popup--company .swal2-icon {
+    display: none !important;
+}
+
+.swal2-popup.tb-swal-popup--company .swal2-html-container,
+.tb-swal-html--company {
+    max-height: none !important;
+    overflow: hidden !important;
+}
+
+.tb-company-confirm__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem 0.85rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.tb-company-confirm__fact--wide {
+    grid-column: 1 / -1;
+}
+
+.tb-company-confirm__fact--wide .fb-pay-fact__value {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+@media (max-width: 575.98px) {
+    .tb-company-confirm__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
 /* —— Soft-align legacy glass cards to theme —— */
 .glass-card.info-box,
 .card.glass-card {

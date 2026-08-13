@@ -4,6 +4,7 @@ namespace Tests\Feature\Company;
 
 use App\Models\Branch;
 use App\Models\Company;
+use App\Models\Country;
 use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -192,6 +193,37 @@ class CompanyBranchTest extends TestCase
         $this->assertCount(2, $response->json('data'));
     }
 
+    public function test_company_create_page_uses_redesigned_form_shell(): void
+    {
+        $super = $this->makeSuperAdmin();
+
+        $response = $this->actingAs($super)->get(route('company.create'));
+
+        $response->assertOk()
+            ->assertViewIs('company.create')
+            ->assertSee('app-create-page', false)
+            ->assertSee('app-form-section', false)
+            ->assertSee('Register Company')
+            ->assertSee('GST &amp; Tax', false)
+            ->assertSee('Bank Details')
+            ->assertDontSee('Company Type')
+            ->assertSee('id="companyForm"', false)
+            ->assertSee('js/company-form.js', false);
+    }
+
+    public function test_company_create_defaults_country_to_india(): void
+    {
+        $india = Country::create(['name' => 'India', 'code' => 'IN']);
+        Country::create(['name' => 'United States', 'code' => 'US']);
+        $super = $this->makeSuperAdmin();
+
+        $response = $this->actingAs($super)->get(route('company.create'));
+
+        $response->assertOk()
+            ->assertViewHas('selectedCountryId', $india->id)
+            ->assertSee('value="'.$india->id.'" selected', false);
+    }
+
     public function test_company_store_creates_company_with_owner(): void
     {
         $master = $this->makeMasterAdmin();
@@ -302,6 +334,50 @@ class CompanyBranchTest extends TestCase
         $response = $this->actingAs($super)->get('/branches');
 
         $response->assertOk()->assertViewIs('branches.index');
+    }
+
+    public function test_branch_create_page_uses_redesigned_form_shell(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $this->createCompanyFor($super, ['name' => 'Acme Logistics']);
+
+        $response = $this->actingAs($super)->get(route('branches.create'));
+
+        $response->assertOk()
+            ->assertViewIs('branches.create')
+            ->assertSee('app-create-page', false)
+            ->assertSee('app-form-section', false)
+            ->assertSee('Register Branch')
+            ->assertSee('Branch Details')
+            ->assertSee('Acme Logistics')
+            ->assertSee('id="branchForm"', false)
+            ->assertSee('data-confirm-mode="create"', false)
+            ->assertSee('js/branch-form.js', false)
+            ->assertDontSee('Register New Branch');
+    }
+
+    public function test_branch_edit_page_uses_redesigned_form_shell(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($super, ['name' => 'Acme Logistics']);
+        $branch = Branch::create([
+            'company_id' => $company->id,
+            'branch_name' => 'Main Branch',
+            'head_office' => true,
+        ]);
+
+        $response = $this->actingAs($super)->get(route('branches.edit', $branch));
+
+        $response->assertOk()
+            ->assertViewIs('branches.edit')
+            ->assertSee('app-create-page', false)
+            ->assertSee('app-form-section', false)
+            ->assertSee('Edit Branch')
+            ->assertSee('Branch Details')
+            ->assertSee('Main Branch')
+            ->assertSee('id="branchForm"', false)
+            ->assertSee('data-confirm-mode="update"', false)
+            ->assertSee('js/branch-form.js', false);
     }
 
     public function test_branch_store_creates_branch_for_company(): void

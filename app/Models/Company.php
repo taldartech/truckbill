@@ -32,7 +32,6 @@ class Company extends Model
         'ifsc',
         'user_id',
         'is_blocked',
-        'company_type',
         'company_logo',
         'gst_slab',
     ];
