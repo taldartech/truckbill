@@ -170,6 +170,8 @@ class PartyLedgerReportController extends Controller
                 'generated_date',
                 'payment_status',
                 'invoice_type',
+                'total_amount',
+                 'net_amount',
                 'lr_ids',
                 'memo_ids',
             ]);
@@ -208,6 +210,7 @@ class PartyLedgerReportController extends Controller
     {
         return $lrs->map(function (LorryReceipt $lr) use ($invoiceByLrId): array {
             $invoice = $invoiceByLrId->get($lr->id);
+            $invoice?->loadMissing('payments');
             $gst = (($invoice->invoice_type ?? '') === 'Forward') ? 5 : 0;
             $billAmount = (float) $lr->amount + (((float) $lr->amount * $gst) / 100);
 
@@ -216,6 +219,7 @@ class PartyLedgerReportController extends Controller
                 'bill_number' => $invoice ? $this->displayInvoiceNumber($invoice) : 'N/A',
                 'bill_date' => $invoice?->generated_date,
                 'bill_amount' => $billAmount,
+                'due_amount' => $invoice?->remaining_amount ?? 0,
                 'payment_status' => $invoice ? ucfirst($invoice->payment_status ?? 'pending') : 'N/A',
             ];
         });

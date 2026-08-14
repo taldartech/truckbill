@@ -14,7 +14,10 @@
             <th>LR Amt</th>
             <th>Bill no</th>
             <th>Bill Date</th>
+            
             <th>Amount</th>
+            <th>Due Amount</th>
+
             <th>Payment Status</th>
         </tr>
     </thead>
@@ -50,6 +53,9 @@
                     @endif
                 </td>
                 <td style="text-align: right;">{{ number_format($row['bill_amount'], 2) }}</td>
+                <td style="text-align: right;">
+                 {{ number_format($row['due_amount'], 2) }}
+                 </td>
                 <td>{{ $row['payment_status'] }}</td>
             </tr>
         @empty
