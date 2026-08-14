@@ -426,7 +426,6 @@
     border: 1px solid #e2e8f0;
     background-color: #fff;
     font-size: var(--fs-input);
-    line-height: calc(var(--input-h) - 2px);
     color: #334155;
 }
 
@@ -1834,7 +1833,7 @@
         padding: 0.4rem 0.35rem;
     }
 
-    .lrf-truck-summary--field {
+    .summary--field {
         height: auto !important;
         max-height: none !important;
         min-height: var(--input-h) !important;
