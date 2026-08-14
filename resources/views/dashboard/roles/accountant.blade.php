@@ -1,9 +1,5 @@
 @include('dashboard.partials.hero', [
     'subtitle' => 'Financial overview and payment ledger monitoring.',
-    'quickActions' => [
-        ['label' => 'Invoices', 'icon' => 'bi bi-receipt', 'url' => route('invoices.index')],
-        ['label' => 'Vouchers', 'icon' => 'bi bi-wallet2', 'url' => route('voucher_payments.index')],
-    ],
     'showPeriodFilter' => false,
 ])
 
