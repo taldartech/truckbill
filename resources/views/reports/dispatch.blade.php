@@ -20,17 +20,17 @@
                         <label class="form-label">End Date <span class="text-danger">*</span></label>
                         <input type="date" name="end_date" class="form-control" value="{{ $endDate }}" required>
                     </div>
-                    <div class="col-md-3 align-self-end p-2">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="balance_as_on_end_date"
-                                id="balance_as_on_end_date" value="1"
-                                @if ($balanceAsOnEndDate ?? false) checked @endif>
-                            <label class="form-check-label" for="balance_as_on_end_date">
-                                Balance &amp; payments as on end date
-                            </label>
-                        </div>
-                    </div>
-                </div>
+                    
+
+
+
+                <div class="col-md-3">
+    <label class="form-label">Balance As On Date</label>
+    <input type="date"
+        name="balance_as_on_date"
+        class="form-control"
+        value="{{ $balanceAsOnDate ?? '' }}">
+</div>
 
                 <div class="row">
                     <div class="col-12 text-end">
@@ -67,7 +67,9 @@
                             href="{{ route('reports.dispatch-export', array_filter([
                                 'start_date' => $startDate,
                                 'end_date' => $endDate,
-                                'balance_as_on_end_date' => ($balanceAsOnEndDate ?? false) ? '1' : null,
+
+                               'balance_as_on_date' => $balanceAsOnDate ?? null,
+                                
                             ])) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>
@@ -86,10 +88,13 @@
                 }
             </style>
             <div class="card-body table-sticky">
+                
+
                 @include('reports.exports.dispatch', [
-                    'balanceAsOnEndDate' => $balanceAsOnEndDate ?? false,
-                    'endDate' => $endDate,
-                ])
+              'balanceAsOnDate' => $balanceAsOnDate ?? null,
+               'endDate' => $endDate,
+                 ])
+
             </div>
             <div class="card-body pt-0 d-flex justify-content-end">
                 {{ $lrs->links() }}

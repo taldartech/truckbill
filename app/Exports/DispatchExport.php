@@ -16,14 +16,15 @@ class DispatchExport implements FromView, ShouldAutoSize, WithColumnFormatting
 
     private $endDate;
 
-    private $balanceAsOnEndDate;
+    private $balanceAsOnDate;
 
-    public function __construct($startDate, $endDate, $balanceAsOnEndDate = false)
-    {
-        $this->startDate = $startDate;
-        $this->endDate = $endDate;
-        $this->balanceAsOnEndDate = $balanceAsOnEndDate;
-    }
+
+    public function __construct($startDate, $endDate, $balanceAsOnDate = null)
+{
+    $this->startDate = $startDate;
+    $this->endDate = $endDate;
+    $this->balanceAsOnDate = $balanceAsOnDate;
+}
 
     public function view(): View
     {
@@ -54,7 +55,8 @@ class DispatchExport implements FromView, ShouldAutoSize, WithColumnFormatting
             'lrs' => $lrs,
             'forExcel' => true,
             'endDate' => $this->endDate,
-            'balanceAsOnEndDate' => $this->balanceAsOnEndDate,
+       
+            'balanceAsOnDate' => $this->balanceAsOnDate,
         ]);
     }
 
