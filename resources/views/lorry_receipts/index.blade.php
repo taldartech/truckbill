@@ -862,7 +862,6 @@
                             name: 'actions',
                             orderable: false,
                             searchable: false,
-                            className: 'text-center'
                         }
                     ],
                     order: [[0, 'desc']],

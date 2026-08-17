@@ -279,6 +279,10 @@ class LorryReceiptController extends Controller
             }
         }
 
+        // LR Copy button
+        $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-bilty lr-copy-btn" title="LR Copy" data-bs-toggle="modal" data-bs-target="#lrCopyModal" data-lr-id="'.$lorryReceipt->id.'">';
+        $buttons .= '<i class="bi bi-file-earmark-text"></i></button>';
+
         // Edit button
         $editUrl = route('lorry_receipts.edit', $lorryReceipt->id).$listingQuerySuffix;
         if ($lorryReceipt->invoice_generated == 0 && $canActAsAdmin) {
@@ -297,10 +301,6 @@ class LorryReceiptController extends Controller
             $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete" data-bs-toggle="tooltip">';
             $buttons .= '<i class="bi bi-trash"></i></button></form>';
         }
-
-        // LR Copy button
-        $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-bilty lr-copy-btn" title="LR Copy" data-bs-toggle="modal" data-bs-target="#lrCopyModal" data-lr-id="'.$lorryReceipt->id.'">';
-        $buttons .= '<i class="bi bi-file-earmark-text"></i></button>';
 
         $buttons .= '</div>';
 
