@@ -64,16 +64,16 @@ class ReportController extends Controller
      */
     private function normalizeDateRange(Request $request, int $monthsLimit = 3): array
     {
+
         $endInput = $request->input('end_date');
-        $startInput = $request->input('start_date');
+$startInput = $request->input('start_date');
 
-        // Always have an end date value for the view (defaults to today if not provided)
-        $endDateForView = $endInput ?? date('Y-m-d');
+$endDateForView = $endInput ?? date('Y-m-d');
+$startDateForView = $startInput ?? date('Y-m-d', strtotime('-7 days'));
 
-        // Require both dates for an actionable range
-        if (! $startInput || ! $endInput) {
-            return [null, $endDateForView, false];
-        }
+if (! $startInput || ! $endInput) {
+    return [$startDateForView, $endDateForView, false];
+}
 
         $start = Carbon::parse($startInput);
         $end = Carbon::parse($endInput);
