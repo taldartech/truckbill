@@ -918,6 +918,10 @@
     grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
+.fb-pay-facts--7 {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
 @media (max-width: 1199.98px) {
     .fb-pay-fields--4 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -928,7 +932,8 @@
     }
 
     .fb-pay-facts--4,
-    .fb-pay-facts--5 {
+    .fb-pay-facts--5,
+    .fb-pay-facts--7 {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
@@ -938,7 +943,8 @@
     .fb-pay-fields,
     .fb-pay-facts--3,
     .fb-pay-facts--4,
-    .fb-pay-facts--5 {
+    .fb-pay-facts--5,
+    .fb-pay-facts--7 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
@@ -950,7 +956,8 @@
     .fb-pay-facts--2,
     .fb-pay-facts--3,
     .fb-pay-facts--4,
-    .fb-pay-facts--5 {
+    .fb-pay-facts--5,
+    .fb-pay-facts--7 {
         grid-template-columns: 1fr;
     }
 }
