@@ -43,14 +43,7 @@
                             </label>
                         </div>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Format</label>
-                        <select name="template" class="form-select">
-                            <option value="classic" @selected($template === 'classic')>A — default table</option>
-                            <option value="modern" @selected($template === 'modern')>B — green Form A</option>
-                            <option value="compact" @selected($template === 'compact')>C — compact amber</option>
-                        </select>
-                    </div>
+                   
                     <div class="col-md-3 text-end d-flex align-items-end justify-content-end gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search"></i> Search

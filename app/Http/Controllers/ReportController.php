@@ -69,7 +69,7 @@ class ReportController extends Controller
 $startInput = $request->input('start_date');
 
 $endDateForView = $endInput ?? date('Y-m-d');
-$startDateForView = $startInput ?? date('Y-m-d', strtotime('-7 days'));
+$startDateForView = $startInput ?? date('Y-m-d', strtotime('-6 days'));
 
 if (! $startInput || ! $endInput) {
     return [$startDateForView, $endDateForView, false];
