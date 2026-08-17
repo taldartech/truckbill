@@ -29,15 +29,14 @@
                     </div>
                
 
-                <div class="row col-md-3">
-                    <div class="col-12 text-end">
+               <div class="col-md-4 d-flex align-items-end justify-content-end gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search"></i> Search
                         </button>
                         <a href="{{ route('reports.transporter-master') }}" class="btn btn-secondary">
                             <i class="bi bi-arrow-clockwise"></i> Reset
                         </a>
-                    </div>
+                    
                      </div>
                 </div>
             </form>

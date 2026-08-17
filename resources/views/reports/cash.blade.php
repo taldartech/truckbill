@@ -52,9 +52,8 @@
                         </select>
                     </div>
                
-
-                <div class=" col-md-3 row">
-                    <div class="col-12 text-end">
+                
+                  <div class="col-md-3 d-flex align-items-end justify-content-end gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search"></i> Search
                         </button>
@@ -62,8 +61,8 @@
                             <i class="bi bi-arrow-clockwise"></i> Reset
                         </a>
                     </div>
-                </div>
-                
+                  </div>
+                 
             </form>
         </div>
     </div>

@@ -58,7 +58,7 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.pump') }}" id="searchForm" onsubmit="validateForm(event)">
-                <div class="row mb-2" style="align-items: end;"">
+                <div class="row mb-2" style="align-items: end;">
                     <div class="col-md-2">
                         <label class="form-label">Start Date <span class="text-danger">*</span></label>
                         <input type="date" name="start_date" class="form-control" value="{{ $startDate }}" required>
@@ -91,15 +91,14 @@
                     </div>
                
 
-                <div class=" col-md-3 row">
-                    <div class="col-12 text-end">
+                
+             <div class="col-md-3 d-flex align-items-end justify-content-end gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search"></i> Search
                         </button>
                         <a href="{{ route('reports.pump') }}" class="btn btn-secondary">
                             <i class="bi bi-arrow-clockwise"></i> Reset
                         </a>
-                    </div>
                 </div>
                  </div>
             </form>

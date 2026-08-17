@@ -14,7 +14,7 @@
         <div class="card-body">
             <form method="GET" action="{{ route('reports.party-bill') }}" id="searchForm" onsubmit="return validatePartyBillForm(event)"
                 class="tb-report-customer-select2-form">
-                <div class="row mb-2 ">
+                <div class="row mb-2";>
                     <div class="col-md-3">
                         <label class="form-label">Customer <span class="text-muted">(optional)</span></label>
                         <select name="customer_id" id="party_bill_customer_id" class="form-select">
