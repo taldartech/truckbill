@@ -354,7 +354,7 @@ class FreightBookingController extends Controller
                     $name = $row->lr->customer?->name ?? '-';
                     $html = e($name);
                     if ($row->lr->memo_id) {
-                        $html .= ' <span class="badge text-bg-success border-secondary ms-1">['.e((string) $row->lr->memo_id).']</span>';
+                        $html .= '<br><span class="badge text-bg-success border-secondary ms-1">['.e((string) $row->lr->memo_id).']</span>';
                     }
 
                     return $html;
@@ -373,8 +373,8 @@ class FreightBookingController extends Controller
 
                     return '
                         <div>
-                            <div>'.e($transporterName).' '.$badge.'</div>
-                            <small class="text-muted">'.e($shortName).'</small><br>
+                            <div>'.$badge.' '.e($transporterName).'</div>
+                            '.($shortName ? '<div class="text-center"><span class="badge text-bg-secondary">'.e($shortName).'</span></div>' : '').'
                         </div>
                     ';
                 })

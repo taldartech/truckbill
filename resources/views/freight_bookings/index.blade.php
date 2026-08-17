@@ -23,7 +23,7 @@
 
         .table td, .table th {
             padding: 4px 8px !important;
-            font-size: 11.5px !important;
+            font-size: 12px !important;
             vertical-align: middle;
             border-color: rgba(0,0,0,0.05) !important;
         }
@@ -200,7 +200,6 @@
         <div class="card app-index-list-card mb-4">
             <div class="card-header">
                 <h3 class="card-title mb-0">Good Hires (Lorry Hire)</h3>
-               
             </div>
 
             <div class="app-index-dt-toolbar">
@@ -1681,7 +1680,7 @@
 
     <style>
         .badge {
-            font-size: 0.65em;
+            font-size: 0.75em;
         }
 
         .clickable {
