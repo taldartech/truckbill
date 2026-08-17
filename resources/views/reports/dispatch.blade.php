@@ -11,7 +11,7 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.dispatch') }}" id="searchForm" onsubmit="validateForm(event)">
-                <div class="row mb-2">
+                <div class="row mb-2" style="align-items: end;">
                     <div class="col-md-3">
                         <label class="form-label">Start Date <span class="text-danger">*</span></label>
                         <input type="date" name="start_date" class="form-control" value="{{ $startDate }}" required>
@@ -32,7 +32,7 @@
         value="{{ $balanceAsOnDate ?? '' }}">
 </div>
 
-                <div class="row">
+                <div class=" col-md-3 row">
                     <div class="col-12 text-end">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search"></i> Search

@@ -21,7 +21,7 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.bank') }}" id="searchForm" onsubmit="validateForm(event)">
-                <div class="row mb-2">
+                <div class="row mb-2" style="align-items: end;">
                     <div class="col-md-3">
                         <label class="form-label">Start Date <span class="text-danger">*</span></label>
                         <input type="date" name="start_date" class="form-control" value="{{ $startDate }}" required>
@@ -41,9 +41,9 @@
                             <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
                         </select>
                     </div>
-                </div>
+               
 
-                <div class="row">
+                <div class=" col-md-3 row">
                     <div class="col-12 text-end">
                         <button type="submit" class="btn btn-brand-primary">
                             <i class="bi bi-search"></i> Search
@@ -53,6 +53,7 @@
                         </a>
                     </div>
                 </div>
+</div>
             </form>
         </div>
     </div>
