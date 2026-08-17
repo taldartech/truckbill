@@ -398,6 +398,10 @@
     min-height: 1.1rem;
 }
 
+.lrf-pf--feedback:has(.lrf-field-feedback:not(:empty)) .invalid-feedback {
+    display: none !important;
+}
+
 .lrf-payee-row {
     margin-top: 0;
     align-items: stretch;

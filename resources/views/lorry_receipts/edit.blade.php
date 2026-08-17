@@ -111,7 +111,7 @@
                                     @error('lr_number')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
-                                    <div class="invalid-feedback">Please enter a unique LR number.</div>
+                                    <div class="invalid-feedback">Please enter an LR number.</div>
                                     <div id="lr-number-feedback" class="lrf-field-feedback" aria-live="polite"></div>
                                 </div>
                                 <div class="lrf-pf">
@@ -137,13 +137,13 @@
                                     @php($selectedCustomer = $customers->firstWhere('id', old('customer_id', $lorry_receipt->customer_id)))
                                     @if($selectedCustomer)
                                         <option value="{{ $selectedCustomer->id }}" selected>
-                                            {{ $selectedCustomer->name }}
+                                            {{ $selectedCustomer->displayNameWithCity() }}
                                         </option>
                                     @endif
                                 </select>
                                 <script>
                                     window.selectedCustomerId = @json(old('customer_id', $lorry_receipt->customer_id));
-                                    window.selectedCustomerName = @json($selectedCustomer?->name ?? '');
+                                    window.selectedCustomerName = @json($selectedCustomer?->displayNameWithCity() ?? '');
                                 </script>
                                 @error('customer_id')
                                     <div class="text-danger">{{ $message }}</div>
@@ -305,7 +305,7 @@
                                     @php($selectedConsignor = $consignors->firstWhere('id', old('consignor_id', $lorry_receipt->consignor_id)))
                                     @if($selectedConsignor)
                                         <option value="{{ $selectedConsignor->id }}" selected>
-                                            {{ $selectedConsignor->name }}
+                                            {{ $selectedConsignor->displayNameWithCity() }}
                                         </option>
                                     @endif
                                 </select>
@@ -363,7 +363,7 @@
                                     @php($selectedConsignee = $consignees->firstWhere('id', old('consignee_id', $lorry_receipt->consignee_id)))
                                     @if($selectedConsignee)
                                         <option value="{{ $selectedConsignee->id }}" selected>
-                                            {{ $selectedConsignee->name }}
+                                            {{ $selectedConsignee->displayNameWithCity() }}
                                         </option>
                                     @endif
                                 </select>

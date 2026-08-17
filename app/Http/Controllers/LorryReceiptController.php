@@ -325,6 +325,7 @@ class LorryReceiptController extends Controller
 
         $consignees = $selectedConsigneeIds->isNotEmpty()
             ? Consignee::withTrashed()
+                ->with('city')
                 ->where('company_id', $companyId)
                 ->whereIn('id', $selectedConsigneeIds)
                 ->orderBy('name')
@@ -389,6 +390,7 @@ class LorryReceiptController extends Controller
 
         $consignees = $selectedConsigneeIds->isNotEmpty()
             ? Consignee::withTrashed()
+                ->with('city')
                 ->where('company_id', $companyId)
                 ->whereIn('id', $selectedConsigneeIds)
                 ->orderBy('name')
@@ -570,7 +572,7 @@ class LorryReceiptController extends Controller
             ];
 
             $perItemRules = [
-                'lrs' => 'nullable|array|min:1',
+                'lrs' => 'required|array|min:2',
                 'lrs.*.lr_number' => [
                     'nullable',
                     'string',
@@ -610,7 +612,10 @@ class LorryReceiptController extends Controller
             ];
             $this->validateLorryReceiptsUniqueness($request->lrs, $companyId);
 
-            $validated = $request->validate(array_merge($sharedRules, $perItemRules));
+            $validated = $request->validate(array_merge($sharedRules, $perItemRules), [
+                'lrs.required' => 'A linked group needs at least 2 lorry receipts.',
+                'lrs.min' => 'A linked group needs at least 2 lorry receipts.',
+            ]);
             $this->forceAgencyForOrphanTruck($validated, $companyId);
 
             // Start DB transaction
@@ -772,7 +777,7 @@ class LorryReceiptController extends Controller
             ->where('company_id', $companyId)
             ->exists()
         ) {
-            return redirect()->back()->withErrors(['lr_number' => 'LR Number already exists. Please use a unique LR Number.']);
+            return redirect()->back()->withErrors(['lr_number' => 'LR Number already exists.']);
         }
 
         // Set unloading_weight = weight initially (for loose weight mode)
@@ -860,7 +865,7 @@ class LorryReceiptController extends Controller
         $companyId = $this->getCurrentCompanyId();
 
         $linkedLorryReceipts = LorryReceipt::query()
-            ->with(['truck.transporter.transporterMaster', 'truck.driver', 'customer', 'transporter.transporterMaster', 'consignor', 'consignee', 'reference.transporterMaster'])
+            ->with(['truck.transporter.transporterMaster', 'truck.driver', 'customer.city', 'transporter.transporterMaster', 'consignor.city', 'consignee.city', 'reference.transporterMaster'])
             ->where('company_id', $companyId)
             ->where('linked_lr_id', $lorry_receipt->linked_lr_id)
             ->orderBy('id')
@@ -894,6 +899,7 @@ class LorryReceiptController extends Controller
 
         $consignees = $selectedConsigneeIds->isNotEmpty()
             ? Consignee::withTrashed()
+                ->with('city')
                 ->where('company_id', $companyId)
                 ->whereIn('id', $selectedConsigneeIds)
                 ->orderBy('name')
@@ -951,12 +957,12 @@ class LorryReceiptController extends Controller
                 'gr_number' => $lr->gr_number,
                 'invoice_number' => $lr->invoice_number,
                 'customer_id' => $lr->customer_id,
-                'customer_name' => $lr->customer?->name,
+                'customer_name' => $lr->customer?->displayNameWithCity(),
                 'consignor_id' => $lr->consignor_id,
-                'consignor_name' => $lr->consignor?->name,
+                'consignor_name' => $lr->consignor?->displayNameWithCity(),
                 'consignor_contact_number' => $lr->consignor_contact_number,
                 'consignee_id' => $lr->consignee_id,
-                'consignee_name' => $lr->consignee?->name,
+                'consignee_name' => $lr->consignee?->displayNameWithCity(),
                 'consignee_contact_number' => $lr->consignee_contact_number,
                 'source_city' => $lr->source_city,
                 'source_state' => $lr->source_state,
@@ -1040,7 +1046,7 @@ class LorryReceiptController extends Controller
             'lrs.*.destination_city' => 'required|string|max:100',
             'lrs.*.destination_state' => 'required|string|max:100',
             'lrs.*.loading_station' => 'nullable|string|max:100',
-                'lrs.*.unloading_station' => 'nullable|string|max:100',
+            'lrs.*.unloading_station' => 'nullable|string|max:100',
             'lrs.*.lane' => 'required|string|max:100',
             'lrs.*.good_type' => 'required|string|max:100',
             'lrs.*.goods_value' => 'nullable|numeric|min:0',
@@ -1211,7 +1217,7 @@ class LorryReceiptController extends Controller
         return response()->json([
             'valid' => ! $exists,
             'message' => $exists
-                ? 'LR Number already exists. Please use a unique LR Number.'
+                ? 'LR Number already exists.'
                 : 'LR Number is available',
         ]);
     }
@@ -1256,7 +1262,7 @@ class LorryReceiptController extends Controller
         }
 
         $companyId = $this->getCurrentCompanyId();
-        $lorry_receipt->load(['truck.transporter.transporterMaster', 'truck.driver', 'customer', 'transporter.transporterMaster', 'consignor', 'consignee']);
+        $lorry_receipt->load(['truck.transporter.transporterMaster', 'truck.driver', 'customer.city', 'transporter.transporterMaster', 'consignor.city', 'consignee.city']);
 
         // Fetch only the selected records needed for initial dropdown rendering.
         $selectedTruckId = old('truck_id', $lorry_receipt->truck_id);
@@ -1317,6 +1323,7 @@ class LorryReceiptController extends Controller
 
         $consignees = $selectedConsigneeIds->isNotEmpty()
             ? Consignee::withTrashed()
+                ->with('city')
                 ->where('company_id', $companyId)
                 ->whereIn('id', $selectedConsigneeIds)
                 ->orderBy('name')

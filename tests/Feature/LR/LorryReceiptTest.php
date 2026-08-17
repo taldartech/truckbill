@@ -417,6 +417,39 @@ class LorryReceiptTest extends TestCase
         $this->assertDatabaseHas('lorry_receipts', ['lr_number' => 'LRB002', 'linked_lr_id' => $linkedId]);
     }
 
+    public function test_batch_store_rejects_fewer_than_two_linked_lrs(): void
+    {
+        $admin = $this->makeAdmin();
+        [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
+        [, $truck] = $this->makeTruck($admin);
+
+        $response = $this->actingAs($admin)->from('/lorry_receipts/create-linked')->post('/lorry_receipts', [
+            'gr_date' => now()->toDateString(),
+            'truck_id' => $truck->id,
+            'transporter_id' => $truck->transporter_id,
+            'company_id' => $admin->company_id,
+            'lrs' => [
+                [
+                    'lr_number' => 'LRB001',
+                    'gr_number' => 'GRB001',
+                    'invoice_number' => 'INVB001',
+                    'customer_id' => $customer->id,
+                    'consignor_id' => $consignor->id,
+                    'consignee_id' => $consignee->id,
+                    'lane' => 'Lane 1',
+                    'good_type' => 'Steel',
+                    'weight' => 5,
+                    'fr_rate' => 500,
+                    'amount' => 2500,
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect('/lorry_receipts/create-linked');
+        $response->assertSessionHasErrors('lrs');
+        $this->assertDatabaseMissing('lorry_receipts', ['lr_number' => 'LRB001']);
+    }
+
     public function test_get_linked_lrs_endpoint_returns_results(): void
     {
         $admin = $this->makeAdmin();
@@ -815,14 +848,20 @@ class LorryReceiptTest extends TestCase
         $responseCreate = $this->actingAs($admin)->get('/lorry_receipts/create');
         $responseCreate->assertOk();
         $responseCreate->assertSee('id="declarationWarning"', false);
-        $responseCreate->assertSee('Declaration is not submitted for the selected truck owner');
+        $responseCreate->assertSee('Declaration missing');
         $responseCreate->assertSee('Edit Truck Owner');
 
         $responseCreateLinked = $this->actingAs($admin)->get('/lorry_receipts/create-linked');
         $responseCreateLinked->assertOk();
         $responseCreateLinked->assertSee('id="declarationWarning"', false);
-        $responseCreateLinked->assertSee('Declaration is not submitted for the selected truck owner');
+        $responseCreateLinked->assertSee('Declaration missing');
         $responseCreateLinked->assertSee('Edit Truck Owner');
+        $responseCreateLinked->assertSee('lrf-page', false);
+        $responseCreateLinked->assertSee('Add Linked Good Receipts (Bilty)', false);
+        $responseCreateLinked->assertSee('linked-lr-form', false);
+        $responseCreateLinked->assertSee('id="linked-lr-submit"', false);
+        $responseCreateLinked->assertSee('disabled', false);
+        $responseCreateLinked->assertSee('Minimum 2 LRs required', false);
 
         $lr = LorryReceipt::create([
             'company_id' => $admin->company_id,
@@ -851,7 +890,7 @@ class LorryReceiptTest extends TestCase
         $responseEdit = $this->actingAs($admin)->get("/lorry_receipts/{$lr->id}/edit");
         $responseEdit->assertOk();
         $responseEdit->assertSee('id="declarationWarning"', false);
-        $responseEdit->assertSee('Declaration is not submitted for the selected truck owner');
+        $responseEdit->assertSee('Declaration missing');
         $responseEdit->assertSee('Edit Truck Owner');
     }
 
@@ -920,6 +959,8 @@ class LorryReceiptTest extends TestCase
             ->assertOk()
             ->assertSee('Edit Linked Good Receipts (Bilty)', false)
             ->assertSee('Linked ID: '.$linkedId, false)
+            ->assertSee('lrf-page', false)
+            ->assertSee('linked-lr-form', false)
             ->assertSee('LRB101', false)
             ->assertSee('LRB102', false);
 

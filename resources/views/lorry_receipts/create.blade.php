@@ -106,7 +106,7 @@
                                     @error('lr_number')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
-                                    <div class="invalid-feedback">Please enter a unique LR number.</div>
+                                    <div class="invalid-feedback">Please enter an LR number.</div>
                                     <div id="lr-number-feedback" class="lrf-field-feedback" aria-live="polite"></div>
                                 </div>
                                 <div class="lrf-pf">
@@ -132,7 +132,7 @@
                                     @php($selectedCustomer = $consignees->firstWhere('id', old('customer_id')))
                                     @if($selectedCustomer)
                                         <option value="{{ $selectedCustomer->id }}" selected>
-                                            {{ $selectedCustomer->name }}
+                                            {{ $selectedCustomer->displayNameWithCity() }}
                                         </option>
                                     @endif
                                 </select>
@@ -284,7 +284,7 @@
                                     @php($selectedConsignor = $consignees->firstWhere('id', old('consignor_id')))
                                     @if($selectedConsignor)
                                         <option value="{{ $selectedConsignor->id }}" selected>
-                                            {{ $selectedConsignor->name }}
+                                            {{ $selectedConsignor->displayNameWithCity() }}
                                         </option>
                                     @endif
                                 </select>
@@ -342,7 +342,7 @@
                                     @php($selectedConsignee = $consignees->firstWhere('id', old('consignee_id')))
                                     @if($selectedConsignee)
                                         <option value="{{ $selectedConsignee->id }}" selected>
-                                            {{ $selectedConsignee->name }}
+                                            {{ $selectedConsignee->displayNameWithCity() }}
                                         </option>
                                     @endif
                                 </select>
