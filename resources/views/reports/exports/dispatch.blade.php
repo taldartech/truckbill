@@ -2,7 +2,8 @@
     // Flag that tells this view whether it's being rendered for Excel export
     // Default to false when included from a normal Blade view
     $forExcel = $forExcel ?? false;
-    $balanceAsOnEndDate = $balanceAsOnEndDate ?? false;
+    
+     $balanceAsOnDate = $balanceAsOnDate ?? null;
     $emptyPaymentSummary = ['cash' => 0, 'bank' => 0, 'fuel' => 0, 'advance' => 0, 'total_paid' => 0, 'balance' => 0];
 @endphp
 
@@ -63,9 +64,10 @@
             <tr>
                 @php
                     $freight = $lr->freightBookings->last();
-                    $paymentSummary = $freight
-                        ? $freight->dispatchPaymentSummary($balanceAsOnEndDate ? $endDate : null)
-                        : $emptyPaymentSummary;
+                        $paymentSummary = $freight
+                   ? $freight->dispatchPaymentSummary($balanceAsOnDate)
+                  : $emptyPaymentSummary;
+
                     $diff = $lr->fr_rate - $freight?->tr_fr_rate;
                     $invoice = \App\Models\Invoice::whereJsonContains('lr_ids', $lr->id)->first();
                 @endphp
