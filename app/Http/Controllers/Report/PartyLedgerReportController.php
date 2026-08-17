@@ -93,11 +93,7 @@ class PartyLedgerReportController extends Controller
     {
         $endInput = $request->input('end_date');
         $startInput = $request->input('start_date');
-        // $endDateForView = $endInput ?? date('Y-m-d');
-
-        // if (! $startInput || ! $endInput) {
-        //     return [null, $endDateForView, false];
-        // }
+       
 
         $endDateForView = $endInput ?? date('Y-m-d');
            $startDateForView = $startInput ?? date('Y-m-d', strtotime('-7 days'));
