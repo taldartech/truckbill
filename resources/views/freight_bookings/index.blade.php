@@ -252,7 +252,7 @@
                             </div>
                         </div>
 
-                        
+
                         <div class="col-12 col-sm-6 col-md-2 d-flex align-items-end">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" name="pending_memo" value="1"
@@ -2387,7 +2387,7 @@
                             <div class="col-md-6">
                                 <label for="individualTotalAmountInput" class="form-label">Payment Amount *</label>
                                 <div class="input-group">
-                                    <span class="input-group-text"></span>
+                                    <span class="input-group-text">₹</span>
                                     <input type="number" step="0.01" class="form-control" name="total_amount" id="individualTotalAmountInput" min="0.01" max="${balance}" required
                                         oninput="updatePaymentTypeFromAmounts({ selectId: 'individual_payment_type', amountInputId: 'individualTotalAmountInput' })"
                                         onchange="updatePaymentTypeFromAmounts({ selectId: 'individual_payment_type', amountInputId: 'individualTotalAmountInput' })">
