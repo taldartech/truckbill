@@ -140,6 +140,11 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        #invoicesTable td,
+        #invoicesTable th {
+            font-size: 12px !important;
+        }
     </style>
 @endpush
 
@@ -308,7 +313,6 @@
                                 <th style="width: 10px">ID</th>
                                 <th>Invoice #</th>
                                 <th>Memo No.</th>
-                                <th>Type</th>
                                 <th>Generated Date</th>
                                 <th>Customer</th>
                                 <th>Total Amount</th>
@@ -472,10 +476,6 @@
                         data: 'memo_numbers',
                         name: 'invoices.memo_ids',
                         orderable: false
-                    },
-                    {
-                        data: 'invoice_type',
-                        name: 'invoices.invoice_type'
                     },
                     {
                         data: 'generated_date_formatted',

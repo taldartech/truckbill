@@ -103,7 +103,9 @@
                     <div class="lrf-receipt-grid">
                         <div class="lrf-receipt-card">
                             <div class="lrf-receipt-card__title">Document</div>
-                            <div class="lrf-receipt-card__row lrf-grid lrf-grid--2">
+
+                             <div class="lrf-receipt-card__row lrf-grid lrf-grid--2">
+                                
                                 <div class="lrf-pf lrf-pf--feedback">
                                     <label for="lr_number" class="lrf-pf__lbl">LR Number<span class="lrf-pf__req">*</span></label>
                                     <input type="text" class="form-control" id="lr_number" name="lr_number"
@@ -124,41 +126,68 @@
                                     <div class="invalid-feedback">Please select a GR date.</div>
                                 </div>
                             </div>
-                            <div class="lrf-receipt-card__row lrf-pf">
-                                <div class="lrf-pf__lbl-row">
-                                    <label for="customer_id" class="lrf-pf__lbl">Customer<span class="lrf-pf__req">*</span></label>
-                                    <a href="{{ route('consignees.create') }}" class="lrf-quick-add" target="_blank" rel="noopener">
-                                        <i class="bi bi-plus-lg"></i> Add
-                                    </a>
-                                </div>
-                                <select class="form-select" id="customer_id" name="customer_id" required
-                                    data-placeholder="Search and select customer...">
-                                    <option value="">Select Customer</option>
-                                    @php($selectedCustomer = $customers->firstWhere('id', old('customer_id', $lorry_receipt->customer_id)))
-                                    @if($selectedCustomer)
-                                        <option value="{{ $selectedCustomer->id }}" selected>
-                                            {{ $selectedCustomer->displayNameWithCity() }}
-                                        </option>
-                                    @endif
-                                </select>
-                                <script>
-                                    window.selectedCustomerId = @json(old('customer_id', $lorry_receipt->customer_id));
-                                    window.selectedCustomerName = @json($selectedCustomer?->displayNameWithCity() ?? '');
-                                </script>
-                                @error('customer_id')
-                                    <div class="text-danger">{{ $message }}</div>
-                                @enderror
-                                <div class="invalid-feedback">Please select a customer.</div>
-                            </div>
-                            @if ($lorry_receipt->delivery_status === 'Delivered')
-                                <div class="lrf-receipt-card__row lrf-pf">
-                                    <label for="memo_id" class="lrf-pf__lbl">Memo ID</label>
-                                    <input type="text" class="form-control @error('memo_id') is-invalid @enderror" id="memo_id" name="memo_id" value="{{ old('memo_id', $lorry_receipt->memo_id) }}">
-                                    @error('memo_id') <div class="text-danger">{{ $message }}</div> @enderror
-                                    <div id="memo_id_feedback" class="lrf-field-feedback"></div>
-                                </div>
-                            @endif
-                        </div>
+
+                        
+    
+        <div class="lrf-receipt-card__row {{ $lorry_receipt->delivery_status === 'Delivered' ? 'lrf-grid lrf-grid--2' : '' }}">
+         <div class="lrf-pf">
+          <div class="lrf-pf__lbl-row">
+            <label for="customer_id" class="lrf-pf__lbl">
+                Customer<span class="lrf-pf__req">*</span>
+            </label>
+
+            <a href="{{ route('consignees.create') }}" class="lrf-quick-add" target="_blank" rel="noopener">
+                <i class="bi bi-plus-lg"></i> Add
+            </a>
+        </div>
+
+        <select class="form-select" id="customer_id" name="customer_id" required
+            data-placeholder="Search and select customer...">
+            <option value="">Select Customer</option>
+
+            @php($selectedCustomer = $customers->firstWhere(
+                'id',
+                old('customer_id', $lorry_receipt->customer_id)
+            ))
+
+            @if($selectedCustomer)
+                <option value="{{ $selectedCustomer->id }}" selected>
+                    {{ $selectedCustomer->displayNameWithCity() }}
+                </option>
+            @endif
+        </select>
+
+        <script>
+            window.selectedCustomerId = @json(old('customer_id', $lorry_receipt->customer_id));
+            window.selectedCustomerName = @json($selectedCustomer?->displayNameWithCity() ?? '');
+        </script>
+
+        @error('customer_id')
+            <div class="text-danger">{{ $message }}</div>
+        @enderror
+
+        <div class="invalid-feedback">Please select a customer.</div>
+    </div>
+
+    @if ($lorry_receipt->delivery_status === 'Delivered')
+        <div class="lrf-pf">
+            <label for="memo_id" class="lrf-pf__lbl">Memo ID</label>
+
+            <input type="text"
+                class="form-control @error('memo_id') is-invalid @enderror"
+                id="memo_id"
+                name="memo_id"
+                value="{{ old('memo_id', $lorry_receipt->memo_id) }}">
+            @error('memo_id')
+                <div class="text-danger">{{ $message }}</div>
+            @enderror
+            <div id="memo_id_feedback" class="lrf-field-feedback"></div>
+        </div>
+    @endif
+
+      </div>
+         </div> 
+
 
                         <div class="lrf-receipt-card">
                             <div class="lrf-receipt-card__title">Vehicle &amp; Payee</div>
@@ -560,7 +589,7 @@
                             @error('gr_number')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                            <div class="invalid-feedback">Please enter a valid GR number.</div>
+                          
                             <div id="gr-number-feedback" class="mt-1"></div>
                         </div>
                         <div class="lrf-pf">
@@ -580,7 +609,7 @@
                             @error('goods_value')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                            <div class="lrf-pf__hint">Value of goods</div>
+                            
                         </div>
                         <div class="lrf-pf">
                             <label for="reference_by" class="lrf-pf__lbl">Reference By</label>

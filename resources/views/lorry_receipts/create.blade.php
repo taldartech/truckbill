@@ -520,7 +520,7 @@
                             @error('gr_number')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                            <div class="invalid-feedback">Please enter a valid GR number.</div>
+                           
                             <div id="gr-number-feedback" class="mt-1"></div>
                         </div>
                         <div class="lrf-pf">
@@ -540,7 +540,7 @@
                             @error('goods_value')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                            <div class="lrf-pf__hint">Value of goods</div>
+                           
                         </div>
                         <div class="lrf-pf">
                             <label for="reference_by" class="lrf-pf__lbl">Reference By</label>

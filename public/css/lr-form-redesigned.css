@@ -308,7 +308,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
-    min-height: 18px;
+    min-height: 18px;  
 }
 
 .lrf-pf__lbl-row .lrf-pf__lbl {

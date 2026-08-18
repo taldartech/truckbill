@@ -1248,7 +1248,13 @@ class LorryReceiptController extends Controller
             ->when($request->exclude_id, fn ($query) => $query->where('id', '!=', $request->exclude_id))
             ->exists();
 
-        return response()->json(['available' => ! $exists]);
+       
+        return response()->json([
+    'available' => ! $exists,
+    'message' => $exists
+        ? 'GR number already exists'
+        : 'GR number is available',
+]);
     }
 
     public function edit(LorryReceipt $lorry_receipt): View|RedirectResponse
