@@ -324,7 +324,7 @@
                     <div class="col-md-4 mb-3">
                         <label for="amount" class="form-label">Amount *</label>
                         <div class="input-group">
-                            <span class="input-group-text"></span>
+                            <span class="input-group-text">₹</span>
                             <input type="number" step="0.01" name="amount" id="amount" class="form-control"
                                 value="{{ old('amount', $voucher_payment->amount) }}" required>
                         </div>

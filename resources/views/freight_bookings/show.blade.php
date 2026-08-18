@@ -677,7 +677,7 @@
                             <i class="bi bi-truck"></i> Transporter Details
                         </div>
                         <div class="fb-pay-panel__body">
-                            <div class="fb-pay-facts">
+                            <div class="fb-pay-facts fb-pay-facts--7">
                                 <div class="fb-pay-fact">
                                     <span class="fb-pay-fact__label">Transporter</span>
                                     <div class="fb-pay-fact__value" id="lrTransporter">
@@ -1253,7 +1253,7 @@
                                 <i class="bi bi-truck"></i> Transporter Details
                             </div>
                             <div class="fb-pay-panel__body">
-                                <div class="fb-pay-facts">
+                                <div class="fb-pay-facts fb-pay-facts--7">
                                     <div class="fb-pay-fact">
                                         <span class="fb-pay-fact__label">Transporter</span>
                                         <div class="fb-pay-fact__value">{{ $firstLr && $firstLr->transporter ? $firstLr->transporter->name : ($firstLinked->transporter_name ?? 'N/A') }}</div>
@@ -1291,14 +1291,14 @@
                                 <i class="bi bi-currency-rupee"></i> Payment Allocation
                             </div>
                             <div class="fb-pay-panel__body">
-                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-                                    <div>
+                                <div class="row align-items-center justify-content-between">
+                                    <div class="col-6">
                                         <span class="fb-pay-fact__label">Total Balance</span>
                                         <div class="fb-pay-fact__value fb-pay-fact__value--warn">₹{{ number_format($combinedTotalBalance, 2) }}</div>
                                     </div>
-                                    <div style="min-width: 12rem;">
+                                    <div class="col-6 d-flex align-items-center justify-content-end">
                                         <label class="form-label mb-1" for="combinedAmountInput">Combined Amount *</label>
-                                        <input type="number" class="form-control" id="combinedAmountInput" name="combined_amount"
+                                        <input style="width: 50%" type="number" class="form-control" id="combinedAmountInput" name="combined_amount"
                                             step="0.01" min="0.01" max="{{ $combinedTotalBalance }}" required>
                                     </div>
                                 </div>

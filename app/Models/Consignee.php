@@ -45,6 +45,18 @@ class Consignee extends Model
         return $this->belongsTo(City::class);
     }
 
+    public function displayNameWithCity(): string
+    {
+        $name = trim((string) ($this->name ?: 'Not Set'));
+        $city = trim((string) ($this->city_name ?? $this->city?->name ?? ''));
+
+        if ($city === '') {
+            return $name;
+        }
+
+        return $name.' ('.$city.')';
+    }
+
     public function state()
     {
         return $this->belongsTo(State::class);

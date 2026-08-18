@@ -1353,6 +1353,9 @@
                 const shortageAmount = parseFloat(document.getElementById('shortage_amount') ? document
                     .getElementById('shortage_amount').value : 0) || 0;
 
+                const summaryTdsEl = document.getElementById('fbSummaryTds');
+                const summaryBalanceEl = document.getElementById('fbSummaryBalance');
+
                 // TDS calculation logic:
                 // If TDS already submitted, never change TDS amount.
                 // Before delivery: Calculate TDS from freight amount (TR amount)
@@ -1394,11 +1397,19 @@
                         : tdsAmount.toFixed(2);
                 }
 
+                if (summaryTdsEl) {
+                    summaryTdsEl.textContent = '₹' + Number(tdsAmount).toFixed(2);
+                }
+
                 // Calculate Balance Amount
                 const balance = trAmount - advanceAmount - tdsAmount + detention + deviation -
                     miscExpense - damageAmount - shortageAmount + customAmountsTotal + negativeAdjustedAmount;
                 if (balanceAmountInput) {
                     balanceAmountInput.value = balance.toFixed(2);
+                }
+
+                if (summaryBalanceEl) {
+                    summaryBalanceEl.textContent = '₹' + Number(balance).toFixed(2);
                 }
 
                 updateTrAmountHighlight();

@@ -53,8 +53,8 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            padding-left: 3px !important;
-            padding-right: 3px !important;
+            padding-left: 5px !important;
+            padding-right: 5px !important;
         }
 
         #lorryReceiptsTable thead th {
@@ -78,30 +78,26 @@
         #lorryReceiptsTable th:nth-child(2),
         #lorryReceiptsTable td:nth-child(2) { width: 9.5%; }  /* LR Details */
         #lorryReceiptsTable th:nth-child(3),
-        #lorryReceiptsTable td:nth-child(3) { width: 12%; }   /* Customer */
+        #lorryReceiptsTable td:nth-child(3) { width: 13%; }   /* Customer */
         #lorryReceiptsTable th:nth-child(4),
-        #lorryReceiptsTable td:nth-child(4) { width: 11%; }   /* Consignor */
+        #lorryReceiptsTable td:nth-child(4) { width: 13%; }   /* Consignor */
         #lorryReceiptsTable th:nth-child(5),
-        #lorryReceiptsTable td:nth-child(5) { width: 11%; }   /* Consignee */
+        #lorryReceiptsTable td:nth-child(5) { width: 13%; }   /* Consignee */
         #lorryReceiptsTable th:nth-child(6),
-        #lorryReceiptsTable td:nth-child(6) { width: 7.5%; }  /* Status */
+        #lorryReceiptsTable td:nth-child(6) { width: 9%; }    /* Truck */
         #lorryReceiptsTable th:nth-child(7),
-        #lorryReceiptsTable td:nth-child(7) { width: 9%; }    /* Truck */
+        #lorryReceiptsTable td:nth-child(7) { width: 6%; }    /* Weight */
         #lorryReceiptsTable th:nth-child(8),
-        #lorryReceiptsTable td:nth-child(8) { width: 6%; }    /* Weight */
+        #lorryReceiptsTable td:nth-child(8) { width: 6%; }    /* Rate */
         #lorryReceiptsTable th:nth-child(9),
-        #lorryReceiptsTable td:nth-child(9) { width: 6%; }    /* Rate */
+        #lorryReceiptsTable td:nth-child(9) { width: 8%; }   /* Amount */
         #lorryReceiptsTable th:nth-child(10),
-        #lorryReceiptsTable td:nth-child(10) { width: 8%; }   /* Amount */
-        #lorryReceiptsTable th:nth-child(11),
-        #lorryReceiptsTable td:nth-child(11) { width: 13.5%; } /* Action */
+        #lorryReceiptsTable td:nth-child(10) { width: 13.5%; } /* Action */
 
-        #lorryReceiptsTable td:nth-child(11),
-        #lorryReceiptsTable th:nth-child(11) {
+        #lorryReceiptsTable td:nth-child(10),
+        #lorryReceiptsTable th:nth-child(10) {
             overflow: visible;
             text-overflow: clip;
-            padding-left: 2px !important;
-            padding-right: 2px !important;
         }
 
         @media (max-width: 991.98px) {
@@ -345,7 +341,6 @@
                                 <th>Customer</th>
                                 <th>Consignor</th>
                                 <th>Consignee</th>
-                                <th>Status</th>
                                 <th>Truck</th>
                                 <th>Weight</th>
                                 <th>Rate</th>
@@ -834,13 +829,11 @@
                             }
                         },
                         {
-                            data: 'status_badge',
-                            name: 'delivery_status'
-                        },
-
-                        {
                             data: 'truck_number',
-                            name: 'truck_number'
+                            name: 'truck_number',
+                            render: function(data, type, row) {
+                                return data + '<br>' + row.status_badge;
+                            }
                         },
                         {
                             data: 'weight',
@@ -862,7 +855,6 @@
                             name: 'actions',
                             orderable: false,
                             searchable: false,
-                            className: 'text-center'
                         }
                     ],
                     order: [[0, 'desc']],

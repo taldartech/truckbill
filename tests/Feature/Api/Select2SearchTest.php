@@ -323,7 +323,7 @@ class Select2SearchTest extends TestCase
             ]);
 
         $texts = collect($response->json('results'))->pluck('text')->all();
-        $this->assertContains('Vikas Trading Co', $texts);
+        $this->assertContains('Vikas Trading Co (UniqueVikasNagar)', $texts);
         $this->assertContains('Plain Name Ltd', $texts);
         $this->assertNotContains('Vikas Other Co', $texts);
     }

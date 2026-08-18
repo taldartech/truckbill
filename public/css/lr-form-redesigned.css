@@ -123,6 +123,13 @@
     padding: 14px 16px 16px;
 }
 
+.lrf-section__head-left {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    flex: 0 1 auto;
+}
+
 .lrf-step-num {
     width: 30px;
     height: 30px;
@@ -389,6 +396,10 @@
     bottom: 0;
     margin-top: 0;
     min-height: 1.1rem;
+}
+
+.lrf-pf--feedback:has(.lrf-field-feedback:not(:empty)) .invalid-feedback {
+    display: none !important;
 }
 
 .lrf-payee-row {

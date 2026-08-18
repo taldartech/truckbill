@@ -98,6 +98,23 @@
         if (amountEl) {
             amountEl.textContent = formatCurrency(totalAmount);
         }
+
+        const form = document.getElementById('lorryReceiptForm');
+        const isEdit = form?.classList.contains('linked-lr-form--edit');
+        const submitBtn = document.getElementById('linked-lr-submit');
+        const minHint = document.getElementById('linked-lr-min-hint');
+        const canSubmit = items.length >= 2;
+
+        if (submitBtn && !isEdit) {
+            submitBtn.disabled = !canSubmit;
+            submitBtn.title = canSubmit
+                ? ''
+                : 'Add at least 2 lorry receipts to create a linked group';
+        }
+
+        if (minHint) {
+            minHint.hidden = canSubmit;
+        }
     }
 
     function refreshIndices() {
@@ -147,6 +164,315 @@
         });
     }
 
+    function displayOrDash(value) {
+        const text = (value || '').toString().trim();
+        if (!text || text === 'No Truck Owner' || text === '--' || text === 'Loading...' || text === 'Error') {
+            return '—';
+        }
+        return text;
+    }
+
+    function initPayeeUi() {
+        const form = document.getElementById('lorryReceiptForm');
+        if (form?.dataset.linkedLrPayeeUi === '1') {
+            if (typeof window.syncLrPayeeVisibility === 'function') {
+                window.syncLrPayeeVisibility();
+            }
+            return;
+        }
+
+        const truckSelect = document.getElementById('truck_id');
+        const lrTruckSummaryTds = document.getElementById('lrTruckSummaryTds');
+        const lrTruckSummaryDriver = document.getElementById('lrTruckSummaryDriver');
+        const lrTruckSummaryDriverItem = document.getElementById('lrTruckSummaryDriverItem');
+        const lrTruckSummaryDriverSep = document.getElementById('lrTruckSummaryDriverSep');
+        const tdsPercentageValue = document.getElementById('tdsPercentageValue');
+        const lrPayToField = document.getElementById('lrPayToField');
+        const lrPayeeRow = document.getElementById('lrPayeeRow');
+
+        if (!truckSelect && !lrPayToField) {
+            return;
+        }
+
+        function syncTruckSummaryTds() {
+            if (!lrTruckSummaryTds) {
+                return;
+            }
+            lrTruckSummaryTds.textContent = displayOrDash(tdsPercentageValue ? tdsPercentageValue.textContent : '');
+        }
+
+        function syncPayeeFieldLockStyle() {
+            const transporterSelect = document.getElementById('transporter_id');
+            if (!lrPayeeRow || !transporterSelect) {
+                return;
+            }
+            lrPayeeRow.classList.toggle('is-payee-locked', !!transporterSelect.disabled);
+        }
+
+        function syncPayeeVisibility() {
+            const hasTruck = !!(truckSelect && truckSelect.value);
+            const transporterTypeSelect = document.getElementById('transporter_type');
+            const transporterSelect = document.getElementById('transporter_id');
+            const payType = transporterTypeSelect ? transporterTypeSelect.value : '';
+            const hasPayType = payType === 'owner' || payType === 'agency';
+
+            if (lrPayToField) {
+                lrPayToField.hidden = !hasTruck;
+            }
+            if (lrPayeeRow) {
+                lrPayeeRow.hidden = !hasTruck || !hasPayType;
+            }
+            if (transporterTypeSelect) {
+                transporterTypeSelect.required = hasTruck;
+            }
+            if (transporterSelect) {
+                transporterSelect.required = hasTruck && hasPayType;
+            }
+            syncPayeeFieldLockStyle();
+        }
+
+        function updateTruckMetaSummary(ownerName, driverName) {
+            const driver = displayOrDash(driverName);
+            const hasTruck = !!(truckSelect && truckSelect.value);
+            const hasDriver = driver !== '—';
+            const transporterTypeSelect = document.getElementById('transporter_type');
+            const transporterSelect = document.getElementById('transporter_id');
+            const wasTruckSelected = !!(lrPayToField && !lrPayToField.hidden);
+
+            if (lrTruckSummaryDriver) {
+                lrTruckSummaryDriver.textContent = driver;
+            }
+            if (lrTruckSummaryDriverItem) {
+                lrTruckSummaryDriverItem.hidden = !(hasTruck && hasDriver);
+            }
+            if (lrTruckSummaryDriverSep) {
+                lrTruckSummaryDriverSep.hidden = !(hasTruck && hasDriver);
+            }
+            syncTruckSummaryTds();
+            syncPayeeVisibility();
+
+            if (!hasTruck && wasTruckSelected) {
+                if (transporterTypeSelect) {
+                    transporterTypeSelect.value = '';
+                    transporterTypeSelect.dispatchEvent(new Event('change'));
+                }
+                document.querySelectorAll('.lrf-pay-pill').forEach(function (pill) {
+                    pill.classList.remove('is-active');
+                    if (pill.getAttribute('data-pay-type') === 'owner') {
+                        pill.disabled = false;
+                    }
+                });
+                if (transporterSelect && window.jQuery && window.jQuery(transporterSelect).hasClass('select2-hidden-accessible')) {
+                    window.jQuery(transporterSelect).val(null).trigger('change');
+                } else if (transporterSelect) {
+                    transporterSelect.value = '';
+                }
+                const tdsDisplay = document.getElementById('tdsRateDisplay');
+                const tdsValue = document.getElementById('tdsPercentageValue');
+                if (tdsDisplay) {
+                    tdsDisplay.style.display = 'none';
+                }
+                if (tdsValue) {
+                    tdsValue.textContent = '--';
+                }
+                if (typeof window.LREntity !== 'undefined' && typeof window.LREntity.showTdsPercentage === 'function') {
+                    window.LREntity.showTdsPercentage(null);
+                }
+                if (lrTruckSummaryDriverItem) {
+                    lrTruckSummaryDriverItem.hidden = true;
+                }
+                if (lrTruckSummaryDriverSep) {
+                    lrTruckSummaryDriverSep.hidden = true;
+                }
+                syncPayeeVisibility();
+            }
+        }
+
+        function readTruckMetaFromSelection() {
+            if (!truckSelect || !truckSelect.value) {
+                updateTruckMetaSummary('', '');
+                return;
+            }
+
+            let ownerName = '';
+            let driverName = '';
+
+            if (window.jQuery) {
+                const selected = window.jQuery('#truck_id').select2('data');
+                const data = selected && selected[0] ? selected[0] : null;
+                if (data) {
+                    ownerName = data.transporter_name || '';
+                    driverName = data.driver_name || '';
+                    if (!ownerName && data.text) {
+                        const match = String(data.text).match(/\(([^)]+)\)$/);
+                        ownerName = match ? match[1].trim() : '';
+                    }
+                    if (!driverName && data.text) {
+                        const driverMatch = String(data.text).match(/Driver:\s*([^-—(]+)/i);
+                        driverName = driverMatch ? driverMatch[1].trim() : '';
+                    }
+                }
+            }
+
+            const option = truckSelect.options[truckSelect.selectedIndex];
+            if (option) {
+                if (!ownerName) {
+                    ownerName = option.getAttribute('data-transporter-name') || '';
+                }
+                if (!driverName) {
+                    driverName = option.getAttribute('data-driver-name') || '';
+                }
+            }
+
+            updateTruckMetaSummary(ownerName, driverName);
+
+            if (truckSelect.value && (!ownerName || !driverName || ownerName === '—')) {
+                fetch(`/api/trucks/${encodeURIComponent(truckSelect.value)}`)
+                    .then((response) => (response.ok ? response.json() : null))
+                    .then((data) => {
+                        if (!data || String(data.id) !== String(truckSelect.value)) {
+                            return;
+                        }
+                        const fetchedOwner = data.transporter
+                            ? (data.transporter.name || data.transporter.short_name || '')
+                            : '';
+                        const fetchedDriver = data.driver ? (data.driver.name || '') : '';
+                        updateTruckMetaSummary(
+                            ownerName && ownerName !== '—' ? ownerName : fetchedOwner,
+                            driverName && driverName !== '—' ? driverName : fetchedDriver
+                        );
+                    })
+                    .catch(() => {});
+            }
+        }
+
+        window.syncLrPayeeVisibility = syncPayeeVisibility;
+        window.syncLrPayeeFieldLockStyle = syncPayeeFieldLockStyle;
+        window.syncLrTruckMetaAfterClear = function () {
+            updateTruckMetaSummary('', '');
+            syncPayeeVisibility();
+        };
+
+        if (form) {
+            form.dataset.linkedLrPayeeUi = '1';
+        }
+
+        if (truckSelect) {
+            truckSelect.addEventListener('change', readTruckMetaFromSelection);
+        }
+        if (window.jQuery) {
+            window.jQuery(document)
+                .off('select2:select.lrTruckMeta select2:clear.lrTruckMeta change.lrTruckMeta', '#truck_id')
+                .on(
+                    'select2:select.lrTruckMeta select2:clear.lrTruckMeta change.lrTruckMeta',
+                    '#truck_id',
+                    function () {
+                        setTimeout(readTruckMetaFromSelection, 0);
+                    }
+                );
+        }
+
+        if (tdsPercentageValue && typeof MutationObserver !== 'undefined') {
+            const tdsObserver = new MutationObserver(syncTruckSummaryTds);
+            tdsObserver.observe(tdsPercentageValue, {
+                childList: true,
+                characterData: true,
+                subtree: true,
+            });
+        }
+
+        const transporterSelectForLock = document.getElementById('transporter_id');
+        if (transporterSelectForLock && typeof MutationObserver !== 'undefined') {
+            const payeeLockObserver = new MutationObserver(syncPayeeFieldLockStyle);
+            payeeLockObserver.observe(transporterSelectForLock, {
+                attributes: true,
+                attributeFilter: ['disabled'],
+            });
+        }
+        if (window.jQuery) {
+            window.jQuery(document).on(
+                'select2:select.lrPayeeLock select2:clear.lrPayeeLock change.lrPayeeLock',
+                '#transporter_id',
+                function () {
+                    setTimeout(syncPayeeFieldLockStyle, 0);
+                }
+            );
+        }
+
+        readTruckMetaFromSelection();
+        syncTruckSummaryTds();
+        syncPayeeVisibility();
+        syncPayeeFieldLockStyle();
+    }
+
+    function parseTruckOptionDisplay(rawText, extra = {}) {
+        const text = String(rawText || '').replace(/\s+/g, ' ').trim();
+        let truckNumber = String(extra.truckNumber || '').trim();
+        let driverName = String(extra.driverName || '').trim();
+
+        if (text) {
+            const driverMatch = text.match(/\s*-\s*Driver:\s*(.+?)(?:\s*\(([^)]*)\)\s*)?$/i);
+            if (driverMatch) {
+                if (!driverName) {
+                    driverName = driverMatch[1].trim();
+                }
+                if (!truckNumber) {
+                    truckNumber = text.slice(0, driverMatch.index).trim();
+                }
+            } else if (!truckNumber) {
+                truckNumber = text.replace(/\s*\([^)]*\)\s*$/, '').trim();
+            }
+        }
+
+        return {
+            truckNumber,
+            driverName,
+        };
+    }
+
+    function getSharedTransportDisplay() {
+        const extra = {};
+        const select = document.getElementById('truck_id');
+        const option = select?.options[select.selectedIndex];
+
+        if (option && option.value) {
+            extra.truckNumber = option.getAttribute('data-truck-number') || '';
+            extra.driverName = option.getAttribute('data-driver-name') || '';
+        }
+
+        if (window.jQuery) {
+            const $truck = window.jQuery('#truck_id');
+            if ($truck.length && $truck.hasClass('select2-hidden-accessible')) {
+                const data = $truck.select2('data')?.[0];
+                if (data) {
+                    extra.driverName = extra.driverName || data.driver_name || '';
+                    extra.truckNumber = extra.truckNumber || data.truck_number || '';
+                    const parsed = parseTruckOptionDisplay(data.text, extra);
+                    extra.truckNumber = parsed.truckNumber;
+                    extra.driverName = parsed.driverName;
+                }
+            }
+        }
+
+        if ((!extra.truckNumber || !extra.driverName) && option && option.value) {
+            const parsed = parseTruckOptionDisplay(option.textContent, extra);
+            extra.truckNumber = extra.truckNumber || parsed.truckNumber;
+            extra.driverName = extra.driverName || parsed.driverName;
+        }
+
+        if (!extra.driverName) {
+            const summary = document.getElementById('lrTruckSummaryDriver')?.textContent?.trim();
+            if (summary && summary !== '—') {
+                extra.driverName = summary;
+            }
+        }
+
+        return {
+            truckNumber: extra.truckNumber || 'Not selected',
+            driverName: extra.driverName || '—',
+        };
+    }
+
     window.LinkedLrFormUI = {
         formatCurrency,
         updateRoutePreview,
@@ -154,10 +480,25 @@
         updateSummary,
         refreshIndices,
         bind,
+        initPayeeUi,
+        getSharedTransportDisplay,
         init() {
             const container = document.getElementById('lr-items-container');
             bind(container);
             updateSummary();
+            const startPayeeUi = () => initPayeeUi();
+            if (window.jQuery) {
+                startPayeeUi();
+            } else {
+                const waitForJQuery = () => {
+                    if (window.jQuery) {
+                        startPayeeUi();
+                        return;
+                    }
+                    setTimeout(waitForJQuery, 50);
+                };
+                waitForJQuery();
+            }
         },
     };
 

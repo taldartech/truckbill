@@ -354,45 +354,30 @@ class FreightBookingController extends Controller
                     $name = $row->lr->customer?->name ?? '-';
                     $html = e($name);
                     if ($row->lr->memo_id) {
-                        $html .= ' <span class="badge text-bg-success border-secondary ms-1">['.e((string) $row->lr->memo_id).']</span>';
+                        $html .= '<br><span class="badge text-bg-success border-secondary ms-1">['.e((string) $row->lr->memo_id).']</span>';
                     }
 
                     return $html;
                 })
-                // ->addColumn('transporter', function (FreightBooking $row) {
-                //     $t = $this->freightBookingTransporterForDisplay($row);
-                //     $transporterName = $row->transporter_name ?? ($t?->name ?? '-');
-                //     if ($t && $t->is_owner) {
-                //         $badge = '<span class="badge text-bg-success border-secondary ms-1" title="Owner"><i class="bi bi-truck"></i></span>';
-                //     } else {
-                //         $badge = '<span class="badge bg-info ms-1" title="Agency"><i class="bi bi-building"></i></span>';
-                //     }
+                ->addColumn('transporter', function (FreightBooking $row) {
+                    $t = $this->freightBookingTransporterForDisplay($row);
 
-                //     return e($transporterName).' '.$badge;
-                // })
+                    $transporterName = $row->transporter_name ?? ($t?->name ?? '-');
+                    $shortName = $t?->short_name ?? $t?->beneficiary_id ?? '';
 
+                    if ($t && $t->is_owner) {
+                        $badge = '<span class="badge text-bg-success border-secondary ms-1" title="Owner"><i class="bi bi-truck"></i></span>';
+                    } else {
+                        $badge = '<span class="badge bg-info ms-1" title="Agency"><i class="bi bi-building"></i></span>';
+                    }
 
-      ->addColumn('transporter', function (FreightBooking $row) {
-    $t = $this->freightBookingTransporterForDisplay($row);
-
-    $transporterName = $row->transporter_name ?? ($t?->name ?? '-');
-    $shortName = $t?->short_name ?? '-';
-    $beneficiaryId = $t?->beneficiary_id ?? 'Not Set';
-
-    if ($t && $t->is_owner) {
-        $badge = '<span class="badge text-bg-success border-secondary ms-1" title="Owner"><i class="bi bi-truck"></i></span>';
-    } else {
-        $badge = '<span class="badge bg-info ms-1" title="Agency"><i class="bi bi-building"></i></span>';
-    }
-
-    return '
-        <div>
-            <div>'.e($transporterName).' '.$badge.'</div>
-            <small class="text-muted">'.e($shortName).'</small><br>
-            <span class="badge bg-success">'.e($beneficiaryId).'</span>
-        </div>
-    ';
-})
+                    return '
+                        <div>
+                            <div>'.$badge.' '.e($transporterName).'</div>
+                            '.($shortName ? '<div class="text-center"><span class="badge text-bg-secondary">'.e($shortName).'</span></div>' : '').'
+                        </div>
+                    ';
+                })
                 ->addColumn('truck_number', function (FreightBooking $row) {
                     if (! $row->lr || ! $row->lr->truck) {
                         return '-';
@@ -1755,5 +1740,4 @@ class FreightBookingController extends Controller
                 ->withErrors(['general' => 'An error occurred while assigning memo ID: '.$e->getMessage()]);
         }
     }
-
 }

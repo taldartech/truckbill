@@ -320,13 +320,14 @@ class Select2SearchController extends Controller
             $page = max(1, (int) $request->query('page', 1));
             $limit = $this->normalizeLimit($request);
 
-            $query = Consignee::query();
+            $query = Consignee::query()
+                ->select(['consignees.id', 'consignees.name'])
+                ->leftJoin('cities', 'consignees.city_id', '=', 'cities.id')
+                ->addSelect('cities.name as city_name')
+                ->where('consignees.company_id', $companyId);
 
             if ($q !== '') {
                 $query
-                    ->select(['consignees.id', 'consignees.name'])
-                    ->where('consignees.company_id', $companyId)
-                    ->leftJoin('cities', 'consignees.city_id', '=', 'cities.id')
                     ->leftJoin('states', 'consignees.state_id', '=', 'states.id')
                     ->leftJoin('countries', 'consignees.country_id', '=', 'countries.id')
                     ->where(function ($builder) use ($q) {
@@ -339,22 +340,17 @@ class Select2SearchController extends Controller
                             ->orWhere('states.name', 'like', "%{$q}%")
                             ->orWhere('countries.name', 'like', "%{$q}%");
                     });
-            } else {
-                $query
-                    ->select(['id', 'name'])
-                    ->where('company_id', $companyId);
             }
 
             $offset = ($page - 1) * $limit;
-            $orderColumn = $q !== '' ? 'consignees.name' : 'name';
-            $items = $query->orderBy($orderColumn, 'asc')->offset($offset)->limit($limit + 1)->get();
+            $items = $query->orderBy('consignees.name', 'asc')->offset($offset)->limit($limit + 1)->get();
             $more = $items->count() > $limit;
             $items = $items->take($limit);
 
             $results = $items->map(function (Consignee $consignee) {
                 return [
                     'id' => $consignee->id,
-                    'text' => $consignee->name ?: 'Not Set',
+                    'text' => $consignee->displayNameWithCity(),
                 ];
             })->values();
 

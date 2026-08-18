@@ -23,7 +23,7 @@
 
         .table td, .table th {
             padding: 4px 8px !important;
-            font-size: 11.5px !important;
+            font-size: 12px !important;
             vertical-align: middle;
             border-color: rgba(0,0,0,0.05) !important;
         }
@@ -200,7 +200,6 @@
         <div class="card app-index-list-card mb-4">
             <div class="card-header">
                 <h3 class="card-title mb-0">Good Hires (Lorry Hire)</h3>
-               
             </div>
 
             <div class="app-index-dt-toolbar">
@@ -253,7 +252,7 @@
                             </div>
                         </div>
 
-                        
+
                         <div class="col-12 col-sm-6 col-md-2 d-flex align-items-end">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" name="pending_memo" value="1"
@@ -1683,7 +1682,7 @@
 
     <style>
         .badge {
-            font-size: 0.65em;
+            font-size: 0.75em;
         }
 
         .clickable {
@@ -2388,7 +2387,7 @@
                             <div class="col-md-6">
                                 <label for="individualTotalAmountInput" class="form-label">Payment Amount *</label>
                                 <div class="input-group">
-                                    <span class="input-group-text"></span>
+                                    <span class="input-group-text">₹</span>
                                     <input type="number" step="0.01" class="form-control" name="total_amount" id="individualTotalAmountInput" min="0.01" max="${balance}" required
                                         oninput="updatePaymentTypeFromAmounts({ selectId: 'individual_payment_type', amountInputId: 'individualTotalAmountInput' })"
                                         onchange="updatePaymentTypeFromAmounts({ selectId: 'individual_payment_type', amountInputId: 'individualTotalAmountInput' })">
