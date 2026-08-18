@@ -160,7 +160,7 @@
                     </div>
                 @endif
             </div>
-            <div class="card-body" style="overflow-x: auto;">
+            <div class="card-body p-2 table-responsive">
                 <table class="table table-bordered app-index-table" id="paymentsTable">
                     <thead>
                         <tr>
@@ -174,7 +174,6 @@
 
                             <th>LR No</th>
                             <th>Transporter</th>
-                            <th>Truck No</th>
                             <th>Source</th>
                             <th>Destination</th>
                             <th>Payment Type</th>
@@ -205,6 +204,13 @@
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
+                                    <br>
+                                    @if ($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->truck)
+                                        <span
+                                            class="badge bg-primary">{{ $payment->freight_booking->lr->truck->truck_number }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
                                 </td>
 
                                 <td>
@@ -217,14 +223,6 @@
                                         {{ $payment->freight_booking->transporter->name }} <br>
                                         <small
                                             class="text-muted">{{ $payment->freight_booking->transporter->beneficiary_id ?? '-' }}</small>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if ($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->truck)
-                                        <span
-                                            class="badge bg-primary">{{ $payment->freight_booking->lr->truck->truck_number }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
@@ -301,7 +299,9 @@
                                     <small>{{ $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y h:i A') }}</small>
                                 </td>
                                 <td>
-                                    @if ($payment->created_by && $payment->creator->branch)
+                                    @if ($payment->created_by && $payment->creator->userRole?->name == 'super_admin')
+                                        Super Admin
+                                    @elseif ($payment->created_by && $payment->creator->branch)
                                         {{ $payment->creator->branch->branch_name }}
                                     @else
                                         <span class="text-muted">-</span>
@@ -334,6 +334,12 @@
                                     @empty
                                         <div class="text-muted">-</div>
                                     @endforelse
+                                    @if ($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->truck)
+                                        <span
+                                            class="badge bg-primary">{{ $payment->freight_booking->lr->truck->truck_number }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
                                 </td>
 
                                 <td>
@@ -347,14 +353,6 @@
                                         <br>
                                         <small
                                             class="text-muted">{{ $payment->freight_booking->transporter->beneficiary_id ?? '-' }}</small>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if ($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->truck)
-                                        <span
-                                            class="badge bg-primary">{{ $payment->freight_booking->lr->truck->truck_number }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
