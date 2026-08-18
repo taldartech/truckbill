@@ -174,24 +174,9 @@ class InvoiceController extends Controller
         $actions .= '<a href="'.route('reports.party-bill-export', ['invoice_number' => $invoice->id, 'type' => 'pdf']).'" class="btn btn-sm btn-icon btn-action-download" title="View PDF" data-bs-toggle="tooltip" target="_blank">';
         $actions .= '<i class="bi bi-file-earmark-text"></i></a>';
 
-        if (Auth::user()->canActAsAdmin() && $invoice->payment_status === 'pending') {
-            $actions .= '<a href="'.route('invoices.edit', $invoice->id).'" class="btn btn-sm btn-icon btn-action-edit" title="Edit Invoice" data-bs-toggle="tooltip">';
-            $actions .= '<i class="bi bi-pencil"></i></a>';
-        }
-
-        if ($invoice->payment_status === 'pending' && $this->invoiceRowIsLatestForCompany($invoice)) {
-            $actions .= '<form method="POST" action="'.route('invoices.destroy', $invoice->id).'">';
-            $actions .= csrf_field();
-            $actions .= method_field('DELETE');
-            $actions .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete" data-bs-toggle="tooltip" onclick="return confirm(\'Are you sure you want to delete this invoice?\')">';
-            $actions .= '<i class="bi bi-trash"></i>';
-            $actions .= '</button>';
-            $actions .= '</form>';
-        }
-
         $paidAmountForRow = isset($invoice->paid_amount_sum)
-            ? (float) $invoice->paid_amount_sum
-            : (float) $invoice->paid_amount;
+        ? (float) $invoice->paid_amount_sum
+        : (float) $invoice->paid_amount;
         $remainingAmountForRow = isset($invoice->remaining_amount_value)
             ? (float) $invoice->remaining_amount_value
             : (float) $invoice->remaining_amount;
@@ -208,6 +193,21 @@ class InvoiceController extends Controller
             $actions .= ' data-paid-amount="'.$paidAmountForRow.'"';
             $actions .= ' data-remaining-amount="'.$remainingAmountForRow.'">';
             $actions .= '<i class="bi bi-currency-rupee"></i></button>';
+        }
+
+        if (Auth::user()->canActAsAdmin() && $invoice->payment_status === 'pending') {
+            $actions .= '<a href="'.route('invoices.edit', $invoice->id).'" class="btn btn-sm btn-icon btn-action-edit" title="Edit Invoice" data-bs-toggle="tooltip">';
+            $actions .= '<i class="bi bi-pencil"></i></a>';
+        }
+
+        if ($invoice->payment_status === 'pending' && $this->invoiceRowIsLatestForCompany($invoice)) {
+            $actions .= '<form method="POST" action="'.route('invoices.destroy', $invoice->id).'">';
+            $actions .= csrf_field();
+            $actions .= method_field('DELETE');
+            $actions .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete" data-bs-toggle="tooltip" onclick="return confirm(\'Are you sure you want to delete this invoice?\')">';
+            $actions .= '<i class="bi bi-trash"></i>';
+            $actions .= '</button>';
+            $actions .= '</form>';
         }
 
         $actions .= '</div>';
@@ -762,7 +762,7 @@ class InvoiceController extends Controller
             ]);
         }
 
-        $query = \App\Models\Invoice::where('manual_invoice_number', $manualNumber)
+        $query = Invoice::where('manual_invoice_number', $manualNumber)
             ->where('company_id', $companyId);
 
         // Ignore current invoice if editing
