@@ -21,16 +21,16 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.cash') }}" id="searchForm" onsubmit="validateForm(event)">
-                <div class="row mb-2">
-                    <div class="col-md-3">
+                 <div class="row mb-2" style="align-items: end;">
+                    <div class="col-md-2">
                         <label class="form-label">Start Date <span class="text-danger">*</span></label>
                         <input type="date" name="start_date" class="form-control" value="{{ $startDate }}" required>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">End Date <span class="text-danger">*</span></label>
                         <input type="date" name="end_date" class="form-control" value="{{ $endDate }}" required>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">Payment Status</label>
                         <select name="payment_status" class="form-select">
                             <option value="">All Statuses</option>
@@ -39,7 +39,7 @@
                             <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">Branch</label>
                         <select name="branch" class="form-select">
                             <option value="">All Branches</option>
@@ -51,10 +51,9 @@
                             @endforeach
                         </select>
                     </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-12 text-end">
+               
+                
+                  <div class="col-md-3 d-flex align-items-end justify-content-end gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search"></i> Search
                         </button>
@@ -62,7 +61,8 @@
                             <i class="bi bi-arrow-clockwise"></i> Reset
                         </a>
                     </div>
-                </div>
+                  </div>
+                 
             </form>
         </div>
     </div>

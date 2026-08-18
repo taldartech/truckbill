@@ -20,15 +20,15 @@
             <form method="GET" action="{{ route('reports.consignor-consignee') }}" id="searchForm"
                 class="cc-report-search-form tb-report-customer-select2-form" onsubmit="validateForm(event)">
                 <div class="row mb-2 g-2 align-items-end">
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">Start Date <span class="text-danger">*</span></label>
                         <input type="date" name="start_date" class="form-control" value="{{ $startDate }}" required>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">End Date <span class="text-danger">*</span></label>
                         <input type="date" name="end_date" class="form-control" value="{{ $endDate }}" required>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">Consignor</label>
                         <select name="consignor_id" id="report_consignor_id" class="form-select js-report-consignor-select2">
                             <option value=""></option>
@@ -37,7 +37,7 @@
                             @endif
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">Consignee</label>
                         <select name="consignee_id" id="report_consignee_id" class="form-select js-report-consignee-select2">
                             <option value=""></option>
@@ -47,18 +47,18 @@
                         </select>
 
                     </div>
-                </div>
+               
 
-                <div class="row mt-2">
-                    <div class="col-12 text-end">
+                <div class="col-md-4 d-flex align-items-end justify-content-end gap-2">
                         <button type="submit" class="btn btn-brand-primary">
                             <i class="bi bi-search"></i> Search
                         </button>
                         <a href="{{ route('reports.consignor-consignee') }}" class="btn btn-secondary">
                             <i class="bi bi-arrow-clockwise"></i> Reset
                         </a>
-                    </div>
+                    
                 </div>
+                 </div>
             </form>
         </div>
     </div>

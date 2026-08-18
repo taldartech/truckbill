@@ -18,7 +18,7 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.lr-copy') }}" id="searchForm" class="tb-report-customer-select2-form">
-                <div class="row mb-2">
+                <div class="row mb-2" style="align-items: end;">
                     <div class="col-md-3">
                         <label class="form-label">Customer <span class="text-danger">*</span></label>
                         <select name="customer_id" id="lr-copy-customer-select" class="form-select" required>
@@ -28,13 +28,13 @@
                             @endif
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">LR Number <span class="text-danger">*</span></label>
                         <select name="lr_id" id="lr-copy-lr-select" class="form-select select2" required>
                             <option value="">Select LR Number</option>
                         </select>
                     </div>
-                    <div class="col-md-3 align-self-end p-2">
+                    <div class="col-md-2 align-self-end p-2">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="show_freight" id="show_freight"
                                 value="1" @if (request()->has('show_freight')) checked @endif>
@@ -43,14 +43,7 @@
                             </label>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Format</label>
-                        <select name="template" class="form-select">
-                            <option value="classic" @selected($template === 'classic')>A — default table</option>
-                            <option value="modern" @selected($template === 'modern')>B — green Form A</option>
-                            <option value="compact" @selected($template === 'compact')>C — compact amber</option>
-                        </select>
-                    </div>
+                   
                     <div class="col-md-3 text-end d-flex align-items-end justify-content-end gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search"></i> Search

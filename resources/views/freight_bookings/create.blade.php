@@ -293,10 +293,11 @@
             </div>
 
             {{-- Section 2 — Optional Details --}}
-            <div class="lrf-section lrf-section--collapsible{{ $fbOptionalOpen ? ' lrf-section--open' : '' }}" id="fbOptionalSection">
-                <button type="button" class="lrf-section__head lrf-section__head--plain lrf-section__head--toggle"
-                    id="fbOptionalToggle" aria-expanded="{{ $fbOptionalOpen ? 'true' : 'false' }}"
-                    aria-controls="fbOptionalBody">
+           
+                <div class="lrf-section" id="fbOptionalSection">
+               
+                   
+                    <div class="lrf-section__head lrf-section__head--plain">
                     <div class="lrf-section__head-left">
                         <div class="lrf-step-num lrf-step-num--gray">2</div>
                         <div>
@@ -304,9 +305,10 @@
                             <p class="lrf-section__desc">E-way bill, PAN status and remarks</p>
                         </div>
                     </div>
-                    <i class="bi bi-chevron-down lrf-collapse-arrow{{ $fbOptionalOpen ? ' lrf-collapse-arrow--open' : '' }}"></i>
-                </button>
-                <div class="lrf-section__body" id="fbOptionalBody" @if (! $fbOptionalOpen) style="display: none;" @endif>
+                 
+                   </div>
+              
+                    <div class="lrf-section__body" id="fbOptionalBody">
                     <div class="lrf-grid lrf-grid--4">
                         <div class="lrf-pf">
                             <label for="eway_bill_number" class="lrf-pf__lbl">E-Way Bill Number</label>
@@ -510,20 +512,7 @@
                 });
             }
 
-            const fbOptionalToggle = document.getElementById('fbOptionalToggle');
-            const fbOptionalBody = document.getElementById('fbOptionalBody');
-            const fbOptionalSection = document.getElementById('fbOptionalSection');
-            if (fbOptionalToggle && fbOptionalBody && fbOptionalSection) {
-                fbOptionalToggle.addEventListener('click', function() {
-                    const isOpen = fbOptionalSection.classList.toggle('lrf-section--open');
-                    fbOptionalBody.style.display = isOpen ? '' : 'none';
-                    fbOptionalToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-                    const arrow = fbOptionalToggle.querySelector('.lrf-collapse-arrow');
-                    if (arrow) {
-                        arrow.classList.toggle('lrf-collapse-arrow--open', isOpen);
-                    }
-                });
-            }
+          
 
             const fbClearFormBtn = document.getElementById('fbClearFormBtn');
             if (fbClearFormBtn) {

@@ -422,9 +422,7 @@
     </div>
 
 
-
-
-                <div class="lrf-section__body" id="fbOptionalBody" @if (! $fbOptionalOpen) style="display: none;" @endif>
+                    <div class="lrf-section__body" id="fbOptionalBody">
                     
                     <div class="lrf-grid lrf-grid--4">
                         <div class="lrf-pf">

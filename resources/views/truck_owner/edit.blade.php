@@ -245,7 +245,7 @@
                             <td>{{ $truck->driver->mobile ?? '-' }}</td>
                             <td>{{ formatDate(optional($truck)->registration_date) }}</td>
                             <td>
-                                <div class="btn-group" role="group">
+                                <div class="d-flex gap-1" role="group">
                                     <button type="button" class="btn btn-sm btn-primary edit-truck-btn"
                                             title="Edit Truck"
                                             data-truck-id="{{ $truck->id }}"

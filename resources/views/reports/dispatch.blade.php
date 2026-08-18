@@ -11,7 +11,7 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.dispatch') }}" id="searchForm" onsubmit="validateForm(event)">
-                <div class="row mb-2">
+                <div class="row mb-2" style="align-items: end;">
                     <div class="col-md-3">
                         <label class="form-label">Start Date <span class="text-danger">*</span></label>
                         <input type="date" name="start_date" class="form-control" value="{{ $startDate }}" required>
@@ -30,20 +30,20 @@
         name="balance_as_on_date"
         class="form-control"
         value="{{ $balanceAsOnDate ?? '' }}">
-</div>
+    </div>
 
-                <div class="row">
-                    <div class="col-12 text-end">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-search"></i> Search
-                        </button>
-                        <a href="{{ route('reports.dispatch') }}?date={{ date('Y-m-d') }}"
-                            class="btn btn-secondary">
-                            <i class="bi bi-arrow-clockwise"></i> Reset
-                        </a>
-                    </div>
+                <div class="col-md-3 d-flex align-items-end justify-content-end gap-2">
+              <button type="submit" class="btn btn-primary">
+                 <i class="bi bi-search"></i> Search
+              </button>
+
+             <a href="{{ route('reports.dispatch') }}?date={{ date('Y-m-d') }}"
+               class="btn btn-secondary">
+              <i class="bi bi-arrow-clockwise"></i> Reset
+             </a>
+             </div>
                 </div>
-            </form>
+              </form>
         </div>
     </div>
 
