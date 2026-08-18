@@ -540,7 +540,7 @@
                             @error('goods_value')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                            <div class="lrf-pf__hint">Value of goods</div>
+                           
                         </div>
                         <div class="lrf-pf">
                             <label for="reference_by" class="lrf-pf__lbl">Reference By</label>
