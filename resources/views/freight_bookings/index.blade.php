@@ -240,8 +240,8 @@
                             <input type="text" class="form-control form-control-sm" name="search"
                                 value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'search', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" placeholder="LR, Customer, Truck, City...">
                         </div>
-                        <div class="col-12 col-md-3">
-                            <div class="d-flex flex-wrap gap-2">
+                        <div class="col-12 col-md-4">
+                            <div class="d-flex  gap-2">
                                 <div class="input-group-custom flex-grow-1">
                                     <span>From</span>
                                     <input type="date" name="start_date" value="{{ $startDate }}">
@@ -252,6 +252,8 @@
                                 </div>
                             </div>
                         </div>
+
+                        
                         <div class="col-12 col-sm-6 col-md-2 d-flex align-items-end">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" name="pending_memo" value="1"
