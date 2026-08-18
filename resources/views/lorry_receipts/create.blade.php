@@ -520,7 +520,7 @@
                             @error('gr_number')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                            <div class="invalid-feedback">Please enter a valid GR number.</div>
+                           
                             <div id="gr-number-feedback" class="mt-1"></div>
                         </div>
                         <div class="lrf-pf">
