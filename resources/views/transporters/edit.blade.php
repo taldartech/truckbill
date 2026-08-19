@@ -1295,7 +1295,7 @@ if (countrySelect && stateSelect && citySelect) {
 
 </script>
 
-<script src="/js/dynamic-dropdowns.js"></script>
+<script src="/js/dynamic-dropdowns.js?v={{ config('app.ASSET_VERSION') }}"></script>
 
 @endsection
 

@@ -297,7 +297,7 @@
 @endsection
 
 @section('scripts')
-<script src="/js/dynamic-dropdowns.js"></script>
+<script src="/js/dynamic-dropdowns.js?v={{ config('app.ASSET_VERSION') }}"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
       const modalCountry = document.querySelector('#addCityModal #modal_city_country_id');

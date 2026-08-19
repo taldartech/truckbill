@@ -1581,7 +1581,7 @@
     }
 </script>
 
-<script src="/js/dynamic-dropdowns.js"></script>
+<script src="/js/dynamic-dropdowns.js?v={{ config('app.ASSET_VERSION') }}"></script>
 
 @push('scripts')
 <script>

@@ -618,7 +618,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Common LR entity confirmation helpers -->
-    <script src="/js/lr-entity.js"></script>
+    <script src="/js/lr-entity.js?v={{ config('app.ASSET_VERSION') }}"></script>
 
     <script>
         // Wait for DOM and jQuery to be ready
