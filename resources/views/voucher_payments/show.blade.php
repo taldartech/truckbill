@@ -17,7 +17,7 @@
         $canManage = auth()->check() && auth()->user()->canActAsAdmin();
     @endphp
 
-    <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
 
     @if (session('success'))
         <div class="alert alert-success mt-2" style="max-width: 1200px; margin-left: auto; margin-right: auto;">

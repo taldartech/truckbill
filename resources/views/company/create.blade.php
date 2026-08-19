@@ -360,5 +360,5 @@
             .catch(error => console.error('Error fetching cities:', error));
     }
 </script>
-<script src="{{ asset('js/company-form.js') }}"></script>
+<script src="{{ asset('js/company-form.js') }}?v={{ config('app.ASSET_VERSION') }}"></script>
 @endpush

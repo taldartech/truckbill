@@ -47,7 +47,7 @@
             background-color: #fff3cd !important;
         }
     </style>
-    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
     <div class="lrf-page app-index-page">
         <div class="lrf-page__toolbar">
             <div>

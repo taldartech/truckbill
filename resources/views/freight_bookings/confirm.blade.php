@@ -11,7 +11,7 @@
         $isFixed = ! empty($formData['is_fixed_amount']);
     @endphp
 
-    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
 
     <div class="lrf-page lrf-page--confirm app-index-page">
         <div class="lrf-page__toolbar">

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @push('styles')
-<link rel="stylesheet" href="{{ asset('css/company-settings.css') }}">
+<link rel="stylesheet" href="{{ asset('css/company-settings.css') }}?v={{ config('app.ASSET_VERSION') }}">
 @endpush
 
 @section('content')
@@ -95,5 +95,5 @@
         });
     })();
 </script>
-<script src="{{ asset('js/company-settings-form.js') }}"></script>
+<script src="{{ asset('js/company-settings-form.js') }}?v={{ config('app.ASSET_VERSION') }}"></script>
 @endpush

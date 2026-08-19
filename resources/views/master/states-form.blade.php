@@ -99,5 +99,5 @@
         });
     })();
 </script>
-<script src="{{ asset('js/state-form.js') }}"></script>
+<script src="{{ asset('js/state-form.js') }}?v={{ config('app.ASSET_VERSION') }}"></script>
 @endpush

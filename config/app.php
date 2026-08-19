@@ -55,6 +55,8 @@ return [
   'url' => env('APP_URL', 'http://localhost'),
   'website_url' => env('WEBSITE_URL', 'https://www.truckbill.in'),
   'block_search_indexing' => (bool) env('BLOCK_SEARCH_INDEXING', false),
+  // Cache-busting value for externally included CSS/JS (see Blade includes).
+  'ASSET_VERSION' => env('ASSET_VERSION', date('Ymd')),
 
   /*
     |--------------------------------------------------------------------------

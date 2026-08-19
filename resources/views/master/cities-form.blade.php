@@ -102,5 +102,5 @@
         });
     })();
 </script>
-<script src="{{ asset('js/city-form.js') }}"></script>
+<script src="{{ asset('js/city-form.js') }}?v={{ config('app.ASSET_VERSION') }}"></script>
 @endpush
