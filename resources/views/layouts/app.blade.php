@@ -991,6 +991,15 @@
                                             <p>Transporter Report</p>
                                         </a>
                                     </li>
+
+                                 <li class="nav-item">
+                                        <a href="{{ route('reports.profitability') }}"
+                                        class="nav-link{{ Request::is('reports/profitability') ? ' active' : '' }}">
+                                        <i class="nav-icon fas fa-chart-line"></i>
+                                         <p>Profitability Report</p>
+                                             </a>
+                                         </li>
+
                                     <li class="nav-item">
                                         <a href="{{ route('reports.tds') }}"
                                             class="nav-link{{ Request::is('reports/tds') ? ' active' : '' }}">
