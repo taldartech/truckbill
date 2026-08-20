@@ -233,8 +233,84 @@
                             },
                         },
                     });
+
+                }
+                                const profitabilityCanvas = document.getElementById('dashProfitabilityTrendChart');
+
+                if (profitabilityCanvas) {
+                    const profitability = payload.profitabilityTrend || {};
+
+                    new Chart(profitabilityCanvas, {
+                        type: 'line',
+                        data: {
+                            labels: profitability.labels || [],
+                            datasets: [
+                                {
+                                    label: 'Revenue',
+                                    data: profitability.revenue || [],
+                                    borderColor: brand.greenDark,
+                                    backgroundColor: 'rgba(47, 179, 111, 0.08)',
+                                    fill: false,
+                                    tension: 0.35,
+                                    pointRadius: 2,
+                                },
+                                {
+                                    label: 'Cost',
+                                    data: profitability.cost || [],
+                                    borderColor: brand.orange,
+                                    backgroundColor: 'transparent',
+                                    fill: false,
+                                    tension: 0.35,
+                                    pointRadius: 2,
+                                },
+                                {
+                                    label: 'Profit',
+                                    data: profitability.profit || [],
+                                    borderColor: brand.blue,
+                                    backgroundColor: 'transparent',
+                                    fill: false,
+                                    tension: 0.35,
+                                    pointRadius: 2,
+                                },
+                            ],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top',
+                                },
+                            },
+                            scales: {
+                                x: {
+                                    grid: { display: false },
+                                    ticks: {
+                                        font: { size: 10, weight: '600' },
+                                    },
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: brand.grid },
+                                    ticks: {
+                                        callback: (v) =>
+                                            '₹' + Number(v).toLocaleString('en-IN', {
+                                                notation: 'compact',
+                                            }),
+                                    },
+                                },
+                            },
+                        },
+                    });
                 }
             }
+
+
+
+
+ 
+  
 
             document.addEventListener('DOMContentLoaded', function () {
                 animateCountUps();

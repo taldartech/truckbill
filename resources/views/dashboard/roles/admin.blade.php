@@ -204,6 +204,14 @@
                 </div>
 
                 <div class="dashboard-analytics-card">
+             <h3 class="dashboard-analytics-card__title">Profitability Trend</h3>
+            <p class="dashboard-analytics-card__hint">{{ $periodLabel }}</p>
+         <div class="dashboard-analytics-card__chart">
+         <canvas id="dashProfitabilityTrendChart" aria-label="Profitability trend chart"></canvas>
+          </div>
+        </div>
+
+                <div class="dashboard-analytics-card">
                     <h3 class="dashboard-analytics-card__title">Period Snapshot</h3>
                     <p class="dashboard-analytics-card__hint">{{ $periodLabel }}</p>
                     <div class="trip-status-grid">

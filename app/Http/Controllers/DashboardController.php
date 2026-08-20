@@ -313,6 +313,52 @@ class DashboardController extends Controller
             'outstanding_amount' => $outstandingAmount,
             'period_revenue' => $this->sumInvoiceTotalRevenue([$companyId], $rangeStart, $rangeEnd),
         ];
+                $profitabilityLrs = LorryReceipt::query()
+    ->with('freightBookings')
+    ->where('company_id', $companyId)
+    ->whereDate('gr_date', '>=', $rangeStart->toDateString())
+    ->whereDate('gr_date', '<=', $rangeEnd->toDateString())
+    ->whereHas('freightBookings')
+    ->get();
+
+$profitabilityByDate = $profitabilityLrs->groupBy(function ($lr) {
+    return Carbon::parse($lr->gr_date)->format('Y-m-d');
+});
+
+$profitabilityTrendLabels = [];
+$profitabilityTrendRevenue = [];
+$profitabilityTrendCost = [];
+$profitabilityTrendProfit = [];
+
+for ($date = $rangeStart->copy()->startOfDay(); $date->lte($rangeEnd); $date->addDay()) {
+    $dateKey = $date->format('Y-m-d');
+    $rows = $profitabilityByDate->get($dateKey, collect());
+
+    $revenue = 0;
+    $cost = 0;
+
+    foreach ($rows as $lr) {
+        $freightBooking = $lr->freightBookings->first();
+
+        $lrRevenue = (float) (
+            $lr->actual_amount
+            ?? $lr->amount
+            ?? 0
+        );
+
+        $lrCost = $freightBooking
+            ? (float) $freightBooking->effectivePayableAmount()
+            : 0;
+
+        $revenue += $lrRevenue;
+        $cost += $lrCost;
+    }
+
+    $profitabilityTrendLabels[] = $date->format('d M');
+    $profitabilityTrendRevenue[] = round($revenue, 2);
+    $profitabilityTrendCost[] = round($cost, 2);
+    $profitabilityTrendProfit[] = round($revenue - $cost, 2);
+}
 
         $bookingStatuses = [
             'in_progress' => Booking::where('is_delivered', false)
@@ -362,6 +408,12 @@ class DashboardController extends Controller
                 'bookings' => $monthlyTrendBookings,
                 'revenue' => $monthlyTrendRevenue,
             ],
+            'profitabilityTrend' => [
+           'labels' => $profitabilityTrendLabels,
+           'revenue' => $profitabilityTrendRevenue,
+           'cost' => $profitabilityTrendCost,
+           'profit' => $profitabilityTrendProfit,
+         ],
         ];
 
         $expiredEwayBills = FreightBooking::with('lr.truck.driver')
