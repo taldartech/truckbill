@@ -312,7 +312,7 @@
                             <tr>
                                 <th style="width: 10px">ID</th>
                                 <th>Invoice #</th>
-                                <th>Memo No.</th>
+                                <th>Memo / POD No.</th>
                                 <th>Generated Date</th>
                                 <th>Customer</th>
                                 <th>Total Amount</th>

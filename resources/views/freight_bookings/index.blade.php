@@ -223,7 +223,7 @@
                     </div>
                     <div class="d-flex flex-wrap gap-2">
                         <button id="bulk-memo-id-btn" class="header-pill-btn btn btn-primary border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;" data-bs-toggle="modal" data-bs-target="#bulkMemoIdModal">
-                            <i class="bi bi-clipboard-check"></i> Bulk Memo
+                            <i class="bi bi-clipboard-check"></i> Bulk Memo / POD
                         </button>
                         <button id="voucher-payment-btn" class="header-pill-btn btn btn-brand-primary border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;">
                             <i class="bi bi-receipt"></i> Voucher
@@ -258,7 +258,7 @@
                                 <input class="form-check-input" type="checkbox" name="pending_memo" value="1"
                                     id="pendingMemoFilter" {{ request('pending_memo') ? 'checked' : '' }}>
                                 <label class="form-check-label" for="pendingMemoFilter">
-                                    Pending Memo
+                                    Pending Memo / POD
                                 </label>
                             </div>
                         </div>
@@ -402,7 +402,7 @@
         <div class="modal-dialog modal-dialog-scrollable modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-clipboard-check"></i> Bulk Memo ID Assignment</h5>
+                    <h5 class="modal-title"><i class="bi bi-clipboard-check"></i> Bulk Memo / POD ID Assignment</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="bulkMemoIdBody">
@@ -410,7 +410,7 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" form="bulkMemoIdForm" class="btn btn-primary">Assign Memo ID</button>
+                    <button type="submit" form="bulkMemoIdForm" class="btn btn-primary">Assign Memo / POD ID</button>
                 </div>
             </div>
         </div>
@@ -1197,9 +1197,9 @@
                         @csrf
                         <div class="row mb-3">
                             <div class="col-md-12">
-                                <label class="form-label">Memo ID *</label>
-                                <input type="text" name="memo_id" class="form-control" required placeholder="Enter Memo ID">
-                                <div class="form-text">This memo ID will be assigned to all selected good receipts (bilty)</div>
+                                <label class="form-label">Memo ID / POD *</label>
+                                <input type="text" name="memo_id" class="form-control" required placeholder="Enter Memo / POD ID">
+                                <div class="form-text">This memo / POD ID will be assigned to all selected good receipts (bilty)</div>
                             </div>
                         </div>
 
@@ -1229,7 +1229,7 @@
 
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i>
-                            <strong>Note:</strong> Assigning memo ID will:
+                            <strong>Note:</strong> Assigning memo / POD ID will:
                             <ul class="mb-0 mt-0">
                                 <li>Set good receipt (bilty) status to "Delivered"</li>
                                 <li>Mark associated good hires (lorry hire) as delivered</li>

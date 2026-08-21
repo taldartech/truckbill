@@ -169,12 +169,12 @@
                                 <p class="text-muted">No line items.</p>
                             @endforelse
                         @else
-                            <h4>Associated Memos</h4>
+                            <h4>Associated Memos / POD</h4>
                             <div class="table-responsive">
                                 <table class="table">
                                     <thead>
                                         <tr>
-                                            <th>Memo #</th>
+                                            <th>Memo / POD #</th>
                                             <th>LR #</th>
                                             <th>From</th>
                                             <th>To</th>

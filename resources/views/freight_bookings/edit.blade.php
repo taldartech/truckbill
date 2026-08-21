@@ -812,7 +812,7 @@
                             <form id="memoIdForm">
                                 <div class="fb-pay-fields" style="grid-template-columns: 1fr;">
                                     <div>
-                                        <label for="deliveryMemoId" class="form-label">Memo ID *</label>
+                                        <label for="deliveryMemoId" class="form-label">Memo ID / POD *</label>
                                         <input type="text" class="form-control" id="deliveryMemoId" name="memo_id"
                                             required placeholder="Enter memo ID" pattern="[A-Za-z0-9\-\/]+">
                                         <div class="lrf-pf__hint mt-1">Saved to the good receipt (bilty) record.</div>

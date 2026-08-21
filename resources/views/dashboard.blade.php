@@ -257,7 +257,7 @@
                                 {
                                     label: 'Cost',
                                     data: profitability.cost || [],
-                                    borderColor: brand.orange,
+                                    borderColor: brand.amber,
                                     backgroundColor: 'transparent',
                                     fill: false,
                                     tension: 0.35,

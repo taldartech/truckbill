@@ -1053,7 +1053,7 @@
                                         <a href="{{ route('reports.pending-memo') }}"
                                             class="nav-link{{ Request::is('reports/pending-memo') ? ' active' : '' }}">
                                             <i class="nav-icon fas fa-sticky-note"></i>
-                                            <p>Pending Memo</p>
+                                            <p>Pending Memo / POD</p>
                                         </a>
                                     </li>
                                     <li class="nav-item">
@@ -1074,7 +1074,7 @@
                                         <a href="{{ route('reports.memo-copy') }}"
                                             class="nav-link{{ Request::is('reports/memo-copy') ? ' active' : '' }}">
                                             <i class="nav-icon fas fa-clone"></i>
-                                            <p>Memo Copy</p>
+                                            <p>Memo / POD Copy</p>
                                         </a>
                                     </li>
                                     <li class="nav-item">
