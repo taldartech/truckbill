@@ -237,6 +237,10 @@ class FreightBooking extends Model implements Auditable
         return $this->hasMany(VoucherLinked::class, 'freight_booking_id');
     }
 
+    public function ewayBills(): HasMany
+  {
+    return $this->hasMany(EwayBill::class, 'freight_booking_id');
+   }
     protected static function booted(): void
     {
         static::deleting(function (FreightBooking $freightBooking): void {

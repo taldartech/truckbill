@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Yajra\DataTables\Facades\DataTables;
+use App\Models\EwayBill;
 
 class FreightBookingController extends Controller
 {
@@ -576,8 +577,9 @@ class FreightBookingController extends Controller
             'advance_amount' => 'nullable|numeric',
             'balance_amount' => 'required|numeric',
             'tds_amount' => 'nullable|numeric',
-            'eway_bill_number' => 'nullable|string',
-            'eway_bill_expiry' => 'nullable|date',
+            'eway_bills' => 'nullable|array',
+            'eway_bills.*.eway_bill_number' => 'nullable|string',
+             'eway_bills.*.eway_bill_expiry' => 'nullable|date',
             'good_type' => 'nullable|string',
             'pan_verified' => 'required|boolean',
             'remark' => 'nullable|string',
@@ -632,8 +634,9 @@ class FreightBookingController extends Controller
             'advance_amount' => 'nullable|numeric',
             'balance_amount' => 'required|numeric',
             'tds_amount' => 'nullable|numeric',
-            'eway_bill_number' => 'nullable|string',
-            'eway_bill_expiry' => 'nullable|date',
+            'eway_bills' => 'nullable|array',
+            'eway_bills.*.eway_bill_number' => 'nullable|string',
+            'eway_bills.*.eway_bill_expiry' => 'nullable|date',
             'good_type' => 'nullable|string',
 
             'pan_verified' => 'required|boolean',
@@ -701,6 +704,20 @@ class FreightBookingController extends Controller
                 'company_id' => $data['company_id'],
                 'linked_lr_id' => $linkedLrId,
             ], $transporterInfo));
+
+            foreach ($data['eway_bills'] ?? [] as $ewayBillData) {
+    if (
+        empty($ewayBillData['eway_bill_number'] ?? null) &&
+        empty($ewayBillData['eway_bill_expiry'] ?? null)
+    ) {
+        continue;
+    }
+
+    $freightBooking->ewayBills()->create([
+        'eway_bill_number' => $ewayBillData['eway_bill_number'] ?? null,
+        'eway_bill_expiry' => $ewayBillData['eway_bill_expiry'] ?? null,
+    ]);
+   }
 
             $oldDeliveryStatus = $lorryReceipt->delivery_status;
             $deliveryStatus = 'Pending';
@@ -1160,8 +1177,19 @@ class FreightBookingController extends Controller
             'is_delivered' => 'boolean',
             'is_cancelled' => 'boolean',
             'linked_freight_booking_id' => 'nullable|exists:freight_bookings,id',
-            'eway_bill_number' => 'nullable|string',
-            'eway_bill_expiry' => 'nullable|date',
+           'eway_bills' => 'nullable|array',
+          'eway_bills.*.id' => [
+         'nullable',
+        'integer',
+       Rule::exists('eway_bills', 'id')->where(
+        fn ($query) => $query->where(
+            'freight_booking_id',
+            $freightBooking->id
+        )
+    ),
+],
+          'eway_bills.*.eway_bill_number' => 'nullable|string',
+          'eway_bills.*.eway_bill_expiry' => 'nullable|date',
             'custom_amounts' => 'nullable|array',
             'custom_amounts.*.id' => [
                 'nullable',
@@ -1219,57 +1247,132 @@ class FreightBookingController extends Controller
 
             $wasFreightBookingCancelled = (bool) $freightBooking->is_cancelled;
 
-            // Update freight booking with lorry receipt's LR number
-            $freightBooking->update(array_merge($data, [
-                'lr_number' => $lorryReceipt->lr_number,
-                'linked_lr_id' => $linkedLrId,
-            ]));
+           // Update freight booking with lorry receipt's LR number
+$freightBooking->update(array_merge($data, [
+    'lr_number' => $lorryReceipt->lr_number,
+    'linked_lr_id' => $linkedLrId,
+]));
 
-            // Refresh freight booking to get updated values
-            $freightBooking->refresh();
+// Get submitted E-Way Bills
+$submittedEwayBills = $data['eway_bills'] ?? [];
 
-            $justCancelledFreightBooking = ! $wasFreightBookingCancelled && (bool) $freightBooking->is_cancelled;
+// Get existing E-Way Bill IDs
+$existingEwayBillIds = $freightBooking->ewayBills()
+    ->pluck('id')
+    ->toArray();
 
-            $lorryReceiptUpdate = null;
+// Get submitted existing E-Way Bill IDs
+$submittedEwayBillIds = collect($submittedEwayBills)
+    ->pluck('id')
+    ->filter()
+    ->map(fn ($id) => (int) $id)
+    ->toArray();
 
-            // Update lorry receipt status
-            if ($lorryReceipt) {
-                $lorryReceiptUpdate = $this->freightBookingCalculationService->updateLorryReceiptForFreightBookingUpdate(
-                    $lorryReceipt,
-                    $data,
-                    $newDamageAmount,
-                    $newShortageAmount,
-                );
+// Delete E-Way Bills removed from the form
+$freightBooking->ewayBills()
+    ->whereIn(
+        'id',
+        array_diff($existingEwayBillIds, $submittedEwayBillIds)
+    )
+    ->delete();
 
-                if ($lorryReceiptUpdate['delivery_status'] !== $lorryReceiptUpdate['old_delivery_status']) {
-                    $lorryReceipt->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
-                    $this->lrNotificationService->notifyStatusChange($lorryReceipt, $lorryReceiptUpdate['delivery_status'], auth()->user());
-                }
-            }
+// Update existing E-Way Bills / Create new E-Way Bills
+foreach ($submittedEwayBills as $ewayBill) {
 
-            if ($justCancelledFreightBooking) {
-                $freightBooking->loadMissing(['company', 'lr.truck', 'transporter.transporterMaster']);
-                $this->frNotificationService->notifyCancelled($freightBooking, auth()->user());
-            }
+    if (!empty($ewayBill['id'])) {
 
-            $freightBooking->refresh();
-            $this->freightBookingCalculationService->applyNegativeAdjustment(
-                $freightBooking,
-                $lorryReceipt?->lr_number
-            );
-
-            DB::commit();
-
-            return $this->redirectToFreightBookingsIndex($request, 'success', 'Good Hire (Lorry Hire) updated successfully.');
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            \Log::error('Freight booking update failed', [
-                'freight_booking_id' => $freightBooking->id ?? null,
-                'error' => $e->getMessage(),
+        $freightBooking->ewayBills()
+            ->where('id', $ewayBill['id'])
+            ->update([
+                'eway_bill_number' => $ewayBill['eway_bill_number'] ?? null,
+                'eway_bill_expiry' => $ewayBill['eway_bill_expiry'] ?? null,
             ]);
 
-            return redirect()->back()->withErrors(['general' => 'Unable to update freight booking. Please try again.'])->withInput();
-        }
+    } elseif (!empty($ewayBill['eway_bill_number'])) {
+
+        $freightBooking->ewayBills()->create([
+            'eway_bill_number' => $ewayBill['eway_bill_number'],
+            'eway_bill_expiry' => $ewayBill['eway_bill_expiry'] ?? null,
+        ]);
+    }
+}
+
+// Refresh freight booking to get updated values
+    // Refresh freight booking to get updated values
+$freightBooking->refresh();
+
+$justCancelledFreightBooking = ! $wasFreightBookingCancelled
+    && (bool) $freightBooking->is_cancelled;
+
+$lorryReceiptUpdate = null;
+
+// Update lorry receipt status
+if ($lorryReceipt) {
+    $lorryReceiptUpdate = $this->freightBookingCalculationService
+        ->updateLorryReceiptForFreightBookingUpdate(
+            $lorryReceipt,
+            $data,
+            $newDamageAmount,
+            $newShortageAmount,
+        );
+
+    if ($lorryReceiptUpdate['delivery_status'] !== $lorryReceiptUpdate['old_delivery_status']) {
+        $lorryReceipt->loadMissing([
+            'company',
+            'truck',
+            'transporter.transporterMaster',
+            'customer',
+        ]);
+
+        $this->lrNotificationService->notifyStatusChange(
+            $lorryReceipt,
+            $lorryReceiptUpdate['delivery_status'],
+            auth()->user()
+        );
+    }
+}
+
+if ($justCancelledFreightBooking) {
+    $freightBooking->loadMissing([
+        'company',
+        'lr.truck',
+        'transporter.transporterMaster',
+    ]);
+
+    $this->frNotificationService->notifyCancelled(
+        $freightBooking,
+        auth()->user()
+    );
+}
+
+$this->freightBookingCalculationService->applyNegativeAdjustment(
+    $freightBooking,
+    $lorryReceipt?->lr_number
+);
+
+DB::commit();
+
+return $this->redirectToFreightBookingsIndex(
+    $request,
+    'success',
+    'Good Hire (Lorry Hire) updated successfully.'
+);
+
+} catch (\Throwable $e) {
+    DB::rollBack();
+
+    \Log::error('Freight booking update failed', [
+        'freight_booking_id' => $freightBooking->id ?? null,
+        'error' => $e->getMessage(),
+    ]);
+
+    return redirect()
+        ->back()
+        ->withErrors([
+            'general' => 'Unable to update freight booking. Please try again.',
+        ])
+        ->withInput();
+}
     }
 
     public function destroy(FreightBooking $freight_booking)

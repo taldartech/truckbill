@@ -425,35 +425,80 @@
                     <div class="lrf-section__body" id="fbOptionalBody">
                     
                     <div class="lrf-grid lrf-grid--4">
-                        <div class="lrf-pf">
-                            <label for="eway_bill_number" class="lrf-pf__lbl">E-Way Bill Number</label>
-                            <div class="input-group flex-nowrap">
-                                <input type="text" class="form-control @error('eway_bill_number') is-invalid @enderror"
-                                    name="eway_bill_number" id="eway_bill_number"
-                                    value="{{ old('eway_bill_number', $freightBooking->eway_bill_number) }}"
-                                    placeholder="Optional"
-                                    {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
-                                    {{ $disabledAttr }}>
-                                <a href="https://ewaybillgst.gov.in/Login.aspx" target="_blank" rel="noopener"
-                                    class="btn btn-outline-secondary" title="Check E-way Bill Status">
-                                    <i class="bi bi-box-arrow-up-right"></i>
-                                </a>
-                            </div>
-                            @error('eway_bill_number')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="lrf-pf">
-                            <label for="eway_bill_expiry" class="lrf-pf__lbl">E-Way Bill Expiry</label>
-                            <input type="date" class="form-control @error('eway_bill_expiry') is-invalid @enderror"
-                                name="eway_bill_expiry" id="eway_bill_expiry"
-                                value="{{ old('eway_bill_expiry', $freightBooking->eway_bill_expiry ?: '') }}"
-                                {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
-                                {{ $disabledAttr }}>
-                            @error('eway_bill_expiry')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
+                       <div class="lrf-pf" style="grid-column: span 2;">
+    <label class="lrf-pf__lbl">E-Way Bills</label>
+    <div id="ewayBillsContainer">
+        @forelse($freightBooking->ewayBills as $index => $ewayBill)
+            <div class="eway-bill-row d-flex gap-2 mb-2">
+                <input
+                    type="hidden"
+                    name="eway_bills[{{ $index }}][id]"
+                    value="{{ $ewayBill->id }}"
+                >
+                <input
+                    type="text"
+                    name="eway_bills[{{ $index }}][eway_bill_number]"
+                    class="form-control"
+                    value="{{ old('eway_bills.' . $index . '.eway_bill_number', $ewayBill->eway_bill_number) }}"
+                    placeholder="E-Way Bill Number"
+                    {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
+                    {{ $disabledAttr }}
+                >
+                <input
+                    type="date"
+                    name="eway_bills[{{ $index }}][eway_bill_expiry]"
+                    class="form-control"
+                   value="{{ old('eway_bills.' . $index . '.eway_bill_expiry', $ewayBill->eway_bill_expiry?->format('Y-m-d')) }}"
+                    {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
+                    {{ $disabledAttr }}
+                >
+                @if(!$is_delivered)
+                    <button
+                        type="button"
+                        class="btn btn-outline-danger remove-eway-bill"
+                       >
+                        Remove
+                    </button>
+                @endif
+            </div>
+        @empty
+            <div class="eway-bill-row d-flex gap-2 mb-2">
+                <input
+                    type="text"
+                    name="eway_bills[0][eway_bill_number]"
+                    class="form-control"
+                    placeholder="E-Way Bill Number"
+                    {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
+                    {{ $disabledAttr }}
+                >
+                <input
+                    type="date"
+                    name="eway_bills[0][eway_bill_expiry]"
+                    class="form-control"
+                    {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
+                    {{ $disabledAttr }}
+                >
+                @if(!$is_delivered)
+                    <button
+                        type="button"
+                        class="btn btn-outline-danger remove-eway-bill"
+                        >
+                        Remove
+                    </button>
+                @endif
+            </div>
+        @endforelse
+      </div>
+       @if(!$is_delivered)
+       <button
+            type="button"
+            id="addEwayBill"
+            class="btn btn-outline-primary btn-sm mt-1"
+             >
+            + Add E-Way Bill
+         </button>
+          @endif
+         </div>
                         <div class="lrf-pf" style="grid-column: span 2;">
                             <label for="remark" class="lrf-pf__lbl">Remark</label>
                             <input type="text" name="remark" id="remark"
@@ -1333,7 +1378,75 @@
                 syncCustomAmountsEmptyState();
                 getCustomAmountsTotal();
             }
+            const ewayBillsContainer = document.getElementById('ewayBillsContainer');
+const addEwayBillBtn = document.getElementById('addEwayBill');
 
+let ewayBillIndex = ewayBillsContainer
+    ? ewayBillsContainer.querySelectorAll('.eway-bill-row').length
+    : 0;
+
+if (addEwayBillBtn && ewayBillsContainer) {
+    addEwayBillBtn.addEventListener('click', function () {
+        const row = document.createElement('div');
+
+        row.className = 'eway-bill-row d-flex gap-2 mb-2';
+
+        row.innerHTML = `
+            <input
+                type="text"
+                name="eway_bills[${ewayBillIndex}][eway_bill_number]"
+                class="form-control"
+                placeholder="E-Way Bill Number"
+            >
+
+            <input
+                type="date"
+                name="eway_bills[${ewayBillIndex}][eway_bill_expiry]"
+                class="form-control"
+            >
+
+            <button
+                type="button"
+                class="btn btn-outline-danger remove-eway-bill"
+            >
+                Remove
+            </button>
+        `;
+
+        ewayBillsContainer.appendChild(row);
+        ewayBillIndex++;
+    });
+
+    ewayBillsContainer.addEventListener('click', function (event) {
+        if (event.target.classList.contains('remove-eway-bill')) {
+            const row = event.target.closest('.eway-bill-row');
+
+            if (!row) {
+                return;
+            }
+
+            const ewayBillNumber = row.querySelector(
+                'input[name*="[eway_bill_number]"]'
+            )?.value?.trim();
+
+            const ewayBillExpiry = row.querySelector(
+                'input[name*="[eway_bill_expiry]"]'
+            )?.value?.trim();
+
+            if (ewayBillNumber || ewayBillExpiry) {
+                const confirmed = confirm(
+                    'This E-Way Bill has data. Are you sure you want to remove it?'
+                );
+
+                if (!confirmed) {
+                    return;
+                }
+            }
+
+            row.remove();
+        }
+    });
+}
             // Function to calculate TDS and Balance amounts
             function calculateTdsAndBalance() {
                 const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
