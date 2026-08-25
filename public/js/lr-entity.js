@@ -1157,6 +1157,12 @@
     };
 
     const enforceAgencyForOwnerlessTruck = (truckId) => {
+
+         if (mode === 'edit') {
+        setOwnerOptionAvailability(true);
+        return true;
+    }
+
       const transporterId = trucksData[truckId]?.transporterId ?? trucksData[truckId]?.transporter_id ?? null;
       const ownerAvailable = transporterId !== null && transporterId !== undefined && transporterId !== '';
       setOwnerOptionAvailability(ownerAvailable);
