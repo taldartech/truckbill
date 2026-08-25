@@ -1123,7 +1123,7 @@
     const truckSelect2 = $('#truck_id');
     const transporterSelect2 = $(transporterSelect);
 
-    const trucksData = initialTrucksData && typeof initialTrucksData === 'object' ? initialTrucksData : {};
+    const trucksData = initialTrucksData && typeof initialTrucksData === 'object' ? { ...initialTrucksData } : {};
 
     let clearingDueToCancel = false;
     let confirmSeq = 0;
@@ -1137,6 +1137,78 @@
           clearingDueToCancel = false;
         }, 0);
       }
+    };
+
+    const getTruckMeta = (truckId) => {
+      if (truckId === null || truckId === undefined || truckId === '') {
+        return undefined;
+      }
+
+      return trucksData[truckId]
+        ?? trucksData[String(truckId)]
+        ?? trucksData[Number(truckId)];
+    };
+
+    const resolveTruckMeta = (truckId, select2Data = {}) => {
+      const option = truckSelect.querySelector(`option[value="${String(truckId)}"]`);
+      const truckText = (select2Data.text || '').toString().trim()
+        || option?.textContent?.trim()
+        || '';
+
+      let transporterId = null;
+      const select2TransporterId = select2Data.transporter_id;
+      if (select2TransporterId !== undefined && select2TransporterId !== null && select2TransporterId !== '') {
+        transporterId = parseInt(select2TransporterId, 10);
+      } else {
+        const optionTransporterId = option?.getAttribute('data-transporter-id')
+          ?? option?.dataset?.transporterId
+          ?? '';
+        if (optionTransporterId !== '') {
+          transporterId = parseInt(optionTransporterId, 10);
+        }
+      }
+
+      if (Number.isNaN(transporterId)) {
+        transporterId = null;
+      }
+
+      const transporterNameFromData = (select2Data.transporter_name || '').toString().trim();
+      const transporterNameFromOption = (option?.getAttribute('data-transporter-name')
+        || option?.dataset?.transporterName
+        || '').toString().trim();
+      const transporterMatch = truckText.match(/\(([^)]+)\)$/);
+      const transporterName = transporterNameFromData
+        || transporterNameFromOption
+        || (transporterMatch ? transporterMatch[1].trim() : '');
+
+      return {
+        transporterId,
+        transporterName,
+        truckText,
+      };
+    };
+
+    const rememberTruckMeta = (truckId, select2Data = {}) => {
+      if (!truckId) {
+        return null;
+      }
+
+      const key = String(truckId);
+      const existing = getTruckMeta(truckId);
+      const hasKnownOwner = existing
+        && existing.transporterId !== null
+        && existing.transporterId !== undefined
+        && existing.transporterId !== '';
+
+      if (hasKnownOwner) {
+        trucksData[key] = existing;
+        return existing;
+      }
+
+      const meta = resolveTruckMeta(truckId, select2Data);
+      trucksData[key] = meta;
+
+      return meta;
     };
 
     const setOwnerOptionAvailability = (isOwnerAvailable) => {
@@ -1157,7 +1229,9 @@
     };
 
     const enforceAgencyForOwnerlessTruck = (truckId) => {
-      const transporterId = trucksData[truckId]?.transporterId ?? trucksData[truckId]?.transporter_id ?? null;
+      rememberTruckMeta(truckId);
+      const meta = getTruckMeta(truckId);
+      const transporterId = meta?.transporterId ?? meta?.transporter_id ?? null;
       const ownerAvailable = transporterId !== null && transporterId !== undefined && transporterId !== '';
       setOwnerOptionAvailability(ownerAvailable);
 
@@ -1180,21 +1254,7 @@
       const selectedTruckId = e.params.data.id;
       const data = e.params.data || {};
 
-      const truckText = (data.text || '').toString().trim() || $(this).find('option:selected').text().trim();
-      const transporterId = data.transporter_id !== undefined && data.transporter_id !== null && data.transporter_id !== ''
-        ? parseInt(data.transporter_id, 10)
-        : null;
-
-      const transporterNameFromData = (data.transporter_name || '').toString().trim();
-      const transporterMatch = truckText.match(/\(([^)]+)\)$/);
-      const transporterName = transporterNameFromData || (transporterMatch ? transporterMatch[1].trim() : '');
-
-      trucksData[selectedTruckId] = {
-        transporterId,
-        transporterName,
-        truckText,
-      };
-
+      rememberTruckMeta(selectedTruckId, data);
       enforceAgencyForOwnerlessTruck(selectedTruckId);
 
       if (transporterTypeSelect.value === 'owner') {
@@ -1208,32 +1268,26 @@
       }
 
       const selectedTruckId = $(this).val();
-      if (!selectedTruckId || trucksData[selectedTruckId]) {
+      if (!selectedTruckId) {
         return;
       }
 
-      const select2Data = truckSelect2 && typeof truckSelect2.select2 === 'function'
-        ? (truckSelect2.select2('data') || [])[0] || {}
-        : {};
+      const alreadyKnown = getTruckMeta(selectedTruckId) !== undefined;
 
-      const truckText = (select2Data.text || '').toString().trim() || $(this).find('option:selected').text().trim();
-      const transporterId = select2Data.transporter_id !== undefined && select2Data.transporter_id !== null && select2Data.transporter_id !== ''
-        ? parseInt(select2Data.transporter_id, 10)
-        : null;
+      if (!alreadyKnown) {
+        const select2Data = truckSelect2 && typeof truckSelect2.select2 === 'function'
+          ? (truckSelect2.select2('data') || [])[0] || {}
+          : {};
 
-      const transporterNameFromData = (select2Data.transporter_name || '').toString().trim();
-      const transporterMatch = truckText.match(/\(([^)]+)\)$/);
-      const transporterName = transporterNameFromData || (transporterMatch ? transporterMatch[1].trim() : '');
-
-      trucksData[selectedTruckId] = {
-        transporterId,
-        transporterName,
-        truckText,
-      };
+        rememberTruckMeta(selectedTruckId, select2Data);
+      } else {
+        rememberTruckMeta(selectedTruckId);
+      }
 
       enforceAgencyForOwnerlessTruck(selectedTruckId);
 
-      if (transporterTypeSelect.value === 'owner') {
+      // Avoid re-opening owner confirmation/auto-select when edit page hydrates an already-known truck.
+      if (!alreadyKnown && transporterTypeSelect.value === 'owner') {
         autoSelectTruckOwner(selectedTruckId);
       }
     });

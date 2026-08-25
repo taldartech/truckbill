@@ -721,12 +721,21 @@
                 }
 
                 if (transporterTypeSelectEl && truckSelectEl && transporterSelectEl && transporterLabelEl) {
+                    const initialTrucksData = {};
+                    @if($selectedTruck)
+                        initialTrucksData[{{ $selectedTruck->id }}] = {
+                            transporterId: {{ $selectedTruck->transporter_id ?? 'null' }},
+                            transporterName: @json($selectedTruck->transporter?->name ?? ''),
+                            truckText: @json($selectedTruck->truck_number),
+                        };
+                    @endif
+
                     window.LREntity.initLorryReceiptTransporterSelectionFlow({
                         transporterTypeSelect: transporterTypeSelectEl,
                         truckSelect: truckSelectEl,
                         transporterSelect: transporterSelectEl,
                         transporterLabel: transporterLabelEl,
-                        trucksData: {},
+                        trucksData: initialTrucksData,
                         mode: 'edit',
                         allowTransporterChanges: {{ $canChangeTransporter ? 'true' : 'false' }},
                         afterTransporterTypeChange: function (selectedType) {
