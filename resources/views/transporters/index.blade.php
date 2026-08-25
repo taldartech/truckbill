@@ -6,6 +6,25 @@
 @endpush
 
 @section('content')
+
+  @if (session('bulk_upload_errors') && count(session('bulk_upload_errors')) > 0)
+        <div class="container mt-3">
+            <div class="alert alert-danger">
+                <strong>Bulk Upload Errors:</strong>
+
+                <ul class="mb-0 mt-2">
+                    @foreach (session('bulk_upload_errors') as $error)
+                        <li>
+                            <strong>Row {{ $error['row'] }}:</strong>
+                            {{ $error['error'] }}
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    @endif
+
+
     <div class="container mt-4 app-index-page app-index-page--standard">
         @if (session('success'))
             <div class="mb-3">
@@ -25,9 +44,309 @@
                     <a href="{{ route('reports.transporter-master-export', ['type' => 'transporter']) }}" class="btn app-index-header-btn" aria-label="Export transporters">
                         <i class="fas fa-file-excel"></i> Export
                     </a>
+              
+
+<button type="button"
+        class="btn app-index-header-btn"
+        data-bs-toggle="modal"
+        data-bs-target="#bulkUploadModal"
+        aria-label="Bulk upload transporters">
+    <i class="fas fa-upload"></i> Bulk Upload
+</button>
+   </div>
+</div> 
+<!-- BULK UPLOAD MODAL -->
+<div class="modal fade" id="bulkUploadModal" tabindex="-1" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+
+        <div class="modal-content shadow border-0 rounded-3">
+
+            <!-- HEADER -->
+          <!-- HEADER -->
+<div class="modal-header px-4 py-3">
+
+    <h4 class="modal-title fw-bold mb-0">
+        <i class="fas fa-upload me-2 text-success"></i>
+        Bulk Upload Transporters
+    </h4>
+
+    <div class="d-flex align-items-center ms-auto gap-3">
+
+        <!-- DOWNLOAD TEMPLATE -->
+        <a href="{{ route('transporters.bulk-upload-template') }}"
+           class="btn btn-outline-success">
+            <i class="fas fa-download me-1"></i>
+            Download Template
+        </a>
+
+        <!-- CLOSE -->
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close">
+        </button>
+
+    </div>
+
+</div>
+
+            <!-- BODY -->
+            <div class="modal-body px-4 py-4">
+
+                <!-- INFO -->
+                <div class="alert alert-info d-flex align-items-center mb-4">
+
+                    <i class="fas fa-info-circle me-2"></i>
+
+                    <span>
+                        Upload an Excel or CSV file to import multiple
+                        transporters at once.
+                    </span>
+
                 </div>
+
+
+                <!-- STEP 1 -->
+                <div class="mb-4">
+
+                    <div class="d-flex align-items-center mb-3">
+
+                        <span class="badge bg-success rounded-circle
+                                     d-flex align-items-center justify-content-center
+                                     me-2"
+                              style="width:30px;height:30px;">
+                            1
+                        </span>
+
+                        <strong>
+                            Choose File
+                        </strong>
+
+                    </div>
+
+
+                    <form id="bulkUploadForm"
+                          action="{{ route('transporters.bulk-upload') }}"
+                          method="POST"
+                          enctype="multipart/form-data">
+
+                        @csrf
+
+
+                        <!-- FILE INPUT -->
+                        <div class="input-group">
+
+                            <span class="input-group-text bg-white">
+                                <i class="far fa-file-alt text-secondary"></i>
+                            </span>
+
+
+                            <input type="text"
+                                   id="uploadFileName"
+                                   class="form-control"
+                                   value="No file selected"
+                                   readonly>
+
+
+                            <label for="bulkUploadFile"
+                                   class="btn btn-outline-secondary mb-0">
+
+                                <i class="fas fa-folder-open me-1"></i>
+                                Choose File
+
+                            </label>
+
+
+                            <input type="file"
+                                   id="bulkUploadFile"
+                                   name="file"
+                                   accept=".xlsx,.xls,.csv"
+                                   class="d-none">
+
+                        </div>
+
+
+                        <div class="form-text mt-2">
+
+                            <i class="fas fa-info-circle me-1"></i>
+
+                            Allowed file types: .xlsx, .xls, .csv
+                            (Maximum 10 MB)
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+
+                <!-- STEP 2 -->
+                <div class="mb-2">
+
+                    <div class="d-flex align-items-center mb-3">
+
+                        <span class="badge bg-success rounded-circle
+                                     d-flex align-items-center justify-content-center
+                                     me-2"
+                              style="width:30px;height:30px;">
+                            2
+                        </span>
+
+                        <strong>
+                            Upload Progress
+                        </strong>
+
+                    </div>
+
+
+                    <!-- PROGRESS -->
+                    <div id="uploadProgressContainer"
+                         class="border rounded-3 p-3 bg-light"
+                         style="display:none;">
+
+                        <!-- PROGRESS BAR -->
+                        <div class="d-flex align-items-center gap-3">
+
+                            <div class="progress flex-grow-1"
+                                 style="height:12px;">
+
+                                <div id="uploadProgressBar"
+                                     class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                                     role="progressbar"
+                                     style="width:0%;">
+
+                                </div>
+
+                            </div>
+
+
+                            <span id="uploadPercentage"
+                                  class="fw-semibold text-success">
+
+                                0%
+
+                            </span>
+
+                        </div>
+
+
+                        <!-- STATUS -->
+                        <div id="uploadStatus"
+                             class="fw-semibold mt-3">
+
+                        </div>
+
+
+                        <!-- MESSAGE -->
+                        <div id="uploadMessage"
+                             class="small text-muted mt-1">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
             </div>
 
+
+            <!-- FOOTER -->
+            <div class="modal-footer px-4 py-3">
+
+               
+
+
+                <button type="button"
+                        id="startUploadBtn"
+                        class="btn btn-success">
+
+                    <i class="fas fa-upload me-1"></i>
+
+                    Upload
+
+                </button>
+
+            </div>
+
+
+            <!-- SECURITY -->
+            <div class="border-top text-center text-muted small py-3">
+
+                <i class="fas fa-lock me-1"></i>
+
+                Your data is secure and will not be shared
+                with any third party.
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- CANCEL CONFIRMATION MODAL -->
+<div class="modal fade"
+     id="cancelUploadModal"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+
+        <div class="modal-content border-0 shadow rounded-3">
+
+            <div class="modal-body text-center p-4">
+
+                <div class="text-warning mb-3">
+
+                    <i class="fas fa-exclamation-triangle fa-3x"></i>
+
+                </div>
+
+
+                <h5 class="fw-bold">
+                    Cancel Upload?
+                </h5>
+
+
+                <p class="text-muted small mb-4">
+
+                    Are you sure you want to cancel this upload?
+                    The selected file will be removed.
+
+                </p>
+
+
+                <div class="d-flex justify-content-center gap-2">
+
+                    <button type="button"
+                            class="btn btn-light border"
+                            data-bs-dismiss="modal">
+
+                        No, Keep File
+
+                    </button>
+
+
+                    <button type="button"
+                            id="confirmCancelUploadBtn"
+                            class="btn btn-danger">
+
+                        Yes, Cancel
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="transportersTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
@@ -553,6 +872,996 @@
                 $('#advancePaymentForm .form-control').removeClass('is-invalid is-valid');
                 $('#advancePaymentForm .invalid-feedback').text('');
             });
-        });
+
+             });
+
+
+        
+
     </script>
+
+     <script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const form = document.getElementById('bulkUploadForm');
+    const fileInput = document.getElementById('bulkUploadFile');
+    const startUploadBtn = document.getElementById('startUploadBtn');
+
+    const progressContainer =
+        document.getElementById('uploadProgressContainer');
+
+    const progressBar =
+        document.getElementById('uploadProgressBar');
+
+    const percentage =
+        document.getElementById('uploadPercentage');
+
+    const status =
+        document.getElementById('uploadStatus');
+
+    const fileName =
+        document.getElementById('uploadFileName');
+
+    const message =
+        document.getElementById('uploadMessage');
+
+    const cancelButton =
+        document.getElementById('cancelUploadBtn');
+
+    const confirmCancelUploadBtn =
+        document.getElementById('confirmCancelUploadBtn');
+
+    const cancelUploadModalElement =
+        document.getElementById('cancelUploadModal');
+
+
+    // Stop if required elements are missing
+    if (
+        !form ||
+        !fileInput ||
+        !startUploadBtn ||
+        !progressContainer ||
+        !progressBar ||
+        !percentage ||
+        !status ||
+        !fileName ||
+        !message
+    ) {
+        return;
+    }
+
+
+    let xhr = null;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | FILE SELECT
+    |--------------------------------------------------------------------------
+    */
+
+    fileInput.addEventListener('change', function () {
+
+        if (!fileInput.files.length) {
+
+            fileName.value = 'No file selected';
+
+            return;
+        }
+
+
+        const file = fileInput.files[0];
+
+
+        // Only show selected file.
+        // Upload does NOT start here.
+        fileName.value =
+            file.name + ' (' +
+            formatFileSize(file.size) +
+            ')';
+
+
+        // Reset previous upload state
+        progressContainer.style.display = 'none';
+
+        progressBar.style.width = '0%';
+
+        progressBar.classList.remove('bg-danger');
+
+        progressBar.classList.add('bg-success');
+
+        percentage.textContent = '0%';
+
+        percentage.classList.remove('text-danger');
+
+        percentage.classList.add('text-success');
+
+        status.textContent = '';
+
+        message.textContent = '';
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPLOAD BUTTON
+    |--------------------------------------------------------------------------
+    */
+
+    startUploadBtn.addEventListener('click', function () {
+
+        // No file selected
+        if (!fileInput.files.length) {
+
+            showUploadError('Please choose a file first.');
+
+            return;
+        }
+
+
+        const file = fileInput.files[0];
+
+
+        // Check file size
+        if (file.size > 10 * 1024 * 1024) {
+
+            showUploadError(
+                'File size must not exceed 10 MB.'
+            );
+
+            return;
+        }
+
+
+        // Check file extension
+        const allowedExtensions = [
+            'xlsx',
+            'xls',
+            'csv'
+        ];
+
+
+        const extension =
+            file.name.split('.').pop().toLowerCase();
+
+
+        if (!allowedExtensions.includes(extension)) {
+
+            showUploadError(
+                'Invalid file type. Please select XLSX, XLS or CSV.'
+            );
+
+            return;
+        }
+
+
+        const formData = new FormData(form);
+
+
+        xhr = new XMLHttpRequest();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SHOW PROGRESS CONTAINER
+        |--------------------------------------------------------------------------
+        */
+
+        progressContainer.style.display = 'block';
+
+
+        progressBar.classList.remove('bg-danger');
+
+        progressBar.classList.add('bg-success');
+
+        progressBar.classList.add('progress-bar-striped');
+
+        progressBar.classList.add('progress-bar-animated');
+
+
+        progressBar.style.width = '0%';
+
+        percentage.textContent = '0%';
+
+        percentage.classList.remove('text-danger');
+
+        percentage.classList.add('text-success');
+
+
+        status.textContent =
+            'Uploading file...';
+
+
+        message.textContent =
+            "Please don't close or refresh this page.";
+
+
+        // Disable upload button while uploading
+        startUploadBtn.disabled = true;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPLOAD PROGRESS
+        |--------------------------------------------------------------------------
+        */
+
+        xhr.upload.addEventListener(
+            'progress',
+            function (event) {
+
+                if (event.lengthComputable) {
+
+                    const percent = Math.round(
+                        (event.loaded / event.total) * 100
+                    );
+
+
+                    progressBar.style.width =
+                        percent + '%';
+
+
+                    percentage.textContent =
+                        percent + '%';
+
+                }
+
+            }
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | REQUEST COMPLETED
+        |--------------------------------------------------------------------------
+        */
+
+        xhr.addEventListener(
+            'load',
+            function () {
+
+                console.log('STATUS:', xhr.status);
+
+                console.log(
+                    'RESPONSE:',
+                    xhr.responseText
+                );
+
+
+                let response = {};
+
+
+                try {
+
+                    response =
+                        JSON.parse(xhr.responseText);
+
+                } catch (e) {
+
+                    console.log(
+                        'Response is not JSON'
+                    );
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | SUCCESS
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    xhr.status >= 200 &&
+                    xhr.status < 300 &&
+                    response.success
+                ) {
+
+                    progressBar.style.width =
+                        '100%';
+
+                    percentage.textContent =
+                        '100%';
+
+
+                    progressBar.classList.remove(
+                        'progress-bar-animated'
+                    );
+
+
+                    status.textContent =
+                        'Upload completed successfully!';
+
+
+                    message.textContent =
+                        response.message ||
+                        'Transporter records processed successfully.';
+
+
+                    message.classList.remove(
+                        'text-danger'
+                    );
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | SHOW PARTIAL ERRORS IF ANY
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        response.errors &&
+                        response.errors.length > 0
+                    ) {
+
+                        let errorHtml =
+                            '<br><strong>Errors:</strong><br>';
+
+
+                        response.errors.forEach(
+                            function (item) {
+
+                                if (
+                                    typeof item === 'object' &&
+                                    item !== null
+                                ) {
+
+                                    errorHtml +=
+                                        'Row ' +
+                                        item.row +
+                                        ': ' +
+                                        item.error +
+                                        '<br>';
+
+                                } else {
+
+                                    errorHtml +=
+                                        String(item) +
+                                        '<br>';
+
+                                }
+
+                            }
+                        );
+
+
+                        message.innerHTML +=
+                            errorHtml;
+
+                    }
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | REFRESH DATATABLE ONLY
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        typeof $ !== 'undefined' &&
+                        $.fn.DataTable &&
+                        $.fn.DataTable.isDataTable(
+                            '#transportersTable'
+                        )
+                    ) {
+
+                        $('#transportersTable')
+                            .DataTable()
+                            .ajax
+                            .reload(null, false);
+
+                    }
+
+
+                    // Enable button again
+                    startUploadBtn.disabled = false;
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | DO NOT HIDE PROGRESS CONTAINER
+                    |--------------------------------------------------------------------------
+                    |
+                    | It stays visible so user can see:
+                    | success message / errors.
+                    |
+                    */
+
+                } else {
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | SERVER / VALIDATION ERROR
+                    |--------------------------------------------------------------------------
+                    */
+
+                    let errorMessage =
+                        response.message || '';
+
+
+                    if (response.errors) {
+
+                        if (
+                            Array.isArray(
+                                response.errors
+                            )
+                        ) {
+
+                            errorMessage =
+                                response.errors
+                                    .map(function (item) {
+
+                                        if (
+                                            typeof item === 'object' &&
+                                            item !== null
+                                        ) {
+
+                                            return (
+                                                'Row ' +
+                                                item.row +
+                                                ': ' +
+                                                item.error
+                                            );
+
+                                        }
+
+                                        return String(item);
+
+                                    })
+                                    .join('<br>');
+
+
+                        } else if (
+                            typeof response.errors === 'object'
+                        ) {
+
+                            let errors = [];
+
+
+                            Object.values(
+                                response.errors
+                            ).forEach(
+                                function (error) {
+
+                                    if (
+                                        Array.isArray(error)
+                                    ) {
+
+                                        errors =
+                                            errors.concat(
+                                                error
+                                            );
+
+                                    } else {
+
+                                        errors.push(
+                                            error
+                                        );
+
+                                    }
+
+                                }
+                            );
+
+
+                            errorMessage =
+                                errors.join('<br>');
+
+
+                        } else {
+
+                            errorMessage =
+                                String(
+                                    response.errors
+                                );
+
+                        }
+
+                    }
+
+
+                    showUploadError(
+                        errorMessage ||
+                        'Something went wrong while uploading.'
+                    );
+
+
+                    startUploadBtn.disabled = false;
+
+                }
+
+            }
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | NETWORK ERROR
+        |--------------------------------------------------------------------------
+        */
+
+        xhr.addEventListener(
+            'error',
+            function () {
+
+                showUploadError(
+                    'Network or server error occurred.'
+                );
+
+
+                startUploadBtn.disabled = false;
+
+            }
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPLOAD ABORTED
+        |--------------------------------------------------------------------------
+        */
+
+        xhr.addEventListener(
+            'abort',
+            function () {
+
+                progressContainer.style.display =
+                    'block';
+
+
+                progressBar.classList.remove(
+                    'progress-bar-animated'
+                );
+
+
+                status.textContent =
+                    'Upload cancelled';
+
+
+                message.textContent =
+                    'The file upload was cancelled.';
+
+
+                startUploadBtn.disabled =
+                    false;
+
+            }
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | OPEN REQUEST
+        |--------------------------------------------------------------------------
+        */
+
+        xhr.open(
+            'POST',
+            form.action,
+            true
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | CSRF TOKEN
+        |--------------------------------------------------------------------------
+        */
+
+        const csrfToken =
+            document.querySelector(
+                'meta[name="csrf-token"]'
+            );
+
+
+        if (csrfToken) {
+
+            xhr.setRequestHeader(
+                'X-CSRF-TOKEN',
+                csrfToken.getAttribute('content')
+            );
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | AJAX REQUEST
+        |--------------------------------------------------------------------------
+        */
+
+        xhr.setRequestHeader(
+            'X-Requested-With',
+            'XMLHttpRequest'
+        );
+
+
+        xhr.setRequestHeader(
+            'Accept',
+            'application/json'
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SEND FILE
+        |--------------------------------------------------------------------------
+        */
+
+        xhr.send(formData);
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CANCEL BUTTON
+    |--------------------------------------------------------------------------
+    |
+    | Cancel button first opens confirmation modal.
+    |
+    */
+
+    if (cancelButton) {
+
+        cancelButton.addEventListener(
+            'click',
+            function () {
+
+                /*
+                |--------------------------------------------------------------------------
+                | If upload is running
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    xhr &&
+                    xhr.readyState !== XMLHttpRequest.DONE
+                ) {
+
+                    showCancelConfirmation();
+
+                    return;
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | If upload hasn't started
+                |--------------------------------------------------------------------------
+                */
+
+                if (fileInput.files.length) {
+
+                    showCancelConfirmation();
+
+                    return;
+
+                }
+
+
+                // Nothing selected
+                resetUpload();
+
+            }
+        );
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CONFIRM CANCEL
+    |--------------------------------------------------------------------------
+    */
+
+    if (confirmCancelUploadBtn) {
+
+        confirmCancelUploadBtn.addEventListener(
+            'click',
+            function () {
+
+                /*
+                |--------------------------------------------------------------------------
+                | Abort active upload
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    xhr &&
+                    xhr.readyState !== XMLHttpRequest.DONE
+                ) {
+
+                    xhr.abort();
+
+                    xhr = null;
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Reset everything
+                |--------------------------------------------------------------------------
+                */
+
+                resetUpload();
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Close confirmation modal
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    cancelUploadModalElement &&
+                    typeof bootstrap !== 'undefined'
+                ) {
+
+                    const modal =
+                        bootstrap.Modal.getInstance(
+                            cancelUploadModalElement
+                        );
+
+                    if (modal) {
+
+                        modal.hide();
+
+                    }
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SHOW CANCEL CONFIRMATION
+    |--------------------------------------------------------------------------
+    */
+
+    function showCancelConfirmation() {
+
+        if (
+            cancelUploadModalElement &&
+            typeof bootstrap !== 'undefined'
+        ) {
+
+            const modal =
+                bootstrap.Modal.getOrCreateInstance(
+                    cancelUploadModalElement
+                );
+
+            modal.show();
+
+        } else {
+
+            // Fallback if Bootstrap modal is unavailable
+            const confirmCancel =
+                confirm(
+                    'Are you sure you want to cancel this upload?'
+                );
+
+
+            if (confirmCancel) {
+
+                if (
+                    xhr &&
+                    xhr.readyState !== XMLHttpRequest.DONE
+                ) {
+
+                    xhr.abort();
+
+                    xhr = null;
+
+                }
+
+                resetUpload();
+
+            }
+
+        }
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SHOW UPLOAD ERROR
+    |--------------------------------------------------------------------------
+    */
+
+    function showUploadError(errorMessage) {
+
+        progressContainer.style.display =
+            'block';
+
+
+        progressBar.classList.remove(
+            'bg-success'
+        );
+
+
+        progressBar.classList.add(
+            'bg-danger'
+        );
+
+
+        progressBar.classList.remove(
+            'progress-bar-animated'
+        );
+
+
+        progressBar.style.width =
+            '100%';
+
+
+        percentage.classList.remove(
+            'text-success'
+        );
+
+
+        percentage.classList.add(
+            'text-danger'
+        );
+
+
+        percentage.textContent =
+            '100%';
+
+
+        status.textContent =
+            'Upload completed with errors!';
+
+
+        message.innerHTML =
+            errorMessage ||
+            'Some rows could not be imported.';
+
+
+        message.classList.add(
+            'text-danger'
+        );
+
+
+        message.style.whiteSpace =
+            'pre-line';
+
+
+        startUploadBtn.disabled =
+            false;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | RESET UPLOAD
+    |--------------------------------------------------------------------------
+    */
+
+    function resetUpload() {
+
+        if (
+            xhr &&
+            xhr.readyState !== XMLHttpRequest.DONE
+        ) {
+
+            xhr.abort();
+
+        }
+
+
+        xhr = null;
+
+
+        fileInput.value = '';
+
+
+        fileName.value =
+            'No file selected';
+
+
+        progressContainer.style.display =
+            'none';
+
+
+        progressBar.style.width =
+            '0%';
+
+
+        progressBar.classList.remove(
+            'bg-danger'
+        );
+
+
+        progressBar.classList.add(
+            'bg-success'
+        );
+
+
+        progressBar.classList.remove(
+            'progress-bar-animated'
+        );
+
+
+        percentage.textContent =
+            '0%';
+
+
+        percentage.classList.remove(
+            'text-danger'
+        );
+
+
+        percentage.classList.add(
+            'text-success'
+        );
+
+
+        status.textContent =
+            '';
+
+
+        message.textContent =
+            '';
+
+
+        startUploadBtn.disabled =
+            false;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | FORMAT FILE SIZE
+    |--------------------------------------------------------------------------
+    */
+
+    function formatFileSize(bytes) {
+
+        if (bytes === 0) {
+
+            return '0 Bytes';
+
+        }
+
+
+        const sizes = [
+            'Bytes',
+            'KB',
+            'MB',
+            'GB'
+        ];
+
+
+        const i = Math.floor(
+            Math.log(bytes) /
+            Math.log(1024)
+        );
+
+
+        return (
+            Math.round(
+                bytes /
+                Math.pow(1024, i) *
+                100
+            ) / 100
+        ) +
+        ' ' +
+        sizes[i];
+
+    }
+
+});
+</script>
+
+
 @endpush

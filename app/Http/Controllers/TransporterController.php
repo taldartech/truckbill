@@ -23,6 +23,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use App\Imports\TransporterImport;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Validator;
 
 class TransporterController extends Controller
 {
@@ -41,6 +44,109 @@ class TransporterController extends Controller
 
         return view('transporters.index');
     }
+
+
+    public function bulkUpload(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'file' => [
+            'required',
+            'file',
+             'extensions:xlsx,xls,csv',
+            'max:10240',
+        ],
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'File validation failed.',
+            'errors' => $validator->errors()->all(),
+        ], 422);
+    }
+
+   try {
+
+    // Laravel will automatically inject the required dependencies
+    $import = app(TransporterImport::class);
+
+    Excel::import(
+        $import,
+        $request->file('file')
+    );
+
+    // Validation/import errors
+   if (!empty($import->errors)) {
+
+    return response()->json([
+        'success' => $import->successCount > 0,
+        'partial_success' => $import->successCount > 0,
+        'message' => $import->successCount > 0
+            ? $import->successCount . ' transporter(s) imported successfully. Some rows have errors.'
+            : 'No transporter records were imported.',
+        'success_count' => $import->successCount,
+        'errors' => $import->errors,
+    ], 200);
+}
+
+    // Everything imported successfully
+    return response()->json([
+        'success' => true,
+        'message' => $import->successCount .
+            ' transporter(s) imported successfully.',
+        'success_count' => $import->successCount,
+        'errors' => [],
+    ]);
+
+} catch (\Throwable $e) {
+
+    // Technical/server error
+    \Log::error('Transporter bulk upload failed', [
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString(),
+    ]);
+
+    return response()->json([
+        'success' => false,
+        'message' => 'Unable to process the file. Please check the file and try again.',
+    ], 500);
+}
+}
+
+
+public function bulkUploadTemplate()
+{
+    $headers = [
+        'PAN Number',
+        'Transport Name',
+        'Email',
+        'GST Number',
+        'PAN Active',
+        'Contact Person Name',
+        'Mobile Number',
+        'Country',
+        'State',
+        'City',
+        'Address',
+        'Declaration Given',
+        'TDS Percentage',
+        'TDS Adjustment Remark',
+        'Short Name',
+        'Advance Amount',
+    ];
+
+    return response()->streamDownload(function () use ($headers) {
+        $handle = fopen('php://output', 'w');
+
+        fputcsv($handle, $headers);
+
+        fclose($handle);
+    }, 'transporter-bulk-upload-template.csv', [
+        'Content-Type' => 'text/csv',
+    ]);
+}
+
+
 
     private function getTransportersData(Request $request)
     {

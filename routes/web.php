@@ -138,8 +138,14 @@ Route::middleware(['auth.blocked'])->group(function () {
     });
 
     // Transporters CRUD
+         Route::get('/transporters/bulk-upload-template', [TransporterController::class, 'bulkUploadTemplate'])
+    ->name('transporters.bulk-upload-template');
+    
     Route::middleware(['role:admin,moderator,super_admin', 'company.context', 'subscription.active'])->group(function () {
         Route::resource('transporters', TransporterController::class)->only(['index', 'create', 'store', 'show']);
+         Route::post('/transporters/bulk-upload', [TransporterController::class, 'bulkUpload'])
+        ->name('transporters.bulk-upload');
+        
     });
     Route::middleware(['role:admin,super_admin', 'company.context', 'subscription.active'])->group(function () {
         Route::resource('transporters', TransporterController::class)->only(['edit', 'update', 'destroy']);
