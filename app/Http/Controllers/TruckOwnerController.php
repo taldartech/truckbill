@@ -9,6 +9,7 @@ use App\Models\City;
 use App\Models\Country;
 use App\Models\Company;
 use App\Models\Driver;
+use App\Imports\TruckOwnerImport;
 use App\Models\State;
 use App\Models\Transporter;
 use App\Models\TransporterMaster;
@@ -48,6 +49,76 @@ class TruckOwnerController extends Controller
 
         return view('truck_owner.index', compact('truckTypes'));
     }
+
+    public function bulkUpload(Request $request)
+{
+    $request->validate([
+        'file' => [
+            'required',
+            'file',
+            'max:10240',
+        ],
+    ]);
+
+    try {
+        $import = new TruckOwnerImport();
+
+        \Maatwebsite\Excel\Facades\Excel::import(
+            $import,
+            $request->file('file')
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => $import->imported . ' truck owner(s) imported successfully.',
+            'imported' => $import->imported,
+            'failed' => count($import->errors),
+            'errors' => $import->errors,
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Bulk upload failed.',
+            'error' => $e->getMessage(),
+        ], 422);
+    }
+}
+
+public function bulkUploadTemplate()
+{
+    $headers = [
+        'Name',
+        'Email',
+        'GST Number',
+        'PAN Active',
+        'Contact Person Name',
+        'Mobile Number',
+        'Country',
+        'State',
+        'City',
+        'Address',
+        'Declaration Given',
+        'Total Trucks',
+        'TDS %',
+        'TDS Adjustment Remark',
+    ];
+
+    $callback = function () use ($headers) {
+        $file = fopen('php://output', 'w');
+
+        fputcsv($file, $headers);
+
+        fclose($file);
+    };
+
+    return response()->streamDownload(
+        $callback,
+        'truck_owner_template.csv',
+        [
+            'Content-Type' => 'text/csv',
+        ]
+    );
+}
 
     private function getTruckOwnersData(Request $request)
     {

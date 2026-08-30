@@ -14,6 +14,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use App\Imports\TruckImport;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Validator;
 
 class TruckController extends Controller
 {
@@ -611,6 +614,128 @@ class TruckController extends Controller
             return redirect()->back()->withErrors(['general' => $errorMessage]);
         }
     }
+
+
+    public function bulkUpload(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'file' => [
+            'required',
+            'file',
+            'extensions:xlsx,xls,csv',
+            'max:10240',
+        ],
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'File validation failed.',
+            'errors' => $validator->errors()->all(),
+        ], 422);
+    }
+
+    try {
+
+        $companyId = $this->getCurrentCompanyId();
+
+        if (! $companyId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Company could not be identified.',
+                'errors' => [
+                    'Company could not be identified.'
+                ],
+            ], 422);
+        }
+
+        $import = new TruckImport($companyId);
+
+        Excel::import(
+            $import,
+            $request->file('file')
+        );
+
+        $total = $import->successCount + count($import->errors);
+
+        /*
+         * PARTIAL / VALIDATION ERRORS
+         */
+        if (! empty($import->errors)) {
+
+            return response()->json([
+                'success' => $import->successCount > 0,
+                'partial_success' => $import->successCount > 0,
+
+                'message' => $import->successCount > 0
+                    ? $import->successCount.' truck(s) imported successfully. Some rows have errors.'
+                    : 'No truck records were imported.',
+
+                'imported' => $import->successCount,
+                'success_count' => $import->successCount,
+                'total' => $total,
+
+                'errors' => $import->errors,
+            ], 200);
+        }
+
+        /*
+         * EVERYTHING SUCCESSFUL
+         */
+        return response()->json([
+            'success' => true,
+
+            'message' =>
+                $import->successCount.' truck(s) imported successfully.',
+
+            'imported' => $import->successCount,
+            'success_count' => $import->successCount,
+            'total' => $total,
+
+            'errors' => [],
+        ], 200);
+
+    } catch (\Throwable $e) {
+
+        \Log::error('Truck bulk upload failed', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' =>
+                'Unable to process the file. Please check the file and try again.',
+            'errors' => [
+                $e->getMessage()
+            ],
+        ], 500);
+    }
+}
+
+
+public function bulkUploadTemplate()
+{
+    $headers = [
+        'Truck Number',
+        'Truck Type',
+        'Registration Date',
+        'Truck Owner',
+        'Driver',
+    ];
+
+    return response()->streamDownload(function () use ($headers) {
+
+        $handle = fopen('php://output', 'w');
+
+        fputcsv($handle, $headers);
+
+        fclose($handle);
+
+    }, 'truck-bulk-upload-template.csv', [
+        'Content-Type' => 'text/csv',
+    ]);
+}
 
     public function show(Truck $truck)
     {

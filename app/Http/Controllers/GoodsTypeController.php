@@ -6,6 +6,8 @@ use App\Models\GoodType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use App\Imports\GoodsTypeImport;
+use Illuminate\Support\Facades\Validator;
 
 class GoodsTypeController extends Controller
 {
@@ -128,6 +130,7 @@ class GoodsTypeController extends Controller
             ],
         ]);
 
+
         $validated['user_id'] = Auth::user()->company->user_id;
         $goodsType = GoodType::create($validated);
         if ($request->ajax() || $request->has('from_modal')) {
@@ -139,6 +142,61 @@ class GoodsTypeController extends Controller
         }
         return redirect()->route('master.goods-types.index')->with('success', 'Goods type created successfully');
     }
+
+
+    public function bulkUpload(Request $request)
+{
+    $request->validate([
+        'file' => [
+            'required',
+            'file',
+            'max:10240',
+        ],
+    ]);
+
+    try {
+        $import = new GoodsTypeImport();
+
+        \Maatwebsite\Excel\Facades\Excel::import(
+            $import,
+            $request->file('file')
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => $import->imported . ' goods type(s) imported successfully.',
+            'imported' => $import->imported,
+            'failed' => count($import->errors),
+            'errors' => $import->errors,
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Bulk upload failed.',
+            'error' => $e->getMessage(),
+        ], 422);
+    }
+}
+
+
+public function bulkUploadTemplate()
+{
+    $headers = [
+        'Name',
+    ];
+
+    $callback = function () use ($headers) {
+        $file = fopen('php://output', 'w');
+
+        fputcsv($file, $headers);
+
+        fclose($file);
+    };
+
+    return response()->streamDownload($callback, 'goods_type_template.csv', [
+        'Content-Type' => 'text/csv',
+    ]);
+}
 
     public function edit(GoodType $goodsType)
     {

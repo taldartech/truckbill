@@ -34,6 +34,9 @@
             </div>
         @endif
 
+
+
+
         <div class="card app-index-list-card mb-4">
             <div class="card-header">
                 <h3 class="card-title mb-0">Truck Owner Management</h3>
@@ -44,6 +47,13 @@
                     <a href="{{ route('reports.transporter-master-export', ['type' => 'owner']) }}" class="btn app-index-header-btn" aria-label="Export truck owners">
                         <i class="fas fa-file-excel"></i> Export
                     </a>
+                     <button type="button"
+                     class="btn app-index-header-btn"
+                     data-bs-toggle="modal"
+                     data-bs-target="#bulkUploadModal"
+                     aria-label="Bulk upload truck owners">
+                    <i class="fas fa-upload"></i> Bulk Upload
+                     </button>
                 </div>
             </div>
             <div class="card-body">
@@ -285,7 +295,15 @@
             </div>
         </div>
     </div>
+
+    @include('shared.bulk-upload-modal', [
+    'title' => 'Bulk Upload Truck Owners',
+    'recordName' => 'truck owners',
+    'uploadUrl' => route('truck_owners.bulk-upload'),
+    'templateUrl' => route('truck_owners.bulk-upload-template'),
+])
 @endsection
+
 
 @push('scripts')
     <!-- DataTables JS -->

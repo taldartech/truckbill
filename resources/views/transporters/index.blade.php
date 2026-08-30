@@ -46,307 +46,15 @@
                     </a>
               
 
-<button type="button"
-        class="btn app-index-header-btn"
-        data-bs-toggle="modal"
-        data-bs-target="#bulkUploadModal"
-        aria-label="Bulk upload transporters">
-    <i class="fas fa-upload"></i> Bulk Upload
-</button>
-   </div>
-</div> 
-<!-- BULK UPLOAD MODAL -->
-<div class="modal fade" id="bulkUploadModal" tabindex="-1" aria-hidden="true">
-
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-
-        <div class="modal-content shadow border-0 rounded-3">
-
-            <!-- HEADER -->
-          <!-- HEADER -->
-<div class="modal-header px-4 py-3">
-
-    <h4 class="modal-title fw-bold mb-0">
-        <i class="fas fa-upload me-2 text-success"></i>
-        Bulk Upload Transporters
-    </h4>
-
-    <div class="d-flex align-items-center ms-auto gap-3">
-
-        <!-- DOWNLOAD TEMPLATE -->
-        <a href="{{ route('transporters.bulk-upload-template') }}"
-           class="btn btn-outline-success">
-            <i class="fas fa-download me-1"></i>
-            Download Template
-        </a>
-
-        <!-- CLOSE -->
-        <button type="button"
-                class="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close">
-        </button>
-
-    </div>
-
-</div>
-
-            <!-- BODY -->
-            <div class="modal-body px-4 py-4">
-
-                <!-- INFO -->
-                <div class="alert alert-info d-flex align-items-center mb-4">
-
-                    <i class="fas fa-info-circle me-2"></i>
-
-                    <span>
-                        Upload an Excel or CSV file to import multiple
-                        transporters at once.
-                    </span>
-
-                </div>
-
-
-                <!-- STEP 1 -->
-                <div class="mb-4">
-
-                    <div class="d-flex align-items-center mb-3">
-
-                        <span class="badge bg-success rounded-circle
-                                     d-flex align-items-center justify-content-center
-                                     me-2"
-                              style="width:30px;height:30px;">
-                            1
-                        </span>
-
-                        <strong>
-                            Choose File
-                        </strong>
-
-                    </div>
-
-
-                    <form id="bulkUploadForm"
-                          action="{{ route('transporters.bulk-upload') }}"
-                          method="POST"
-                          enctype="multipart/form-data">
-
-                        @csrf
-
-
-                        <!-- FILE INPUT -->
-                        <div class="input-group">
-
-                            <span class="input-group-text bg-white">
-                                <i class="far fa-file-alt text-secondary"></i>
-                            </span>
-
-
-                            <input type="text"
-                                   id="uploadFileName"
-                                   class="form-control"
-                                   value="No file selected"
-                                   readonly>
-
-
-                            <label for="bulkUploadFile"
-                                   class="btn btn-outline-secondary mb-0">
-
-                                <i class="fas fa-folder-open me-1"></i>
-                                Choose File
-
-                            </label>
-
-
-                            <input type="file"
-                                   id="bulkUploadFile"
-                                   name="file"
-                                   accept=".xlsx,.xls,.csv"
-                                   class="d-none">
-
-                        </div>
-
-
-                        <div class="form-text mt-2">
-
-                            <i class="fas fa-info-circle me-1"></i>
-
-                            Allowed file types: .xlsx, .xls, .csv
-                            (Maximum 10 MB)
-
-                        </div>
-
-                    </form>
-
-                </div>
-
-
-                <!-- STEP 2 -->
-                <div class="mb-2">
-
-                    <div class="d-flex align-items-center mb-3">
-
-                        <span class="badge bg-success rounded-circle
-                                     d-flex align-items-center justify-content-center
-                                     me-2"
-                              style="width:30px;height:30px;">
-                            2
-                        </span>
-
-                        <strong>
-                            Upload Progress
-                        </strong>
-
-                    </div>
-
-
-                    <!-- PROGRESS -->
-                    <div id="uploadProgressContainer"
-                         class="border rounded-3 p-3 bg-light"
-                         style="display:none;">
-
-                        <!-- PROGRESS BAR -->
-                        <div class="d-flex align-items-center gap-3">
-
-                            <div class="progress flex-grow-1"
-                                 style="height:12px;">
-
-                                <div id="uploadProgressBar"
-                                     class="progress-bar progress-bar-striped progress-bar-animated bg-success"
-                                     role="progressbar"
-                                     style="width:0%;">
-
-                                </div>
-
-                            </div>
-
-
-                            <span id="uploadPercentage"
-                                  class="fw-semibold text-success">
-
-                                0%
-
-                            </span>
-
-                        </div>
-
-
-                        <!-- STATUS -->
-                        <div id="uploadStatus"
-                             class="fw-semibold mt-3">
-
-                        </div>
-
-
-                        <!-- MESSAGE -->
-                        <div id="uploadMessage"
-                             class="small text-muted mt-1">
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- FOOTER -->
-            <div class="modal-footer px-4 py-3">
-
-               
-
-
-                <button type="button"
-                        id="startUploadBtn"
-                        class="btn btn-success">
-
-                    <i class="fas fa-upload me-1"></i>
-
-                    Upload
-
+               <button type="button"
+                class="btn app-index-header-btn"
+                data-bs-toggle="modal"
+                data-bs-target="#transporterBulkUploadModal">
+               <i class="fas fa-upload"></i> Bulk Upload
                 </button>
-
             </div>
+        </div> 
 
-
-            <!-- SECURITY -->
-            <div class="border-top text-center text-muted small py-3">
-
-                <i class="fas fa-lock me-1"></i>
-
-                Your data is secure and will not be shared
-                with any third party.
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- CANCEL CONFIRMATION MODAL -->
-<div class="modal fade"
-     id="cancelUploadModal"
-     tabindex="-1"
-     aria-hidden="true">
-
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-
-        <div class="modal-content border-0 shadow rounded-3">
-
-            <div class="modal-body text-center p-4">
-
-                <div class="text-warning mb-3">
-
-                    <i class="fas fa-exclamation-triangle fa-3x"></i>
-
-                </div>
-
-
-                <h5 class="fw-bold">
-                    Cancel Upload?
-                </h5>
-
-
-                <p class="text-muted small mb-4">
-
-                    Are you sure you want to cancel this upload?
-                    The selected file will be removed.
-
-                </p>
-
-
-                <div class="d-flex justify-content-center gap-2">
-
-                    <button type="button"
-                            class="btn btn-light border"
-                            data-bs-dismiss="modal">
-
-                        No, Keep File
-
-                    </button>
-
-
-                    <button type="button"
-                            id="confirmCancelUploadBtn"
-                            class="btn btn-danger">
-
-                        Yes, Cancel
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="transportersTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
@@ -459,6 +167,14 @@
         </div>
     </div>
 @endsection
+
+@include('shared.bulk-upload-modal', [
+    'modalId' => 'transporterBulkUploadModal',
+    'title' => 'Bulk Upload Transporters',
+    'templateUrl' => route('transporters.bulk-upload-template'),
+    'uploadUrl' => route('transporters.bulk-upload'),
+    'recordName' => 'transporters',
+])
 
 @push('scripts')
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
@@ -1817,6 +1533,14 @@ document.addEventListener('DOMContentLoaded', function () {
             false;
 
     }
+
+    const bulkUploadModal = document.getElementById('bulkUploadModal');
+
+if (bulkUploadModal) {
+    bulkUploadModal.addEventListener('hidden.bs.modal', function () {
+        resetUpload();
+    });
+}
 
 
     /*

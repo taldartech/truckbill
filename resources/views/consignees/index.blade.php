@@ -22,9 +22,16 @@
         <div class="card-header">
             <h3 class="card-title mb-0">Consignees / Consignors / Customers</h3>
             <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+
                 <a href="{{ route('consignees.create') }}" class="btn app-index-header-btn" aria-label="Create consignee">
                     <i class="fas fa-plus"></i> Create
                 </a>
+                <button type="button"
+               class="btn app-index-header-btn"
+               data-bs-toggle="modal"
+               data-bs-target="#consigneeBulkUploadModal">
+               <i class="fas fa-upload"></i> Bulk Upload
+               </button>
             </div>
         </div>
         <div class="card-body">
@@ -77,6 +84,27 @@
         </div>
     </div>
 </div>
+
+
+@include('shared.bulk-upload-modal', [
+    'modalId' => 'consigneeBulkUploadModal',
+    'title' => 'Bulk Upload Consignees',
+    'uploadUrl' => route('consignees.bulkUpload'),
+    'templateUrl' => route('consignees.bulkUploadTemplate'),
+    'recordName' => 'consignees',
+
+    'columns' => [
+        ['name' => 'Consignee Name', 'format' => 'Text', 'required' => true],
+        ['name' => 'Contact Number', 'format' => '10-digit number', 'required' => true],
+        ['name' => 'Country', 'format' => 'Country name', 'required' => true],
+        ['name' => 'State', 'format' => 'State name', 'required' => true],
+        ['name' => 'City', 'format' => 'City name', 'required' => true],
+        ['name' => 'Email', 'format' => 'Valid email address', 'required' => false],
+        ['name' => 'GST Number', 'format' => 'GST number', 'required' => false],
+        ['name' => 'PAN Number', 'format' => 'PAN number', 'required' => false],
+        ['name' => 'Address', 'format' => 'Text', 'required' => false],
+    ],
+])
 @endsection
 
 @push('scripts')

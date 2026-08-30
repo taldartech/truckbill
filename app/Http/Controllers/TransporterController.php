@@ -46,71 +46,42 @@ class TransporterController extends Controller
     }
 
 
-    public function bulkUpload(Request $request)
+  public function bulkUpload(Request $request)
 {
-    $validator = Validator::make($request->all(), [
+    $request->validate([
         'file' => [
             'required',
             'file',
-             'extensions:xlsx,xls,csv',
+            'mimes:xlsx,xls,csv',
             'max:10240',
         ],
     ]);
 
-    if ($validator->fails()) {
+    try {
+        $import = new \App\Imports\TransporterImport();
+
+        \Maatwebsite\Excel\Facades\Excel::import(
+            $import,
+            $request->file('file')
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => $import->successCount .
+                ' transporter(s) imported successfully.',
+            'imported' => $import->successCount,
+            'failed' => count($import->errors),
+            'errors' => $import->errors,
+        ]);
+
+    } catch (\Throwable $e) {
+
         return response()->json([
             'success' => false,
-            'message' => 'File validation failed.',
-            'errors' => $validator->errors()->all(),
+            'message' => 'Bulk upload failed.',
+            'error' => $e->getMessage(),
         ], 422);
     }
-
-   try {
-
-    // Laravel will automatically inject the required dependencies
-    $import = app(TransporterImport::class);
-
-    Excel::import(
-        $import,
-        $request->file('file')
-    );
-
-    // Validation/import errors
-   if (!empty($import->errors)) {
-
-    return response()->json([
-        'success' => $import->successCount > 0,
-        'partial_success' => $import->successCount > 0,
-        'message' => $import->successCount > 0
-            ? $import->successCount . ' transporter(s) imported successfully. Some rows have errors.'
-            : 'No transporter records were imported.',
-        'success_count' => $import->successCount,
-        'errors' => $import->errors,
-    ], 200);
-}
-
-    // Everything imported successfully
-    return response()->json([
-        'success' => true,
-        'message' => $import->successCount .
-            ' transporter(s) imported successfully.',
-        'success_count' => $import->successCount,
-        'errors' => [],
-    ]);
-
-} catch (\Throwable $e) {
-
-    // Technical/server error
-    \Log::error('Transporter bulk upload failed', [
-        'error' => $e->getMessage(),
-        'trace' => $e->getTraceAsString(),
-    ]);
-
-    return response()->json([
-        'success' => false,
-        'message' => 'Unable to process the file. Please check the file and try again.',
-    ], 500);
-}
 }
 
 
@@ -135,15 +106,22 @@ public function bulkUploadTemplate()
         'Advance Amount',
     ];
 
-    return response()->streamDownload(function () use ($headers) {
-        $handle = fopen('php://output', 'w');
+    $callback = function () use ($headers) {
 
-        fputcsv($handle, $headers);
+        $file = fopen('php://output', 'w');
 
-        fclose($handle);
-    }, 'transporter-bulk-upload-template.csv', [
-        'Content-Type' => 'text/csv',
-    ]);
+        fputcsv($file, $headers);
+
+        fclose($file);
+    };
+
+    return response()->streamDownload(
+        $callback,
+        'transporter_template.csv',
+        [
+            'Content-Type' => 'text/csv',
+        ]
+    );
 }
 
 

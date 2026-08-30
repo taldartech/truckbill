@@ -25,6 +25,14 @@
                 <button type="button" class="btn app-index-header-btn" data-bs-toggle="modal" data-bs-backdrop="false" data-bs-target="#addDriverModal" aria-label="Create driver">
                     <i class="fas fa-plus"></i> Create
                 </button>
+
+                <button type="button"
+        class="btn app-index-header-btn"
+        data-bs-toggle="modal"
+        data-bs-target="#driverBulkUploadModal">
+    <i class="fas fa-upload"></i>
+    Bulk Upload
+</button>
             </div>
         </div>
         <div class="card-body">
@@ -149,6 +157,42 @@
         </div>
     </div>
 </div>
+
+@include('shared.bulk-upload-modal', [
+    'modalId' => 'driverBulkUploadModal',
+    'uploadUrl' => route('drivers.bulkUpload'),
+    'templateUrl' => route('drivers.bulkUploadTemplate'),
+    'title' => 'Bulk Upload Drivers',
+    'recordName' => 'drivers',
+
+    'requiredColumns' => [
+        [
+            'name' => 'Name',
+            'format' => 'Text',
+        ],
+        [
+            'name' => 'Mobile',
+            'format' => '10-digit number',
+        ],
+    ],
+
+    'optionalColumns' => [
+        [
+            'name' => 'License Number',
+            'format' => 'Text',
+        ],
+        [
+            'name' => 'Address',
+            'format' => 'Text',
+        ],
+    ],
+     'columns' => [
+        ['name' => 'Name', 'format' => 'Text', 'required' => true],
+        ['name' => 'Mobile', 'format' => '10-digit number', 'required' => true],
+        ['name' => 'License Number', 'format' => 'Text', 'required' => false],
+        ['name' => 'Address', 'format' => 'Text', 'required' => false],
+    ],
+])
 @endsection
 
 @push('scripts')

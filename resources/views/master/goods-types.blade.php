@@ -22,6 +22,15 @@
                 <a href="{{ route('master.goods-types.create') }}" class="btn app-index-header-btn" aria-label="Create goods type">
                     <i class="fas fa-plus"></i> Create
                 </a>
+
+    <button type="button"
+        class="btn app-index-header-btn"
+        data-bs-toggle="modal"
+        data-bs-target="#goodsTypeBulkUploadModal">
+    <i class="fas fa-upload"></i> Bulk Upload
+</button>
+
+</div>
             </div>
         </div>
         <div class="card-body">
@@ -44,7 +53,20 @@
         </div>
     </div>
 </div>
+
 @endsection
+
+
+@include('shared.bulk-upload-modal', [
+    'modalId' => 'goodsTypeBulkUploadModal',
+    'title' => 'Bulk Upload Goods Types',
+    'templateUrl' => route('master.goods-types.bulk-upload.template'),
+    'uploadUrl' => route('master.goods-types.bulk-upload'),
+    'recordName' => 'goods types',
+       'columns' => [
+        ['name' => 'Goods Type Name', 'format' => 'Text', 'required' => true],
+    ],
+])
 
 @push('scripts')
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>

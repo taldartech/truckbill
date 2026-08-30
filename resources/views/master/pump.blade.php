@@ -22,6 +22,14 @@
                 <a href="{{ route('master.pump.create') }}" class="btn app-index-header-btn" aria-label="Create pump">
                     <i class="fas fa-plus"></i> Create
                 </a>
+               
+    <button type="button"
+            class="btn app-index-header-btn"
+            data-bs-toggle="modal"
+            data-bs-target="#pumpBulkUploadModal">
+        <i class="fas fa-upload"></i> Bulk Upload
+    </button>
+
             </div>
         </div>
         <div class="card-body">
@@ -47,6 +55,21 @@
     </div>
 </div>
 @endsection
+
+@include('shared.bulk-upload-modal', [
+    'modalId' => 'pumpBulkUploadModal',
+    'title' => 'Bulk Upload Pumps',
+    'templateUrl' => route('master.pump.bulk-upload.template'),
+    'uploadUrl' => route('master.pump.bulk-upload'),
+    'recordName' => 'pumps',
+
+    'columns' => [
+        ['name' => 'Pump Name', 'format' => 'Text', 'required' => true],
+        ['name' => 'Contact Name', 'format' => 'Text', 'required' => true],
+        ['name' => 'Contact Number', 'format' => 'Text', 'required' => true],
+        ['name' => 'Remark', 'format' => 'Text', 'required' => false],
+    ],
+])
 
 @push('scripts')
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>

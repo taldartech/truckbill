@@ -8,6 +8,7 @@ use App\Models\Pump;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use App\Imports\PumpImport;
 
 class PumpController extends Controller
 {
@@ -182,6 +183,63 @@ class PumpController extends Controller
         $pump->delete();
         return redirect()->route('master.pump.index')->with('success', 'Pump deleted successfully');
     }
+
+    public function bulkUpload(Request $request)
+{
+    $request->validate([
+        'file' => [
+            'required',
+            'file',
+            'mimes:xlsx,xls,csv',
+            'max:10240',
+        ],
+    ]);
+
+    try {
+        $import = new PumpImport();
+
+        \Maatwebsite\Excel\Facades\Excel::import(
+            $import,
+            $request->file('file')
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => $import->imported . ' pump(s) imported successfully.',
+            'imported' => $import->imported,
+            'failed' => count($import->errors),
+            'errors' => $import->errors,
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Bulk upload failed.',
+            'error' => $e->getMessage(),
+        ], 422);
+    }
+}
+
+public function bulkUploadTemplate()
+{
+    $headers = [
+        'Pump Name',
+        'Contact Name',
+        'Contact Number',
+        'Remark',
+    ];
+
+    $callback = function () use ($headers) {
+        $file = fopen('php://output', 'w');
+
+        fputcsv($file, $headers);
+
+        fclose($file);
+    };
+
+    return response()->streamDownload($callback, 'pump_template.csv', [
+        'Content-Type' => 'text/csv',
+    ]);
+}
 
     public function show(Pump $pump)
     {

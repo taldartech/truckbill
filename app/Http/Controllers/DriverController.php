@@ -5,6 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
+use App\Imports\DriverImport;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
+
 class DriverController extends Controller
 {
     public function index(Request $request)
@@ -223,5 +229,105 @@ class DriverController extends Controller
         return redirect()->route('drivers.index')->with('success', 'Driver deleted successfully!');
     }
 
+
+   public function bulkUpload(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'file' => [
+            'required',
+            'file',
+            'mimes:xlsx,xls,csv',
+            'max:10240',
+        ],
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'File validation failed.',
+            'errors' => $validator->errors()->all(),
+        ], 422);
+    }
+
+    try {
+
+        $import = new DriverImport();
+
+        Excel::import(
+            $import,
+            $request->file('file')
+        );
+
+        /*
+         * ERRORS FOUND
+         */
+        if (!empty($import->errors)) {
+
+            return response()->json([
+                'success' => $import->successCount > 0,
+                'partial_success' => $import->successCount > 0,
+
+                'message' => $import->successCount > 0
+                    ? $import->successCount . ' driver(s) imported successfully. Some rows have errors.'
+                    : 'No driver records were imported.',
+
+                'success_count' => $import->successCount,
+                'imported' => $import->successCount,
+
+                'errors' => $import->errors,
+            ]);
+        }
+
+        /*
+         * EVERYTHING SUCCESSFUL
+         */
+       return response()->json([
+    'success' => true,
+
+    'message' => $import->successCount
+        . ' driver(s) imported successfully.',
+
+    'success_count' => $import->successCount,
+    'imported' => $import->successCount,
+
+    'errors' => [],
+]);
+
+    } catch (\Throwable $e) {
+
+        Log::error('Driver bulk upload failed', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Unable to process the file. Please check the file and try again.',
+        ], 500);
+    }
+}
+
+
+public function bulkUploadTemplate()
+{
+    $headers = [
+        'Name',
+        'Mobile',
+        'License Number',
+        'Address',
+    ];
+
+    return response()->streamDownload(function () use ($headers) {
+
+        $handle = fopen('php://output', 'w');
+
+        fputcsv($handle, $headers);
+
+        fclose($handle);
+
+    }, 'driver-bulk-upload-template.csv', [
+        'Content-Type' => 'text/csv',
+    ]);
+}    
     //
 }

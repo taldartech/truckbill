@@ -26,6 +26,17 @@
                     <a href="{{ route('trucks.create') }}" class="btn app-index-header-btn" aria-label="Add truck">
                         <i class="fas fa-plus"></i> Add Truck
                     </a>
+
+
+                     <button
+                     type="button"
+                      class="btn app-index-header-btn"
+                     data-bs-toggle="modal"
+                     data-bs-target="#truckBulkUploadModal"
+                          >
+                    <i class="fas fa-upload"></i>
+                    Bulk Upload
+                </button>
                 @endif
             </div>
         </div>
@@ -722,9 +733,26 @@ $(document).ready(function() {
 </script>
 @endpush
 
+
 @push('scripts')
 <!-- Select2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 @endpush
+
+@include('shared.bulk-upload-modal', [
+    'modalId' => 'truckBulkUploadModal',
+    'title' => 'Bulk Upload Trucks',
+    'uploadUrl' => route('trucks.bulkUpload'),
+    'templateUrl' => route('trucks.bulkUploadTemplate'),
+    'recordName' => 'trucks',
+
+    'columns' => [
+    ['name' => 'Truck Number', 'format' => 'Valid truck number, e.g. MH12AB1234', 'required' => true],
+    ['name' => 'Truck Type', 'format' => 'Valid truck type', 'required' => true],
+    ['name' => 'Registration Date', 'format' => 'DD-MM-YYYY or YYYY-MM-DD', 'required' => true],
+    ['name' => 'Truck Owner', 'format' => 'Existing owner name', 'required' => false],
+    ['name' => 'Driver', 'format' => 'Existing driver name', 'required' => false],
+],
+])
 
 @endsection

@@ -18,7 +18,7 @@
                     <div class="invalid-feedback">Please enter a name.</div>
                 </div>
                 <div class="col-md-6">
-                    <label for="mobile" class="form-label">Mobile</label>
+                    <label for="mobile" class="form-label">Mobile *</label>
                     <input type="text" class="form-control" id="mobile" name="mobile" value="{{ old('mobile') }}">
                     @error('mobile') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter a valid mobile number.</div>
