@@ -294,13 +294,6 @@ class ConsigneeController extends Controller
             }
         }
 
-        // Check GST number
-        if (! empty($data['gst_number'])) {
-            if ($query->clone()->where('gst_number', $data['gst_number'])->exists()) {
-                $errors['gst_number'] = 'This GST number is already used by another consignee in your company.';
-            }
-        }
-
         // Check PAN number
         if (! empty($data['pan_number'])) {
             if ($query->clone()->where('pan_number', $data['pan_number'])->exists()) {
@@ -417,13 +410,6 @@ class ConsigneeController extends Controller
         if (! empty($data['email'])) {
             if ($query->clone()->where('email', $data['email'])->exists()) {
                 $errors['email'] = 'This email is already used by another consignee in your company.';
-            }
-        }
-
-        // Check GST number
-        if (! empty($data['gst_number'])) {
-            if ($query->clone()->where('gst_number', $data['gst_number'])->exists()) {
-                $errors['gst_number'] = 'This GST number is already used by another consignee in your company.';
             }
         }
 

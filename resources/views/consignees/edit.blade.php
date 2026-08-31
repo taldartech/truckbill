@@ -46,7 +46,7 @@
         @csrf
         @method('PUT')
         <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
-        
+
         <div class="card-body">
             <!-- Basic Details -->
             <div class="row mb-3">
@@ -65,9 +65,9 @@
                     <input placeholder="Enter Email" type="email" class="form-control" id="email" name="email" value="{{ old('email', $consignee->email) }}">
                     @error('email') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-                
+
             </div>
-            
+
             <div class="row mb-3">
             <div class="col-md-4">
                     <label for="gst_number" class="form-label">GST Number</label>
@@ -81,7 +81,7 @@
                     <div class="invalid-feedback" id="pan_number_feedback"></div>
                     @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-                
+
             </div>
             <!-- Location Details -->
             <div class="row mb-3">
@@ -141,17 +141,17 @@
                     @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
             </div>
-            
+
             <div class="row mb-3">
                 <div class="col-md-8">
                     <label for="address" class="form-label">Address</label>
                     <input placeholder="Enter Address" type="text" class="form-control" id="address" name="address" value="{{ old('address', $consignee->address) }}">
                     @error('address') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-               
+
             </div>
         </div>
-        
+
         <div class="card-footer">
             <button class="btn btn-success" type="submit">
                 <i class="bi bi-check-circle"></i> Update Consignee
@@ -173,7 +173,7 @@
     function showSuccessMessage(message) {
         // Remove any existing alerts
         $('.alert-success').remove();
-        
+
         // Create and show success alert
         const alertHtml = `
             <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
@@ -181,14 +181,14 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         `;
-        
+
         // Insert after the page title or at the top of the form
         if ($('.card-header').length) {
             $('.card-header').after(alertHtml);
         } else {
             $('form').before(alertHtml);
         }
-        
+
         // Auto-hide after 5 seconds
         setTimeout(function() {
             $('.alert-success').fadeOut();
@@ -199,7 +199,7 @@
     function showErrorMessage(message) {
         // Remove any existing alerts
         $('.alert-danger').remove();
-        
+
         // Create and show error alert
         const alertHtml = `
             <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
@@ -207,7 +207,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         `;
-        
+
         // Insert after the page title or at the top of the form
         if ($('.card-header').length) {
             $('.card-header').after(alertHtml);
@@ -221,7 +221,7 @@
         $('#country_id').change(function() {
             const countryId = $(this).val();
             $('#country_id_hidden').val(countryId);
-            
+
             if (countryId) {
                 $.ajax({
                     url: '/api/states/' + countryId,
@@ -229,7 +229,7 @@
                     success: function(data) {
                         $('#state_id').empty().append('<option value="">Select State</option>');
                         $('#city_id').empty().append('<option value="">Select City</option>');
-                        
+
                         data.forEach(function(state) {
                             $('#state_id').append('<option value="' + state.id + '">' + state.name + '</option>');
                         });
@@ -248,14 +248,14 @@
         $('#state_id').change(function() {
             const stateId = $(this).val();
             $('#state_id_hidden').val(stateId);
-            
+
             if (stateId) {
                 $.ajax({
                     url: '/api/cities/' + stateId,
                     type: 'GET',
                     success: function(data) {
                         $('#city_id').empty().append('<option value="">Select City</option>');
-                        
+
                         data.forEach(function(city) {
                             $('#city_id').append('<option value="' + city.id + '">' + city.name + '</option>');
                         });
@@ -276,7 +276,7 @@
         // Handle Country Modal Form Submission
         $('#addCountryModal form').on('submit', function(e) {
             e.preventDefault();
-            
+
             $.ajax({
                 url: $(this).attr('action'),
                 method: 'POST',
@@ -284,11 +284,11 @@
                 success: function(response) {
                     if (response.success) {
                         $('#country_id').append(`<option value="${response.country.id}">${response.country.name}</option>`);
-                        
+
                         // Add new country to modal dropdowns
                         $('#state_country_id').append(`<option value="${response.country.id}">${response.country.name}</option>`);
                         $('#city_country_id').append(`<option value="${response.country.id}">${response.country.name}</option>`);
-                        
+
                         $('#country_id').val(response.country.id);
                         $('#addCountryModal').modal('hide');
                         $('.modal-backdrop').remove();
@@ -313,7 +313,7 @@
         // Handle State Modal Form Submission
         $('#addStateModal form').on('submit', function(e) {
             e.preventDefault();
-            
+
             $.ajax({
                 url: $(this).attr('action'),
                 method: 'POST',
@@ -321,10 +321,10 @@
                 success: function(response) {
                     if (response.success) {
                         $('#state_id').append(`<option value="${response.state.id}">${response.state.name}</option>`);
-                        
+
                         // Add new state to city modal dropdown
                         $('#city_state_id').append(`<option value="${response.state.id}">${response.state.name}</option>`);
-                        
+
                         $('#state_id').val(response.state.id);
                         $('#addStateModal').modal('hide');
                         $('.modal-backdrop').remove();
@@ -349,7 +349,7 @@
         // Handle City Modal Form Submission
         $('#addCityModal form').on('submit', function(e) {
             e.preventDefault();
-            
+
             $.ajax({
                 url: $(this).attr('action'),
                 method: 'POST',
@@ -382,9 +382,9 @@
         $('#city_country_id').on('change', function() {
             const countryId = $(this).val();
             const stateSelect = $('#city_state_id');
-            
+
             stateSelect.html('<option value="">Select State</option>');
-            
+
             if (countryId) {
                 $.get(`/api/states/${countryId}`)
                     .done(function(states) {
@@ -524,7 +524,7 @@
         function showSuccessMessage(message) {
             // Remove any existing alerts
             $('.alert-success').remove();
-            
+
             // Create and show success alert
             const alertHtml = `
                 <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
@@ -532,14 +532,14 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             `;
-            
+
             // Insert after the page title or at the top of the form
             if ($('.card-header').length) {
                 $('.card-header').after(alertHtml);
             } else {
                 $('form').before(alertHtml);
             }
-            
+
             // Auto-hide after 5 seconds
             setTimeout(function() {
                 $('.alert-success').fadeOut();
@@ -550,7 +550,7 @@
         function showErrorMessage(message) {
             // Remove any existing alerts
             $('.alert-danger').remove();
-            
+
             // Create and show error alert
             const alertHtml = `
                 <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
@@ -558,7 +558,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             `;
-            
+
             // Insert after the page title or at the top of the form
             if ($('.card-header').length) {
                 $('.card-header').after(alertHtml);
@@ -570,7 +570,7 @@
         // Handle country change
         $('#country_id').change(function() {
             const countryId = $(this).val();
-            
+
             if (countryId) {
                 $.ajax({
                     url: '/api/states/' + countryId,
@@ -578,7 +578,7 @@
                     success: function(data) {
                         $('#state_id').empty().append('<option value="">Select State</option>');
                         $('#city_id').empty().append('<option value="">Select City</option>');
-                        
+
                         data.forEach(function(state) {
                             $('#state_id').append('<option value="' + state.id + '">' + state.name + '</option>');
                         });
@@ -593,14 +593,14 @@
         // Handle state change
         $('#state_id').change(function() {
             const stateId = $(this).val();
-            
+
             if (stateId) {
                 $.ajax({
                     url: '/api/cities/' + stateId,
                     type: 'GET',
                     success: function(data) {
                         $('#city_id').empty().append('<option value="">Select City</option>');
-                        
+
                         data.forEach(function(city) {
                             $('#city_id').append('<option value="' + city.id + '">' + city.name + '</option>');
                         });
@@ -615,7 +615,7 @@
         // Handle Country Modal Form Submission
         $('#addCountryModal form').on('submit', function(e) {
             e.preventDefault();
-            
+
             $.ajax({
                 url: $(this).attr('action'),
                 method: 'POST',
@@ -623,11 +623,11 @@
                 success: function(response) {
                     if (response.success) {
                         $('#country_id').append(`<option value="${response.country.id}">${response.country.name}</option>`);
-                        
+
                         // Add new country to modal dropdowns
                         $('#state_country_id').append(`<option value="${response.country.id}">${response.country.name}</option>`);
                         $('#city_country_id').append(`<option value="${response.country.id}">${response.country.name}</option>`);
-                        
+
                         $('#country_id').val(response.country.id);
                         $('#addCountryModal').modal('hide');
                         $('.modal-backdrop').remove();
@@ -652,7 +652,7 @@
         // Handle State Modal Form Submission
         $('#addStateModal form').on('submit', function(e) {
             e.preventDefault();
-            
+
             $.ajax({
                 url: $(this).attr('action'),
                 method: 'POST',
@@ -660,10 +660,10 @@
                 success: function(response) {
                     if (response.success) {
                         $('#state_id').append(`<option value="${response.state.id}">${response.state.name}</option>`);
-                        
+
                         // Add new state to city modal dropdown
                         $('#city_state_id').append(`<option value="${response.state.id}">${response.state.name}</option>`);
-                        
+
                         $('#state_id').val(response.state.id);
                         $('#addStateModal').modal('hide');
                         $('.modal-backdrop').remove();
@@ -688,7 +688,7 @@
         // Handle City Modal Form Submission
         $('#addCityModal form').on('submit', function(e) {
             e.preventDefault();
-            
+
             $.ajax({
                 url: $(this).attr('action'),
                 method: 'POST',
@@ -721,9 +721,9 @@
         $('#city_country_id').on('change', function() {
             const countryId = $(this).val();
             const stateSelect = $('#city_state_id');
-            
+
             stateSelect.html('<option value="">Select State</option>');
-            
+
             if (countryId) {
                 $.get(`/api/states/${countryId}`)
                     .done(function(states) {
@@ -739,26 +739,26 @@
 
         // Fresh approach using fetch API for modal submissions
         document.addEventListener('DOMContentLoaded', function() {
-            
+
             // Country Modal Handler
             const countryForm = document.getElementById('addCountryForm');
             if (countryForm) {
                 countryForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
-                    
+
                     const submitBtn = this.querySelector('button[type="submit"]');
                     const spinner = submitBtn.querySelector('.spinner-border');
                     const errorDiv = document.getElementById('countryFormErrors');
-                    
+
                     // Show loading
                     submitBtn.disabled = true;
                     spinner?.classList.remove('d-none');
                     errorDiv?.classList.add('d-none');
-                    
+
                     try {
                         const formData = new FormData(this);
                         formData.append('from_modal', '1');
-                        
+
                         const response = await fetch('{{ route("master.countries.store") }}', {
                             method: 'POST',
                             body: formData,
@@ -768,20 +768,20 @@
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                             }
                         });
-                        
+
                         const data = await response.json();
-                        
+
                         if (data.success && data.country) {
                             // Update all dropdowns
                             updateCountryDropdowns(data.country);
-                            
+
                             // Select new country
                             document.getElementById('country_id').value = data.country.id;
                             document.getElementById('country_id').dispatchEvent(new Event('change'));
-                            
+
                             // Clean close modal
                             closeModalClean('addCountryModal');
-                            
+
                             // Reset form
                             this.reset();
                         } else {
@@ -805,20 +805,20 @@
             if (stateForm) {
                 stateForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
-                    
+
                     const submitBtn = this.querySelector('button[type="submit"]');
                     const spinner = submitBtn.querySelector('.spinner-border');
                     const errorDiv = document.getElementById('stateFormErrors');
-                    
+
                     // Show loading
                     submitBtn.disabled = true;
                     spinner?.classList.remove('d-none');
                     errorDiv?.classList.add('d-none');
-                    
+
                     try {
                         const formData = new FormData(this);
                         formData.append('from_modal', '1');
-                        
+
                         const response = await fetch('{{ route("master.states.store") }}', {
                             method: 'POST',
                             body: formData,
@@ -828,20 +828,20 @@
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                             }
                         });
-                        
+
                         const data = await response.json();
-                        
+
                         if (data.success && data.state) {
                             // Update dropdowns
                             updateStateDropdowns(data.state);
-                            
+
                             // Select new state
                             document.getElementById('state_id').value = data.state.id;
                             document.getElementById('state_id').dispatchEvent(new Event('change'));
-                            
+
                             // Clean close modal
                             closeModalClean('addStateModal');
-                            
+
                             // Reset form
                             this.reset();
                         } else {
@@ -865,20 +865,20 @@
             if (cityForm) {
                 cityForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
-                    
+
                     const submitBtn = this.querySelector('button[type="submit"]');
                     const spinner = submitBtn.querySelector('.spinner-border');
                     const errorDiv = document.getElementById('cityFormErrors');
-                    
+
                     // Show loading
                     submitBtn.disabled = true;
                     spinner?.classList.remove('d-none');
                     errorDiv?.classList.add('d-none');
-                    
+
                     try {
                         const formData = new FormData(this);
                         formData.append('from_modal', '1');
-                        
+
                         const response = await fetch('{{ route("master.cities.store") }}', {
                             method: 'POST',
                             body: formData,
@@ -888,20 +888,20 @@
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                             }
                         });
-                        
+
                         const data = await response.json();
-                        
+
                         if (data.success && data.city) {
                             // Update dropdown
                             updateCityDropdown(data.city);
-                            
+
                             // Select new city
                             document.getElementById('city_id').value = data.city.id;
                             document.getElementById('city_id').dispatchEvent(new Event('change'));
-                            
+
                             // Clean close modal
                             closeModalClean('addCityModal');
-                            
+
                             // Reset form
                             this.reset();
                         } else {
@@ -919,10 +919,10 @@
                     }
                 });
             }
-            
+
             // Note: The country, state, and city cascading selects are handled by dynamic-dropdowns.js
             // No need for duplicate event listeners here
-            
+
             // GST and PAN number validation
             const gstNumberInput = document.getElementById('gst_number');
             const panNumberInput = document.getElementById('pan_number');
@@ -933,7 +933,7 @@
             let gstValid = true;
             let panValid = true;
             const consigneeId = {{ $consignee->id }}; // Current consignee ID for exclusion
-            
+
             // Form validation
             const consigneeForm = document.getElementById('consigneeForm');
             if (consigneeForm) {
@@ -946,15 +946,15 @@
                     }
                 });
             }
-            
+
             // Check GST number availability with debounce
             if (gstNumberInput) {
                 gstNumberInput.addEventListener('input', function() {
                     const gstNumber = this.value.trim().toUpperCase();
                     this.value = gstNumber; // Force uppercase
-                    
+
                     clearTimeout(gstTimeout);
-                    
+
                     if (gstNumber.length > 0) {
                         gstTimeout = setTimeout(() => {
                             validateGstNumber(gstNumber, consigneeId);
@@ -966,15 +966,15 @@
                     }
                 });
             }
-            
+
             // Check PAN number availability with debounce
             if (panNumberInput) {
                 panNumberInput.addEventListener('input', function() {
                     const panNumber = this.value.trim().toUpperCase();
                     this.value = panNumber; // Force uppercase
-                    
+
                     clearTimeout(panTimeout);
-                    
+
                     if (panNumber.length === 10) { // Only validate complete PAN numbers
                         panTimeout = setTimeout(() => {
                             validatePanNumber(panNumber, consigneeId);
@@ -986,51 +986,18 @@
                     }
                 });
             }
-            
-            // Validate GST number against API
-            function validateGstNumber(gstNumber, excludeId) {
-                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                
-                fetch('/api/validate/gst-number', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    },
-                    body: JSON.stringify({ 
-                        gst_number: gstNumber,
-                        exclude_id: excludeId
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.available) {
-                        gstNumberInput.classList.add('is-invalid');
-                        gstFeedback.textContent = 'This GST Number is already in use';
-                        gstValid = false;
-                    } else {
-                        gstNumberInput.classList.remove('is-invalid');
-                        gstFeedback.textContent = '';
-                        gstValid = true;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error checking GST number:', error);
-                    gstValid = true; // Default to valid on error to not block submission
-                });
-            }
-            
+
             // Validate PAN number against API
             function validatePanNumber(panNumber, excludeId) {
                 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                
+
                 fetch('/api/validate/pan-number', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken
                     },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         pan_number: panNumber,
                         exclude_id: excludeId
                     })
@@ -1052,17 +1019,17 @@
                     panValid = true; // Default to valid on error to not block submission
                 });
             }
-            
+
             // Handle city change with validation
             $('#city_id').on('change', function() {
                 const cityId = $(this).val();
                 const stateId = $('#state_id').val();
                 const countryId = $('#country_id').val();
-                
+
                 // Clear validation errors
                 $(this).removeClass('is-invalid');
                 $(this).next('.invalid-feedback').remove();
-                
+
                 // Additional client-side validation
                 if (cityId && (!stateId || !countryId)) {
                     $(this).addClass('is-invalid');
@@ -1084,7 +1051,7 @@
                 }
             });
         }
-        
+
         function updateStateDropdowns(state) {
             const dropdowns = ['state_id', 'city_state_id'];
             dropdowns.forEach(id => {
@@ -1097,7 +1064,7 @@
                 }
             });
         }
-        
+
         function updateCityDropdown(city) {
             const select = document.getElementById('city_id');
             if (select) {
@@ -1107,14 +1074,14 @@
                 select.appendChild(option);
             }
         }
-        
+
         function closeModalClean(modalId) {
             const modal = document.getElementById(modalId);
             if (modal) {
                 // Use Bootstrap's modal instance
                 const bsModal = bootstrap.Modal.getInstance(modal) || new bootstrap.Modal(modal);
                 bsModal.hide();
-                
+
                 // Clean up after hide completes
                 modal.addEventListener('hidden.bs.modal', function cleanup() {
                     document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
