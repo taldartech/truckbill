@@ -185,7 +185,16 @@
                                     <tbody>
                                         @forelse($memos as $memo)
                                         <tr>
-                                            <td>{{ $memo->memo_id }}</td>
+                                            <td>
+    {{ $memo->memo_id }}
+
+                                    @if($memo->memo_created_at)
+                                    <br>
+                                    <small class="text-muted">
+                                   {{ \Carbon\Carbon::parse($memo->memo_created_at)->format('d-m-Y h:i A') }}
+                                         </small>
+                                          @endif
+                                          </td>
                                             <td>{{ $memo->lr_number }}</td>
                                             <td>{{ $memo->from_location }}</td>
                                             <td>{{ $memo->to_location }}</td>

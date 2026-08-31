@@ -96,11 +96,36 @@ class InvoiceController extends Controller
                     return '<a href="#" class="text-primary invoice-details-link" data-id="'.$row->id.'">'.$invoiceLabel.'</a>';
                 })
                 ->addColumn('memo_numbers', function ($row) {
-                    if (is_array($row->memo_ids)) {
-                        return implode(', ', $row->memo_ids);
-                    }
+                    // if (is_array($row->memo_ids)) {
+                    //     return implode(', ', $row->memo_ids);
+                    // }
+                    if (empty($row->memo_ids)) {
+                  return '-';
+                     }
+                   $memoIds = is_array($row->memo_ids)
+                    ? $row->memo_ids
+                  : [$row->memo_ids];
 
-                    return (string) ($row->memo_ids ?? '-');
+                 $memos = DB::table('lorry_receipts')
+                   ->whereIn('memo_id', $memoIds)
+                   ->select('memo_id', 'memo_created_at')
+                   ->get()
+                   ->keyBy('memo_id');
+
+                    // return (string) ($row->memo_ids ?? '-');
+                    return collect($memoIds)->map(function ($memoId) use ($memos) {
+                    $memo = $memos->get($memoId);
+
+                      $html = '<div>'.e($memoId).'</div>';
+
+                     if ($memo && $memo->memo_created_at) {
+                     $html .= '<small class="text-muted">'
+                    .date('d-m-Y h:i A', strtotime($memo->memo_created_at))
+                    .'</small>';
+                   }
+
+                   return $html;
+                   })->implode('');
                 })
                 ->addColumn('consignee_name', function ($row) {
                     return $row->consignee ? $row->consignee->name : '-';
@@ -136,15 +161,19 @@ class InvoiceController extends Controller
                 ->addColumn('actions', function ($row) {
                     return $this->getActionButtons($row);
                 })
+                
                 ->filterColumn('consignee_name', function ($query, $keyword) {
                     $query->where('consignees.name', 'like', "%{$keyword}%");
                 })
+         
                 ->filterColumn('invoice_link', function ($query, $keyword) {
                     $query->where(function ($subQuery) use ($keyword) {
                         $subQuery->where('invoices.invoice_number', 'like', "%{$keyword}%")
                             ->orWhere('invoices.manual_invoice_number', 'like', "%{$keyword}%");
                     });
+                    
                 })
+              
                 ->filterColumn('paid_amount_formatted', function ($query, $keyword) {
                     $query->whereRaw('COALESCE(invoice_payment_totals.paid_amount_sum, 0) LIKE ?', ["%{$keyword}%"]);
                 })
@@ -155,7 +184,7 @@ class InvoiceController extends Controller
                 ->orderColumn('invoice_link', 'invoices.invoice_number $1')
                 ->orderColumn('paid_amount_formatted', 'paid_amount_sum $1')
                 ->orderColumn('remaining_amount_formatted', 'remaining_amount_value $1')
-                ->rawColumns(['invoice_link', 'payment_status_badge', 'actions', 'remaining_amount_formatted'])
+               ->rawColumns(['invoice_link', 'payment_status_badge', 'actions', 'remaining_amount_formatted', 'memo_numbers'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error('DataTables error: '.$e->getMessage());
@@ -436,7 +465,7 @@ class InvoiceController extends Controller
             $lrIds = $invoice->lr_ids ?? [];
             if (! empty($lrIds)) {
                 $memos = DB::table('lorry_receipts')
-                    ->select('memo_id', 'lr_number', 'source_city as from_location', 'destination_city as to_location', 'fr_rate as rate', 'amount')
+                    ->select('memo_id','memo_created_at', 'lr_number', 'source_city as from_location', 'destination_city as to_location', 'fr_rate as rate', 'amount')
                     ->whereIn('id', $lrIds)
                     ->where('company_id', $invoice->company_id)
                     ->whereNotNull('memo_id')

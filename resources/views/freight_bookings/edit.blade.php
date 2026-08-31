@@ -536,7 +536,12 @@
                             <label class="form-check-label" for="is_delivered">
                                 Delivered
                                 @if (($freightBooking->is_delivered && $lr) || ($lr && $lr->memo_id))
-                                    <small class="text-muted ms-1">Locked (Memo: {{ $lr->memo_id ?? 'N/A' }})</small>
+                                    <small class="text-muted ms-1">Locked (Memo: {{ $lr->memo_id ?? 'N/A' }})
+                                         @if ($lr->memo_created_at)
+                                    <br>
+                           <span style="display: inline-block; margin-left: 82px;">{{ date('d-m-Y h:i A', strtotime($lr->memo_created_at)) }}</span>
+                             @endif
+                                    </small>
                                 @endif
                             </label>
                         </div>
@@ -813,20 +818,20 @@
                 <div class="modal-header">
                     <h5 class="modal-title" id="askMemoModalLabel">
                         <i class="bi bi-journal-text"></i>
-                        Memo ID Confirmation
+                        Memo ID / POD Confirmation
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="fb-confirm-note mb-0">
                         <i class="bi bi-info-circle"></i>
-                        Do you want to enter a Memo ID for this delivery?
+                        Do you want to enter a Memo ID / POD for this delivery?
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-outline-danger" id="noMemoBtn">No, Continue Without Memo</button>
-                    <button type="button" class="btn btn-brand-primary" id="yesMemoBtn">Yes, Enter Memo ID</button>
+                    <button type="button" class="btn btn-outline-danger" id="noMemoBtn">No, Continue Without Memo / POD</button>
+                    <button type="button" class="btn btn-brand-primary" id="yesMemoBtn">Yes, Enter Memo ID / POD</button>
                 </div>
             </div>
         </div>
@@ -840,18 +845,18 @@
                 <div class="modal-header">
                     <h5 class="modal-title" id="memoIdModalLabel">
                         <i class="bi bi-pencil-square"></i>
-                        Enter Memo ID for Delivery
+                        Enter Memo ID / POD for Delivery
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="fb-confirm-note">
                         <i class="bi bi-info-circle"></i>
-                        A Memo ID is required to mark this good hire as delivered.
+                        A Memo ID / POD is required to mark this good hire as delivered.
                     </div>
                     <div class="fb-pay-panel">
                         <div class="fb-pay-panel__head">
-                            <i class="bi bi-hash"></i> Memo Details
+                            <i class="bi bi-hash"></i> Memo / POD Details
                         </div>
                         <div class="fb-pay-panel__body">
                             <form id="memoIdForm">
@@ -859,7 +864,7 @@
                                     <div>
                                         <label for="deliveryMemoId" class="form-label">Memo ID / POD *</label>
                                         <input type="text" class="form-control" id="deliveryMemoId" name="memo_id"
-                                            required placeholder="Enter memo ID" pattern="[A-Za-z0-9\-\/]+">
+                                            required placeholder="Enter memo ID / POD" pattern="[A-Za-z0-9\-\/]+">
                                         <div class="lrf-pf__hint mt-1">Saved to the good receipt (bilty) record.</div>
                                     </div>
                                 </div>
@@ -875,7 +880,7 @@
                     <button type="button" class="btn btn-brand-primary" onclick="saveMemoId()" id="saveMemoBtn">
                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"
                             style="display: none;"></span>
-                        Save Memo ID
+                        Save Memo ID / POD
                     </button>
                 </div>
             </div>
@@ -1054,7 +1059,7 @@
                         document.getElementById('additional-charges-section').style.display = 'block';
 
                         // Show success message
-                        alert('Memo ID saved successfully. Freight booking marked as delivered.');
+                        alert('Memo ID / POD saved successfully. Freight booking marked as delivered.');
 
                         // Optionally reload to reflect changes
                         location.reload();

@@ -38,6 +38,7 @@ class LorryReceipt extends Model implements Auditable
         'actual_amount',
         'gr_date',
         'memo_id',
+        'memo_created_at',
         'lane',
         'damage_amount',
         'shortage_amount',

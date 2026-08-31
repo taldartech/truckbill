@@ -523,6 +523,9 @@ class LorryReceiptController extends Controller
                 foreach ($lorryReceipts as $lr) {
                     $oldDeliveryStatus = $lr->delivery_status;
                     $lr->memo_id = $validated['memo_id'];
+                    if (empty($lr->memo_created_at)) {
+                      $lr->memo_created_at = now();
+                   }
                     $lr->delivery_status = 'Delivered';
                     $lr->save();
 
