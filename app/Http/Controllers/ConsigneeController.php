@@ -272,13 +272,28 @@ public function bulkUploadTemplate()
         $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-action-edit" title="Edit Consignee" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-pencil"></i></a>';
 
-        // Delete button
+       // Delete button
         $deleteUrl = route('consignees.destroy', $consignee->id);
-        $buttons .= '<form action="'.$deleteUrl.'" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this consignee?\')">';
-        $buttons .= csrf_field().method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete Consignee" data-bs-toggle="tooltip">';
-        $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
+        $buttons .= '<form action="'.$deleteUrl.'" method="POST" class="consignee-delete-form">';
+        $buttons .= csrf_field().method_field('DELETE');
+
+        $buttons .= '<button type="button"
+        class="btn btn-sm btn-icon btn-action-delete consignee-delete-btn"
+        title="Delete Consignee"
+        data-bs-toggle="modal"
+        data-bs-target="#consigneeDeleteModal"
+        data-consignee-id="'.$consignee->id.'"
+        data-consignee-name="'.e($consignee->name ?? '-').'"
+        data-consignee-contact="'.e($consignee->contact_number ?? '-').'"
+        data-consignee-city="'.e($consignee->city?->name ?? '-').'"
+        data-consignee-state="'.e($consignee->state?->name ?? '-').'"
+        data-consignee-country="'.e($consignee->country?->name ?? '-').'"
+        data-consignee-address="'.e($consignee->address ?? '-').'">';
+
+        $buttons .= '<i class="bi bi-trash"></i>';
+        $buttons .= '</button>';
+        $buttons .= '</form>';
         $buttons .= '</div>';
 
         return $buttons;
@@ -622,17 +637,25 @@ public function bulkUploadTemplate()
         return 'Existing customer login linked and email sent.';
     }
 
-    public function destroy(Consignee $consignee)
-    {
-        if (Auth::user()->company_id && $consignee->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized access to this consignee.');
-        }
-        $consignee->delete();
-
-        return redirect()->route('consignees.index')
-            ->with('success', 'Consignee deleted successfully!');
+    public function destroy(Request $request, Consignee $consignee)
+{
+    if (Auth::user()->company_id && $consignee->company_id !== Auth::user()->company_id) {
+        abort(403, 'Unauthorized access to this consignee.');
     }
 
+    $request->validate([
+        'delete_remark' => ['required', 'string', 'max:1000'],
+    ]);
+
+    $consignee->deleted_by = Auth::id();
+    $consignee->deleted_remark = $request->input('delete_remark');
+    $consignee->save();
+
+    $consignee->delete();
+
+    return redirect()->route('consignees.index')
+        ->with('success', 'Consignee deleted successfully!');
+}
     /**
      * Get consignee data for API
      * Consolidated method that returns all consignee details

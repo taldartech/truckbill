@@ -251,15 +251,24 @@ class CompanyController extends Controller
             $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-action-edit" title="Edit Company">
                     <i class="bi bi-pencil"></i></a>';
 
-            // Delete button
+           // Delete button
             $deleteUrl = route('company.destroy', $company->id);
-            $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this company?\')">';
+
+            $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" class="company-delete-form">';
             $buttons .= csrf_field().method_field('DELETE');
-            $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete Company">';
-            $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
+           $buttons .= '<button type="button"
+           class="btn btn-sm btn-icon btn-action-delete company-delete-btn"
+           data-bs-toggle="modal"
+           data-bs-target="#companyDeleteModal"
+           data-company-name="'.e($company->name).'"
+           data-company-pan="'.e($company->pan_number ?? '-').'"
+           data-company-address="'.e($company->address ?? '-').'"
+           title="Delete Company">
+           <i class="bi bi-trash"></i>
+           </button>';
+            $buttons .= '</form>';
             $buttons .= '</div>';
-
             return $buttons;
         } else {
             if ($company->is_blocked) {
@@ -274,7 +283,6 @@ class CompanyController extends Controller
                           <i class="bi bi-lock"></i></a>';
             }
             $buttons .= '</div>';
-
             return $buttons;
         }
     }
@@ -455,13 +463,24 @@ class CompanyController extends Controller
         return redirect()->route('company.index')->with('success', 'Company updated successfully!');
     }
 
-    public function destroy($id)
-    {
-        $company = Company::findOrFail($id);
-        $company->delete();
+    public function destroy(Request $request, $id)
+{
+    $request->validate([
+        'delete_remark' => ['required', 'string', 'max:1000'],
+    ]);
 
-        return redirect()->route('company.index')->with('success', 'Company deleted successfully!');
-    }
+    $company = Company::findOrFail($id);
+
+    $company->deleted_by = Auth::id();
+    $company->deleted_remark = $request->input('delete_remark');
+    $company->save();
+
+    $company->delete();
+
+    return redirect()
+        ->route('company.index')
+        ->with('success', 'Company deleted successfully!');
+}
 
     public function create()
     {

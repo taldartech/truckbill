@@ -29,6 +29,8 @@ class Invoice extends Model implements Auditable
         'cgst',
         'igst',
         'lr_ids',
+        'deleted_by',
+        'deleted_remark',
     ];
     protected $casts = [
         'memo_ids' => 'array',

@@ -202,6 +202,7 @@ public function bulkUploadTemplate()
                         'actions' => $this->getActionButtons((object) [
                             'id' => $transporter->id,
                             'transporter_name' => $transporter->transporterMaster?->name,
+                            'transporter_pan_number' => $transporter->transporterMaster?->pan_number, 
                         ]),
                     ];
                 });
@@ -263,6 +264,11 @@ public function bulkUploadTemplate()
                         'actions' => $this->getActionButtons((object) [
                             'id' => $transporter->id,
                             'transporter_name' => $transporter->transporterMaster?->name,
+                        ]),
+                        'actions' => $this->getActionButtons((object) [
+                       'id' => $transporter->id,
+                       'transporter_name' => $transporter->transporterMaster?->name,
+                       'transporter_pan_number' => $transporter->transporterMaster?->pan_number,
                         ]),
                     ];
                 })->filter()->values();
@@ -429,14 +435,22 @@ public function bulkUploadTemplate()
         $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-action-edit" title="Edit Transporter" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-pencil"></i></a>';
 
-        $deleteUrl = route('transporters.destroy', $transporter->id);
-        $buttons .= '<form action="'.$deleteUrl.'" method="POST" onsubmit="return confirm(\'Delete this transporter?\')">';
-        $buttons .= csrf_field().method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete Transporter" data-bs-toggle="tooltip">';
-        $buttons .= '<i class="bi bi-trash"></i></button></form>';
+       $deleteUrl = route('transporters.destroy', $transporter->id);
 
+       $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" class="transporter-delete-form">';
+       $buttons .= csrf_field().method_field('DELETE');
+
+       $buttons .= '<button type="button"
+      class="btn btn-sm btn-icon btn-action-delete transporter-delete-btn"
+      data-bs-toggle="modal"
+      data-bs-target="#transporterDeleteModal"
+      data-transporter-name="'.e($transporter->transporter_name ?? $transporter->name ?? '-').'" 
+      data-transporter-pan="'.e($transporter->transporter_pan_number ?? $transporter->pan_number ?? '-').'" 
+      title="Delete Transporter">
+     <i class="bi bi-trash"></i>
+     </button>';
+       $buttons .= '</form>';
         $buttons .= '</div>';
-
         return $buttons;
     }
 
@@ -851,15 +865,24 @@ public function bulkUploadTemplate()
         ]);
     }
 
-    public function destroy(Transporter $transporter)
-    {
-        if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized access to this transporter.');
-        }
-        $transporter->delete();
+    public function destroy(Request $request, $id)
+{
+    $request->validate([
+        'delete_remark' => ['required', 'string', 'max:1000'],
+    ]);
 
-        return redirect()->route('transporters.index')->with('success', 'Transporter deleted successfully!');
-    }
+    $transporter = Transporter::findOrFail($id);
+
+    $transporter->deleted_by = Auth::id();
+    $transporter->deleted_remark = $request->input('delete_remark');
+    $transporter->save();
+
+    $transporter->delete();
+
+    return redirect()
+    ->route('transporters.index')
+    ->with('success', 'Transporter deleted successfully!');
+}
 
     /**
      * Get truck owners for API

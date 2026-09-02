@@ -34,6 +34,8 @@ class Company extends Model
         'is_blocked',
         'company_logo',
         'gst_slab',
+        'deleted_by',
+        'deleted_remark',
     ];
 
     protected $dates = ['deleted_at'];

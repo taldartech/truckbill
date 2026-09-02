@@ -50,6 +50,8 @@ class LorryReceipt extends Model implements Auditable
         'loading_station',
         'unloading_station',
         'gr_number',
+        'deleted_by',
+        'deleted_remark',
     ];
 
     protected $attributes = [

@@ -290,23 +290,31 @@ class LorryReceiptController extends Controller
             $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-action-edit" title="Edit" data-bs-toggle="tooltip"'.$confirmMsg.'>';
             $buttons .= '<i class="bi bi-pencil"></i></a>';
         }
+if ($lorryReceipt->delivery_status === 'Pending' && $canActAsAdmin) {
+    $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
 
-        if ($lorryReceipt->delivery_status === 'Pending' && $canActAsAdmin) {
-            $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
-            $confirmMsg = $lorryReceipt->linked_lr_id
-                ? 'This will delete all linked good receipts in this group. Are you sure?'
-                : 'Are you sure you want to delete this good receipt (bilty)?';
-            $buttons .= '<form action="'.$deleteUrl.'" method="POST" onsubmit="return confirm(\''.$confirmMsg.'\')">';
-            $buttons .= csrf_field().method_field('DELETE');
-            $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete" data-bs-toggle="tooltip">';
-            $buttons .= '<i class="bi bi-trash"></i></button></form>';
-        }
+    $buttons .= '<form action="'.$deleteUrl.'" method="POST" class="delete-lr-form">';
+    $buttons .= csrf_field().method_field('DELETE');
 
-        $buttons .= '</div>';
+    $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-delete delete-lr-btn"
+        title="Delete"
+        data-bs-toggle="tooltip"
+        data-id="'.e($lorryReceipt->id).'"
+        data-lr-number="'.e($lorryReceipt->lr_number).'"
+        data-truck-number="'.e($lorryReceipt->truck->truck_number ?? 'N/A').'"
+        data-customer="'.e($lorryReceipt->customer->name ?? 'N/A').'"
+        data-consignor="'.e($lorryReceipt->consignor->name ?? 'N/A').'"
+        data-consignee="'.e($lorryReceipt->consignee->name ?? 'N/A').'">
+        <i class="bi bi-trash"></i>
+    </button>';
 
-        return $buttons;
-    }
+    $buttons .= '</form>';
+}
 
+$buttons .= '</div>';
+
+return $buttons;
+}
     public function create(): View|RedirectResponse
     {
         if ($redirect = $this->redirectIfPlanExpired()) {
@@ -1603,42 +1611,70 @@ class LorryReceiptController extends Controller
         }
     }
 
-    public function destroy(LorryReceipt $lorry_receipt): RedirectResponse
-    {
-        if ($redirect = $this->redirectIfPlanExpired()) {
-            return $redirect;
-        }
-
-        $lorryReceiptsToDelete = $this->resolveLorryReceiptsForDeletion($lorry_receipt);
-
-        if ($lorryReceiptsToDelete === null) {
-            return redirect()->back()
-                ->with('error', 'Good receipt (bilty) can only be deleted when delivery status is Pending.');
-        }
-
-        try {
-            DB::transaction(function () use ($lorryReceiptsToDelete) {
-                foreach ($lorryReceiptsToDelete as $lr) {
-                    $lr->delete();
-                }
-            });
-
-            $message = $lorryReceiptsToDelete->count() > 1
-                ? $lorryReceiptsToDelete->count().' linked good receipts (bilty) and all associated data deleted successfully!'
-                : 'Good receipt (bilty) and all associated data deleted successfully!';
-
-            return $this->redirectToLorryReceiptsIndex(request(), 'success', $message);
-        } catch (\Exception $e) {
-            Log::error('Error deleting lorry receipt: '.$e->getMessage());
-
-            return redirect()->back()
-                ->with('error', 'Error deleting good receipt (bilty). Please try again.');
-        }
+   public function destroy(
+    Request $request,
+    LorryReceipt $lorry_receipt
+): RedirectResponse {
+    if ($redirect = $this->redirectIfPlanExpired()) {
+        return $redirect;
     }
 
-    /**
-     * @return Collection<int, LorryReceipt>|null
-     */
+    $request->validate([
+        'delete_remark' => ['required', 'string', 'max:1000'],
+    ]);
+
+    $deleteRemark = $request->input('delete_remark');
+
+    $lorryReceiptsToDelete = $this->resolveLorryReceiptsForDeletion($lorry_receipt);
+
+    if ($lorryReceiptsToDelete === null) {
+        return redirect()->back()
+            ->with(
+                'error',
+                'Good receipt (bilty) can only be deleted when delivery status is Pending.'
+            );
+    }
+
+    try {
+        $deletedBy = Auth::id();
+
+        DB::transaction(function () use (
+            $lorryReceiptsToDelete,
+            $deleteRemark,
+            $deletedBy
+        ) {
+         foreach ($lorryReceiptsToDelete as $lr) {
+        $lr->deleted_by = $deletedBy;
+        $lr->deleted_remark = $deleteRemark;
+        $lr->save();
+        $lr->delete();
+        }
+        });
+
+        $message = $lorryReceiptsToDelete->count() > 1
+            ? $lorryReceiptsToDelete->count()
+                . ' linked good receipts (bilty) and all associated data deleted successfully!'
+            : 'Good receipt (bilty) and all associated data deleted successfully!';
+
+        return $this->redirectToLorryReceiptsIndex(
+            request(),
+            'success',
+            $message
+        );
+
+    } catch (\Exception $e) {
+        Log::error(
+            'Error deleting lorry receipt: ' . $e->getMessage()
+        );
+
+        return redirect()->back()
+            ->with(
+                'error',
+                'Error deleting good receipt (bilty). Please try again.'
+            );
+    }
+}
+    
     private function resolveLorryReceiptsForDeletion(LorryReceipt $lorry_receipt): ?Collection
     {
         $companyId = $this->getCurrentCompanyId();

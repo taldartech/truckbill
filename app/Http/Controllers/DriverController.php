@@ -127,10 +127,20 @@ class DriverController extends Controller
         $buttons .= 'data-driver-address="'.htmlspecialchars($driver->address ?? '').'">';
         $buttons .= '<i class="bi bi-pencil"></i></button>';
 
-        $buttons .= '<form action="'.route('drivers.destroy', $driver->id).'" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this driver?\')">';
-        $buttons .= csrf_field().method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete Driver" data-bs-toggle="tooltip">';
-        $buttons .= '<i class="bi bi-trash"></i></button></form>';
+       $buttons .= '<form action="'.route('drivers.destroy', $driver->id).'" method="POST" class="driver-delete-form">';
+       $buttons .= csrf_field().method_field('DELETE');
+
+       $buttons .= '<button type="button"
+       class="btn btn-sm btn-icon btn-action-delete driver-delete-btn"
+       title="Delete Driver"
+       data-bs-toggle="modal"
+       data-bs-target="#driverDeleteModal"
+       data-driver-name="'.e($driver->name).'"
+       data-driver-mobile="'.e($driver->mobile ?? '-').'"
+       data-driver-license="'.e($driver->license_number ?? '-').'"
+       data-driver-address="'.e($driver->address ?? '-').'">';
+    
+       $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
         $buttons .= '</div>';
 
@@ -222,12 +232,42 @@ class DriverController extends Controller
         return redirect()->route('drivers.index')->with('success', 'Driver updated successfully!');
     }
 
-    public function destroy(\App\Models\Driver $driver)
-    {
+    public function destroy(Request $request, \App\Models\Driver $driver)
+{
+    if (
+        Auth::user()->company_id &&
+        $driver->company_id !== Auth::user()->company_id
+    ) {
+        abort(403, 'Unauthorized access to this driver.');
+    }
+
+    $request->validate([
+        'delete_remark' => ['required', 'string', 'max:1000'],
+    ]);
+
+    try {
+        $driver->deleted_by = Auth::id();
+        $driver->deleted_remark = $request->input('delete_remark');
+        $driver->save();
+
         $driver->delete();
 
-        return redirect()->route('drivers.index')->with('success', 'Driver deleted successfully!');
+        return redirect()
+            ->route('drivers.index')
+            ->with('success', 'Driver deleted successfully!');
+
+    } catch (\Throwable $e) {
+
+        Log::error('Driver delete failed', [
+            'driver_id' => $driver->id,
+            'error' => $e->getMessage(),
+        ]);
+
+        return redirect()
+            ->back()
+            ->with('error', 'Unable to delete driver. Please try again.');
     }
+}
 
 
    public function bulkUpload(Request $request)

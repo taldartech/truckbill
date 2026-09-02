@@ -26,6 +26,8 @@ class Transporter extends Model
         'beneficiary_id',
         'tds_percentage',
         'tds_adjustment_remark',
+        'deleted_by',
+        'deleted_remark',
     ];
 
     protected function casts(): array

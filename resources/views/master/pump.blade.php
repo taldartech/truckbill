@@ -56,6 +56,79 @@
 </div>
 @endsection
 
+<!-- Pump Delete Modal -->
+<div class="modal fade" id="pumpDeleteModal" tabindex="-1"
+    aria-labelledby="pumpDeleteModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="pumpDeleteModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                    Confirm Delete
+                </h5>
+
+                <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <p>Are you sure you want to delete this pump?</p>
+
+                <p>
+                    <strong>Pump Name:</strong>
+                    <span id="deletePumpName"></span>
+                </p>
+
+                <div class="mb-3 mt-3">
+                    <label for="deletePumpRemark" class="form-label">
+                        <strong>
+                            Remark <span class="text-danger">*</span>
+                        </strong>
+                    </label>
+
+                    <textarea
+                        id="deletePumpRemark"
+                        class="form-control"
+                        rows="4"
+                        placeholder="Enter reason for deletion"></textarea>
+                </div>
+
+                <div id="deletePumpRemarkError"
+                    class="text-danger small d-none">
+                    Delete remark is required.
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i>
+                    Cancel
+                </button>
+
+                <button type="button"
+                    class="btn btn-danger"
+                    id="confirmPumpDelete">
+                    <i class="bi bi-trash"></i>
+                    Confirm Delete
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
 @include('shared.bulk-upload-modal', [
     'modalId' => 'pumpBulkUploadModal',
     'title' => 'Bulk Upload Pumps',
@@ -138,12 +211,49 @@ $(document).ready(function() {
         searchDelay: 500
     });
 
-    $(document).on('submit', 'form[action*="destroy"]', function(e) {
-        if (!confirm('Are you sure you want to delete this pump?')) {
-            e.preventDefault();
-            return false;
-        }
-    });
+  // Open Pump Delete Modal
+$(document).on('click', '.pump-delete-btn', function() {
+
+    const button = $(this);
+    const form = button.closest('.pump-delete-form');
+
+    const pumpName = button.data('pump-name') || '-';
+
+    $('#deletePumpName').text(pumpName);
+
+    $('#deletePumpRemark').val('');
+    $('#deletePumpRemarkError').addClass('d-none');
+
+    $('#confirmPumpDelete').data('form', form);
+});
+
+
+// Confirm Pump Delete
+$(document).on('click', '#confirmPumpDelete', function() {
+
+    const remark = $('#deletePumpRemark').val().trim();
+    const form = $('#confirmPumpDelete').data('form');
+
+    if (!remark) {
+        $('#deletePumpRemarkError')
+            .removeClass('d-none')
+            .text('Please enter a remark before deleting.');
+
+        return;
+    }
+
+    $('#deletePumpRemarkError').addClass('d-none');
+
+    form.find('input[name="delete_remark"]').remove();
+
+    $('<input>', {
+        type: 'hidden',
+        name: 'delete_remark',
+        value: remark
+    }).appendTo(form);
+
+    form[0].submit();
+});
 });
 </script>
 @endpush

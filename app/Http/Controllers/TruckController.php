@@ -240,10 +240,25 @@ class TruckController extends Controller
 
         // Delete button
         $deleteUrl = route('trucks.destroy', $truck->id);
-        $buttons .= '<form action="'.$deleteUrl.'" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this truck?\')">';
-        $buttons .= csrf_field().method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete Truck" data-bs-toggle="tooltip">';
-        $buttons .= '<i class="bi bi-trash"></i></button></form>';
+
+       $buttons .= '<form action="'.$deleteUrl.'" method="POST" class="truck-delete-form">';
+       $buttons .= csrf_field().method_field('DELETE');
+
+       $buttons .= '<button type="button"
+       class="btn btn-sm btn-icon btn-action-delete truck-delete-btn"
+       title="Delete Truck"
+       data-bs-toggle="modal"
+       data-bs-target="#truckDeleteModal"
+       data-truck-id="'.$truck->id.'"
+       data-truck-number="'.htmlspecialchars($truck->truck_number).'"
+       data-truck-type="'.htmlspecialchars($truck->truck_type).'"
+       data-registration-date="'.htmlspecialchars($truck->registration_date ?? '').'"
+       data-transporter-name="'.htmlspecialchars($truck->transporter_name ?? '-').' "
+       data-driver-name="'.htmlspecialchars($truck->driver_name ?? '-').'">';
+
+       $buttons .= '<i class="bi bi-trash"></i>';
+       $buttons .= '</button>';
+       $buttons .= '</form>';
 
         // show button to assign truck owner for those whose transporter_id is null
         if ($truck->transporter_id == null) {
@@ -582,39 +597,40 @@ class TruckController extends Controller
         }
     }
 
-    public function destroy(Truck $truck)
-    {
-        if (! $this->isTruckAccessibleToCurrentCompany($truck)) {
-            abort(403, 'Unauthorized access to this truck.');
-        }
-        try {
-            // Soft delete the truck
-            $truck->delete();
-
-            // Return JSON response for AJAX requests
-            if (request()->expectsJson() || request()->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Truck deleted successfully!',
-                ]);
-            }
-
-            return redirect()->route('trucks.index')->with('success', 'Truck deleted successfully!');
-        } catch (\Exception $e) {
-            // Handle any errors during deletion
-            $errorMessage = 'Unable to delete truck. Please try again.';
-
-            if (request()->expectsJson() || request()->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $errorMessage,
-                ], 500);
-            }
-
-            return redirect()->back()->withErrors(['general' => $errorMessage]);
-        }
+   public function destroy(Request $request, Truck $truck)
+{
+    if (! $this->isTruckAccessibleToCurrentCompany($truck)) {
+        abort(403, 'Unauthorized access to this truck.');
     }
 
+    $request->validate([
+        'delete_remark' => ['required', 'string', 'max:1000'],
+    ]);
+
+    try {
+        $truck->deleted_by = Auth::id();
+        $truck->deleted_remark = $request->input('delete_remark');
+
+        $truck->save();
+
+        $truck->delete();
+
+        return redirect()
+            ->route('trucks.index')
+            ->with('success', 'Truck deleted successfully!');
+
+    } catch (\Throwable $e) {
+
+        Log::error('Truck delete failed', [
+            'truck_id' => $truck->id,
+            'error' => $e->getMessage(),
+        ]);
+
+        return redirect()
+            ->back()
+            ->with('error', 'Unable to delete truck. Please try again.');
+    }
+}
 
     public function bulkUpload(Request $request)
 {

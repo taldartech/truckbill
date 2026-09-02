@@ -85,6 +85,103 @@
     </div>
 </div>
 
+<!-- Consignee Delete Modal -->
+<div class="modal fade" id="consigneeDeleteModal" tabindex="-1"
+    aria-labelledby="consigneeDeleteModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="consigneeDeleteModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                    Confirm Delete
+                </h5>
+
+                <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <p>Are you sure you want to delete this consignee?</p>
+
+                <p>
+                    <strong>Name:</strong>
+                    <span id="deleteConsigneeName">-</span>
+                </p>
+
+                <p>
+                    <strong>Contact Number:</strong>
+                    <span id="deleteConsigneeContact">-</span>
+                </p>
+
+                <p>
+                    <strong>City:</strong>
+                    <span id="deleteConsigneeCity">-</span>
+                </p>
+
+                <p>
+                    <strong>State:</strong>
+                    <span id="deleteConsigneeState">-</span>
+                </p>
+
+                <p>
+                    <strong>Country:</strong>
+                    <span id="deleteConsigneeCountry">-</span>
+                </p>
+
+                <p>
+                    <strong>Address:</strong>
+                    <span id="deleteConsigneeAddress">-</span>
+                </p>
+
+                <div class="mb-3 mt-3">
+
+                    <label for="deleteConsigneeRemark" class="form-label">
+                        <strong>
+                            Remark <span class="text-danger">*</span>
+                        </strong>
+                    </label>
+
+                    <textarea
+                        id="deleteConsigneeRemark"
+                        class="form-control"
+                        rows="4"
+                        placeholder="Enter reason for deletion"></textarea>
+
+                </div>
+
+                <div id="deleteConsigneeRemarkError"
+                    class="text-danger small d-none">
+                    Delete remark is required.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i>
+                    Cancel
+                </button>
+
+                <button type="button"
+                    class="btn btn-danger"
+                    id="confirmConsigneeDelete">
+                    <i class="bi bi-trash"></i>
+                    Confirm Delete
+                </button>
+
+            </div>
+        </div>
+    </div>
+</div>
+
 
 @include('shared.bulk-upload-modal', [
     'modalId' => 'consigneeBulkUploadModal',
@@ -334,14 +431,62 @@ $(document).ready(function() {
             }
         });
     });
+    // Handle Consignee Delete Button
+$(document).on('click', '.consignee-delete-btn', function() {
 
-    // Handle delete confirmation
-    $(document).on('submit', 'form[action*="destroy"]', function(e) {
-        if (!confirm('Are you sure you want to delete this consignee?')) {
-            e.preventDefault();
-            return false;
-        }
-    });
+    const button = $(this);
+    const form = button.closest('.consignee-delete-form');
+
+    const consigneeName = button.data('consignee-name') || '-';
+    const contactNumber = button.data('consignee-contact') || '-';
+    const city = button.data('consignee-city') || '-';
+    const state = button.data('consignee-state') || '-';
+    const country = button.data('consignee-country') || '-';
+    const address = button.data('consignee-address') || '-';
+
+    $('#deleteConsigneeName').text(consigneeName);
+    $('#deleteConsigneeContact').text(contactNumber);
+    $('#deleteConsigneeCity').text(city);
+    $('#deleteConsigneeState').text(state);
+    $('#deleteConsigneeCountry').text(country);
+    $('#deleteConsigneeAddress').text(address);
+
+    $('#deleteConsigneeRemark').val('');
+    $('#deleteConsigneeRemarkError').addClass('d-none');
+
+    $('#confirmConsigneeDelete').data('form', form);
+});
+
+
+// Confirm Consignee Delete
+$(document).on('click', '#confirmConsigneeDelete', function() {
+
+    const remark = $('#deleteConsigneeRemark').val().trim();
+    const form = $('#confirmConsigneeDelete').data('form');
+
+    if (!remark) {
+
+        $('#deleteConsigneeRemarkError')
+            .removeClass('d-none')
+            .text('Please enter a remark before deleting.');
+
+        return;
+    }
+
+    $('#deleteConsigneeRemarkError').addClass('d-none');
+
+    form.find('input[name="delete_remark"]').remove();
+
+    $('<input>', {
+        type: 'hidden',
+        name: 'delete_remark',
+        value: remark
+    }).appendTo(form);
+
+    form[0].submit();
+});
+
+    
 });
 </script>
 @endpush

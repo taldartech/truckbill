@@ -229,15 +229,22 @@ class InvoiceController extends Controller
             $actions .= '<i class="bi bi-pencil"></i></a>';
         }
 
-        if ($invoice->payment_status === 'pending' && $this->invoiceRowIsLatestForCompany($invoice)) {
-            $actions .= '<form method="POST" action="'.route('invoices.destroy', $invoice->id).'">';
-            $actions .= csrf_field();
-            $actions .= method_field('DELETE');
-            $actions .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete" data-bs-toggle="tooltip" onclick="return confirm(\'Are you sure you want to delete this invoice?\')">';
-            $actions .= '<i class="bi bi-trash"></i>';
-            $actions .= '</button>';
-            $actions .= '</form>';
-        }
+    if ($invoice->payment_status === 'pending' && $this->invoiceRowIsLatestForCompany($invoice)) {
+    $actions .= '<form method="POST" class="invoice-delete-form" action="'.route('invoices.destroy', $invoice->id).'">';
+    $actions .= csrf_field();
+    $actions .= method_field('DELETE');
+
+    $actions .= '<button type="button" class="btn btn-sm btn-icon btn-action-delete invoice-delete-btn"';
+    $actions .= ' data-bs-toggle="modal" data-bs-target="#invoiceDeleteModal"';
+    $actions .= ' data-invoice-id="'.$invoice->id.'"';
+    $actions .= ' data-invoice-number="'.e($invoice->invoice_number).'"';
+    $actions .= '>';
+
+    $actions .= '<i class="bi bi-trash"></i>';
+    $actions .= '</button>';
+
+    $actions .= '</form>';
+}
 
         $actions .= '</div>';
 
@@ -614,55 +621,77 @@ class InvoiceController extends Controller
         return redirect()->route('invoices.index')->with('success', 'Invoice updated successfully.');
     }
 
-    public function destroy(Invoice $invoice)
-    {
-        if (Auth::user()->company_id && $invoice->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized access to this invoice.');
-        }
-        $company = Auth::user()->company;
-        $company->loadMissing('subscription');
-        if (! $company->subscriptionCanWrite()) {
-            return redirect()->route('invoices.index')
-                ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
-        }
-        if ($invoice->payment_status !== 'pending') {
-            return redirect()->back()->with('error', 'Cannot delete invoice.');
-        }
-        if (! $this->isLastInvoiceForCompany($invoice)) {
-            return redirect()->back()->with('error', 'Only the latest invoice can be deleted.');
-        }
+    public function destroy(Request $request, Invoice $invoice)
+   {
+    if (Auth::user()->company_id && $invoice->company_id !== Auth::user()->company_id) {
+        abort(403, 'Unauthorized access to this invoice.');
+    }
 
-        try {
-            DB::transaction(function () use ($invoice): void {
-                // Custom invoices do not flip LR invoice_generated on create, so do not reset it on delete.
-                if (! $invoice->custom_invoice) {
-                    $lrIds = $invoice->lr_ids ?? [];
-                    if (! empty($lrIds)) {
-                        $lorryReceipts = LorryReceipt::query()
-                            ->whereIn('id', $lrIds)
-                            ->lockForUpdate()
-                            ->get();
+    $company = Auth::user()->company;
+    $company->loadMissing('subscription');
 
-                        foreach ($lorryReceipts as $lr) {
-                            $lr->invoice_generated = 0;
-                            $lr->save();
-                        }
+    if (! $company->subscriptionCanWrite()) {
+        return redirect()->route('invoices.index')
+            ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+    }
+
+    // Delete remark is required
+    $request->validate([
+        'delete_remark' => ['required', 'string', 'max:1000'],
+    ]);
+
+    $deleteRemark = $request->input('delete_remark');
+
+    if ($invoice->payment_status !== 'pending') {
+        return redirect()->back()->with('error', 'Cannot delete invoice.');
+    }
+
+    if (! $this->isLastInvoiceForCompany($invoice)) {
+        return redirect()->back()->with('error', 'Only the latest invoice can be deleted.');
+    }
+
+    try {
+        DB::transaction(function () use ($invoice, $deleteRemark): void {
+
+            // Custom invoices do not flip LR invoice_generated on create,
+            // so do not reset it on delete.
+            if (! $invoice->custom_invoice) {
+                $lrIds = $invoice->lr_ids ?? [];
+
+                if (! empty($lrIds)) {
+                    $lorryReceipts = LorryReceipt::query()
+                        ->whereIn('id', $lrIds)
+                        ->lockForUpdate()
+                        ->get();
+
+                    foreach ($lorryReceipts as $lr) {
+                        $lr->invoice_generated = 0;
+                        $lr->save();
                     }
                 }
+            }
 
-                $invoice->delete();
-            });
-        } catch (\Throwable $e) {
-            Log::error('Invoice delete failed', [
-                'invoice_id' => $invoice->id,
-                'error' => $e->getMessage(),
-            ]);
+            // Save delete information
+            $invoice->deleted_by = Auth::id();
+            $invoice->deleted_remark = $deleteRemark;
+            $invoice->save();
 
-            return redirect()->back()->with('error', 'Failed to delete invoice. Please try again.');
-        }
+            // Soft delete
+            $invoice->delete();
+        });
+    } catch (\Throwable $e) {
+        Log::error('Invoice delete failed', [
+            'invoice_id' => $invoice->id,
+            'error' => $e->getMessage(),
+        ]);
 
-        return redirect()->route('invoices.index')->with('success', 'Invoice deleted.');
+        return redirect()->back()
+            ->with('error', 'Failed to delete invoice. Please try again.');
     }
+
+    return redirect()->route('invoices.index')
+        ->with('success', 'Invoice deleted.');
+}
 
     private function invoiceRowIsLatestForCompany(Invoice $invoice): bool
     {

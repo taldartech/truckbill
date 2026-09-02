@@ -109,6 +109,87 @@
         </div>
     </div>
 
+    <!-- Truck Owner Delete Confirmation Modal -->
+<div class="modal fade" id="truckOwnerDeleteModal" tabindex="-1"
+    aria-labelledby="truckOwnerDeleteModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="truckOwnerDeleteModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                    Confirm Delete
+                </h5>
+
+                <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <p>Are you sure you want to delete this truck owner?</p>
+
+                <p>
+                    <strong>Truck Owner Name:</strong>
+                    <span id="deleteTruckOwnerName"></span>
+                </p>
+                <p>
+                  <strong>PAN Number:</strong>
+                  <span id="deleteTruckOwnerPan"></span>
+                </p>
+
+                 <p>
+                   <strong>Contact Number:</strong>
+                   <span id="deleteTruckOwnerContact"></span>
+                 </p>
+
+                <div class="mb-3 mt-3">
+                    <label for="deleteTruckOwnerRemark" class="form-label">
+                        <strong>
+                            Remark <span class="text-danger">*</span>
+                        </strong>
+                    </label>
+
+                    <textarea
+                        id="deleteTruckOwnerRemark"
+                        class="form-control"
+                        rows="4"
+                        placeholder="Enter reason for deletion"></textarea>
+                </div>
+
+                <div id="deleteTruckOwnerRemarkError"
+                    class="text-danger small d-none">
+                    Delete remark is required.
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i>
+                    Cancel
+                </button>
+
+                <button type="button"
+                    class="btn btn-danger"
+                    id="confirmTruckOwnerDelete">
+                    <i class="bi bi-trash"></i>
+                    Confirm Delete
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
     <!-- Advance Payment Modal -->
     <div class="modal fade fb-pay-modal" id="advancePaymentModal" tabindex="-1" aria-labelledby="advancePaymentModalLabel"
         aria-hidden="true">
@@ -1104,58 +1185,90 @@
                 });
             });
 
-            // Handle Delete Truck Owner button click
-            $(document).on('click', '.delete-truck-owner-btn', function() {
-                const truckOwnerId = $(this).data('truck-owner-id');
-                const truckOwnerName = $(this).data('truck-owner-name');
+         
+           // Open Truck Owner Delete Confirmation Modal
+$(document).on('click', '.delete-truck-owner-btn', function() {
 
-                if (confirm(
-                        `Are you sure you want to delete truck owner "${truckOwnerName}"? This action cannot be undone.`
-                    )) {
-                    $.ajax({
-                        url: '/truck_owners/' + truckOwnerId,
-                        type: 'POST',
-                        data: {
-                            '_token': $('meta[name="csrf-token"]').attr('content'),
-                            '_method': 'DELETE'
-                        },
-                        success: function(response) {
-                            // Show success message
-                            $('body').prepend(`
-                        <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
-                            <i class="bi bi-check-circle"></i>
-                            <strong>Success!</strong> Truck owner "${truckOwnerName}" has been deleted successfully.
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    `);
+    const button = $(this);
 
-                            // Auto-hide alert after 5 seconds
-                            setTimeout(function() {
-                                $('.alert-success').fadeOut();
-                            }, 5000);
+    const truckOwnerId = button.data('truck-owner-id');
+    const truckOwnerName = button.data('truck-owner-name');
+    const truckOwnerPan = button.data('truck-owner-pan');
+    const truckOwnerContact = button.data('truck-owner-contact');
+    
+    $('#deleteTruckOwnerName').text(truckOwnerName || '-');
+    $('#deleteTruckOwnerPan').text(truckOwnerPan || '-');
+    $('#deleteTruckOwnerContact').text(truckOwnerContact || '-');
+    
 
-                            // Reload DataTable
-                            $('#truckOwnersTable').DataTable().ajax.reload(null, false);
-                        },
-                        error: function(xhr) {
-                            // Show error message
-                            $('body').prepend(`
-                        <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
-                            <i class="bi bi-exclamation-triangle"></i>
-                            <strong>Error!</strong> Unable to delete truck owner "${truckOwnerName}". Please try again.
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    `);
+    $('#deleteTruckOwnerRemark').val('');
+    $('#deleteTruckOwnerRemarkError').addClass('d-none');
 
-                            setTimeout(function() {
-                                $('.alert-danger').fadeOut();
-                            }, 5000);
-                        }
-                    });
-                }
-            });
-        });
+    $('#confirmTruckOwnerDelete')
+        .data('truck-owner-id', truckOwnerId);
 
+    $('#truckOwnerDeleteModal').modal('show');
+});
+
+
+// Confirm Truck Owner Delete
+$(document).on('click', '#confirmTruckOwnerDelete', function() {
+
+    const button = $(this);
+
+    const truckOwnerId = button.data('truck-owner-id');
+    const remark = $('#deleteTruckOwnerRemark').val().trim();
+
+    if (!remark) {
+        $('#deleteTruckOwnerRemarkError')
+            .removeClass('d-none')
+            .text('Please enter a remark before deleting.');
+
+        return;
+    }
+
+    $('#deleteTruckOwnerRemarkError').addClass('d-none');
+
+    button.prop('disabled', true)
+        .html('<i class="bi bi-hourglass-split"></i> Deleting...');
+
+    $.ajax({
+        url: '/truck_owners/' + truckOwnerId,
+        type: 'POST',
+        data: {
+            '_token': $('meta[name="csrf-token"]').attr('content'),
+            '_method': 'DELETE',
+            'delete_remark': remark
+        },
+
+        success: function(response) {
+            $('#truckOwnerDeleteModal').modal('hide');
+            $('#truckOwnersTable').DataTable().ajax.reload(null, false);
+        },
+
+        error: function(xhr) {
+
+            let message = 'Unable to delete truck owner. Please try again.';
+
+            if (xhr.status === 422 &&
+                xhr.responseJSON?.errors?.delete_remark) {
+
+                message = xhr.responseJSON.errors.delete_remark[0];
+            }
+
+            $('#deleteTruckOwnerRemarkError')
+                .removeClass('d-none')
+                .text(message);
+        },
+
+        complete: function() {
+
+            button.prop('disabled', false)
+                .html('<i class="bi bi-trash"></i> Confirm Delete');
+        }
+    });
+});
+}); 
         // Function to view truck details
         function viewTruckDetails(truckId) {
             // You can implement a truck details modal here or redirect to truck details page

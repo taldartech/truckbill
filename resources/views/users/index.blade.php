@@ -51,6 +51,77 @@
         </div>
     </div>
 </div>
+      <!-- User Delete Confirmation Modal -->
+  <div class="modal fade" id="userDeleteModal" tabindex="-1" aria-labelledby="userDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="userDeleteModalLabel">
+                    Delete User
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="userDeleteForm" method="POST">
+                @csrf
+                @method('DELETE')
+
+                <div class="modal-body">
+
+               <p>Are you sure you want to delete this user?</p>
+
+              <p>
+                 <strong>Name:</strong>
+                 <span id="deleteUserName">-</span>
+              </p>
+
+              <p>
+                <strong>Email:</strong>
+                <span id="deleteUserEmail">-</span>
+             </p>
+
+             <p>
+                <strong>Role:</strong>
+                <span id="deleteUserRole">-</span>
+             </p>
+
+             <p>
+               <strong>Company:</strong>
+               <span id="deleteUserCompany">-</span>
+            </p>
+
+          <div class="mb-3 mt-3">
+             <label for="deleteUserRemark" class="form-label">
+            Delete Remark <span class="text-danger">*</span>
+             </label>
+
+        <textarea
+            name="delete_remark"
+            id="deleteUserRemark"
+            class="form-control"
+            rows="3"
+            required
+            placeholder="Enter reason for deleting this user"></textarea>
+    </div>
+ </div>
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="submit" class="btn btn-danger">
+                        Delete
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -141,12 +212,26 @@ $(document).ready(function() {
     });
 
     // Handle delete confirmation
-    $(document).on('submit', 'form[action*="destroy"]', function(e) {
-        if (!confirm('Are you sure you want to delete this user?')) {
-            e.preventDefault();
-            return false;
-        }
-    });
+   $(document).on('click', '.user-delete-btn', function () {
+    const userId = $(this).data('user-id');
+    const userName = $(this).data('user-name');
+    const userEmail = $(this).data('user-email');
+     const userRole = $(this).data('user-role');
+     const userCompany = $(this).data('user-company');
+
+    $('#deleteUserName').text(userName);
+    $('#deleteUserName').text(userName);
+    $('#deleteUserEmail').text(userEmail);
+    $('#deleteUserRole').text(userRole);
+    $('#deleteUserCompany').text(userCompany);
+
+    $('#userDeleteForm').attr(
+        'action',
+        '/users/' + userId
+    );
+
+    $('#deleteUserRemark').val('');
+});
 });
 
 function handleUserStatusAction(form, actionType) {

@@ -433,6 +433,59 @@
         </div>
     </div>
 
+    <!-- Invoice Delete Modal -->
+<div class="modal fade" id="invoiceDeleteModal" tabindex="-1" aria-labelledby="invoiceDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="invoiceDeleteModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                    Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <p>Are you sure you want to delete this invoice?</p>
+
+                <p>
+                    <strong>Invoice #:</strong>
+                    <span id="deleteInvoiceNumber"></span>
+                </p>
+
+                <div class="mb-3">
+                    <label for="deleteRemark" class="form-label">
+                        <strong>Remark <span class="text-danger">*</span></strong>
+                    </label>
+
+                    <textarea
+                        id="deleteRemark"
+                        class="form-control"
+                        rows="4"
+                        placeholder="Enter reason for deletion"
+                    ></textarea>
+                </div>
+
+                <div id="deleteRemarkError" class="text-danger small d-none">
+                    Delete remark is required.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i> Cancel
+                </button>
+
+                <button type="button" class="btn btn-danger" id="confirmInvoiceDelete">
+                    <i class="bi bi-trash"></i> Confirm Delete
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
     @include('invoices.partials.confirmation-assets')
 
     <script>
@@ -782,16 +835,16 @@
                 if (form) {
                     form.reset();
                 }
-                $('.form-check-input').prop('checked', false);
-                ['field_generated_date_from', 'field_generated_date_to', 'field_manual_invoice_number', 'field_customer', 'field_payment_status', 'field_generated_date']
-                    .forEach(function(id) {
-                        const el = document.getElementById(id);
-                        if (el) {
-                            el.classList.add('d-none');
-                        }
+             $('.form-check-input').prop('checked', false);
+            ['field_generated_date_from', 'field_generated_date_to', 'field_manual_invoice_number', 'field_customer', 'field_payment_status', 'field_generated_date']
+                 .forEach(function(id) {
+                     const el = document.getElementById(id);
+                     if (el) {
+                     el.classList.add('d-none');
+                  }
                     });
-                $('#filter_customer_select').val(null).trigger('change');
-                invoiceTable.ajax.reload();
+             $('#filter_customer_select').val(null).trigger('change');
+             invoiceTable.ajax.reload();
             });
 
             function formatPaymentAmount(value) {
@@ -981,8 +1034,45 @@
                 $('#filter_customer_select').append(opt).trigger('change');
             }
         }); // End of document ready
+
+        // Invoice delete modal
+           $(document).on('click', '.invoice-delete-btn', function() {
+              const button = $(this);
+              const form = button.closest('.invoice-delete-form');
+
+              const invoiceNumber = button.data('invoice-number') || '-';
+      
+            $('#deleteInvoiceNumber').text(invoiceNumber);
+            $('#deleteRemark').val('');
+            $('#deleteRemarkError').addClass('d-none');
+
+            $('#confirmInvoiceDelete').data('form', form);
+        });
+
+           $('#confirmInvoiceDelete').on('click', function() {
+             const remark = $('#deleteRemark').val().trim();
+             const form = $('#confirmInvoiceDelete').data('form');
+
+       if (!remark) {
+           $('#deleteRemarkError')
+            .removeClass('d-none')
+            .text('Please enter a remark before deleting.');
+           return;
+       }
+
+           $('#deleteRemarkError').addClass('d-none');
+           form.find('input[name="delete_remark"]').remove();
+
+           $('<input>', {
+           type: 'hidden',
+           name: 'delete_remark',
+           value: remark
+       }).appendTo(form);
+
+       form[0].submit();
+      });
     </script>
-@endsection
+  @endsection
 
 @push('scripts')
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>

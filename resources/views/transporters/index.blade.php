@@ -166,6 +166,81 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="transporterDeleteModal" tabindex="-1"
+    aria-labelledby="transporterDeleteModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="transporterDeleteModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                    Confirm Delete
+                </h5>
+
+                <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <p>Are you sure you want to delete this transporter?</p>
+
+                <p>
+                    <strong>Transporter Name:</strong>
+                    <span id="deleteTransporterName"></span>
+                </p>
+
+                <p>
+                    <strong>PAN Number:</strong>
+                    <span id="deleteTransporterPan"></span>
+                </p>
+
+                <div class="mb-3 mt-3">
+                    <label for="deleteTransporterRemark" class="form-label">
+                        <strong>
+                            Remark <span class="text-danger">*</span>
+                        </strong>
+                    </label>
+
+                    <textarea
+                        id="deleteTransporterRemark"
+                        class="form-control"
+                        rows="4"
+                        placeholder="Enter reason for deletion"></textarea>
+                </div>
+
+                <div id="deleteTransporterRemarkError"
+                    class="text-danger small d-none">
+                    Delete remark is required.
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i>
+                    Cancel
+                </button>
+
+                <button type="button"
+                    class="btn btn-danger"
+                    id="confirmTransporterDelete">
+                    <i class="bi bi-trash"></i>
+                    Confirm Delete
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+</div>
 @endsection
 
 @include('shared.bulk-upload-modal', [
@@ -274,12 +349,73 @@
                 searchDelay: 500
             });
 
-            $(document).on('submit', 'form[action*="destroy"]', function(e) {
-                if (!confirm('Are you sure you want to delete this transporter?')) {
-                    e.preventDefault();
-                    return false;
-                }
-            });
+           // Open Transporter Delete Modal
+               $(document).on('click', '.transporter-delete-btn', function() {
+
+               const button = $(this);
+               const form = button.closest('.transporter-delete-form');
+
+              const transporterName =
+              button.data('transporter-name') || '-';
+
+              const transporterPan =
+              button.data('transporter-pan') || '-';
+
+              $('#deleteTransporterName').text(transporterName);
+              $('#deleteTransporterPan').text(transporterPan);
+ 
+              $('#deleteTransporterRemark').val('');
+              $('#deleteTransporterRemarkError').addClass('d-none');
+
+              $('#confirmTransporterDelete').data('form', form);
+           });
+
+           // Open Transporter Delete Modal
+         $(document).on('click', '.transporter-delete-btn', function() {
+
+         const button = $(this);
+         const form = button.closest('.transporter-delete-form');
+
+         const transporterName = button.attr('data-transporter-name') || '-';
+         const transporterPan = button.attr('data-transporter-pan') || '-';
+
+         $('#deleteTransporterName').text(transporterName);
+         $('#deleteTransporterPan').text(transporterPan);
+
+         $('#deleteTransporterRemark').val('');
+         $('#deleteTransporterRemarkError').addClass('d-none');
+
+         $('#confirmTransporterDelete').data('form', form);
+       });
+
+
+         // Confirm Transporter Delete
+          $(document).on('click', '#confirmTransporterDelete', function() {
+
+        const remark = $('#deleteTransporterRemark').val().trim();
+        const form = $('#confirmTransporterDelete').data('form');
+
+      if (!remark) {
+
+        $('#deleteTransporterRemarkError')
+            .removeClass('d-none')
+            .text('Please enter a remark before deleting.');
+
+          return;
+       }
+
+      $('#deleteTransporterRemarkError').addClass('d-none');
+
+      form.find('input[name="delete_remark"]').remove();
+
+      $('<input>', {
+        type: 'hidden',
+        name: 'delete_remark',
+        value: remark
+       }).appendTo(form);
+
+         form[0].submit();
+        });
 
             $(document).on('click', '.transporter-name-link', function(e) {
                 e.preventDefault();
@@ -590,9 +726,6 @@
             });
 
              });
-
-
-        
 
     </script>
 
