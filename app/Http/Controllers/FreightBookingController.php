@@ -13,6 +13,7 @@ use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\VoucherLinked;
 use App\Models\VoucherPayment;
+use App\Services\FreightBookingAmountVerifier;
 use App\Services\FreightBookingCalculationService;
 use App\Services\FreightBookingCustomAmountService;
 use App\Services\Notifications\FreightBookingNotificationService;
@@ -115,6 +116,71 @@ class FreightBookingController extends Controller
             'is_delivered' => $request->boolean('is_delivered'),
             'is_cancelled' => $request->boolean('is_cancelled'),
         ];
+    }
+
+    /**
+     * @return array{
+     *     is_fixed_amount: bool,
+     *     tr_fr_rate: float,
+     *     tr_amount: float,
+     *     loading_weight: float,
+     *     unloading_weight: float,
+     *     tds_amount: float,
+     *     advance_amount: float,
+     *     balance_amount: float,
+     *     negative_adjusted_amount: float,
+     *     shortage_amount: float,
+     *     damage_amount: float,
+     *     detention: float,
+     *     deviation: float,
+     *     misc_expense: float,
+     *     custom_amounts_total: float,
+     *     voucher_payments_total: float,
+     * }
+     */
+    private function freightBookingAmountsForVerification(
+        FreightBooking $freightBooking,
+        float $voucherPaymentsTotal,
+        float $customAmountsTotal,
+        float $loadingWeight,
+        float $unloadingWeight,
+    ): array {
+        return [
+            'is_fixed_amount' => (bool) $freightBooking->is_fixed_amount,
+            'tr_fr_rate' => (float) $freightBooking->tr_fr_rate,
+            'tr_amount' => (float) $freightBooking->tr_amount,
+            'loading_weight' => $loadingWeight,
+            'unloading_weight' => $unloadingWeight,
+            'tds_amount' => (float) ($freightBooking->tds_amount ?? 0),
+            'advance_amount' => (float) ($freightBooking->advance_amount ?? 0),
+            'balance_amount' => (float) ($freightBooking->balance_amount ?? 0),
+            'negative_adjusted_amount' => (float) ($freightBooking->negative_adjusted_amount ?? 0),
+            'shortage_amount' => (float) ($freightBooking->shortage_amount ?? 0),
+            'damage_amount' => (float) ($freightBooking->damage_amount ?? 0),
+            'detention' => (float) ($freightBooking->detention ?? 0),
+            'deviation' => (float) ($freightBooking->deviation ?? 0),
+            'misc_expense' => (float) ($freightBooking->misc_expense ?? 0),
+            'custom_amounts_total' => $customAmountsTotal,
+            'voucher_payments_total' => $voucherPaymentsTotal,
+        ];
+    }
+
+    private function verifyFreightBookingAmountsBeforeSave(
+        FreightBooking $freightBooking,
+        float $voucherPaymentsTotal,
+        float $customAmountsTotal,
+        float $loadingWeight,
+        float $unloadingWeight,
+    ): void {
+        FreightBookingAmountVerifier::verify(
+            $this->freightBookingAmountsForVerification(
+                $freightBooking,
+                $voucherPaymentsTotal,
+                $customAmountsTotal,
+                $loadingWeight,
+                $unloadingWeight,
+            )
+        );
     }
 
     public function index(Request $request)
@@ -726,6 +792,14 @@ class FreightBookingController extends Controller
             $notifyCancelled = ! empty($data['is_cancelled']);
             $notifyLrStatusChange = $deliveryStatus !== $oldDeliveryStatus;
 
+            $this->verifyFreightBookingAmountsBeforeSave(
+                $freightBooking,
+                0,
+                0,
+                (float) ($lorryReceipt->weight ?? 0),
+                (float) ($lorryReceipt->unloading_weight ?? $lorryReceipt->weight ?? 0),
+            );
+
             DB::afterCommit(function () use ($notifyCancelled, $notifyLrStatusChange, $freightBooking, $lorryReceipt, $deliveryStatus): void {
                 if ($notifyCancelled) {
                     $freightBooking->loadMissing(['company', 'lr.truck', 'transporter.transporterMaster']);
@@ -739,6 +813,16 @@ class FreightBookingController extends Controller
             });
 
             DB::commit();
+        } catch (\InvalidArgumentException $e) {
+            DB::rollBack();
+            \Log::error('Freight booking create failed: amount verification', [
+                'error' => $e->getMessage(),
+                'request_context' => $this->freightBookingUpdateLogContext($request),
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['general' => 'Unable to create Good Hire (Lorry Hire). Amount verification failed. Please try again.']);
         } catch (\Throwable $e) {
             DB::rollBack();
             \Log::error('Freight booking create failed', [
@@ -1179,6 +1263,11 @@ class FreightBookingController extends Controller
         if (! $lorryReceipt) {
             return redirect()->back()->withErrors(['lr_id' => 'Invalid good receipt (bilty)']);
         }
+
+        $voucherPaymentsTotal = 0.0;
+        $customAmountsTotal = 0.0;
+        $unloadingWeight = (float) ($lorryReceipt->unloading_weight ?? $lorryReceipt->weight ?? 0);
+
         DB::beginTransaction();
         try {
             $isFixedAmount = (bool) ($data['is_fixed_amount'] ?? $freightBooking->is_fixed_amount);
@@ -1258,9 +1347,33 @@ class FreightBookingController extends Controller
                 $lorryReceipt?->lr_number
             );
 
+            $freightBooking->refresh();
+            $this->verifyFreightBookingAmountsBeforeSave(
+                $freightBooking,
+                $voucherPaymentsTotal,
+                $customAmountsTotal,
+                (float) ($lorryReceipt->weight ?? 0),
+                $unloadingWeight,
+            );
+
             DB::commit();
 
             return $this->redirectToFreightBookingsIndex($request, 'success', 'Good Hire (Lorry Hire) updated successfully.');
+        } catch (\InvalidArgumentException $e) {
+            DB::rollBack();
+            \Log::error('Freight booking update failed: amount verification', [
+                'freight_booking_id' => $freightBooking->id ?? null,
+                'error' => $e->getMessage(),
+                'amounts' => $this->freightBookingAmountsForVerification(
+                    $freightBooking,
+                    $voucherPaymentsTotal,
+                    $customAmountsTotal,
+                    (float) ($lorryReceipt->weight ?? 0),
+                    $unloadingWeight,
+                ),
+            ]);
+
+            return redirect()->back()->withErrors(['general' => 'Unable to update freight booking. Amount verification failed. Please try again.'])->withInput();
         } catch (\Throwable $e) {
             DB::rollBack();
             \Log::error('Freight booking update failed', [

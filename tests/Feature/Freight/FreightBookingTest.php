@@ -626,6 +626,68 @@ class FreightBookingTest extends TestCase
         $this->assertSame(5140.0, (float) $booking->balance_amount);
     }
 
+    public function test_negative_balance_adjustment_reconciles_when_shortage_applied_after_delivery(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $service = app(FreightBookingCalculationService::class);
+
+        $booking = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 9001,
+            'transporter_id' => $lr->transporter_id,
+            'transporter_name' => $lr->transporter?->name,
+            'transporter_tds_percentage' => 1,
+            'tr_fr_rate' => 1000,
+            'tr_amount' => 10000,
+            'tds_amount' => 100,
+            'advance_amount' => 10500,
+            'balance_amount' => -600,
+            'negative_adjusted_amount' => 0,
+            'shortage_amount' => 0,
+            'is_delivered' => 1,
+        ]));
+
+        $lr->update(['freight_booking_id' => $booking->id, 'unloading_weight' => 10]);
+
+        $service->applyNegativeAdjustment($booking, $lr->lr_number);
+        $booking->refresh();
+
+        $this->assertSame(600.0, (float) $booking->negative_adjusted_amount);
+        $this->assertSame(0.0, (float) $booking->balance_amount);
+
+        $booking->shortage_amount = 5000;
+        $booking->balance_amount = $service->calculateForUpdate(
+            false,
+            1000,
+            10,
+            10,
+            10000,
+            10500,
+            0,
+            0,
+            0,
+            0,
+            5000,
+            1,
+            false,
+            100,
+            600,
+        )['balance_amount'];
+        $booking->save();
+
+        $service->applyNegativeAdjustment($booking, $lr->lr_number);
+        $booking->refresh();
+
+        $this->assertSame(5600.0, (float) $booking->negative_adjusted_amount);
+        $this->assertSame(0.0, (float) $booking->balance_amount);
+        $this->assertEqualsWithDelta(
+            0.0,
+            $booking->balanceFromAdvance(),
+            0.01,
+            'Stored balance must match balanceFromAdvance() after shortage is applied.'
+        );
+    }
+
     public function test_linked_negative_balance_adjustment_skipped_when_group_net_is_zero(): void
     {
         $admin = $this->makeUser('admin');
