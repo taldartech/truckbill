@@ -24,6 +24,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Yajra\DataTables\Facades\DataTables;
+use App\Models\Country;
 
 class LorryReceiptController extends Controller
 {
@@ -314,6 +315,7 @@ class LorryReceiptController extends Controller
         }
 
         $companyId = $this->getCurrentCompanyId();
+        $countries = Country::orderBy('name')->get();
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
 
         // Only fetch selected IDs (if any) to avoid loading large dropdown datasets.
@@ -369,7 +371,7 @@ class LorryReceiptController extends Controller
                 ->first()
             : null;
 
-        return view('lorry_receipts.create', compact('trucks', 'consignees', 'goodsTypes', 'agencies', 'payeeTransporter'));
+        return view('lorry_receipts.create', compact('trucks', 'consignees', 'goodsTypes', 'agencies', 'payeeTransporter','countries'));
     }
 
     public function createLinked(): View|RedirectResponse

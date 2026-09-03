@@ -122,9 +122,11 @@
                             <div class="lrf-receipt-card__row lrf-pf">
                                 <div class="lrf-pf__lbl-row">
                                     <label for="customer_id" class="lrf-pf__lbl">Customer<span class="lrf-pf__req">*</span></label>
-                                    <a href="{{ route('consignees.create') }}" class="lrf-quick-add" target="_blank" rel="noopener">
-                                        <i class="bi bi-plus-lg"></i> Add
-                                    </a>
+                                   <a href="#" class="lrf-quick-add"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#quickAddCustomerModal">
+                                  <i class="bi bi-plus-lg"></i> Add
+                                   </a>
                                 </div>
                                 <select class="form-select" id="customer_id" name="customer_id" required
                                     data-placeholder="Search and select customer...">
@@ -611,6 +613,664 @@
             </div>
         </div>
     </div>
+
+    <!-- Add Customer Modal -->
+<div class="modal fade fb-pay-modal" id="quickAddCustomerModal" tabindex="-1"
+    aria-labelledby="quickAddCustomerModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+
+            <form id="quickAddCustomerForm">
+                @csrf
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="quickAddCustomerModalLabel">
+                        Add Customer
+                    </h5>
+
+                    <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div id="quickCustomerFormErrors"
+                        class="alert alert-danger d-none">
+                    </div>
+
+                    <!-- Basic Details -->
+                    <div class="app-form-section">
+                        <div class="app-form-section__header">
+                            <h5 class="app-form-section__title">
+                                <i class="bi bi-person-vcard"></i>
+                                Basic Details
+                            </h5>
+                        </div>
+
+                        <div class="app-form-section__body">
+
+                            <div class="row g-2 mb-2">
+
+                                <div class="col-md-4">
+                                    <label for="quick_customer_name"
+                                        class="form-label">
+                                        Customer Name *
+                                    </label>
+
+                                    <input
+                                        placeholder="Enter Customer Name"
+                                        type="text"
+                                        class="form-control"
+                                        id="quick_customer_name"
+                                        name="name"
+                                        required>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label for="quick_customer_contact_number"
+                                        class="form-label">
+                                        Contact Number *
+                                    </label>
+
+                                    <input
+                                        placeholder="Enter Contact Number"
+                                        type="text"
+                                        class="form-control"
+                                        id="quick_customer_contact_number"
+                                        name="contact_number"
+                                        required>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label for="quick_customer_email"
+                                        class="form-label">
+                                        Email
+                                    </label>
+
+                                    <input
+                                        placeholder="Enter Email"
+                                        type="email"
+                                        class="form-control"
+                                        id="quick_customer_email"
+                                        name="email">
+                                </div>
+
+                            </div>
+
+                            <div class="row g-2">
+
+                                <div class="col-md-4">
+                                    <label for="quick_customer_gst_number"
+                                        class="form-label">
+                                        GST Number
+                                    </label>
+
+                                    <input
+                                        placeholder="Enter GST Number"
+                                        type="text"
+                                        class="form-control"
+                                        id="quick_customer_gst_number"
+                                        name="gst_number">
+
+                                    <div class="invalid-feedback"
+                                        id="quick_customer_gst_feedback">
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label for="quick_customer_pan_number"
+                                        class="form-label">
+                                        PAN Number
+                                    </label>
+
+                                    <input
+                                        placeholder="Enter PAN Number (e.g., ABCDE1234F)"
+                                        type="text"
+                                        class="form-control"
+                                        id="quick_customer_pan_number"
+                                        name="pan_number"
+                                        maxlength="10"
+                                        style="text-transform: uppercase;">
+
+                                    <div class="invalid-feedback"
+                                        id="quick_customer_pan_feedback">
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+
+                    <!-- Location Details -->
+                    <div class="app-form-section mt-3">
+
+                        <div class="app-form-section__header">
+                            <h5 class="app-form-section__title">
+                                <i class="bi bi-geo-alt"></i>
+                                Location Details
+                            </h5>
+                        </div>
+
+                        <div class="app-form-section__body">
+
+                            <div class="row g-2 mb-2">
+
+                                <!-- Country -->
+                                <div class="col-md-4">
+                                    <label for="quick_customer_country_id"
+                                        class="form-label">
+                                        Country *
+                                    </label>
+
+                                    <div class="input-group">
+
+                                        <select
+                                            class="form-select"
+                                            id="quick_customer_country_id"
+                                            name="country_id"
+                                            required>
+
+                                            <option value="">
+                                                Select Country
+                                            </option>
+
+                                            @foreach($countries as $country)
+                                                <option value="{{ $country->id }}">
+                                                    {{ $country->name }}
+                                                </option>
+                                            @endforeach
+
+                                        </select>
+
+                                        <button
+                                            type="button"
+                                            class="btn btn-brand-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#addCountryModal"
+                                            title="Add New Country">
+
+                                            <i class="bi bi-plus"></i>
+
+                                        </button>
+
+                                    </div>
+                                </div>
+
+
+                                <!-- State -->
+                                <div class="col-md-4">
+                                    <label for="quick_customer_state_id"
+                                        class="form-label">
+                                        State *
+                                    </label>
+
+                                    <div class="input-group">
+
+                                        <select
+                                            class="form-select"
+                                            id="quick_customer_state_id"
+                                            name="state_id"
+                                            required>
+
+                                            <option value="">
+                                                Select State
+                                            </option>
+
+                                        </select>
+
+                                        <button
+                                            type="button"
+                                            class="btn btn-brand-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#addStateModal"
+                                            title="Add New State">
+
+                                            <i class="bi bi-plus"></i>
+
+                                        </button>
+
+                                    </div>
+                                </div>
+
+
+                                <!-- City -->
+                                <div class="col-md-4">
+                                    <label for="quick_customer_city_id"
+                                        class="form-label">
+                                        City *
+                                    </label>
+
+                                    <div class="input-group">
+
+                                        <select
+                                            class="form-select"
+                                            id="quick_customer_city_id"
+                                            name="city_id"
+                                            required>
+
+                                            <option value="">
+                                                Select City
+                                            </option>
+
+                                        </select>
+
+                                        <button
+                                            type="button"
+                                            class="btn btn-brand-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#addCityModal"
+                                            title="Add New City">
+
+                                            <i class="bi bi-plus"></i>
+
+                                        </button>
+
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+                            <!-- Address -->
+                            <div class="row g-2">
+
+                                <div class="col-md-8">
+                                    <label for="quick_customer_address"
+                                        class="form-label">
+                                        Address
+                                    </label>
+
+                                    <input
+                                        placeholder="Enter Address"
+                                        type="text"
+                                        class="form-control"
+                                        id="quick_customer_address"
+                                        name="address">
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+
+                        Cancel
+
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn btn-brand-primary">
+
+                        <span
+                            class="spinner-border spinner-border-sm d-none"
+                            role="status"
+                            aria-hidden="true">
+                        </span>
+
+                        Create Customer
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+<!-- Add Country Modal -->
+<div class="modal fade fb-pay-modal"
+    id="addCountryModal"
+    tabindex="-1"
+    aria-labelledby="addCountryModalLabel"
+    aria-hidden="true">
+
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <form id="addCountryForm">
+                @csrf
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title" id="addCountryModalLabel">
+                        Add Country
+                    </h5>
+
+                    <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <div id="countryFormErrors"
+                        class="alert alert-danger d-none">
+                    </div>
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label for="country_name"
+                                class="form-label">
+                                Country Name *
+                            </label>
+
+                            <input type="text"
+                                class="form-control"
+                                id="country_name"
+                                name="name"
+                                required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="country_code"
+                                class="form-label">
+                                Country Code *
+                            </label>
+
+                            <input type="text"
+                                class="form-control"
+                                id="country_code"
+                                name="code"
+                                required>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                        class="btn btn-brand-primary">
+
+                        <span
+                            class="spinner-border spinner-border-sm d-none">
+                        </span>
+
+                        Submit form
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+<!-- Add State Modal -->
+<div class="modal fade fb-pay-modal"
+    id="addStateModal"
+    tabindex="-1"
+    aria-labelledby="addStateModalLabel"
+    aria-hidden="true">
+
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <form id="addStateForm">
+                @csrf
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title"
+                        id="addStateModalLabel">
+                        Add State
+                    </h5>
+
+                    <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <div id="stateFormErrors"
+                        class="alert alert-danger d-none">
+                    </div>
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label for="state_name"
+                                class="form-label">
+                                State Name *
+                            </label>
+
+                            <input type="text"
+                                class="form-control"
+                                id="state_name"
+                                name="name"
+                                required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="state_code"
+                                class="form-label">
+                                State Code *
+                            </label>
+
+                            <input type="text"
+                                class="form-control"
+                                id="state_code"
+                                name="code"
+                                required
+                                maxlength="10">
+                        </div>
+
+                        <div class="col-md-12">
+
+                            <label for="modal_state_country_id"
+                                class="form-label">
+                                Country *
+                            </label>
+
+                            <select
+                                class="form-select"
+                                id="modal_state_country_id"
+                                name="country_id"
+                                required>
+
+                                <option value="">
+                                    Select Country
+                                </option>
+
+                                @foreach($countries as $country)
+                                    <option value="{{ $country->id }}">
+                                        {{ $country->name }}
+                                    </option>
+                                @endforeach
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                        class="btn btn-brand-primary">
+
+                        <span
+                            class="spinner-border spinner-border-sm d-none">
+                        </span>
+
+                        Submit form
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+<!-- Add City Modal -->
+<div class="modal fade fb-pay-modal"
+    id="addCityModal"
+    tabindex="-1"
+    aria-labelledby="addCityModalLabel"
+    aria-hidden="true">
+
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <form id="addCityForm">
+                @csrf
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title"
+                        id="addCityModalLabel">
+                        Add City
+                    </h5>
+
+                    <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <div id="cityFormErrors"
+                        class="alert alert-danger d-none">
+                    </div>
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+
+                            <label for="modal_city_name"
+                                class="form-label">
+                                City Name *
+                            </label>
+
+                            <input type="text"
+                                class="form-control"
+                                id="modal_city_name"
+                                name="name"
+                                required>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <label for="modal_city_country_id"
+                                class="form-label">
+                                Country *
+                            </label>
+
+                            <select
+                                class="form-select"
+                                id="modal_city_country_id"
+                                name="country_id"
+                                required>
+
+                                <option value="">
+                                    Select Country
+                                </option>
+
+                                @foreach($countries as $country)
+                                    <option value="{{ $country->id }}">
+                                        {{ $country->name }}
+                                    </option>
+                                @endforeach
+
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <label for="modal_city_state_id"
+                                class="form-label">
+                                State *
+                            </label>
+
+                            <select
+                                class="form-select"
+                                id="modal_city_state_id"
+                                name="state_id"
+                                required>
+
+                                <option value="">
+                                    Select State
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                        class="btn btn-brand-primary">
+
+                        <span
+                            class="spinner-border spinner-border-sm d-none">
+                        </span>
+
+                        Submit form
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
 
     <!-- Load Select2 from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -2044,5 +2704,222 @@ grNumberInput.addEventListener('blur', function() {
                     errorBox.innerHTML = '⚠️ Error: ' + error.message;
                 });
         });
-    </script>
+      document.addEventListener('DOMContentLoaded', function () {
+
+    const countrySelect = document.getElementById('quick_customer_country_id');
+    const stateSelect = document.getElementById('quick_customer_state_id');
+    const citySelect = document.getElementById('quick_customer_city_id');
+
+    if (countrySelect) {
+        countrySelect.addEventListener('change', function () {
+
+            const countryId = this.value;
+
+            stateSelect.innerHTML =
+                '<option value="">Select State</option>';
+
+            citySelect.innerHTML =
+                '<option value="">Select City</option>';
+
+            if (!countryId) {
+                return;
+            }
+
+            fetch(`/api/states/${countryId}`)
+                .then(response => response.json())
+                .then(states => {
+
+                    states.forEach(state => {
+
+                        const option =
+                            document.createElement('option');
+
+                        option.value = state.id;
+                        option.textContent = state.name;
+
+                        stateSelect.appendChild(option);
+                    });
+
+                })
+                .catch(error => {
+                    console.error(
+                        'Error loading states:',
+                        error
+                    );
+                });
+        });
+    }
+
+    if (stateSelect) {
+        stateSelect.addEventListener('change', function () {
+
+            const stateId = this.value;
+
+            citySelect.innerHTML =
+                '<option value="">Select City</option>';
+
+            if (!stateId) {
+                return;
+            }
+
+            fetch(`/api/cities/${stateId}`)
+                .then(response => response.json())
+                .then(cities => {
+
+                    cities.forEach(city => {
+
+                        const option =
+                            document.createElement('option');
+
+                        option.value = city.id;
+                        option.textContent = city.name;
+
+                        citySelect.appendChild(option);
+                    });
+
+                })
+                .catch(error => {
+                    console.error(
+                        'Error loading cities:',
+                        error
+                    );
+                });
+        });
+    }
+
+});
+    // Quick Add Customer
+     document.addEventListener('DOMContentLoaded', function () {
+
+    const customerForm = document.getElementById('quickAddCustomerForm');
+
+    if (customerForm) {
+        customerForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const submitBtn = customerForm.querySelector(
+                'button[type="submit"]'
+            );
+
+            const spinner = submitBtn.querySelector('.spinner-border');
+
+            const errorBox = document.getElementById(
+                'quickCustomerFormErrors'
+            );
+
+            submitBtn.disabled = true;
+            spinner.classList.remove('d-none');
+            errorBox.classList.add('d-none');
+            errorBox.innerHTML = '';
+
+            const formData = new FormData(customerForm);
+
+            formData.append('from_modal', '1');
+
+            fetch("{{ route('consignees.store') }}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(async response => {
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw {
+                        validation: data.errors,
+                        message: data.message
+                    };
+                }
+
+                return data;
+            })
+            .then(data => {
+
+                if (data.success && data.customer) {
+
+                    // Add customer to LR Customer dropdown
+                    const customerSelect =
+                        document.getElementById('customer_id');
+
+                    if (customerSelect) {
+
+                        const option = new Option(
+                            data.customer.name,
+                            data.customer.id,
+                            true,
+                            true
+                        );
+
+                        customerSelect.add(option);
+
+                        customerSelect.value =
+                            data.customer.id;
+
+                        customerSelect.dispatchEvent(
+                            new Event('change')
+                        );
+                    }
+
+                    // Close customer modal
+                    const modalElement =
+                        document.getElementById(
+                            'quickAddCustomerModal'
+                        );
+
+                    const modal =
+                        bootstrap.Modal.getInstance(
+                            modalElement
+                        );
+
+                    if (modal) {
+                        modal.hide();
+                    }
+
+                    // Reset customer form
+                    customerForm.reset();
+
+                    errorBox.classList.add('d-none');
+                    errorBox.innerHTML = '';
+                }
+            })
+            .catch(error => {
+
+                console.error(
+                    'Error creating customer:',
+                    error
+                );
+
+                if (error.validation) {
+
+                    const messages =
+                        Object.values(error.validation)
+                            .flat()
+                            .join('<br>');
+
+                    errorBox.innerHTML = messages;
+
+                } else {
+
+                    errorBox.innerHTML =
+                        error.message ||
+                        'Unable to create customer.';
+                }
+
+                errorBox.classList.remove('d-none');
+            })
+            .finally(() => {
+
+                submitBtn.disabled = false;
+                spinner.classList.add('d-none');
+
+            });
+        });
+    }
+
+});
+</script>
 @endsection
