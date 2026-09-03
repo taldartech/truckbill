@@ -315,12 +315,24 @@
 
       <div id="ewayBillsContainer">
         <div class="eway-bill-row d-flex gap-2 mb-2">
-            <input
-                type="text"
-                name="eway_bills[0][eway_bill_number]"
-                class="form-control"
-                placeholder="E-Way Bill Number"
-            >
+            <div class="input-group">
+      <input 
+        type="text" 
+        name="eway_bills[0][eway_bill_number]" 
+        class="form-control" 
+        placeholder="E-Way Bill Number" 
+      >
+
+      <a 
+        href="https://ewaybillgst.gov.in/Login.aspx"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="btn btn-outline-success"
+        title="Create E-Way Bill"
+      >
+        <i class="bi bi-box-arrow-up-right"></i>
+      </a>
+      </div>
 
             <input
                 type="date"

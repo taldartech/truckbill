@@ -5,11 +5,16 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    public function up(): void
+     public function up(): void
     {
         DB::table('freight_bookings')
-            ->whereNotNull('eway_bill_number')
-            ->where('eway_bill_number', '!=', '')
+            ->where(function ($query) {
+                $query->where(function ($q) {
+                    $q->whereNotNull('eway_bill_number')
+                        ->where('eway_bill_number', '!=', '');
+                })
+                ->orWhereNotNull('eway_bill_expiry');
+            })
             ->get()
             ->each(function ($freightBooking) {
                 DB::table('eway_bills')->insert([
@@ -21,6 +26,7 @@ return new class extends Migration
                 ]);
             });
     }
+
 
     public function down(): void
     {

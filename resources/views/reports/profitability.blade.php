@@ -1,7 +1,65 @@
 @extends('layouts.app')
 
 @section('content')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 
+
+<style>
+    .select2-container--bootstrap-5 .select2-selection {
+        min-height: 38px;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        padding-left: 12px;
+        padding-right: 20px;
+        color: var(--brand-text-primary);
+        line-height: 36px;
+        background: var(--brand-card-bg);
+        border: 1px solid var(--brand-border);
+        border-radius: 0.375rem;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--single:focus-visible {
+        border-color: var(--brand-primary);
+        box-shadow: 0 0 0 0.25rem var(--brand-primary-light);
+        outline: 0;
+        border-radius: 0.375rem;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+        right: 12px;
+    }
+
+    .select2-dropdown {
+        border: 1px solid var(--brand-border);
+        border-radius: 0.375rem;
+    }
+
+    /* Search input */
+    .select2-search--dropdown {
+        padding: 8px;
+    }
+
+    .select2-search--dropdown .select2-search__field {
+        border: 2px solid #212121;
+        border-radius: 0;
+        margin: 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .select2-results__option--highlighted {
+        background-color: var(--brand-primary);
+        color: white;
+    }
+
+    .table th,
+    .table td {
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+</style>
 <div class="container mt-4">
 
     <div class="card">
@@ -39,15 +97,15 @@
                 <div class="col-md-2">
                     <label class="form-label">Customer</label>
 
-                    <select name="customer_id" class="form-control">
-                        <option value="">All Customers</option>
+                   <select name="customer_id" class="form-select select2">
+                    <option value="">All Customers</option>
 
-                        @foreach($customers as $customer)
-                            <option value="{{ $customer->id }}"
-                                {{ request('customer_id') == $customer->id ? 'selected' : '' }}>
-                                {{ $customer->name }}
-                            </option>
-                        @endforeach
+                    @foreach($customers as $customer)
+                    <option value="{{ $customer->id }}"
+                   {{ request('customer_id') == $customer->id ? 'selected' : '' }}>
+                   {{ $customer->name }}
+                    </option>
+                    @endforeach
                     </select>
                 </div>
 
@@ -55,7 +113,7 @@
                 <div class="col-md-2">
                     <label class="form-label">Transporter</label>
 
-                    <select name="transporter_id" class="form-control">
+                   <select name="transporter_id" class="form-select select2">
                         <option value="">All Transporters</option>
 
                         @foreach($transporters as $transporter)
@@ -71,7 +129,7 @@
                 <div class="col-md-2">
                     <label class="form-label">Vehicle</label>
 
-                    <select name="truck_id" class="form-control">
+                   <select name="truck_id" class="form-select select2">
                         <option value="">All Vehicles</option>
 
                         @foreach($trucks as $truck)
@@ -88,7 +146,7 @@
           <div class="col-md-2">
           <label class="form-label">Status</label>
 
-          <select name="status" class="form-control">
+        <select name="status" class="form-select select2">
           <option value="">All Status</option>
 
             <option value="Pending"
@@ -117,7 +175,7 @@
                 <div class="col-md-2">
                     <label class="form-label">Profit / Loss</label>
 
-                    <select name="profit_loss" class="form-control">
+                  <select name="profit_loss" class="form-select select2">
                         <option value="">All</option>
 
                         <option value="profit"
@@ -433,5 +491,18 @@
     </div>
 
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $('.select2').each(function () {
+            $(this).select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+        });
+    });
+</script>
 
 @endsection

@@ -312,8 +312,6 @@
                     @endauth
 
                 </ul>
-                <!--end::Start Navbar Links-->
-                <!--begin::End Navbar Links-->
                 <ul class="navbar-nav ms-auto">
                     @auth
                         @if (in_array(Auth::user()->user_role_id, [3, 4, 5]) || (Auth::user()->userRole->name === 'super_admin' && Auth::user()->canAccessCompanyPanel()))
@@ -335,7 +333,6 @@
                         @endif
                     @endauth
 
-                    <!--begin::User Menu Dropdown-->
                     <!--begin::User Menu Dropdown-->
                     <li class="nav-item dropdown user-menu">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">

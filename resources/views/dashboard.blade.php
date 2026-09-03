@@ -235,83 +235,95 @@
                     });
 
                 }
-                                const profitabilityCanvas = document.getElementById('dashProfitabilityTrendChart');
+      const profitabilityCanvas = document.getElementById('dashProfitabilityTrendChart');
 
-                if (profitabilityCanvas) {
-                    const profitability = payload.profitabilityTrend || {};
+if (profitabilityCanvas) {
+    const profitability = payload.profitabilityTrend || {};
 
-                    new Chart(profitabilityCanvas, {
-                        type: 'line',
-                        data: {
-                            labels: profitability.labels || [],
-                            datasets: [
-                                {
-                                    label: 'Revenue',
-                                    data: profitability.revenue || [],
-                                    borderColor: brand.greenDark,
-                                    backgroundColor: 'rgba(47, 179, 111, 0.08)',
-                                    fill: false,
-                                    tension: 0.35,
-                                    pointRadius: 2,
-                                },
-                                {
-                                    label: 'Cost',
-                                    data: profitability.cost || [],
-                                    borderColor: brand.amber,
-                                    backgroundColor: 'transparent',
-                                    fill: false,
-                                    tension: 0.35,
-                                    pointRadius: 2,
-                                },
-                                {
-                                    label: 'Profit',
-                                    data: profitability.profit || [],
-                                    borderColor: brand.blue,
-                                    backgroundColor: 'transparent',
-                                    fill: false,
-                                    tension: 0.35,
-                                    pointRadius: 2,
-                                },
-                            ],
+    new Chart(profitabilityCanvas, {
+        type: 'bar',
+        data: {
+            labels: profitability.labels || [],
+            datasets: [
+                {
+                    label: 'Revenue',
+                    data: profitability.revenue || [],
+                    backgroundColor: brand.green,
+                    borderRadius: 3,
+                    barThickness: 14,
+                },
+                {
+                    label: 'Cost',
+                    data: profitability.cost || [],
+                    backgroundColor: brand.amber,
+                    borderRadius: 3,
+                    barThickness: 14,
+                },
+                {
+                    label: 'Profit',
+                    data: profitability.profit || [],
+                    backgroundColor: brand.blue,
+                    borderRadius: 3,
+                    barThickness: 14,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        boxWidth: 8,
+                        font: {
+                            size: 11,
+                            weight: '600',
                         },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    display: true,
-                                    position: 'top',
-                                },
-                            },
-                            scales: {
-                                x: {
-                                    grid: { display: false },
-                                    ticks: {
-                                        font: { size: 10, weight: '600' },
-                                    },
-                                },
-                                y: {
-                                    beginAtZero: true,
-                                    grid: { color: brand.grid },
-                                    ticks: {
-                                        callback: (v) =>
-                                            '₹' + Number(v).toLocaleString('en-IN', {
-                                                notation: 'compact',
-                                            }),
-                                    },
-                                },
-                            },
+                    },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return context.dataset.label + ': ₹' +
+                                Number(context.raw).toLocaleString('en-IN');
                         },
-                    });
-                }
-            }
-
-
-
-
- 
-  
-
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    stacked: false,
+                    grid: {
+                        display: false,
+                    },
+                    ticks: {
+                        font: {
+                            size: 10,
+                            weight: '600',
+                        },
+                    },
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: brand.grid,
+                    },
+                    ticks: {
+                        callback: function (value) {
+                            return '₹' + Number(value).toLocaleString('en-IN', {
+                                notation: 'compact',
+                            });
+                        },
+                    },
+                },
+            },
+        },
+    });
+}
+}
             document.addEventListener('DOMContentLoaded', function () {
                 animateCountUps();
                 initTabs();

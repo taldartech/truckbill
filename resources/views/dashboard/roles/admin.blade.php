@@ -109,15 +109,16 @@
             <i class="bi bi-pie-chart"></i>
             Visual Analytics &amp; Insights
         </h2>
-        <div class="dashboard-tabs" role="tablist">
-            <button type="button" class="dashboard-tabs__btn is-active" data-dash-tab="operations">Operations</button>
-            <button type="button" class="dashboard-tabs__btn" data-dash-tab="finance">Finance</button>
-        </div>
+       <div class="dashboard-tabs" role="tablist">
+    <button type="button" class="dashboard-tabs__btn is-active" data-dash-tab="operations">Operations</button>
+    <button type="button" class="dashboard-tabs__btn" data-dash-tab="finance">Finance</button>
+    <button type="button" class="dashboard-tabs__btn" data-dash-tab="profitability">Profitability</button>
+</div>
     </div>
     <div class="dashboard-panel__body">
         <div class="dashboard-tab-pane" data-dash-pane="operations">
             <div class="dashboard-analytics-grid">
-                <div class="dashboard-analytics-card">
+            <div class="dashboard-analytics-card">
                     <h3 class="dashboard-analytics-card__title">Hire by Status</h3>
                     <p class="dashboard-analytics-card__hint">Date: {{ $periodLabel }}</p>
                     <div class="trip-status-grid">
@@ -182,7 +183,7 @@
         </div>
 
         <div class="dashboard-tab-pane" data-dash-pane="finance" hidden>
-            <div class="dashboard-analytics-grid">
+    <div class="dashboard-analytics-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%;">
                 <div class="dashboard-analytics-card">
                     <h3 class="dashboard-analytics-card__title">Invoice Payment Status</h3>
                     <p class="dashboard-analytics-card__hint">All open ledgers</p>
@@ -202,14 +203,6 @@
                         <canvas id="dashRevenueTrendChart" aria-label="Revenue trend chart"></canvas>
                     </div>
                 </div>
-
-                <div class="dashboard-analytics-card">
-             <h3 class="dashboard-analytics-card__title">Profitability Trend</h3>
-            <p class="dashboard-analytics-card__hint">{{ $periodLabel }}</p>
-         <div class="dashboard-analytics-card__chart">
-         <canvas id="dashProfitabilityTrendChart" aria-label="Profitability trend chart"></canvas>
-          </div>
-        </div>
 
                 <div class="dashboard-analytics-card">
                     <h3 class="dashboard-analytics-card__title">Period Snapshot</h3>
@@ -235,6 +228,24 @@
                 </div>
             </div>
         </div>
+
+        <div class="dashboard-tab-pane" data-dash-pane="profitability" hidden>
+    <div class="dashboard-analytics-grid" style="grid-template-columns: 1fr;">
+       <div class="dashboard-analytics-card dashboard-analytics-card--profitability">
+            <h3 class="dashboard-analytics-card__title">Profitability</h3>
+            <p class="dashboard-analytics-card__hint">
+                Revenue vs Cost vs Profit · {{ $periodLabel }}
+            </p>
+
+           <div class="dashboard-analytics-card__chart" style="height: 420px;">
+                <canvas
+                    id="dashProfitabilityTrendChart"
+                    aria-label="Profitability chart">
+                </canvas>
+            </div>
+        </div>
+    </div>
+</div>
     </div>
 </section>
 
