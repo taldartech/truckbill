@@ -428,8 +428,8 @@ class FreightBookingController extends Controller
                     $lr = $booking->lr;
                     if ($lr) {
                         $printTitle = $booking->voucher_last_printed_at
-                            ? 'Last printed: '.$booking->voucher_last_printed_at->format('d-m-Y h:i A')
-                            : 'Print voucher challan';
+                          ? 'Last printed: '.$booking->voucher_last_printed_at->format('d-m-Y h:i A')
+                          : 'Print voucher challan';
                         $printedClass = $booking->voucher_printed ? ' is-printed' : '';
                         $html .= '<a href="'.e(route('reports.voucher-receipt-export', ['lr_id' => $lr->id])).'" ';
                         $html .= 'class="btn btn-sm btn-icon btn-action-print voucher-print-btn'.$printedClass.'" ';
@@ -579,7 +579,7 @@ class FreightBookingController extends Controller
             'tds_amount' => 'nullable|numeric',
             'eway_bills' => 'nullable|array',
             'eway_bills.*.eway_bill_number' => 'nullable|string',
-             'eway_bills.*.eway_bill_expiry' => 'nullable|date',
+            'eway_bills.*.eway_bill_expiry' => 'nullable|date',
             'good_type' => 'nullable|string',
             'pan_verified' => 'required|boolean',
             'remark' => 'nullable|string',
@@ -626,7 +626,7 @@ class FreightBookingController extends Controller
                 ->with('error', 'Please confirm the good hire (lorry hire) details before submission.');
         }
 
-        $data = $request->validate([
+            $data = $request->validate([
             'lr_id' => 'required|exists:lorry_receipts,id',
             'tr_fr_rate' => 'required|numeric',
             'tr_amount' => 'required|numeric',
@@ -638,7 +638,6 @@ class FreightBookingController extends Controller
             'eway_bills.*.eway_bill_number' => 'nullable|string',
             'eway_bills.*.eway_bill_expiry' => 'nullable|date',
             'good_type' => 'nullable|string',
-
             'pan_verified' => 'required|boolean',
             'remark' => 'nullable|string',
             'is_delivered' => 'boolean',
@@ -706,18 +705,18 @@ class FreightBookingController extends Controller
             ], $transporterInfo));
 
             foreach ($data['eway_bills'] ?? [] as $ewayBillData) {
-    if (
+     if (
         empty($ewayBillData['eway_bill_number'] ?? null) &&
         empty($ewayBillData['eway_bill_expiry'] ?? null)
-    ) {
+        ) {
         continue;
-    }
+       }
 
-    $freightBooking->ewayBills()->create([
+      $freightBooking->ewayBills()->create([
         'eway_bill_number' => $ewayBillData['eway_bill_number'] ?? null,
         'eway_bill_expiry' => $ewayBillData['eway_bill_expiry'] ?? null,
-    ]);
-   }
+      ]);
+     }
 
             $oldDeliveryStatus = $lorryReceipt->delivery_status;
             $deliveryStatus = 'Pending';
@@ -1177,14 +1176,14 @@ class FreightBookingController extends Controller
             'is_delivered' => 'boolean',
             'is_cancelled' => 'boolean',
             'linked_freight_booking_id' => 'nullable|exists:freight_bookings,id',
-           'eway_bills' => 'nullable|array',
-          'eway_bills.*.id' => [
-         'nullable',
-        'integer',
-       Rule::exists('eway_bills', 'id')->where(
-        fn ($query) => $query->where(
-            'freight_booking_id',
-            $freightBooking->id
+            'eway_bills' => 'nullable|array',
+            'eway_bills.*.id' => [
+            'nullable',
+            'integer',
+          Rule::exists('eway_bills', 'id')->where(
+          fn ($query) => $query->where(
+          'freight_booking_id',
+           $freightBooking->id
         )
     ),
 ],
@@ -1248,38 +1247,38 @@ class FreightBookingController extends Controller
             $wasFreightBookingCancelled = (bool) $freightBooking->is_cancelled;
 
            // Update freight booking with lorry receipt's LR number
-$freightBooking->update(array_merge($data, [
-    'lr_number' => $lorryReceipt->lr_number,
-    'linked_lr_id' => $linkedLrId,
-]));
+           $freightBooking->update(array_merge($data, [
+          'lr_number' => $lorryReceipt->lr_number,
+          'linked_lr_id' => $linkedLrId,
+         ]));
 
-// Get submitted E-Way Bills
-$submittedEwayBills = $data['eway_bills'] ?? [];
+          // Get submitted E-Way Bills
+         $submittedEwayBills = $data['eway_bills'] ?? [];
 
-// Get existing E-Way Bill IDs
-$existingEwayBillIds = $freightBooking->ewayBills()
-    ->pluck('id')
-    ->toArray();
+         // Get existing E-Way Bill IDs
+         $existingEwayBillIds = $freightBooking->ewayBills()
+        ->pluck('id')
+         ->toArray();
 
-// Get submitted existing E-Way Bill IDs
-$submittedEwayBillIds = collect($submittedEwayBills)
-    ->pluck('id')
-    ->filter()
-    ->map(fn ($id) => (int) $id)
-    ->toArray();
+         // Get submitted existing E-Way Bill IDs
+         $submittedEwayBillIds = collect($submittedEwayBills)
+         ->pluck('id')
+         ->filter()
+         ->map(fn ($id) => (int) $id)
+         ->toArray();
 
-// Delete E-Way Bills removed from the form
-$freightBooking->ewayBills()
-    ->whereIn(
-        'id',
-        array_diff($existingEwayBillIds, $submittedEwayBillIds)
-    )
-    ->delete();
+        // Delete E-Way Bills removed from the form
+        $freightBooking->ewayBills()
+        ->whereIn(
+         'id',
+          array_diff($existingEwayBillIds, $submittedEwayBillIds)
+        )
+       ->delete();
 
-// Update existing E-Way Bills / Create new E-Way Bills
-foreach ($submittedEwayBills as $ewayBill) {
+     // Update existing E-Way Bills / Create new E-Way Bills
+     foreach ($submittedEwayBills as $ewayBill) {
 
-    if (!empty($ewayBill['id'])) {
+       if (!empty($ewayBill['id'])) {
 
         $freightBooking->ewayBills()
             ->where('id', $ewayBill['id'])
@@ -1297,18 +1296,17 @@ foreach ($submittedEwayBills as $ewayBill) {
     }
 }
 
-// Refresh freight booking to get updated values
-    // Refresh freight booking to get updated values
-$freightBooking->refresh();
+       // Refresh freight booking to get updated values
+       $freightBooking->refresh();
 
-$justCancelledFreightBooking = ! $wasFreightBookingCancelled
-    && (bool) $freightBooking->is_cancelled;
+       $justCancelledFreightBooking = ! $wasFreightBookingCancelled
+       && (bool) $freightBooking->is_cancelled;
 
-$lorryReceiptUpdate = null;
+       $lorryReceiptUpdate = null;
 
-// Update lorry receipt status
-if ($lorryReceipt) {
-    $lorryReceiptUpdate = $this->freightBookingCalculationService
+      // Update lorry receipt status
+      if ($lorryReceipt) {
+       $lorryReceiptUpdate = $this->freightBookingCalculationService
         ->updateLorryReceiptForFreightBookingUpdate(
             $lorryReceipt,
             $data,
@@ -1316,7 +1314,7 @@ if ($lorryReceipt) {
             $newShortageAmount,
         );
 
-    if ($lorryReceiptUpdate['delivery_status'] !== $lorryReceiptUpdate['old_delivery_status']) {
+       if ($lorryReceiptUpdate['delivery_status'] !== $lorryReceiptUpdate['old_delivery_status']) {
         $lorryReceipt->loadMissing([
             'company',
             'truck',
@@ -1332,34 +1330,34 @@ if ($lorryReceipt) {
     }
 }
 
-if ($justCancelledFreightBooking) {
-    $freightBooking->loadMissing([
+        if ($justCancelledFreightBooking) {
+        $freightBooking->loadMissing([
         'company',
         'lr.truck',
         'transporter.transporterMaster',
     ]);
 
-    $this->frNotificationService->notifyCancelled(
-        $freightBooking,
-        auth()->user()
+         $this->frNotificationService->notifyCancelled(
+         $freightBooking,
+         auth()->user()
     );
 }
 
-$this->freightBookingCalculationService->applyNegativeAdjustment(
-    $freightBooking,
-    $lorryReceipt?->lr_number
+        $this->freightBookingCalculationService->applyNegativeAdjustment(
+        $freightBooking,
+        $lorryReceipt?->lr_number
 );
 
-DB::commit();
+        DB::commit();
 
-return $this->redirectToFreightBookingsIndex(
-    $request,
-    'success',
-    'Good Hire (Lorry Hire) updated successfully.'
+        return $this->redirectToFreightBookingsIndex(
+        $request,
+        'success',
+        'Good Hire (Lorry Hire) updated successfully.'
 );
 
-} catch (\Throwable $e) {
-    DB::rollBack();
+        } catch (\Throwable $e) {
+        DB::rollBack();
 
     \Log::error('Freight booking update failed', [
         'freight_booking_id' => $freightBooking->id ?? null,

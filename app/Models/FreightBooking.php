@@ -47,8 +47,6 @@ class FreightBooking extends Model implements Auditable
         'pan_verified',
         'voucher_number',
         'company_id',
-        'eway_bill_number',
-        'eway_bill_expiry',
         'linked_lr_id',
         'voucher_printed',
         'voucher_last_printed_at',

@@ -134,11 +134,11 @@
                         <tbody>
                             @foreach($expiredEwayBills->take(10) as $ewayBill)
                                 <tr>
-                                    <td class="ps-4"><span class="fw-bold text-dark">#{{ $ewayBill->lr->lr_number ?? 'N/A' }}</span></td>
+                                    <td class="ps-4"><span class="fw-bold text-dark">#{{ $ewayBill->freightBooking?->lr?->lr_number?? 'N/A' }}</span></td>
                                     <td>
                                         <div class="d-flex flex-column">
-                                            <span class="fw-medium">{{ $ewayBill->lr->truck->truck_number ?? 'N/A' }}</span>
-                                            <small class="text-muted">{{ $ewayBill->lr->destination_city ?? '-' }}</small>
+                                            <span class="fw-medium">{{ $ewayBill->freightBooking?->lr?->truck?->truck_number ?? 'N/A' }}</span>
+                                            <small class="text-muted">{{ $ewayBill->freightBooking?->lr?->destination_city ?? '-' }}</small>
                                         </div>
                                     </td>
                                     <td><span class="badge bg-danger text-white px-3 py-2 rounded-pill"> {{ formatDate(optional($ewayBill)->eway_bill_expiry) }}</span></td>

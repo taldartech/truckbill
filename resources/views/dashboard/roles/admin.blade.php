@@ -273,32 +273,48 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($expiredEwayBills->take(10) as $ewayBill)
-                            @php
-                                $expiryDate = \Carbon\Carbon::parse($ewayBill->eway_bill_expiry)->startOfDay();
-                                $isPastOrToday = $expiryDate->isPast() || $expiryDate->isToday();
-                            @endphp
-                            <tr>
-                                <td><strong>#{{ $ewayBill->lr->lr_number ?? '—' }}</strong></td>
-                                <td>
-                                    <div>{{ $ewayBill->lr->truck->truck_number ?? 'N/A' }}</div>
-                                    <small class="text-muted">{{ $ewayBill->lr->destination_city ?? '—' }}</small>
-                                </td>
-                                <td>{{ $ewayBill->lr?->truck?->driver?->mobile ?? '—' }}</td>
-                                <td>
-                                    <span class="dashboard-stat-card__chip {{ $isPastOrToday ? 'dashboard-stat-card__chip--danger' : 'dashboard-stat-card__chip--warning' }}">
-                                        {{ formatDate(optional($ewayBill)->eway_bill_expiry) }}
-                                    </span>
-                                </td>
-                                <td class="text-end">
-                                    <a href="{{ route('freight_bookings.show', $ewayBill->id) }}"
-                                        class="btn btn-sm btn-icon btn-action-view" title="View hire">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
+    @foreach ($expiredEwayBills->take(10) as $ewayBill)
+        @php
+            $expiryDate = \Carbon\Carbon::parse($ewayBill->eway_bill_expiry)->startOfDay();
+            $isPastOrToday = $expiryDate->isPast() || $expiryDate->isToday();
+
+            $lr = $ewayBill->freightBooking?->lr;
+            $truck = $lr?->truck;
+            $driver = $truck?->driver;
+        @endphp
+
+        <tr>
+            <td>
+                <strong>#{{ $lr?->lr_number ?? '—' }}</strong>
+            </td>
+
+            <td>
+                <div>{{ $truck?->truck_number ?? 'N/A' }}</div>
+                <small class="text-muted">
+                    {{ $lr?->destination_city ?? '—' }}
+                </small>
+            </td>
+
+            <td>
+                {{ $driver?->mobile ?? '—' }}
+            </td>
+
+            <td>
+                <span class="dashboard-stat-card__chip {{ $isPastOrToday ? 'dashboard-stat-card__chip--danger' : 'dashboard-stat-card__chip--warning' }}">
+                    {{ formatDate($ewayBill->eway_bill_expiry) }}
+                </span>
+            </td>
+
+            <td class="text-end">
+                <a href="{{ route('freight_bookings.show', $ewayBill->freightBooking->id) }}"
+                    class="btn btn-sm btn-icon btn-action-view"
+                    title="View hire">
+                    <i class="bi bi-eye"></i>
+                </a>
+            </td>
+        </tr>
+    @endforeach
+</tbody>
                 </table>
             </div>
         </div>

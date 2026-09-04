@@ -168,14 +168,14 @@
                                     }
                                 @endphp
                                 <tr>
-                                    <td class="ps-4"><span class="fw-bold text-dark">#{{ $ewayBill->lr->lr_number }}</span></td>
+                                    <td class="ps-4"><span class="fw-bold text-dark">#{{ $ewayBill->freightBooking?->lr?->lr_number }}</span></td>
                                     <td>
                                         <div class="d-flex flex-column">
-                                            <span class="fw-medium">{{ $ewayBill->lr->truck->truck_number ?? 'N/A' }}</span>
-                                            <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i> {{ $ewayBill->lr->destination_city }}</small>
+                                            <span class="fw-medium">{{ $ewayBill->freightBooking?->lr?->truck?->truck_number ?? 'N/A' }}</span>
+                                            <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i> {{ $ewayBill->freightBooking?->lr?->destination_city }}</small>
                                         </div>
                                     </td>
-                                    <td>{{ $ewayBill->lr?->truck?->driver?->mobile ?? '-' }}</td>
+                                    <td>{{ $ewayBill->freightBooking?->lr?->truck?->driver?->mobile ?? '-' }}</td>
                                     <td><span class="badge {{ $bgClass }} {{ $expiryClass }} px-3 py-2 rounded-pill fw-bold"> {{ formatDate(optional($ewayBill)->eway_bill_expiry) }}</span></td>
                                     <td class="text-end pe-4 align-middle">
                                         <a href="{{ route('freight_bookings.show', $ewayBill->id) }}" class="btn btn-icon btn-view rounded-circle">
