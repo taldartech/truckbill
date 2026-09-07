@@ -25,6 +25,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Yajra\DataTables\Facades\DataTables;
 use App\Models\Country;
+use App\Models\TruckType;
 
 class LorryReceiptController extends Controller
 {
@@ -315,9 +316,17 @@ class LorryReceiptController extends Controller
         }
 
         $companyId = $this->getCurrentCompanyId();
+       $transporters = Transporter::where('company_id', $companyId)
+       ->where('is_owner', 1)
+       ->with('transporterMaster')
+       ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+       ->orderBy('transporter_masters.name')
+       ->select('transporters.*')
+       ->get();
         $countries = Country::orderBy('name')->get();
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
-
+        $truckTypes = TruckType::orderBy('name')->get();
+        
         // Only fetch selected IDs (if any) to avoid loading large dropdown datasets.
         $selectedConsigneeIds = collect([
             old('customer_id'),
@@ -371,7 +380,7 @@ class LorryReceiptController extends Controller
                 ->first()
             : null;
 
-        return view('lorry_receipts.create', compact('trucks', 'consignees', 'goodsTypes', 'agencies', 'payeeTransporter','countries'));
+        return view('lorry_receipts.create', compact('trucks', 'consignees', 'goodsTypes', 'agencies', 'payeeTransporter','countries','transporters' ,'truckTypes'));
     }
 
     public function createLinked(): View|RedirectResponse

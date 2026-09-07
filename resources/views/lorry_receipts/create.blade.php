@@ -46,6 +46,48 @@
         .select2-container.declaration-warning .select2-selection__rendered {
             background-color: #fff3cd !important;
         }
+        .driver-joined-group {
+            max-width: 100%;
+            min-width: 0;
+        }
+
+        .driver-joined-group > .flex-grow-1 {
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .driver-joined-group .select2-container {
+           width: 100% !important;
+           max-width: 100%;
+           min-width: 0;
+        }
+
+        .driver-joined-group .select2-container .select2-selection--single {
+           border-top-right-radius: 0;
+           border-bottom-right-radius: 0;
+           height: 38px;
+           display: flex;
+           align-items: center;
+        }
+
+       .driver-joined-group .select2-selection--single
+       .select2-selection__rendered {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          display: block;
+          padding-right: 1.5rem;
+        }
+
+       .driver-joined-group .btn {
+          flex-shrink: 0;
+          border-top-left-radius: 0;
+          border-bottom-left-radius: 0;
+          white-space: nowrap;
+          height: 38px;
+          display: inline-flex;
+          align-items: center;
+        }
     </style>
     <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
     <div class="lrf-page app-index-page">
@@ -149,7 +191,16 @@
                             <div class="lrf-receipt-card__title">Vehicle &amp; Payee</div>
                             <div class="lrf-receipt-card__row lrf-grid lrf-grid--2">
                                 <div class="lrf-pf">
-                                    <label for="truck_id" class="lrf-pf__lbl">Truck<span class="lrf-pf__req">*</span></label>
+                                  <div class="lrf-pf__lbl-row">
+                                  <label for="truck_id" class="lrf-pf__lbl">
+                                  Truck<span class="lrf-pf__req">*</span>
+                                  </label>
+                                  <a href="#" class="lrf-quick-add"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#quickAddTruckModal">
+                                  <i class="bi bi-plus-lg"></i> Add
+                                  </a>
+                                </div>
                                     <select class="form-select" id="truck_id" name="truck_id" required
                                         data-placeholder="Search and select truck...">
                                         <option value="">Select Trucks</option>
@@ -1143,7 +1194,7 @@
         </div>
     </div>
 </div>
-<!-- Add City Modal -->
+ <!-- Add City Modal -->
 <div class="modal fade fb-pay-modal"
     id="addCityModal"
     tabindex="-1"
@@ -1271,6 +1322,169 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="quickAddTruckModal" tabindex="-1"
+     aria-labelledby="quickAddTruckModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="quickAddTruckModalLabel">
+                    <i class="bi bi-truck me-1"></i> Add New Truck
+                </h5>
+
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+
+            <form id="quickTruckForm">
+                @csrf
+
+                <div class="modal-body">
+
+                    <div id="quickTruckGeneralError"
+                         class="alert alert-danger d-none"></div>
+
+                    <div class="row g-2">
+
+                        {{-- Truck Owner --}}
+                        <div class="col-md-6">
+                            <label for="quick_truck_transporter_id"
+                                   class="form-label">
+                                Truck Owner
+                            </label>
+
+                            <select class="form-select"
+                                    id="quick_truck_transporter_id"
+                                    name="transporter_id">
+                                <option value="">No Truck Owner</option>
+
+                                @foreach($transporters as $owner)
+                                    <option value="{{ $owner->id }}">
+                                        {{ $owner->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <div class="text-danger small"
+                                 id="quick_truck_transporter_id_error"></div>
+                        </div>
+
+                        {{-- Truck Number --}}
+                        <div class="col-md-6">
+                            <label for="quick_truck_number"
+                                   class="form-label">
+                                Truck Number *
+                            </label>
+
+                            <input type="text"
+                                   class="form-control"
+                                   id="quick_truck_number"
+                                   name="truck_number"
+                                   placeholder="Enter Truck Number"
+                                   required
+                                   style="text-transform: uppercase;">
+
+                            <div class="text-danger small"
+                                 id="quick_truck_number_error"></div>
+                        </div>
+
+                        {{-- Truck Type --}}
+                        <div class="col-md-6">
+                            <label for="quick_truck_type"
+                                   class="form-label">
+                                Truck Type *
+                            </label>
+
+                            <select class="form-select"
+                                    id="quick_truck_type"
+                                    name="truck_type"
+                                    required>
+                                <option value="">Select</option>
+
+                                @foreach($truckTypes as $type)
+                                    <option value="{{ $type->name }}">
+                                        {{ $type->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <div class="text-danger small"
+                                 id="quick_truck_type_error"></div>
+                        </div>
+
+                        
+                      
+                   {{-- Driver --}}
+           {{-- Driver --}}
+<div class="col-md-6 min-w-0">
+    <label for="quick_truck_driver_id" class="form-label">
+        Driver
+    </label>
+
+    <div class="driver-joined-group d-flex align-items-stretch">
+        <div class="flex-grow-1">
+            <select
+                class="form-select"
+                id="quick_truck_driver_id"
+                name="driver_id"
+                data-placeholder="Search driver (type first letter)...">
+                <option value="">No Driver</option>
+            </select>
+        </div>
+
+        <a href="{{ route('drivers.create') }}"
+           class="btn btn-secondary"
+           target="_blank">
+            Add New Driver
+        </a>
+    </div>
+
+    <div class="text-danger small"
+         id="quick_truck_driver_id_error"></div>
+</div>
+
+                     
+             {{-- Registration Date --}}
+      <div class="col-md-6">
+            <label for="quick_truck_registration_date"
+              class="form-label">
+              Registration Date *
+            </label>
+
+              <input type="date"
+              class="form-control"
+              id="quick_truck_registration_date"
+              name="registration_date"
+              required>
+
+         <div class="text-danger small"
+          id="quick_truck_registration_date_error"></div>
+
+        <div class="invalid-feedback">
+          Please select a registration date.
+        </div>
+      </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-brand-primary"
+                            id="quickTruckSaveBtn">
+                        <i class="bi bi-floppy-fill me-1"></i>
+                        Create Truck
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
 
     <!-- Load Select2 from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -1352,6 +1566,8 @@
                     },
                     cache: true
                 };
+
+            
 
                 const ajaxAgenciesConfig = {
                     url: '/api/agencies/search',
@@ -2704,22 +2920,25 @@ grNumberInput.addEventListener('blur', function() {
                     errorBox.innerHTML = '⚠️ Error: ' + error.message;
                 });
         });
-      document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function () {
 
     const countrySelect = document.getElementById('quick_customer_country_id');
     const stateSelect = document.getElementById('quick_customer_state_id');
     const citySelect = document.getElementById('quick_customer_city_id');
 
-    if (countrySelect) {
+    if (countrySelect && stateSelect && citySelect) {
+
         countrySelect.addEventListener('change', function () {
 
             const countryId = this.value;
 
-            stateSelect.innerHTML =
-                '<option value="">Select State</option>';
+            $(stateSelect).empty().append(
+                new Option('Select State', '')
+            );
 
-            citySelect.innerHTML =
-                '<option value="">Select City</option>';
+            $(citySelect).empty().append(
+                new Option('Select City', '')
+            );
 
             if (!countryId) {
                 return;
@@ -2729,34 +2948,27 @@ grNumberInput.addEventListener('blur', function() {
                 .then(response => response.json())
                 .then(states => {
 
-                    states.forEach(state => {
+                    const options = states.map(state =>
+                        `<option value="${state.id}">${state.name}</option>`
+                    ).join('');
 
-                        const option =
-                            document.createElement('option');
+                    stateSelect.innerHTML =
+                        '<option value="">Select State</option>' + options;
 
-                        option.value = state.id;
-                        option.textContent = state.name;
-
-                        stateSelect.appendChild(option);
-                    });
-
+                    $(stateSelect).trigger('change');
                 })
                 .catch(error => {
-                    console.error(
-                        'Error loading states:',
-                        error
-                    );
+                    console.error('Error loading states:', error);
                 });
         });
-    }
 
-    if (stateSelect) {
         stateSelect.addEventListener('change', function () {
 
             const stateId = this.value;
 
-            citySelect.innerHTML =
-                '<option value="">Select City</option>';
+            $(citySelect).empty().append(
+                new Option('Select City', '')
+            );
 
             if (!stateId) {
                 return;
@@ -2766,23 +2978,15 @@ grNumberInput.addEventListener('blur', function() {
                 .then(response => response.json())
                 .then(cities => {
 
-                    cities.forEach(city => {
+                    const options = cities.map(city =>
+                        `<option value="${city.id}">${city.name}</option>`
+                    ).join('');
 
-                        const option =
-                            document.createElement('option');
-
-                        option.value = city.id;
-                        option.textContent = city.name;
-
-                        citySelect.appendChild(option);
-                    });
-
+                    citySelect.innerHTML =
+                        '<option value="">Select City</option>' + options;
                 })
                 .catch(error => {
-                    console.error(
-                        'Error loading cities:',
-                        error
-                    );
+                    console.error('Error loading cities:', error);
                 });
         });
     }
@@ -2919,6 +3123,298 @@ grNumberInput.addEventListener('blur', function() {
             });
         });
     }
+
+});
+
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const quickTruckForm = document.getElementById('quickTruckForm');
+
+    if (!quickTruckForm) {
+        return;
+    }
+
+    const truckNumber = document.getElementById('quick_truck_number');
+
+    // Uppercase truck number
+    truckNumber?.addEventListener('input', function () {
+        this.value = this.value.toUpperCase();
+    });
+
+    quickTruckForm.addEventListener('submit', function (e) {
+
+        e.preventDefault();
+
+        const form = this;
+        const saveBtn = document.getElementById('quickTruckSaveBtn');
+        const generalError = document.getElementById('quickTruckGeneralError');
+
+        // Clear old errors
+        generalError.classList.add('d-none');
+        generalError.textContent = '';
+
+        document.querySelectorAll(
+            '#quickTruckForm .text-danger'
+        ).forEach(el => {
+            el.textContent = '';
+        });
+
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = 'Creating...';
+
+        const formData = new FormData(form);
+
+        fetch("{{ route('trucks.store') }}", {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+        .then(async response => {
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw {
+                    status: response.status,
+                    data: data
+                };
+            }
+
+            return data;
+        })
+        .then(data => {
+
+            if (!data.success) {
+                throw {
+                    status: 422,
+                    data: data
+                };
+            }
+
+            const truck = data.truck;
+
+            // Add newly created truck to LR truck dropdown
+            const truckSelect = document.getElementById('truck_id');
+
+            if (truckSelect) {
+
+               const option = new Option(
+                truck.truck_number +
+               (truck.driver_name
+               ? ' - Driver: ' + truck.driver_name : '') + ' (' +
+               (truck.transporter_name || 'No Truck Owner') +')',
+               truck.id,
+               true,
+               true
+             );
+
+             option.dataset.transporterId =
+             truck.transporter_id || '';
+
+             option.dataset.transporterName =
+             truck.transporter_name || '';
+
+             option.dataset.driverName =
+             truck.driver_name || '';
+
+             option.dataset.driverId =
+             truck.driver_id || '';
+
+             truckSelect.appendChild(option);
+
+                // If Select2 is being used
+                if (window.jQuery &&
+                    window.jQuery.fn.select2 &&
+                    window.jQuery(truckSelect).hasClass('select2-hidden-accessible')) {
+
+                    window.jQuery(truckSelect)
+                        .val(truck.id)
+                        .trigger('change');
+                } else {
+                    truckSelect.value = truck.id;
+                    truckSelect.dispatchEvent(new Event('change'));
+                }
+            }
+
+            // Close modal
+            const modalElement =
+                document.getElementById('quickAddTruckModal');
+
+            const modal =
+                bootstrap.Modal.getInstance(modalElement);
+
+            if (modal) {
+                modal.hide();
+            }
+
+            // Reset form
+            form.reset();
+
+        })
+        .catch(error => {
+
+            console.error(error);
+
+            const data = error.data;
+
+            if (data && data.errors) {
+
+                Object.keys(data.errors).forEach(field => {
+
+                    const errorElement =
+                        document.getElementById(
+                            'quick_truck_' + field + '_error'
+                        );
+
+                    if (errorElement) {
+                        errorElement.textContent =
+                            data.errors[field][0];
+                    }
+
+                });
+
+            } else {
+
+                generalError.textContent =
+                    data?.message ||
+                    'Unable to create truck. Please try again.';
+
+                generalError.classList.remove('d-none');
+            }
+
+        })
+        .finally(() => {
+
+            saveBtn.disabled = false;
+
+            saveBtn.innerHTML =
+                '<i class="bi bi-floppy-fill me-1"></i> Create Truck';
+
+        });
+
+    });
+
+});
+
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    function initQuickTruckFields() {
+        if (!window.jQuery || typeof window.jQuery.fn.select2 === 'undefined') {
+            return;
+        }
+
+        const $owner = $('#quick_truck_transporter_id');
+        const $driver = $('#quick_truck_driver_id');
+
+        // =========================
+        // QUICK TRUCK OWNER
+        // =========================
+        if ($owner.length && !$owner.hasClass('select2-hidden-accessible')) {
+
+            $owner.select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                allowClear: true,
+                minimumInputLength: 1,
+                placeholder: 'Search owner (type first letter)...',
+
+                dropdownParent: $('#quickAddTruckModal'),
+
+                ajax: {
+                    url: '/api/truck-owners/search',
+                    dataType: 'json',
+                    delay: 700,
+
+                    data: function (params) {
+                        return {
+                            q: params.term || '',
+                            limit: 20
+                        };
+                    },
+
+                    processResults: function (data) {
+                        return {
+                            results: data.results || [],
+                            pagination: {
+                                more: false
+                            }
+                        };
+                    },
+
+                    cache: true
+                },
+
+                language: {
+                    inputTooShort: function () {
+                        return 'Please type at least 1 character to search';
+                    },
+                    searching: function () {
+                        return 'Searching...';
+                    }
+                }
+            });
+        }
+
+        // =========================
+        // QUICK TRUCK DRIVER
+        // =========================
+        if ($driver.length && !$driver.hasClass('select2-hidden-accessible')) {
+
+            $driver.select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                allowClear: true,
+                minimumInputLength: 1,
+                placeholder: 'Search driver (type first letter)...',
+
+                dropdownParent: $('#quickAddTruckModal'),
+
+                ajax: {
+                    url: '/api/drivers/search',
+                    dataType: 'json',
+                    delay: 700,
+
+                    data: function (params) {
+                        return {
+                            q: params.term || '',
+                            limit: 20
+                        };
+                    },
+
+                    processResults: function (data) {
+                        return {
+                            results: data.results || [],
+                            pagination: {
+                                more: false
+                            }
+                        };
+                    },
+
+                    cache: true
+                },
+
+                language: {
+                    inputTooShort: function () {
+                        return 'Please type at least 1 character to search';
+                    },
+                    searching: function () {
+                        return 'Searching...';
+                    }
+                }
+            });
+        }
+    }
+
+    // Modal open hone ke baad dono initialize honge
+    $('#quickAddTruckModal').on('shown.bs.modal', function () {
+        initQuickTruckFields();
+    });
 
 });
 </script>

@@ -361,34 +361,52 @@ class TruckController extends Controller
         ]);
 
         $exists = $this->isTruckNumberTakenInCompany($validated['truck_number'], $companyId);
-        if ($exists) {
-            $errorMessage = 'The truck number must be unique within the company.';
-            if ($request->expectsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $errorMessage,
-                    'errors' => ['truck_number' => [$errorMessage]],
-                ], 422);
-            }
+       if ($exists) {
+       $errorMessage = 'The truck number must be unique within the company.';
 
-            return redirect()->back()->withErrors(['truck_number' => $errorMessage])->withInput();
-        }
+       if ($request->expectsJson() || $request->ajax()) {
+        return response()->json([
+            'success' => false,
+            'message' => $errorMessage,
+            'errors' => [
+                'truck_number' => [$errorMessage],
+            ],
+        ], 422);
+    }
+
+        return redirect()
+        ->back()
+        ->withErrors(['truck_number' => $errorMessage])
+        ->withInput();
+ }
 
         $validated['company_id'] = $companyId;
         try {
-            $truck = Truck::create($validated);
+       $truck = Truck::create($validated);
+         $truck->load([
+        'transporter.transporterMaster',
+        'driver',
+    ]);
 
-            // Return JSON response for AJAX requests
-            if ($request->expectsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Truck created successfully!',
-                    'truck' => $truck,
-                ]);
-            }
+    if ($request->expectsJson() || $request->ajax()) {
+        return response()->json([
+            'success' => true,
+            'message' => 'Truck created successfully!',
+            'truck' => [
+                'id' => $truck->id,
+                'truck_number' => $truck->truck_number,
+                'truck_type' => $truck->truck_type,
+                'transporter_id' => $truck->transporter_id,
+                'transporter_name' => $truck->transporter?->name ?? '',
+                'driver_id' => $truck->driver_id,
+                'driver_name' => $truck->driver?->name ?? '',
+            ],
+        ]);
+    }
 
-            return redirect()->route('trucks.index')->with('success', 'Truck created successfully!');
-        } catch (QueryException $e) {
+    return redirect()->route('trucks.index')
+        ->with('success', 'Truck created successfully!');
+            } catch (QueryException $e) {
             // Handle database constraint violations
             if ($e->errorInfo[1] == 1062) { // Duplicate entry error
                 $errorMessage = 'This truck number is already registered in the system. Please use a different truck number.';

@@ -39,28 +39,39 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Handle state change
-    stateSelect.addEventListener('change', function() {
-        const stateId = this.value;
-        citySelect.innerHTML = '<option value="">Select City</option>';
+let cityRequestId = 0;
 
-        // If state is selected, fetch cities
-        if (stateId) {
-            fetch(`/api/cities/${stateId}`, {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-                .then(response => response.json())
-                .then(cities => {
-                    cities.forEach(city => {
-                        const option = document.createElement('option');
-                        option.value = city.id;
-                        option.textContent = city.name;
-                        citySelect.appendChild(option);
-                    });
-                });
+stateSelect.addEventListener('change', function() {
+    const stateId = this.value;
+    const requestId = ++cityRequestId;
+
+    citySelect.innerHTML = '<option value="">Select City</option>';
+
+    if (!stateId) {
+        return;
+    }
+
+    fetch(`/api/cities/${stateId}`, {
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
         }
+    })
+    .then(response => response.json())
+    .then(cities => {
+        if (requestId !== cityRequestId || stateSelect.value !== stateId) {
+            return;
+        }
+
+        const options = cities.map(city =>
+            `<option value="${city.id}">${city.name}</option>`
+        ).join('');
+
+        citySelect.innerHTML = '<option value="">Select City</option>' + options;
+    })
+    .catch(error => {
+        console.error('Error fetching cities:', error);
     });
+});
     }
 });
