@@ -139,7 +139,7 @@
     'columns' => [
         ['name' => 'Pump Name', 'format' => 'Text', 'required' => true],
         ['name' => 'Contact Name', 'format' => 'Text', 'required' => true],
-        ['name' => 'Contact Number', 'format' => 'Text', 'required' => true],
+        ['name' => 'Contact Number', 'format' => '10-digit number', 'required' => true],
         ['name' => 'Remark', 'format' => 'Text', 'required' => false],
     ],
 ])

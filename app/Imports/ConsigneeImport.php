@@ -630,7 +630,7 @@ class ConsigneeImport implements
                 $data = [
 
                     'name' =>
-                        $row['consignee_name'] ?? null,
+                        $row['name'] ?? null,
 
                     'contact_number' =>
                         $row['contact_number'] ?? null,

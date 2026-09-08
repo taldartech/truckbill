@@ -191,12 +191,12 @@
     'recordName' => 'consignees',
 
     'columns' => [
-        ['name' => 'Consignee Name', 'format' => 'Text', 'required' => true],
+        ['name' => 'Name', 'format' => 'Text', 'required' => true],
         ['name' => 'Contact Number', 'format' => '10-digit number', 'required' => true],
         ['name' => 'Country', 'format' => 'Country name', 'required' => true],
         ['name' => 'State', 'format' => 'State name', 'required' => true],
         ['name' => 'City', 'format' => 'City name', 'required' => true],
-        ['name' => 'Email', 'format' => 'Valid email address', 'required' => false],
+        ['name' => 'Email', 'format' => 'email address', 'required' => false],
         ['name' => 'GST Number', 'format' => 'GST number', 'required' => false],
         ['name' => 'PAN Number', 'format' => 'PAN number', 'required' => false],
         ['name' => 'Address', 'format' => 'Text', 'required' => false],

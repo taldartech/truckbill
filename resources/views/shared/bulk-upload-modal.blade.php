@@ -11,24 +11,6 @@
     $title = $title ?? 'Bulk Upload';
     $recordName = $recordName ?? 'records';
 
-    /*
-    |--------------------------------------------------------------------------
-    | SUPPORT BOTH FORMATS
-    |--------------------------------------------------------------------------
-    |
-    | Preferred:
-    |
-    | 'requiredColumns' => [...]
-    | 'optionalColumns' => [...]
-    |
-    | Also supports old:
-    |
-    | 'columns' => [
-    |     ['name' => 'Name', 'format' => 'Text', 'required' => true]
-    | ]
-    |
-    */
-
     $requiredColumns = $requiredColumns ?? [];
     $optionalColumns = $optionalColumns ?? [];
 
@@ -493,9 +475,6 @@
                                                         {{ $column['name'] ?? '-' }}
                                                     </span>
 
-                                                    <span class="required-badge ms-1">
-                                                        Required
-                                                    </span>
 
                                                 </td>
 
@@ -575,9 +554,6 @@
                                                         {{ $column['name'] ?? '-' }}
                                                     </span>
 
-                                                    <span class="optional-badge ms-1">
-                                                        Optional
-                                                    </span>
 
                                                 </td>
 
@@ -1681,10 +1657,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         'Import completed.';
 
 
-                    uploadBtn.disabled = false;
-
                     uploadBtn.innerHTML =
-                        '<i class="fas fa-upload me-1"></i> Upload';
+                   '<i class="fas fa-upload me-1"></i> Upload';
 
 
                     showImportResult(response);
@@ -1752,8 +1726,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 progressText.textContent =
                     'Import failed.';
 
-
-                uploadBtn.disabled = false;
 
                 uploadBtn.innerHTML =
                     '<i class="fas fa-upload me-1"></i> Upload';
@@ -1827,8 +1799,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 progressText.textContent =
                     'Upload failed.';
 
-
-                uploadBtn.disabled = false;
 
                 uploadBtn.innerHTML =
                     '<i class="fas fa-upload me-1"></i> Upload';

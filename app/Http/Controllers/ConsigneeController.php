@@ -115,7 +115,7 @@ class ConsigneeController extends Controller
 public function bulkUploadTemplate()
 {
     $headers = [
-        'Consignee Name',
+        'Name',
         'Contact Number',
         'Email',
         'GST Number',
