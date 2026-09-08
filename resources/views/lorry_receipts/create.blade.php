@@ -2909,9 +2909,9 @@ grNumberInput.addEventListener('blur', function() {
                         // Reset form
                         form.reset();
                     } else {
-                        errorBox.classList.remove('d-none');
-                        errorBox.innerHTML = 'Failed to add goods type';
-                    }
+                         errorBox.classList.remove('d-none');
+                         errorBox.innerHTML = data.message || 'Failed to add goods type';
+                        }
                 })
                 .catch(error => {
                     spinner.classList.add('d-none');
