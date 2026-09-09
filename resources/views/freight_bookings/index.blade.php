@@ -480,8 +480,10 @@
 
             </div>
 
-            <form id="quickAddPumpForm">
-                @csrf
+            <form id="quickAddPumpForm"
+             method="POST"
+             action="{{ route('master.pump.store') }}">
+              @csrf
 
                 <div class="modal-body">
 
@@ -651,9 +653,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Add newly created pump to LR Pump dropdown
            // Add newly created pump to Voucher Pump dropdown
-const pumpSelect = document.getElementById('pumpName');
+     const pumpSelect = document.getElementById('pumpName');
 
-if (pumpSelect) {
+      if (pumpSelect) {
     const option = new Option(
         data.pump.pump_name +
         (data.pump.contact_name
@@ -673,7 +675,7 @@ if (pumpSelect) {
     }));
 }
 
-Close Quick Add modal only
+
 const modalElement =
     document.getElementById('quickAddPumpModal');
 
@@ -2437,11 +2439,11 @@ quickAddPumpForm.reset();
                          <label style="display: block; margin-bottom: 0; font-weight: bold;">
                           Pump Name *
                            </label>
-<a href="javascript:void(0)"
-   class="lrf-quick-add"
-   id="openQuickAddPump">
-    <i class="bi bi-plus-lg"></i> Add
-</a>
+                       <a href="javascript:void(0)"
+                       class="lrf-quick-add"
+                       id="openQuickAddPump">
+                         <i class="bi bi-plus-lg"></i> Add
+                        </a>
                              </div>
                             <select id="pumpName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                                 <option value="">Select Pump</option>
