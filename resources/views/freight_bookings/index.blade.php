@@ -150,7 +150,6 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-        
     </style>
 @endpush
 
@@ -457,256 +456,11 @@
         </div>
     </div>
 
-    <!-- Quick Add Pump Modal -->
-    
-<div class="modal fade" id="quickAddPumpModal" tabindex="-1"
-    aria-labelledby="quickAddPumpModalLabel" aria-hidden="true">
-
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-          
-            <div class="modal-header"
-                style="background: linear-gradient(135deg, #20b486, #2589e8); color: white;">
-
-                <h5 class="modal-title" id="quickAddPumpModalLabel">
-                    <i class="bi bi-fuel-pump"></i> Add New Pump
-                </h5>
-
-                <button type="button"
-                    class="btn-close btn-close-white"
-                    data-bs-dismiss="modal"
-                    aria-label="Close">
-</button>
-
-            </div>
-
-            <form id="quickAddPumpForm"
-             method="POST"
-             action="{{ route('master.pump.store') }}">
-              @csrf
-
-                <div class="modal-body">
-
-                    <div id="quickPumpError"
-                        class="alert alert-danger d-none">
-                    </div>
-
-                    <div class="row g-3">
-
-                        <div class="col-md-6">
-                            <label for="quick_pump_name" class="form-label">
-                                Pump Name *
-                            </label>
-
-                            <input type="text"
-                                class="form-control"
-                                id="quick_pump_name"
-                                name="pump_name"
-                                required>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="quick_contact_name" class="form-label">
-                                Contact Person *
-                            </label>
-
-                            <input type="text"
-                                class="form-control"
-                                id="quick_contact_name"
-                                name="contact_name"
-                                required>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="quick_contact_number" class="form-label">
-                                Contact Number *
-                            </label>
-
-                            <input type="text"
-                                class="form-control"
-                                id="quick_contact_number"
-                                name="contact_number"
-                                required>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="quick_remark" class="form-label">
-                                Remark
-                            </label>
-
-                            <textarea
-                                class="form-control"
-                                id="quick_remark"
-                                name="remark"
-                                rows="1"></textarea>
-                        </div>
-
-                    </div>
-                </div>
-
-                <div class="modal-footer">
-
-                    <button type="button"
-                        class="btn btn-secondary"
-                        data-bs-dismiss="modal">
-                        Cancel
-                    </button>
-
-                    <button type="submit"
-                        class="btn btn-brand-primary"
-                        id="quickAddPumpSaveBtn">
-                        <i class="bi bi-floppy-fill me-1"></i>
-                        Save
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-    </div>
-</div>
- 
+    @include('freight_bookings.partials.quick-add-pump')
 
 @endsection
 
 @push('scripts')
-
-
-<script>
-document.addEventListener('click', function (e) {
-
-    const addPumpBtn = e.target.closest('#openQuickAddPump');
-
-    if (!addPumpBtn) {
-        return;
-    }
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    const quickAddPumpModal =
-        document.getElementById('quickAddPumpModal');
-
-    const voucherPaymentModal =
-        document.getElementById('voucherPaymentModal');
-
-    if (!quickAddPumpModal || !voucherPaymentModal) {
-        return;
-    }
-
-    // Lock Voucher modal completely while Add Pump is open
-    voucherPaymentModal.classList.add('pump-modal-open');
-
-    const pumpModal =
-        bootstrap.Modal.getOrCreateInstance(quickAddPumpModal);
-    pumpModal.show();
-
-    // Unlock Voucher modal when Add Pump closes
-    quickAddPumpModal.addEventListener('hidden.bs.modal', function () {
-        voucherPaymentModal.classList.remove('pump-modal-open');
-    }, { once: true });
-});
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-
-    const quickAddPumpForm = document.getElementById('quickAddPumpForm');
-    const quickPumpError = document.getElementById('quickPumpError');
-    const quickAddPumpSaveBtn = document.getElementById('quickAddPumpSaveBtn');
-
-    if (!quickAddPumpForm) {
-        return;
-    }
-
-    quickAddPumpForm.addEventListener('submit', async function (e) {
-
-        e.preventDefault();
-
-        quickPumpError.classList.add('d-none');
-        quickPumpError.textContent = '';
-
-        quickAddPumpSaveBtn.disabled = true;
-        quickAddPumpSaveBtn.innerHTML = 'Saving...';
-
-        const formData = new FormData(quickAddPumpForm);
-
-        try {
-
-            const response = await fetch("{{ route('master.pump.store') }}", {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: formData
-            });
-
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
-                throw new Error(
-                    data.message || 'Failed to add pump'
-                );
-            }
-
-            // Add newly created pump to LR Pump dropdown
-           // Add newly created pump to Voucher Pump dropdown
-     const pumpSelect = document.getElementById('pumpName');
-
-      if (pumpSelect) {
-    const option = new Option(
-        data.pump.pump_name +
-        (data.pump.contact_name
-            ? ' (' + data.pump.contact_name + ')'
-            : ''),
-        data.pump.id
-    );
-
-    pumpSelect.appendChild(option);
-
-    // Automatically select newly created pump
-    pumpSelect.value = data.pump.id;
-
-    // Trigger any existing change handlers
-    pumpSelect.dispatchEvent(new Event('change', {
-        bubbles: true
-    }));
-}
-
-
-const modalElement =
-    document.getElementById('quickAddPumpModal');
-
-const modal =
-    bootstrap.Modal.getInstance(modalElement);
-
-if (modal) {
-    modal.hide();
-}
-
-
-// Reset Quick Add form
-quickAddPumpForm.reset();
-        } catch (error) {
-
-            quickPumpError.textContent =
-                error.message || 'Failed to add pump';
-
-            quickPumpError.classList.remove('d-none');
-
-        } finally {
-
-            quickAddPumpSaveBtn.disabled = false;
-
-            quickAddPumpSaveBtn.innerHTML =
-                '<i class="bi bi-floppy-fill me-1"></i> Save';
-        }
-    });
-
-});
-</script>
     <script>
         const paymentTypes = @json($paymentTypes);
         const paymentModes = @json($paymentModes);
@@ -1160,7 +914,14 @@ quickAddPumpForm.reset();
                                 </select>
                             </div>
                             <div class="col-md-4" id="combinedPumpContainer" style="display: none;">
-                                <label for="combinedPumpName" class="form-label">Pump Name *</label>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="combinedPumpName" class="form-label mb-0">Pump Name *</label>
+                                    <a href="javascript:void(0)"
+                                        class="lrf-quick-add js-open-quick-add-pump"
+                                        data-pump-select="combinedPumpName">
+                                        <i class="bi bi-plus-lg"></i> Add
+                                    </a>
+                                </div>
                                 <select class="form-select" id="combinedPumpName" name="pump_id">
                                     <option value="">Select Pump</option>
                                     @foreach ($pumps as $pump)
@@ -2440,8 +2201,8 @@ quickAddPumpForm.reset();
                           Pump Name *
                            </label>
                        <a href="javascript:void(0)"
-                       class="lrf-quick-add"
-                       id="openQuickAddPump">
+                       class="lrf-quick-add js-open-quick-add-pump"
+                       data-pump-select="pumpName">
                          <i class="bi bi-plus-lg"></i> Add
                         </a>
                              </div>
@@ -2537,6 +2298,22 @@ quickAddPumpForm.reset();
                                     ${paymentModes.map(mode =>
                                         `<option value="${mode.id}">${mode.name}</option>`
                                     ).join('')}
+                                </select>
+                            </div>
+                            <div id="pumpNameContainer" style="display: none; flex: 1;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                    <label style="display: block; margin-bottom: 0; font-weight: bold;">Pump Name *</label>
+                                    <a href="javascript:void(0)"
+                                        class="lrf-quick-add js-open-quick-add-pump"
+                                        data-pump-select="pumpName">
+                                        <i class="bi bi-plus-lg"></i> Add
+                                    </a>
+                                </div>
+                                <select id="pumpName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                                    <option value="">Select Pump</option>
+                                    @foreach ($pumps as $pump)
+                                        <option value="{{ $pump->id }}">{{ $pump->pump_name }} {{ $pump->contact_name ? '('.$pump->contact_name.')' : '' }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>

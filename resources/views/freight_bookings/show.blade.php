@@ -806,7 +806,14 @@
                                     <input type="text" class="form-control" id="paymentRemarks" placeholder="Enter remarks">
                                 </div>
                                 <div id="pumpNameContainer" style="display: none;">
-                                    <label for="pumpName" class="form-label">Pump Name *</label>
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="pumpName" class="form-label mb-0">Pump Name *</label>
+                                        <a href="javascript:void(0)"
+                                            class="lrf-quick-add js-open-quick-add-pump"
+                                            data-pump-select="pumpName">
+                                            <i class="bi bi-plus-lg"></i> Add
+                                        </a>
+                                    </div>
                                     <select class="form-select" id="pumpName">
                                         <option value="">Select Pump</option>
                                         @foreach ($pumps as $pump)
@@ -1363,7 +1370,14 @@
                                         </select>
                                     </div>
                                     <div id="combinedPumpContainer" style="display: none;">
-                                        <label for="combinedPumpName" class="form-label">Pump Name *</label>
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label for="combinedPumpName" class="form-label mb-0">Pump Name *</label>
+                                            <a href="javascript:void(0)"
+                                                class="lrf-quick-add js-open-quick-add-pump"
+                                                data-pump-select="combinedPumpName">
+                                                <i class="bi bi-plus-lg"></i> Add
+                                            </a>
+                                        </div>
                                         <select class="form-select" id="combinedPumpName" name="pump_id">
                                             <option value="">Select Pump</option>
                                             @foreach ($pumps as $pump)
@@ -1636,4 +1650,5 @@
         })();
     </script>
 
+    @include('freight_bookings.partials.quick-add-pump')
 @endsection

@@ -158,11 +158,11 @@ class StateController extends Controller
             $state = State::create($validated);
 
             // Check if it's an AJAX request
-            if ($request->ajax() || $request->has('from_modal')) {
+            if ($request->ajax() || $request->expectsJson() || $request->has('from_modal')) {
                 return response()->json([
                     'success' => true,
                     'message' => 'State created successfully',
-                    'state' => $state
+                    'state' => $state,
                 ]);
             }
 

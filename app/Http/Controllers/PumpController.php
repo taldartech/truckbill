@@ -136,39 +136,42 @@ class PumpController extends Controller
         return view('master.pump-form');
     }
 
-   public function store(Request $request)
-{
-    $validated = $request->validate([
-        'pump_name' => 'required|string|max:255',
-        'contact_name' => 'required|string|max:255',
-        'contact_number' => [
-            'required',
-            'string',
-            'max:20',
-            Rule::unique('pumps', 'contact_number')
-                ->where('user_id', Auth::user()->company->user_id),
-        ],
-        'remark' => 'nullable|string',
-    ]);
-
-    $validated['user_id'] = Auth::user()->company->user_id;
-
-    $pump = Pump::create($validated);
-
-    // Quick Add se request aayi hai
-    if ($request->ajax() || $request->expectsJson()) {
-        return response()->json([
-            'success' => true,
-            'message' => 'Pump added successfully',
-            'pump' => $pump,
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'pump_name' => 'required|string|max:255',
+            'contact_name' => 'required|string|max:255',
+            'contact_number' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('pumps', 'contact_number')
+                    ->where('user_id', Auth::user()->company->user_id),
+            ],
+            'remark' => 'nullable|string',
         ]);
-    }
 
-    // Normal Master > Pump form ke liye
-    return redirect()
-        ->route('master.pump.index')
-        ->with('success', 'Pump created successfully');
-}
+        $validated['user_id'] = Auth::user()->company->user_id;
+
+        $pump = Pump::create($validated);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pump added successfully',
+                'pump' => [
+                    'id' => $pump->id,
+                    'pump_name' => $pump->pump_name,
+                    'contact_name' => $pump->contact_name,
+                    'contact_number' => $pump->contact_number,
+                ],
+            ]);
+        }
+
+        return redirect()
+            ->route('master.pump.index')
+            ->with('success', 'Pump created successfully');
+    }
     public function edit(Pump $pump)
     {
 

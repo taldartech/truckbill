@@ -90,7 +90,14 @@
                             <div class="lrf-receipt-card__title">Vehicle &amp; Payee</div>
                             <div class="lrf-receipt-card__row lrf-grid lrf-grid--2">
                                 <div class="lrf-pf">
-                                    <label for="truck_id" class="lrf-pf__lbl">Truck<span class="lrf-pf__req">*</span></label>
+                                    <div class="lrf-pf__lbl-row">
+                                        <label for="truck_id" class="lrf-pf__lbl">Truck<span class="lrf-pf__req">*</span></label>
+                                        <a href="#" class="lrf-quick-add"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#quickAddTruckModal">
+                                            <i class="bi bi-plus-lg"></i> Add
+                                        </a>
+                                    </div>
                                     <select class="form-select" id="truck_id" name="truck_id" required
                                         data-placeholder="Search and select truck...">
                                         <option value="">Select Trucks</option>
@@ -1699,4 +1706,5 @@ lrItemsContainer.addEventListener('blur', function(e) {
         });
 
     </script>
+    @include('lorry_receipts.partials.quick-add-modals')
 @endsection

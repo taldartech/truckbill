@@ -177,13 +177,14 @@ class CityController extends Controller
             $validated['country_id'] = $state->country_id;
 
             $city = City::create($validated);
+            $city->loadMissing('state');
 
             // Check if it's an AJAX request
-            if ($request->ajax() || $request->has('from_modal')) {
+            if ($request->ajax() || $request->expectsJson() || $request->has('from_modal')) {
                 return response()->json([
                     'success' => true,
                     'message' => 'City created successfully',
-                    'city' => $city
+                    'city' => $city,
                 ]);
             }
 

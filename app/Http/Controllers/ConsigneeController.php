@@ -275,19 +275,19 @@ class ConsigneeController extends Controller
             throw $exception;
         }
 
-       if ($request->ajax() || $request->from_modal) {
-    return response()->json([
-        'success' => true,
-        'message' => 'Customer created successfully!',
-        'customer' => [
-            'id' => $consignee->id,
-            'name' => $consignee->name,
-        ],
-    ]);
-}
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Customer created successfully!',
+                'customer' => [
+                    'id' => $consignee->id,
+                    'name' => $consignee->name,
+                ],
+            ]);
+        }
 
-return redirect()->route('consignees.index')
-    ->with('success', 'Consignee created successfully! '.$customerEmailResult);
+        return redirect()->route('consignees.index')
+            ->with('success', 'Customer created successfully! '.$customerEmailResult);
     }
 
     private function validateConsigneeUniquenessCreate($data, $companyId)
