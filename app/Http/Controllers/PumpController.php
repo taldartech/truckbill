@@ -152,11 +152,26 @@ class PumpController extends Controller
         ]);
 
         $validated['user_id'] = Auth::user()->company->user_id;
-        Pump::create($validated);
 
-        return redirect()->route('master.pump.index')->with('success', 'Pump created successfully');
+        $pump = Pump::create($validated);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pump added successfully',
+                'pump' => [
+                    'id' => $pump->id,
+                    'pump_name' => $pump->pump_name,
+                    'contact_name' => $pump->contact_name,
+                    'contact_number' => $pump->contact_number,
+                ],
+            ]);
+        }
+
+        return redirect()
+            ->route('master.pump.index')
+            ->with('success', 'Pump created successfully');
     }
-
     public function edit(Pump $pump)
     {
 

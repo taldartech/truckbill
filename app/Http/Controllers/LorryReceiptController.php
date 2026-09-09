@@ -24,6 +24,8 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Yajra\DataTables\Facades\DataTables;
+use App\Models\Country;
+use App\Models\TruckType;
 
 class LorryReceiptController extends Controller
 {
@@ -314,7 +316,9 @@ class LorryReceiptController extends Controller
         }
 
         $companyId = $this->getCurrentCompanyId();
+        $countries = Country::orderBy('name')->get();
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
+        $truckTypes = TruckType::orderBy('name')->get();
 
         // Only fetch selected IDs (if any) to avoid loading large dropdown datasets.
         $selectedConsigneeIds = collect([
@@ -369,7 +373,15 @@ class LorryReceiptController extends Controller
                 ->first()
             : null;
 
-        return view('lorry_receipts.create', compact('trucks', 'consignees', 'goodsTypes', 'agencies', 'payeeTransporter'));
+        return view('lorry_receipts.create', compact(
+            'trucks',
+            'consignees',
+            'goodsTypes',
+            'agencies',
+            'payeeTransporter',
+            'countries',
+            'truckTypes'
+        ));
     }
 
     public function createLinked(): View|RedirectResponse
@@ -379,7 +391,9 @@ class LorryReceiptController extends Controller
         }
 
         $companyId = $this->getCurrentCompanyId();
+        $countries = Country::orderBy('name')->get();
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
+        $truckTypes = TruckType::orderBy('name')->get();
 
         // Only fetch selected IDs (if any) to avoid loading large dropdown datasets.
         $selectedConsigneeIds = collect([
@@ -434,7 +448,15 @@ class LorryReceiptController extends Controller
                 ->first()
             : null;
 
-        return view('lorry_receipts.create-linked', compact('trucks', 'consignees', 'goodsTypes', 'agencies', 'payeeTransporter'));
+        return view('lorry_receipts.create-linked', compact(
+            'trucks',
+            'consignees',
+            'goodsTypes',
+            'agencies',
+            'payeeTransporter',
+            'countries',
+            'truckTypes'
+        ));
     }
 
     /**
@@ -884,7 +906,9 @@ class LorryReceiptController extends Controller
         }
 
         $sharedLorryReceipt = $linkedLorryReceipts->first();
+        $countries = Country::orderBy('name')->get();
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
+        $truckTypes = TruckType::orderBy('name')->get();
 
         $selectedConsigneeIds = $linkedLorryReceipts
             ->flatMap(fn (LorryReceipt $lr): array => [$lr->customer_id, $lr->consignor_id, $lr->consignee_id])
@@ -993,6 +1017,8 @@ class LorryReceiptController extends Controller
             'payeeTransporter' => $payeeTransporter,
             'canChangeTransporter' => $canChangeTransporter,
             'tdsPercentages' => $tdsPercentages,
+            'countries' => $countries,
+            'truckTypes' => $truckTypes,
         ]);
     }
 
@@ -1336,6 +1362,8 @@ class LorryReceiptController extends Controller
                 ->get()
             : collect();
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
+        $countries = Country::orderBy('name')->get();
+        $truckTypes = TruckType::orderBy('name')->get();
         $statuses = ['Pending', 'Delivered', 'Cancelled', 'In-Progress'];
         $tdsPercentages = [
             'default' => config('payments.tds_percentages.default', 20),
@@ -1388,6 +1416,8 @@ class LorryReceiptController extends Controller
             'consignors' => $consignees,
             'consignees' => $consignees,
             'goodsTypes' => $goodsTypes,
+            'countries' => $countries,
+            'truckTypes' => $truckTypes,
             'truckOwners' => $truckOwners,
             'agencies' => $agencies,
             'tdsPercentages' => $tdsPercentages,

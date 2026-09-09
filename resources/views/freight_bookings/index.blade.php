@@ -150,7 +150,6 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-
     </style>
 @endpush
 
@@ -456,6 +455,9 @@
             </div>
         </div>
     </div>
+
+    @include('freight_bookings.partials.quick-add-pump')
+
 @endsection
 
 @push('scripts')
@@ -912,7 +914,14 @@
                                 </select>
                             </div>
                             <div class="col-md-4" id="combinedPumpContainer" style="display: none;">
-                                <label for="combinedPumpName" class="form-label">Pump Name *</label>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="combinedPumpName" class="form-label mb-0">Pump Name *</label>
+                                    <a href="javascript:void(0)"
+                                        class="lrf-quick-add js-open-quick-add-pump"
+                                        data-pump-select="combinedPumpName">
+                                        <i class="bi bi-plus-lg"></i> Add
+                                    </a>
+                                </div>
                                 <select class="form-select" id="combinedPumpName" name="pump_id">
                                     <option value="">Select Pump</option>
                                     @foreach ($pumps as $pump)
@@ -2187,7 +2196,16 @@
                             </select>
                           </div>
                           <div id="pumpNameContainer" style="display: none ; margin-bottom: 15px; flex: 1;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Pump Name *</label>
+                           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                         <label style="display: block; margin-bottom: 0; font-weight: bold;">
+                          Pump Name *
+                           </label>
+                       <a href="javascript:void(0)"
+                       class="lrf-quick-add js-open-quick-add-pump"
+                       data-pump-select="pumpName">
+                         <i class="bi bi-plus-lg"></i> Add
+                        </a>
+                             </div>
                             <select id="pumpName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                                 <option value="">Select Pump</option>
                                 @foreach ($pumps as $pump)
@@ -2280,6 +2298,22 @@
                                     ${paymentModes.map(mode =>
                                         `<option value="${mode.id}">${mode.name}</option>`
                                     ).join('')}
+                                </select>
+                            </div>
+                            <div id="pumpNameContainer" style="display: none; flex: 1;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                    <label style="display: block; margin-bottom: 0; font-weight: bold;">Pump Name *</label>
+                                    <a href="javascript:void(0)"
+                                        class="lrf-quick-add js-open-quick-add-pump"
+                                        data-pump-select="pumpName">
+                                        <i class="bi bi-plus-lg"></i> Add
+                                    </a>
+                                </div>
+                                <select id="pumpName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                                    <option value="">Select Pump</option>
+                                    @foreach ($pumps as $pump)
+                                        <option value="{{ $pump->id }}">{{ $pump->pump_name }} {{ $pump->contact_name ? '('.$pump->contact_name.')' : '' }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>

@@ -46,6 +46,48 @@
         .select2-container.declaration-warning .select2-selection__rendered {
             background-color: #fff3cd !important;
         }
+        .driver-joined-group {
+            max-width: 100%;
+            min-width: 0;
+        }
+
+        .driver-joined-group > .flex-grow-1 {
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .driver-joined-group .select2-container {
+           width: 100% !important;
+           max-width: 100%;
+           min-width: 0;
+        }
+
+        .driver-joined-group .select2-container .select2-selection--single {
+           border-top-right-radius: 0;
+           border-bottom-right-radius: 0;
+           height: 38px;
+           display: flex;
+           align-items: center;
+        }
+
+       .driver-joined-group .select2-selection--single
+       .select2-selection__rendered {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          display: block;
+          padding-right: 1.5rem;
+        }
+
+       .driver-joined-group .btn {
+          flex-shrink: 0;
+          border-top-left-radius: 0;
+          border-bottom-left-radius: 0;
+          white-space: nowrap;
+          height: 38px;
+          display: inline-flex;
+          align-items: center;
+        }
     </style>
     <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
     <div class="lrf-page app-index-page">
@@ -122,9 +164,11 @@
                             <div class="lrf-receipt-card__row lrf-pf">
                                 <div class="lrf-pf__lbl-row">
                                     <label for="customer_id" class="lrf-pf__lbl">Customer<span class="lrf-pf__req">*</span></label>
-                                    <a href="{{ route('consignees.create') }}" class="lrf-quick-add" target="_blank" rel="noopener">
-                                        <i class="bi bi-plus-lg"></i> Add
-                                    </a>
+                                   <a href="#" class="lrf-quick-add"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#quickAddCustomerModal">
+                                  <i class="bi bi-plus-lg"></i> Add
+                                   </a>
                                 </div>
                                 <select class="form-select" id="customer_id" name="customer_id" required
                                     data-placeholder="Search and select customer...">
@@ -147,7 +191,16 @@
                             <div class="lrf-receipt-card__title">Vehicle &amp; Payee</div>
                             <div class="lrf-receipt-card__row lrf-grid lrf-grid--2">
                                 <div class="lrf-pf">
-                                    <label for="truck_id" class="lrf-pf__lbl">Truck<span class="lrf-pf__req">*</span></label>
+                                  <div class="lrf-pf__lbl-row">
+                                  <label for="truck_id" class="lrf-pf__lbl">
+                                  Truck<span class="lrf-pf__req">*</span>
+                                  </label>
+                                  <a href="#" class="lrf-quick-add"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#quickAddTruckModal">
+                                  <i class="bi bi-plus-lg"></i> Add
+                                  </a>
+                                </div>
                                     <select class="form-select" id="truck_id" name="truck_id" required
                                         data-placeholder="Search and select truck...">
                                         <option value="">Select Trucks</option>
@@ -612,6 +665,10 @@
         </div>
     </div>
 
+    
+    @include('lorry_receipts.partials.quick-add-modals')
+
+
     <!-- Load Select2 from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <!-- Load SweetAlert2 from CDN -->
@@ -692,6 +749,8 @@
                     },
                     cache: true
                 };
+
+            
 
                 const ajaxAgenciesConfig = {
                     url: '/api/agencies/search',
@@ -2033,9 +2092,9 @@ grNumberInput.addEventListener('blur', function() {
                         // Reset form
                         form.reset();
                     } else {
-                        errorBox.classList.remove('d-none');
-                        errorBox.innerHTML = 'Failed to add goods type';
-                    }
+                         errorBox.classList.remove('d-none');
+                         errorBox.innerHTML = data.message || 'Failed to add goods type';
+                        }
                 })
                 .catch(error => {
                     spinner.classList.add('d-none');

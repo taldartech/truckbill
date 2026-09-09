@@ -356,16 +356,6 @@
         });
     })();
 
-    // Note: Country, State, City cascading selects are handled by dynamic-dropdowns.js
-    const oldCountry = "{{ old('country_id') }}";
-    const oldState = "{{ old('state_id') }}";
-    const oldCity = "{{ old('city_id') }}";
-
-    // These variables are used elsewhere in the code
-    const countrySelect = document.getElementById('country_id');
-    const stateSelect = document.getElementById('state_id');
-    const citySelect = document.getElementById('city_id');
-
     // GST and PAN number validation
     const gstNumberInput = document.getElementById('gst_number');
     const panNumberInput = document.getElementById('pan_number');

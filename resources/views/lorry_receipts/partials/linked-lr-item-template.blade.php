@@ -36,7 +36,14 @@
                         <div class="invoice-number-feedback"></div>
                     </div>
                     <div class="lrf-pf">
-                        <label class="lrf-pf__lbl">Customer<span class="lrf-pf__req">*</span></label>
+                        <div class="lrf-pf__lbl-row">
+                            <label class="lrf-pf__lbl">Customer<span class="lrf-pf__req">*</span></label>
+                            <a href="#" class="lrf-quick-add"
+                                data-bs-toggle="modal"
+                                data-bs-target="#quickAddCustomerModal">
+                                <i class="bi bi-plus-lg"></i> Add
+                            </a>
+                        </div>
                         <select class="form-select select2 customer-select" required>
                             <option value="">Select Customer</option>
                         </select>
