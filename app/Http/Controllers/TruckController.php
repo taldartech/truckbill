@@ -235,6 +235,11 @@ class TruckController extends Controller
         $buttons .= 'data-current-driver-name="'.htmlspecialchars($truck->driver_name ?? '').'">';
         $buttons .= '<i class="bi bi-person-plus"></i></button>';
 
+         // Edit button
+        $editUrl = route('trucks.edit', $truck->id);
+        $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-action-edit" title="Edit Truck" data-bs-toggle="tooltip">';
+        $buttons .= '<i class="bi bi-pencil"></i></a>';
+
         // Delete button
         $deleteUrl = route('trucks.destroy', $truck->id);
         $buttons .= '<form action="'.$deleteUrl.'" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this truck?\')">';

@@ -257,9 +257,10 @@
                 ...........................
             @endif
             दिनांक
-            @if (!empty(optional(optional($firstLr->freightBookings)->last())->created_at))
-                <span
-                    class="dotted-underline">{{ $firstLr->freightBookings->last()->created_at->format('d-m-Y') }}</span>
+            @if (!empty($firstLr->gr_date))
+            <span class="dotted-underline">
+           {{ \Carbon\Carbon::parse($firstLr->gr_date)->format('d-m-Y') }}
+            </span>
             @else
                 ...........................
             @endif
