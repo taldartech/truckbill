@@ -427,6 +427,13 @@ class VoucherPaymentController extends Controller
             $voucherPayment->loadMissing(['company', 'freight_booking.lr', 'freight_booking.transporter.transporterMaster']);
             $this->voucherPaymentNotificationService->notifyForCurrentStatus($voucherPayment, auth()->user());
 
+            try {
+                $voucherPayment->loadMissing(['company', 'freight_booking.transporter', 'freight_booking.truck', 'pump']);
+                app(\App\Services\AccountingPostingService::class)->postVoucherPayment($voucherPayment);
+            } catch (\Throwable $e) {
+                \Log::error('Accounting post voucher payment failed: '.$e->getMessage());
+            }
+
             // Redirect back to lorry receipts page with success message
             return redirect()->route('lorry_receipts.index')
                 ->with('success', 'Payment allocated successfully.');

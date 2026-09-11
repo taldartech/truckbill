@@ -415,6 +415,12 @@ class InvoiceController extends Controller
         if ($createdInvoice instanceof Invoice) {
             $createdInvoice->loadMissing(['company', 'consignee', 'payments']);
             $this->invoiceNotificationService->notifyForCurrentStatus($createdInvoice, Auth::user());
+
+            try {
+                app(\App\Services\AccountingPostingService::class)->postInvoice($createdInvoice);
+            } catch (\Throwable $e) {
+                Log::error('Accounting post invoice failed: '.$e->getMessage());
+            }
         }
 
         return redirect()->route('invoices.index')->with('success', 'Invoice created successfully.');
@@ -827,6 +833,12 @@ class InvoiceController extends Controller
             'paymentAmount' => (string) number_format((float) $validated['amount'], 2),
             'paymentDate' => Carbon::parse((string) $validated['payment_date'])->format('d M Y'),
         ]);
+
+        try {
+            app(\App\Services\AccountingPostingService::class)->postInvoicePayment($payment);
+        } catch (\Throwable $e) {
+            Log::error('Accounting post payment failed: '.$e->getMessage());
+        }
 
         return response()->json([
             'success' => true,

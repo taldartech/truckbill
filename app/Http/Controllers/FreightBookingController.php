@@ -810,6 +810,13 @@ class FreightBookingController extends Controller
                     $lorryReceipt->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
                     $this->lrNotificationService->notifyStatusChange($lorryReceipt, $deliveryStatus, auth()->user());
                 }
+
+                try {
+                    $freightBooking->loadMissing(['company', 'transporter', 'truck', 'lr']);
+                    app(\App\Services\AccountingPostingService::class)->postFreightBooking($freightBooking);
+                } catch (\Throwable $e) {
+                    \Log::error('Accounting post freight booking failed: '.$e->getMessage());
+                }
             });
 
             DB::commit();

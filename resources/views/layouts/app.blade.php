@@ -935,6 +935,73 @@
                             @endif
                         @endif
 
+                        {{-- Accounting Section --}}
+                        @if (auth()->check() && (in_array(auth()->user()->userRole->name, ['accountant', 'admin']) || (auth()->user()->userRole->name === 'super_admin' && auth()->user()->canAccessCompanyPanel())))
+                            <li class="nav-header">Financials & Accounting</li>
+                            <li class="nav-item">
+                                <a class="nav-link{{ Request::is('accounting*') ? ' active' : '' }}" href="#accountingMenu"
+                                    data-lte-toggle="collapse">
+                                    <i class="nav-icon bi bi-calculator"></i>
+                                    <p>
+                                        Accounting
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview collapse {{ Request::is('accounting*') ? ' show' : '' }}"
+                                    id="accountingMenu">
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.day-book') }}"
+                                            class="nav-link{{ Request::is('accounting/day-book*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-calendar-day"></i>
+                                            <p>Day Book</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.ledger-statement') }}"
+                                            class="nav-link{{ Request::is('accounting/ledger-statement*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-book-open"></i>
+                                            <p>Ledger Statement</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.trial-balance') }}"
+                                            class="nav-link{{ Request::is('accounting/trial-balance*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-balance-scale"></i>
+                                            <p>Trial Balance</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.profit-and-loss') }}"
+                                            class="nav-link{{ Request::is('accounting/profit-and-loss*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-chart-line"></i>
+                                            <p>Profit & Loss</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.balance-sheet') }}"
+                                            class="nav-link{{ Request::is('accounting/balance-sheet*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-file-invoice-dollar"></i>
+                                            <p>Balance Sheet</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.vouchers.index') }}"
+                                            class="nav-link{{ Request::is('accounting/vouchers*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-receipt"></i>
+                                            <p>Vouchers Entry</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.ledgers.index') }}"
+                                            class="nav-link{{ Request::is('accounting/ledgers*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-sitemap"></i>
+                                            <p>Chart of Accounts</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        @endif
+
                         {{-- Reports Section - admin, accountant, moderator, or super_admin in company context --}}
                         @if (auth()->check() && (in_array(auth()->user()->userRole->name, ['accountant', 'admin', 'moderator']) || (auth()->user()->userRole->name === 'super_admin' && auth()->user()->canAccessCompanyPanel())))
                             <li class="nav-header">Insights</li>
