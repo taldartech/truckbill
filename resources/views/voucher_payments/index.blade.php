@@ -128,25 +128,63 @@
                 font-size: 0.8125rem !important;
                 padding: 0.25rem 0.5rem !important;
             }
+
+            .voucher-payments-index .app-index-list-card > .card-header {
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-wrap: nowrap !important;
+            }
+
+            .voucher-payments-index .app-index-card-toolbar {
+                width: auto !important;
+                margin-left: auto !important;
+            }
         }
 
         @media (max-width: 575.98px) {
             .voucher-payments-index .app-index-list-card > .card-header {
-                padding: 0.5rem 0.75rem !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-wrap: nowrap !important;
+                gap: 0.4rem !important;
+                padding: 0.45rem 0.65rem !important;
+            }
+
+            .voucher-payments-index .app-index-list-card > .card-header .card-title {
+                font-size: 0.95rem !important;
+                margin: 0 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                flex-shrink: 1 !important;
             }
 
             .voucher-payments-index .app-index-card-toolbar {
-                width: 100%;
-                display: flex;
-                gap: 0.4rem;
+                width: auto !important;
+                margin-left: auto !important;
+                display: inline-flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                align-items: center !important;
+                gap: 0.35rem !important;
+                flex-shrink: 0 !important;
             }
 
-            .voucher-payments-index .app-index-card-toolbar .btn {
-                flex: 1 1 auto;
-                justify-content: center;
-                text-align: center;
-                padding: 0.35rem 0.5rem !important;
-                font-size: 0.75rem !important;
+            .voucher-payments-index .app-index-card-toolbar .app-index-header-btn {
+                width: 32px !important;
+                height: 32px !important;
+                min-width: 32px !important;
+                min-height: 32px !important;
+                padding: 0 !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border-radius: 8px !important;
+                font-size: 1rem !important;
+                flex: 0 0 auto !important;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
             }
 
             .vp-filter-actions {
@@ -183,14 +221,14 @@
     @endif
 
     <div class="card app-index-list-card mb-4">
-        <div class="card-header">
+        <div class="card-header d-flex align-items-center justify-content-between">
             <h3 class="card-title mb-0">Voucher Payments</h3>
-            <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
-                <button type="button" class="btn app-index-header-btn" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
-                    <i class="bi bi-funnel"></i> Search filter
+            <div class="app-index-card-toolbar d-flex align-items-center gap-2">
+                <button type="button" class="btn app-index-header-btn" title="Search filter" aria-label="Search filter" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
+                    <i class="bi bi-funnel"></i><span class="d-none d-sm-inline ms-1">Search filter</span>
                 </button>
-                <a href="{{ route('voucher_payments.daily') }}" class="btn app-index-header-btn">
-                    <i class="bi bi-calendar-day"></i> Daily Report
+                <a href="{{ route('voucher_payments.daily') }}" class="btn app-index-header-btn" title="Daily Report" aria-label="Daily report">
+                    <i class="bi bi-calendar-day"></i><span class="d-none d-sm-inline ms-1">Daily Report</span>
                 </a>
             </div>
         </div>

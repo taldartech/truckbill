@@ -436,7 +436,7 @@
                     <div class="card-body p-0">
                         @if ($payments->count() > 0)
                             <div class="table-responsive">
-                                <table class="table table-sm table-hover align-middle mb-0 fb-compact-table">
+                                <table class="table table-sm table-hover align-middle mb-0 fb-compact-table text-nowrap">
                                     <thead>
                                         <tr>
                                             <th>Voucher</th>

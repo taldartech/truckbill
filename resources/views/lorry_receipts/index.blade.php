@@ -156,56 +156,120 @@
             }
         }
 
+        @media (max-width: 767.98px) {
+            .lorry-receipts-index .app-index-list-card > .card-header {
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-wrap: nowrap !important;
+            }
+
+            .lorry-receipts-index .app-index-card-toolbar {
+                width: auto !important;
+                margin-left: auto !important;
+            }
+        }
+
         @media (max-width: 575.98px) {
             .lorry-receipts-index .status-pill {
                 font-size: 9px !important;
             }
 
             .lorry-receipts-index .app-index-list-card > .card-header {
-                flex-direction: column;
-                align-items: stretch !important;
-                gap: 0.5rem;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-wrap: nowrap !important;
+                gap: 0.4rem !important;
+                padding: 0.45rem 0.65rem !important;
+            }
+
+            .lorry-receipts-index .app-index-list-card > .card-header .card-title {
+                font-size: 0.95rem !important;
+                margin: 0 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                flex-shrink: 1 !important;
             }
 
             .lorry-receipts-index .app-index-card-toolbar {
-                width: 100%;
-                display: flex;
-                gap: 0.5rem;
+                width: auto !important;
+                margin-left: auto !important;
+                display: inline-flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                align-items: center !important;
+                gap: 0.35rem !important;
+                flex-shrink: 0 !important;
             }
 
             .lorry-receipts-index .app-index-card-toolbar .app-index-header-btn {
-                flex: 1 1 50%;
-                text-align: center;
-                justify-content: center;
+                width: 32px !important;
+                height: 32px !important;
+                min-width: 32px !important;
+                min-height: 32px !important;
+                padding: 0 !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border-radius: 8px !important;
+                font-size: 1rem !important;
+                flex: 0 0 auto !important;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
             }
 
             .lorry-receipts-index .lr-date-filter-bar {
-                flex-direction: column;
+                flex-direction: column !important;
                 align-items: stretch !important;
-                gap: 0.5rem !important;
+                gap: 0.4rem !important;
+                padding: 0.45rem 0.65rem !important;
             }
 
             .lorry-receipts-index .lr-date-filter-inputs {
-                display: flex;
-                width: 100%;
-                gap: 0.4rem;
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                width: 100% !important;
+                gap: 0.35rem !important;
+                min-width: 0 !important;
             }
 
+            .lorry-receipts-index .lr-date-filter-inputs .input-group-custom,
             .lorry-receipts-index .input-group-custom {
-                flex: 1 1 50%;
-                min-width: 0;
+                flex: 1 1 50% !important;
+                width: 50% !important;
+                min-width: 0 !important;
+                max-width: 50% !important;
+                padding: 2px 5px !important;
+                box-sizing: border-box !important;
+            }
+
+            .lorry-receipts-index .input-group-custom span {
+                font-size: 8.5px !important;
+                margin-right: 3px !important;
+                flex-shrink: 0 !important;
             }
 
             .lorry-receipts-index .input-group-custom input {
-                width: 100%;
-                min-width: 0;
+                font-size: 11px !important;
+                padding: 1px 0 !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+            }
+
+            .lorry-receipts-index .input-group-custom input::-webkit-calendar-picker-indicator {
+                padding: 0 !important;
+                margin: 0 !important;
+                cursor: pointer;
             }
 
             .lorry-receipts-index .lr-date-filter-actions {
-                width: 100%;
-                display: flex;
-                justify-content: flex-end;
-                gap: 0.4rem;
+                width: 100% !important;
+                display: flex !important;
+                justify-content: flex-end !important;
+                gap: 0.4rem !important;
             }
 
             #lrDetailsModal .modal-footer {
@@ -397,27 +461,7 @@
             width: 100%;
         }
 
-        @media (max-width: 575.98px) {
-            .lorry-receipts-index .lr-date-filter-bar {
-                justify-content: stretch !important;
-            }
 
-            .lorry-receipts-index .lr-date-filter-inputs {
-                width: 100% !important;
-                display: flex !important;
-                gap: 0.4rem !important;
-            }
-
-            .lorry-receipts-index .lr-date-filter-inputs .input-group-custom {
-                flex: 1 1 50% !important;
-                min-width: 0 !important;
-            }
-
-            .lorry-receipts-index .lr-date-filter-actions {
-                width: 100% !important;
-                justify-content: flex-end !important;
-            }
-        }
 
         .lorry-receipts-index .app-index-list-card {
             margin-bottom: 0.75rem !important;
@@ -457,20 +501,20 @@
         @endif
 
         <div class="card app-index-list-card mb-2">
-            <div class="card-header">
+            <div class="card-header d-flex align-items-center justify-content-between">
                 <h3 class="card-title mb-0">Good Receipts (Bilty)</h3>
-                <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
-                    <a href="{{ route('lorry_receipts.create') }}" class="btn app-index-header-btn" aria-label="Create good receipt">
-                        <i class="bi bi-plus-circle"></i> Create
+                <div class="app-index-card-toolbar d-flex align-items-center gap-2">
+                    <a href="{{ route('lorry_receipts.create') }}" class="btn app-index-header-btn" title="Create Good Receipt" aria-label="Create good receipt">
+                        <i class="bi bi-plus-circle"></i><span class="d-none d-sm-inline ms-1">Create</span>
                     </a>
-                    <a href="{{ route('lorry_receipts.createLinked') }}" class="btn app-index-header-btn" aria-label="Create linked good receipt">
-                        <i class="bi bi-link-45deg"></i> Linked
+                    <a href="{{ route('lorry_receipts.createLinked') }}" class="btn app-index-header-btn" title="Create Linked Good Receipt" aria-label="Create linked good receipt">
+                        <i class="bi bi-link-45deg"></i><span class="d-none d-sm-inline ms-1">Linked</span>
                     </a>
                 </div>
             </div>
 
             <div class="app-index-dt-toolbar lr-date-filter-bar d-flex flex-wrap justify-content-end align-items-center gap-2">
-                <div class="lr-date-filter-inputs d-flex flex-wrap align-items-center gap-2">
+                <div class="lr-date-filter-inputs d-flex align-items-center gap-2">
                     <div class="input-group-custom">
                         <span>From</span>
                         <input type="date" id="fromDate">

@@ -16,9 +16,24 @@
             ?? ($lr?->consignee?->city?->name ?? null);
         $canManage = auth()->check() && auth()->user()->canActAsAdmin();
     @endphp
-
     <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
 
+    <style>
+        .fb-compact-table th,
+        .fb-compact-table td,
+        .fb-compact-table thead th,
+        .fb-compact-table tbody td,
+        .fb-compact-table .fb-info-grid__sub {
+            white-space: nowrap !important;
+            vertical-align: middle;
+        }
+
+        .fb-detail-page .table-responsive {
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+    </style>
     @if (session('success'))
         <div class="alert alert-success mt-2" style="max-width: 1200px; margin-left: auto; margin-right: auto;">
             {{ session('success') }}
@@ -172,7 +187,7 @@
                     <div class="card-body p-0">
                         @if ($payments->count() > 0)
                             <div class="table-responsive">
-                                <table class="table table-sm table-hover align-middle mb-0 fb-compact-table">
+                                <table class="table table-sm table-hover align-middle mb-0 fb-compact-table text-nowrap">
                                     <thead>
                                         <tr>
                                             <th>ID</th>
