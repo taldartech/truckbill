@@ -3,11 +3,170 @@
 @push('styles')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <style>
+        .voucher-payments-index .table-responsive {
+            max-height: none !important;
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #voucherPaymentsTable {
+            width: 100% !important;
+            border-collapse: collapse;
+        }
+
+        #voucherPaymentsTable th,
+        #voucherPaymentsTable td {
+            vertical-align: middle;
+            padding: 8px 10px;
+        }
+
+        #voucherPaymentsTable thead th {
+            position: sticky;
+            top: 0;
+            background: var(--brand-table-header-bg) !important;
+            z-index: 10;
+            white-space: nowrap !important;
+        }
+
+        @media (max-width: 1199.98px) {
+            #voucherPaymentsTable {
+                table-layout: auto !important;
+                min-width: 960px !important;
+            }
+
+            #voucherPaymentsTable th,
+            #voucherPaymentsTable td {
+                white-space: nowrap !important;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            #voucherPaymentsTable th,
+            #voucherPaymentsTable td {
+                font-size: 0.8125rem !important;
+                padding: 6px 8px !important;
+            }
+        }
+
+        .voucher-payments-index .app-index-table-actions {
+            display: inline-flex !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            gap: 4px !important;
+            white-space: nowrap !important;
+        }
+
+        .vp-filter-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+        }
+
+        .vp-filter-checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem 1rem;
+            align-items: center;
+        }
+
+        .vp-filter-checkboxes .form-check {
+            margin-bottom: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .vp-filter-checkboxes .form-check-input {
+            margin-top: 0;
+            cursor: pointer;
+        }
+
+        .vp-filter-checkboxes .form-check-label {
+            font-size: 0.875rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        @media (max-width: 767.98px) {
+            #voucherPaymentsTable th,
+            #voucherPaymentsTable td {
+                font-size: 0.8125rem !important;
+                padding: 6px 8px !important;
+            }
+
+            .vp-filter-title {
+                font-size: 0.8125rem !important;
+                margin-bottom: 0.35rem !important;
+            }
+
+            .vp-filter-checkboxes {
+                gap: 0.35rem 0.65rem !important;
+            }
+
+            .vp-filter-checkboxes .form-check {
+                margin-right: 0 !important;
+            }
+
+            .vp-filter-checkboxes .form-check-input {
+                width: 0.9rem !important;
+                height: 0.9rem !important;
+                min-width: 0.9rem !important;
+            }
+
+            .vp-filter-checkboxes .form-check-label {
+                font-size: 0.78rem !important;
+                line-height: 1.25;
+            }
+
+            #filter-fields .form-label {
+                font-size: 0.75rem !important;
+            }
+
+            #filter-fields .form-control-sm,
+            #filter-fields .form-select-sm {
+                font-size: 0.8125rem !important;
+                padding: 0.25rem 0.5rem !important;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .voucher-payments-index .app-index-list-card > .card-header {
+                padding: 0.5rem 0.75rem !important;
+            }
+
+            .voucher-payments-index .app-index-card-toolbar {
+                width: 100%;
+                display: flex;
+                gap: 0.4rem;
+            }
+
+            .voucher-payments-index .app-index-card-toolbar .btn {
+                flex: 1 1 auto;
+                justify-content: center;
+                text-align: center;
+                padding: 0.35rem 0.5rem !important;
+                font-size: 0.75rem !important;
+            }
+
+            .vp-filter-actions {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.4rem;
+            }
+
+            .vp-filter-actions .btn {
+                width: 100%;
+                margin: 0 !important;
+                text-align: center;
+            }
+        }
+    </style>
 @endpush
 
 @section('content')
 
-<div class="container mt-4 app-index-page app-index-page--standard">
+<div class="container-fluid mt-2 pt-1 app-index-page app-index-page--standard voucher-payments-index">
     @if(session('success'))
         <div class="mb-3">
             <span class="badge text-bg-dark border app-index-flash">
@@ -40,84 +199,86 @@
         <form method="GET" action="{{ route('voucher_payments.index') }}" id="advanced-search-box" class="app-index-dt-toolbar d-none">
             {{-- Filter checkboxes --}}
             <div class="row g-2">
-                <div class="col-md-12">
-                    <label class="form-label fw-bold">Choose Filter Fields:</label>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" value="truck_no" id="filter_truck_no" onchange="toggleField(this)">
-                        <label class="form-check-label" for="filter_truck_no">Truck No</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" value="transporter" id="filter_transporter" onchange="toggleField(this)">
-                        <label class="form-check-label" for="filter_transporter">Transporter</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" value="source" id="filter_source" onchange="toggleField(this)">
-                        <label class="form-check-label" for="filter_source">Source</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" value="destination" id="filter_destination" onchange="toggleField(this)">
-                        <label class="form-check-label" for="filter_destination">Destination</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" value="lr_no" id="filter_lr_no" onchange="toggleField(this)">
-                        <label class="form-check-label" for="filter_lr_no">Good Receipt (Bilty) No</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" value="freight_booking_no" id="filter_freight_booking_no" onchange="toggleField(this)">
-                        <label class="form-check-label" for="filter_freight_booking_no">Good Hire (Lorry Hire) No</label>
+                <div class="col-12">
+                    <label class="form-label fw-bold d-block mb-2 vp-filter-title">Choose Filter Fields:</label>
+                    <div class="vp-filter-checkboxes">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" value="truck_no" id="filter_truck_no" onchange="toggleField(this)">
+                            <label class="form-check-label" for="filter_truck_no">Truck No</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" value="transporter" id="filter_transporter" onchange="toggleField(this)">
+                            <label class="form-check-label" for="filter_transporter">Transporter</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" value="source" id="filter_source" onchange="toggleField(this)">
+                            <label class="form-check-label" for="filter_source">Source</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" value="destination" id="filter_destination" onchange="toggleField(this)">
+                            <label class="form-check-label" for="filter_destination">Destination</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" value="lr_no" id="filter_lr_no" onchange="toggleField(this)">
+                            <label class="form-check-label" for="filter_lr_no">Good Receipt (Bilty) No</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" value="freight_booking_no" id="filter_freight_booking_no" onchange="toggleField(this)">
+                            <label class="form-check-label" for="filter_freight_booking_no">Good Hire (Lorry Hire) No</label>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {{-- Conditionally visible filter fields --}}
-            <div class="row g-3 mt-2" id="filter-fields">
-                <div class="col-md-3 d-none" id="field_truck_no">
-                    <label class="form-label">Truck No</label>
-                    <input type="text" name="truck_no" class="form-control" value="{{ request('truck_no') }}">
+            <div class="row g-2 g-md-3 mt-2" id="filter-fields">
+                <div class="col-12 col-sm-6 col-lg-3 d-none" id="field_truck_no">
+                    <label class="form-label mb-1" style="font-size: 0.8125rem; font-weight: 600;">Truck No</label>
+                    <input type="text" name="truck_no" class="form-control form-control-sm" value="{{ request('truck_no') }}">
                 </div>
-                <div class="col-md-3 d-none" id="field_transporter">
-                    <label class="form-label">Transporter</label>
-                    <select name="transporter" id="voucherPaymentsTransporterFilter" class="form-select">
+                <div class="col-12 col-sm-6 col-lg-3 d-none" id="field_transporter">
+                    <label class="form-label mb-1" style="font-size: 0.8125rem; font-weight: 600;">Transporter</label>
+                    <select name="transporter" id="voucherPaymentsTransporterFilter" class="form-select form-select-sm">
                         <option value="">All Transporters</option>
                         @if (! empty($selectedVoucherPaymentTransporter))
                             <option value="{{ $selectedVoucherPaymentTransporter['id'] }}" selected>{{ $selectedVoucherPaymentTransporter['text'] }}</option>
                         @endif
                     </select>
                 </div>
-                <div class="col-md-3 d-none" id="field_source">
-                    <label class="form-label">Source</label>
-                    <select name="source" id="voucherPaymentsSourceCityFilter" class="form-select">
+                <div class="col-12 col-sm-6 col-lg-3 d-none" id="field_source">
+                    <label class="form-label mb-1" style="font-size: 0.8125rem; font-weight: 600;">Source</label>
+                    <select name="source" id="voucherPaymentsSourceCityFilter" class="form-select form-select-sm">
                         <option value="">All Sources</option>
                         @if (! empty($selectedVoucherPaymentSourceCity))
                             <option value="{{ $selectedVoucherPaymentSourceCity['id'] }}" selected>{{ $selectedVoucherPaymentSourceCity['text'] }}</option>
                         @endif
                     </select>
                 </div>
-                <div class="col-md-3 d-none" id="field_destination">
-                    <label class="form-label">Destination</label>
-                    <select name="destination" id="voucherPaymentsDestinationCityFilter" class="form-select">
+                <div class="col-12 col-sm-6 col-lg-3 d-none" id="field_destination">
+                    <label class="form-label mb-1" style="font-size: 0.8125rem; font-weight: 600;">Destination</label>
+                    <select name="destination" id="voucherPaymentsDestinationCityFilter" class="form-select form-select-sm">
                         <option value="">All Destinations</option>
                         @if (! empty($selectedVoucherPaymentDestinationCity))
                             <option value="{{ $selectedVoucherPaymentDestinationCity['id'] }}" selected>{{ $selectedVoucherPaymentDestinationCity['text'] }}</option>
                         @endif
                     </select>
                 </div>
-                <div class="col-md-3 d-none" id="field_lr_no">
-                    <label class="form-label">Good Receipt (Bilty) No</label>
-                    <input type="text" name="lr_no" class="form-control" value="{{ request('lr_no') }}">
+                <div class="col-12 col-sm-6 col-lg-3 d-none" id="field_lr_no">
+                    <label class="form-label mb-1" style="font-size: 0.8125rem; font-weight: 600;">Good Receipt (Bilty) No</label>
+                    <input type="text" name="lr_no" class="form-control form-control-sm" value="{{ request('lr_no') }}">
                 </div>
-                <div class="col-md-3 d-none" id="field_freight_booking_no">
-                    <label class="form-label">Good Hire (Lorry Hire) No</label>
-                    <input type="text" name="freight_booking_no" class="form-control" value="{{ request('freight_booking_no') }}">
+                <div class="col-12 col-sm-6 col-lg-3 d-none" id="field_freight_booking_no">
+                    <label class="form-label mb-1" style="font-size: 0.8125rem; font-weight: 600;">Good Hire (Lorry Hire) No</label>
+                    <input type="text" name="freight_booking_no" class="form-control form-control-sm" value="{{ request('freight_booking_no') }}">
                 </div>
             </div>
 
             {{-- Form action buttons --}}
-            <div class="text-end mt-3">
-                <button type="submit" class="btn btn-secondary">
+            <div class="d-flex justify-content-end gap-2 mt-3 vp-filter-actions">
+                <button type="submit" class="btn btn-secondary btn-sm">
                     <i class="bi bi-search"></i> Search
                 </button>
-                <a href="{{ route('voucher_payments.index') }}" class="btn btn-secondary ms-2">
+                <a href="{{ route('voucher_payments.index') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-arrow-clockwise"></i> Reset
                 </a>
             </div>
@@ -125,7 +286,7 @@
 
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
+                <table class="table table-striped table-hover align-middle mb-0 app-index-table w-100" id="voucherPaymentsTable">
                     <thead class="table-light">
                         <tr>
                             <th>Voucher #</th>
@@ -204,10 +365,9 @@
 
                                 @if(auth()->check() && auth()->user()->canActAsAdmin())
                                 <td class="app-index-actions-cell">
-                                    <div class="d-flex gap-1 justify-content-center">
-                                        <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip"
-                                data-bs-placement="top"
-                                title="View Details">
+                                    <div class="app-index-table-actions">
+                                        <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}" class="btn btn-sm btn-icon btn-action-view" data-bs-toggle="tooltip"
+                                            data-bs-placement="top" title="View Details">
                                             <i class="bi bi-eye"></i>
                                         </a>
                                     </div>

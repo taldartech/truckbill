@@ -3,10 +3,65 @@
 @push('styles')
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
         rel="stylesheet" />
+    <style>
+        /* Mobile-responsive adjustments for Create Invoice */
+        @media (max-width: 767.98px) {
+            .app-create-page .app-index-list-card > .card-header {
+                padding: 0.5rem 0.75rem !important;
+            }
+
+            .app-create-page .app-index-list-card > .card-header .card-title,
+            .app-create-page .card-header h3.card-title {
+                font-size: 0.95rem !important;
+            }
+
+            .app-create-page .app-form-section__header {
+                padding: 0.45rem 0.75rem !important;
+            }
+
+            .app-create-page .app-form-section__header h5,
+            .app-create-page .app-form-section__header .app-form-section__title {
+                font-size: 0.8125rem !important;
+            }
+
+            .app-create-page .app-form-section__body {
+                padding: 0.75rem !important;
+            }
+
+            .app-create-page .form-label {
+                font-size: 0.78rem !important;
+                margin-bottom: 0.25rem !important;
+            }
+
+            #showMemoOptions {
+                font-size: 0.78rem !important;
+                padding: 0.28rem 0.6rem !important;
+                border-radius: 0.375rem !important;
+            }
+
+            #memoOptionsContainer .app-form-section__title {
+                font-size: 0.78rem !important;
+            }
+
+            #memoCheckboxes .form-check-label {
+                font-size: 0.78rem !important;
+            }
+
+            #memoCheckboxes .form-check-input {
+                width: 0.9rem !important;
+                height: 0.9rem !important;
+            }
+
+            .app-create-page .app-form-actions .btn {
+                font-size: 0.8125rem !important;
+                padding: 0.35rem 0.75rem !important;
+            }
+        }
+    </style>
 @endpush
 
 @section('content')
-    <div class="container mt-4 pb-5 app-index-page app-create-page">
+    <div class="container mt-2 pt-1 pb-5 app-index-page app-create-page">
         {{-- Step 1: Select customer & memo --}}
         <div id="preFormContainer">
             <div class="card app-index-list-card mb-3">
@@ -40,8 +95,7 @@
                                     <label class="form-label">Memo ID</label>
                                     <div class="input-group">
                                         {{-- <input type="text" id="preMemoId" class="form-control" placeholder="Optional"> --}}
-                                        <button class="btn btn-secondary" type="button" id="showMemoOptions">Show
-                                            Memos</button>
+                                        <button class="btn btn-secondary btn-sm" type="button" id="showMemoOptions">Show Memos</button>
                                     </div>
                                 </div>
                             </div>

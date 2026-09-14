@@ -22,10 +22,16 @@
         }
 
         .table td, .table th {
-            padding: 4px 8px !important;
-            font-size: 12px !important;
+            padding: 8px 10px;
             vertical-align: middle;
             border-color: rgba(0,0,0,0.05) !important;
+        }
+
+        @media (max-width: 767.98px) {
+            .table td, .table th {
+                font-size: 0.8125rem !important;
+                padding: 4px 6px !important;
+            }
         }
 
         /* Action Buttons */
@@ -81,12 +87,15 @@
 
         .input-group-custom {
             background: white;
-            border-radius: 10px;
+            border-radius: 8px;
             padding: 2px 8px;
-            border: 1px solid rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.12);
             display: flex;
             align-items: center;
             box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            min-width: 0;
+            flex: 1 1 50%;
+            overflow: hidden;
         }
 
         .input-group-custom span {
@@ -94,7 +103,9 @@
             text-transform: uppercase;
             font-weight: 700;
             color: var(--slate-600);
-            margin-right: 8px;
+            margin-right: 6px;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .input-group-custom input {
@@ -104,6 +115,61 @@
             background: transparent !important;
             outline: none !important;
             box-shadow: none !important;
+            min-width: 0;
+            width: 100%;
+        }
+
+        .fb-date-inputs {
+            display: flex;
+            width: 100%;
+            gap: 0.5rem;
+            min-width: 0;
+        }
+
+        .fb-filter-actions-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            min-width: 0;
+            width: 100%;
+        }
+
+        .fb-filter-actions-group .form-switch {
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 0;
+            padding-left: 2.5em;
+            min-height: 32px;
+        }
+
+        .fb-filter-actions-group .form-switch .form-check-input {
+            margin-top: 0;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .fb-filter-actions-group .form-switch .form-check-label {
+            margin-bottom: 0;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--slate-600);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .fb-filter-actions-group .fb-filter-btns {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        @media (min-width: 1400px) {
+            .fb-filter-actions-group {
+                justify-content: flex-end;
+                gap: 1.25rem;
+            }
         }
 
         /* Compact Status Legend */
@@ -150,6 +216,217 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
+
+        .freight-bookings-index .table-responsive {
+            max-height: none !important;
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .freight-bookings-index .table-responsive::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .freight-bookings-index .table-responsive::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        .freight-bookings-index .table-responsive::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .freight-bookings-index .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        #freightBookingsTable {
+            width: 100% !important;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        #freightBookingsTable th,
+        #freightBookingsTable td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-left: 5px !important;
+            padding-right: 5px !important;
+        }
+
+        #freightBookingsTable thead th {
+            position: sticky;
+            top: 0;
+            background: var(--brand-table-header-bg) !important;
+            z-index: 20;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            padding-top: 4px !important;
+            padding-bottom: 4px !important;
+            padding-left: 3px !important;
+            padding-right: 3px !important;
+            font-size: 11.5px !important;
+            font-weight: 700;
+            letter-spacing: 0;
+        }
+
+        /* Large desktop view: fit within 100% */
+        @media (min-width: 1200px) {
+            #freightBookingsTable {
+                table-layout: fixed;
+                min-width: 0 !important;
+            }
+
+            #freightBookingsTable th:nth-child(1), #freightBookingsTable td:nth-child(1) { width: 3.5%; text-align: center; } /* Checkbox */
+            #freightBookingsTable th:nth-child(2), #freightBookingsTable td:nth-child(2) { width: 7.5%; } /* GR Date */
+            #freightBookingsTable th:nth-child(3), #freightBookingsTable td:nth-child(3) { width: 8.5%; } /* LR No */
+            #freightBookingsTable th:nth-child(4), #freightBookingsTable td:nth-child(4) { width: 11%; }  /* Customer */
+            #freightBookingsTable th:nth-child(5), #freightBookingsTable td:nth-child(5) { width: 11%; }  /* Transporter */
+            #freightBookingsTable th:nth-child(6), #freightBookingsTable td:nth-child(6) { width: 9%; }   /* Truck */
+            #freightBookingsTable th:nth-child(7), #freightBookingsTable td:nth-child(7) { width: 10%; }  /* Route */
+            #freightBookingsTable th:nth-child(8), #freightBookingsTable td:nth-child(8) { width: 6%; }   /* Weight */
+            #freightBookingsTable th:nth-child(9), #freightBookingsTable td:nth-child(9) { width: 6%; }   /* Rate */
+            #freightBookingsTable th:nth-child(10), #freightBookingsTable td:nth-child(10) { width: 8%; } /* Total */
+            #freightBookingsTable th:nth-child(11), #freightBookingsTable td:nth-child(11) { width: 8%; } /* Balance */
+            #freightBookingsTable th:nth-child(12), #freightBookingsTable td:nth-child(12) { width: 11.5%; min-width: 115px; } /* Actions */
+        }
+
+        #freightBookingsTable td:nth-child(12),
+        #freightBookingsTable th:nth-child(12) {
+            overflow: visible;
+            text-overflow: clip;
+        }
+
+        .freight-bookings-index .app-index-table-actions {
+            display: inline-flex !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            gap: 4px !important;
+            white-space: nowrap !important;
+            max-width: none !important;
+        }
+
+        /* Mobile & Tablet: smooth internal horizontal scroll without page overflow */
+        @media (max-width: 1199.98px) {
+            #freightBookingsTable {
+                table-layout: auto !important;
+                min-width: 1050px !important;
+                width: 100% !important;
+            }
+
+            #freightBookingsTable th:nth-child(n),
+            #freightBookingsTable td:nth-child(n) {
+                width: auto !important;
+                white-space: nowrap !important;
+            }
+
+            #freightBookingsTable th:nth-child(12),
+            #freightBookingsTable td:nth-child(12) {
+                min-width: 120px !important;
+                width: 120px !important;
+                white-space: nowrap !important;
+                overflow: visible !important;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .freight-bookings-index .app-index-list-card > .card-header {
+                padding: 0.5rem 0.75rem !important;
+            }
+
+            .freight-bookings-index .fb-header-actions {
+                width: 100%;
+                display: flex;
+                gap: 0.4rem;
+            }
+
+            .freight-bookings-index .fb-header-actions .header-pill-btn {
+                flex: 1 1 auto;
+                justify-content: center;
+                text-align: center;
+                padding: 0 10px !important;
+            }
+
+
+            .freight-bookings-index .modal-footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.4rem;
+            }
+
+            .freight-bookings-index .modal-footer .btn {
+                width: 100%;
+                margin: 0 !important;
+                text-align: center;
+            }
+
+            /* Pagination size matches Bilty standard: unified block with small font */
+            .freight-bookings-index .app-index-partload-pagination {
+                padding: 0.4rem 0.5rem !important;
+                gap: 0.35rem !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .dataTables_info {
+                font-size: 0.72rem !important;
+                text-align: center !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination {
+                margin: 0 !important;
+                gap: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-link {
+                font-size: 0.72rem !important;
+                padding: 0.22rem 0.5rem !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item:first-child .page-link {
+                border-top-left-radius: 0.375rem !important;
+                border-bottom-left-radius: 0.375rem !important;
+                border-top-right-radius: 0 !important;
+                border-bottom-right-radius: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item:last-child .page-link {
+                border-top-right-radius: 0.375rem !important;
+                border-bottom-right-radius: 0.375rem !important;
+                border-top-left-radius: 0 !important;
+                border-bottom-left-radius: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item:not(:first-child):not(:last-child) .page-link {
+                border-radius: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item:only-child .page-link {
+                border-radius: 0.375rem !important;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .freight-bookings-index .app-index-partload-pagination .dataTables_info {
+                font-size: 0.75rem !important;
+                text-align: center !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination {
+                margin: 0 !important;
+                gap: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-link {
+                font-size: 0.75rem !important;
+                padding: 0.25rem 0.55rem !important;
+            }
+        }
     </style>
 @endpush
 
@@ -180,7 +457,7 @@
 
 
 
-    <div class="container-fluid mt-4 app-index-page app-index-page--standard">
+    <div class="container-fluid mt-2 pt-1 app-index-page app-index-page--standard freight-bookings-index">
         @if (session('success'))
             <div class="mb-3">
                 <span class="badge text-bg-dark border app-index-flash">
@@ -220,7 +497,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="d-flex flex-wrap gap-2">
+                    <div class="d-flex flex-wrap gap-2 fb-header-actions">
                         <button id="bulk-memo-id-btn" class="header-pill-btn btn btn-primary border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;" data-bs-toggle="modal" data-bs-target="#bulkMemoIdModal">
                             <i class="bi bi-clipboard-check"></i> Bulk Memo
                         </button>
@@ -233,41 +510,41 @@
                     </div>
                 </div>
                 <form method="GET" action="{{ route('freight_bookings.index') }}" id="searchForm">
-                    <div class="row g-2 align-items-end">
-                        <div class="col-12 col-md-5">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-12 col-md-6 col-xxl-4">
                             <input type="text" class="form-control form-control-sm" name="search"
                                 value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'search', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" placeholder="LR, Customer, Truck, City...">
                         </div>
-                        <div class="col-12 col-md-4">
-                            <div class="d-flex  gap-2">
-                                <div class="input-group-custom flex-grow-1">
+                        <div class="col-12 col-md-6 col-xxl-4">
+                            <div class="fb-date-inputs">
+                                <div class="input-group-custom">
                                     <span>From</span>
                                     <input type="date" name="start_date" value="{{ $startDate }}">
                                 </div>
-                                <div class="input-group-custom flex-grow-1">
+                                <div class="input-group-custom">
                                     <span>To</span>
                                     <input type="date" name="end_date" value="{{ $endDate }}">
                                 </div>
                             </div>
                         </div>
-
-
-                        <div class="col-12 col-sm-6 col-md-2 d-flex align-items-end">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" name="pending_memo" value="1"
-                                    id="pendingMemoFilter" {{ request('pending_memo') ? 'checked' : '' }}>
-                                <label class="form-check-label" for="pendingMemoFilter">
-                                    Pending Memo
-                                </label>
+                        <div class="col-12 col-xxl-4">
+                            <div class="fb-filter-actions-group">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="pending_memo" value="1"
+                                        id="pendingMemoFilter" {{ request('pending_memo') ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="pendingMemoFilter">
+                                        Pending Memo
+                                    </label>
+                                </div>
+                                <div class="fb-filter-btns">
+                                    <button type="submit" class="filter-action-btn" style="background: var(--brand-primary); color: white;" title="Filter" data-bs-toggle="tooltip">
+                                        <i class="bi bi-funnel-fill"></i>
+                                    </button>
+                                    <a href="{{ route('freight_bookings.index') }}" class="filter-action-btn" style="background: var(--brand-text-primary); color: white;" title="Reset" data-bs-toggle="tooltip">
+                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                    </a>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-12 col-sm-6 col-md-1 d-flex gap-2 justify-content-sm-end">
-                            <button type="submit" class="filter-action-btn" style="background: var(--brand-primary); color: white;" title="Filter" data-bs-toggle="tooltip">
-                                <i class="bi bi-funnel-fill"></i>
-                            </button>
-                            <a href="{{ route('freight_bookings.index') }}" class="filter-action-btn" style="background: var(--brand-text-primary); color: white;" title="Reset" data-bs-toggle="tooltip">
-                                <i class="bi bi-arrow-counterclockwise"></i>
-                            </a>
                         </div>
                     </div>
                 </form>
@@ -1863,7 +2140,9 @@
                 searching: false,
                 ordering: true,
                 theme: 'bootstrap-5',
-                responsive: true,
+                responsive: false,
+                scrollX: false,
+                autoWidth: false,
                 lengthChange: true,
                 lengthMenu: [
                     [10, 25, 50, 100],

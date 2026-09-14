@@ -36,14 +36,31 @@
 
         .lorry-receipts-index .table-responsive {
             max-height: none !important;
-            overflow-x: visible !important;
-            overflow-y: visible !important;
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .lorry-receipts-index .table-responsive::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .lorry-receipts-index .table-responsive::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        .lorry-receipts-index .table-responsive::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .lorry-receipts-index .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
 
         #lorryReceiptsTable {
             width: 100% !important;
-            min-width: 0 !important;
-            table-layout: fixed;
             border-collapse: collapse;
             border-spacing: 0;
         }
@@ -72,27 +89,34 @@
             letter-spacing: 0;
         }
 
-        /* Compact column widths so the row fits without horizontal scroll */
-        #lorryReceiptsTable th:nth-child(1),
-        #lorryReceiptsTable td:nth-child(1) { width: 6.5%; }  /* GR Date */
-        #lorryReceiptsTable th:nth-child(2),
-        #lorryReceiptsTable td:nth-child(2) { width: 9.5%; }  /* LR Details */
-        #lorryReceiptsTable th:nth-child(3),
-        #lorryReceiptsTable td:nth-child(3) { width: 13%; }   /* Customer */
-        #lorryReceiptsTable th:nth-child(4),
-        #lorryReceiptsTable td:nth-child(4) { width: 13%; }   /* Consignor */
-        #lorryReceiptsTable th:nth-child(5),
-        #lorryReceiptsTable td:nth-child(5) { width: 13%; }   /* Consignee */
-        #lorryReceiptsTable th:nth-child(6),
-        #lorryReceiptsTable td:nth-child(6) { width: 9%; }    /* Truck */
-        #lorryReceiptsTable th:nth-child(7),
-        #lorryReceiptsTable td:nth-child(7) { width: 6%; }    /* Weight */
-        #lorryReceiptsTable th:nth-child(8),
-        #lorryReceiptsTable td:nth-child(8) { width: 6%; }    /* Rate */
-        #lorryReceiptsTable th:nth-child(9),
-        #lorryReceiptsTable td:nth-child(9) { width: 8%; }   /* Amount */
-        #lorryReceiptsTable th:nth-child(10),
-        #lorryReceiptsTable td:nth-child(10) { width: 13.5%; } /* Action */
+        /* Large desktop view: fit within 100% */
+        @media (min-width: 1200px) {
+            #lorryReceiptsTable {
+                table-layout: fixed;
+                min-width: 0 !important;
+            }
+
+            #lorryReceiptsTable th:nth-child(1),
+            #lorryReceiptsTable td:nth-child(1) { width: 7%; }   /* GR Date */
+            #lorryReceiptsTable th:nth-child(2),
+            #lorryReceiptsTable td:nth-child(2) { width: 9.5%; } /* LR Details */
+            #lorryReceiptsTable th:nth-child(3),
+            #lorryReceiptsTable td:nth-child(3) { width: 13%; }  /* Customer */
+            #lorryReceiptsTable th:nth-child(4),
+            #lorryReceiptsTable td:nth-child(4) { width: 12.5%; } /* Consignor */
+            #lorryReceiptsTable th:nth-child(5),
+            #lorryReceiptsTable td:nth-child(5) { width: 12.5%; } /* Consignee */
+            #lorryReceiptsTable th:nth-child(6),
+            #lorryReceiptsTable td:nth-child(6) { width: 9%; }   /* Truck */
+            #lorryReceiptsTable th:nth-child(7),
+            #lorryReceiptsTable td:nth-child(7) { width: 6%; }   /* Weight */
+            #lorryReceiptsTable th:nth-child(8),
+            #lorryReceiptsTable td:nth-child(8) { width: 6%; }   /* Rate */
+            #lorryReceiptsTable th:nth-child(9),
+            #lorryReceiptsTable td:nth-child(9) { width: 8.5%; } /* Amount */
+            #lorryReceiptsTable th:nth-child(10),
+            #lorryReceiptsTable td:nth-child(10) { width: 16%; min-width: 140px; } /* Action */
+        }
 
         #lorryReceiptsTable td:nth-child(10),
         #lorryReceiptsTable th:nth-child(10) {
@@ -100,32 +124,35 @@
             text-overflow: clip;
         }
 
-        @media (max-width: 991.98px) {
-            .lorry-receipts-index .table-responsive {
-                overflow-x: auto !important;
-                -webkit-overflow-scrolling: touch;
-            }
+        .lorry-receipts-index .app-index-table-actions {
+            display: inline-flex !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            gap: 4px !important;
+            white-space: nowrap !important;
+            max-width: none !important;
+        }
 
-            .lorry-receipts-index .dataTables_wrapper,
-            .lorry-receipts-index .dataTables_scroll,
-            .lorry-receipts-index .dataTables_scrollHead,
-            .lorry-receipts-index .dataTables_scrollBody {
-                overflow-x: auto !important;
-            }
-
+        /* Mobile & Tablet: smooth internal horizontal scroll without page overflow */
+        @media (max-width: 1199.98px) {
             #lorryReceiptsTable {
                 table-layout: auto !important;
-                min-width: 920px !important;
+                min-width: 960px !important;
+                width: 100% !important;
             }
 
             #lorryReceiptsTable th:nth-child(n),
             #lorryReceiptsTable td:nth-child(n) {
                 width: auto !important;
+                white-space: nowrap !important;
             }
 
-            #lorryReceiptsTable th:nth-child(11),
-            #lorryReceiptsTable td:nth-child(11) {
-                min-width: 118px;
+            #lorryReceiptsTable th:nth-child(10),
+            #lorryReceiptsTable td:nth-child(10) {
+                min-width: 140px !important;
+                width: 140px !important;
+                white-space: nowrap !important;
+                overflow: visible !important;
             }
         }
 
@@ -134,13 +161,123 @@
                 font-size: 9px !important;
             }
 
-            .app-index-list-card > .card-header .d-flex.gap-2 {
-                width: 100%;
-                flex-wrap: wrap;
+            .lorry-receipts-index .app-index-list-card > .card-header {
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 0.5rem;
             }
 
-            .app-index-list-card > .card-header .app-index-header-btn {
-                flex: 1 1 auto;
+            .lorry-receipts-index .app-index-card-toolbar {
+                width: 100%;
+                display: flex;
+                gap: 0.5rem;
+            }
+
+            .lorry-receipts-index .app-index-card-toolbar .app-index-header-btn {
+                flex: 1 1 50%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            .lorry-receipts-index .lr-date-filter-bar {
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 0.5rem !important;
+            }
+
+            .lorry-receipts-index .lr-date-filter-inputs {
+                display: flex;
+                width: 100%;
+                gap: 0.4rem;
+            }
+
+            .lorry-receipts-index .input-group-custom {
+                flex: 1 1 50%;
+                min-width: 0;
+            }
+
+            .lorry-receipts-index .input-group-custom input {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .lorry-receipts-index .lr-date-filter-actions {
+                width: 100%;
+                display: flex;
+                justify-content: flex-end;
+                gap: 0.4rem;
+            }
+
+            #lrDetailsModal .modal-footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.4rem;
+            }
+
+            #lrDetailsModal .modal-footer .btn {
+                width: 100%;
+                margin: 0 !important;
+                text-align: center;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination {
+                padding: 0.4rem 0.5rem !important;
+                gap: 0.35rem !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .dataTables_info {
+                font-size: 0.72rem !important;
+                text-align: center !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .pagination {
+                margin: 0 !important;
+                gap: 0 !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .pagination .page-item {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .pagination .page-link {
+                font-size: 0.72rem !important;
+                padding: 0.22rem 0.5rem !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .pagination .page-item:first-child .page-link {
+                border-top-left-radius: 0.375rem !important;
+                border-bottom-left-radius: 0.375rem !important;
+                border-top-right-radius: 0 !important;
+                border-bottom-right-radius: 0 !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .pagination .page-item:last-child .page-link {
+                border-top-right-radius: 0.375rem !important;
+                border-bottom-right-radius: 0.375rem !important;
+                border-top-left-radius: 0 !important;
+                border-bottom-left-radius: 0 !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .pagination .page-item:not(:first-child):not(:last-child) .page-link {
+                border-radius: 0 !important;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .lorry-receipts-index .app-index-partload-pagination .dataTables_info {
+                font-size: 0.75rem !important;
+                text-align: center !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .pagination {
+                margin: 0 !important;
+                gap: 0 !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .pagination .page-link {
+                font-size: 0.75rem !important;
+                padding: 0.25rem 0.55rem !important;
             }
         }
 
@@ -155,13 +292,6 @@
 
         .lorry-receipts-index .lr-number-link {
             font-size: 12.5px;
-        }
-
-        .lorry-receipts-index .dataTables_wrapper,
-        .lorry-receipts-index .dataTables_scroll,
-        .lorry-receipts-index .dataTables_scrollHead,
-        .lorry-receipts-index .dataTables_scrollBody {
-            overflow-x: hidden !important;
         }
 
         .lorry-receipts-index .dataTables_scrollBody {
@@ -236,11 +366,14 @@
         .input-group-custom {
             background: white;
             border-radius: 8px;
-            padding: 1px 6px;
-            border: 1px solid rgba(0,0,0,0.08);
+            padding: 2px 8px;
+            border: 1px solid rgba(0,0,0,0.12);
             display: flex;
             align-items: center;
             box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            min-width: 0;
+            flex: 1 1 auto;
+            overflow: hidden;
         }
 
         .input-group-custom span {
@@ -249,6 +382,8 @@
             font-weight: 700;
             color: var(--slate-600);
             margin-right: 6px;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .input-group-custom input {
@@ -258,6 +393,30 @@
             background: transparent !important;
             outline: none !important;
             box-shadow: none !important;
+            min-width: 0;
+            width: 100%;
+        }
+
+        @media (max-width: 575.98px) {
+            .lorry-receipts-index .lr-date-filter-bar {
+                justify-content: stretch !important;
+            }
+
+            .lorry-receipts-index .lr-date-filter-inputs {
+                width: 100% !important;
+                display: flex !important;
+                gap: 0.4rem !important;
+            }
+
+            .lorry-receipts-index .lr-date-filter-inputs .input-group-custom {
+                flex: 1 1 50% !important;
+                min-width: 0 !important;
+            }
+
+            .lorry-receipts-index .lr-date-filter-actions {
+                width: 100% !important;
+                justify-content: flex-end !important;
+            }
         }
 
         .lorry-receipts-index .app-index-list-card {
@@ -274,7 +433,7 @@
         }
 
         .lorry-receipts-index .app-index-partload-pagination {
-            padding: 0.4rem 0.75rem !important;
+            padding: 0.4rem 0.75rem;
         }
 
     </style>
@@ -310,8 +469,8 @@
                 </div>
             </div>
 
-            <div class="app-index-dt-toolbar d-flex flex-wrap justify-content-end align-items-center gap-2">
-                <div class="d-flex flex-wrap align-items-center gap-2">
+            <div class="app-index-dt-toolbar lr-date-filter-bar d-flex flex-wrap justify-content-end align-items-center gap-2">
+                <div class="lr-date-filter-inputs d-flex flex-wrap align-items-center gap-2">
                     <div class="input-group-custom">
                         <span>From</span>
                         <input type="date" id="fromDate">
@@ -321,7 +480,7 @@
                         <input type="date" id="toDate">
                     </div>
                 </div>
-                <div class="d-flex gap-2">
+                <div class="lr-date-filter-actions d-flex gap-2">
                     <button type="button" class="filter-action-btn" id="filterBtn" style="background: var(--brand-primary); color: white;" title="Filter" data-bs-toggle="tooltip">
                         <i class="bi bi-funnel-fill"></i>
                     </button>
@@ -1013,21 +1172,23 @@
                                     <h6 class="mb-0"><i class="bi bi-list"></i> Linked Good Receipts (Bilty)</h6>
                                 </div>
                                 <div class="card-body">
-                                    <table class="table table-bordered">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>LR Number</th>
-                                                <th>Customer</th>
-                                                <th>Consignor</th>
-                                                <th>Consignee</th>
-                                                <th>Goods</th>
-                                                <th>Weight</th>
-                                                <th>Amount</th>
-                                                <th>Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>${lrRows}</tbody>
-                                    </table>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>LR Number</th>
+                                                    <th>Customer</th>
+                                                    <th>Consignor</th>
+                                                    <th>Consignee</th>
+                                                    <th>Goods</th>
+                                                    <th>Weight</th>
+                                                    <th>Amount</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>${lrRows}</tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         `;

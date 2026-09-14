@@ -209,6 +209,24 @@
             border-bottom: 1px solid rgba(0, 0, 0, 0.08);
         }
 
+        /* Completely remove blue border / focus outline on sidebar menu bar icon */
+        [data-lte-toggle="sidebar"],
+        [data-lte-toggle="sidebar"]:hover,
+        [data-lte-toggle="sidebar"]:focus,
+        [data-lte-toggle="sidebar"]:active,
+        [data-lte-toggle="sidebar"]:focus-visible,
+        .app-header [data-lte-toggle="sidebar"],
+        .app-header [data-lte-toggle="sidebar"]:hover,
+        .app-header [data-lte-toggle="sidebar"]:focus,
+        .app-header [data-lte-toggle="sidebar"]:active,
+        .app-header [data-lte-toggle="sidebar"]:focus-visible {
+            outline: none !important;
+            border: 0 !important;
+            box-shadow: none !important;
+            text-decoration: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
         .credits-container {
             display: inline-flex;
             align-items: center;
@@ -295,7 +313,7 @@
                 <!--begin::Start Navbar Links-->
                 <ul class="navbar-nav d-flex flex-row align-items-center flex-nowrap gap-1 gap-sm-2 mb-0">
                     <li class="nav-item flex-shrink-0">
-                        <a class="nav-link p-1 p-sm-2 text-secondary" data-lte-toggle="sidebar" href="#" role="button" aria-label="Toggle sidebar">
+                        <a class="nav-link p-1 p-sm-2 text-secondary border-0 shadow-none" data-lte-toggle="sidebar" href="#" role="button" aria-label="Toggle sidebar" style="outline: none !important; border: 0 !important; box-shadow: none !important;">
                             <i class="fa-solid fa-bars fs-5"></i>
                         </a>
                     </li>
