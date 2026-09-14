@@ -46,7 +46,7 @@
         white-space: nowrap;
     }
 </style>
-<div class="container mt-4">
+<div class="container-fluid px-2 px-md-3 mt-3 mt-md-4">
     <div class="row justify-content-center">
         <div class="col-12 col-lg-10 col-xl-8">
             <div class="card card-info card-outline mb-4">
@@ -58,7 +58,7 @@
                     @csrf
                     @method('PUT')
 
-                    <div class="card-body">
+                    <div class="card-body p-2 p-md-4">
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="transporter_id" class="form-label">Truck Owner</label>

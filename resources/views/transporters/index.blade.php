@@ -18,12 +18,12 @@
         <div class="card app-index-list-card mb-4">
             <div class="card-header">
                 <h3 class="card-title mb-0">Transporter Management</h3>
-                <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+                <div class="app-index-card-toolbar d-flex flex-nowrap gap-1 gap-sm-2 align-items-center">
                     <a href="{{ route('transporters.create') }}" class="btn app-index-header-btn" aria-label="Create transporter">
-                        <i class="fas fa-plus"></i> Create
+                        <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Create</span>
                     </a>
                     <a href="{{ route('reports.transporter-master-export', ['type' => 'transporter']) }}" class="btn app-index-header-btn" aria-label="Export transporters">
-                        <i class="fas fa-file-excel"></i> Export
+                        <i class="bi bi-file-earmark-excel"></i> <span class="d-none d-sm-inline">Export</span>
                     </a>
                 </div>
             </div>
@@ -33,15 +33,15 @@
                     <table id="transportersTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
                         <thead class="table-light">
                             <tr>
-                                <th>Name</th>
-                                <th>Short Name</th>
-                                <th>Beneficiary ID</th>
-                                <th>PAN Number</th>
-                                <th>Contact Person</th>
-                                <th>Contact Number</th>
-                                <th class="text-end">Book Balance</th>
+                                <th class="text-nowrap">Name</th>
+                                <th class="text-nowrap">Short Name</th>
+                                <th class="text-nowrap">Beneficiary ID</th>
+                                <th class="text-nowrap">PAN Number</th>
+                                <th class="text-nowrap">Contact Person</th>
+                                <th class="text-nowrap">Contact Number</th>
+                                <th class="text-end text-nowrap">Book Balance</th>
                                 @if (auth()->check() && auth()->user()->canActAsAdmin())
-                                    <th class="app-index-actions-cell" style="width: 120px;">Actions</th>
+                                    <th class="app-index-actions-cell text-nowrap" style="width: 120px;">Actions</th>
                                 @endif
                             </tr>
                         </thead>
@@ -160,32 +160,38 @@
                 },
                 columns: [{
                         data: 'name',
-                        name: 'name'
+                        name: 'name',
+                        className: 'text-nowrap'
                     },
                     {
                         data: 'short_name',
                         name: 'short_name',
+                        className: 'text-nowrap'
                     },
                     {
                         data: 'beneficiary_id',
                         name: 'beneficiary_id',
+                        className: 'text-nowrap'
                     },
                     {
                         data: 'pan_number',
                         name: 'pan_number',
+                        className: 'text-nowrap'
                     },
                     {
                         data: 'contact_person',
                         name: 'contact_person',
+                        className: 'text-nowrap'
                     },
                     {
                         data: 'contact_number',
                         name: 'contact_number',
+                        className: 'text-nowrap'
                     },
                     {
                         data: 'advance_amount',
                         name: 'advance_amount',
-                        className: 'text-end'
+                        className: 'text-end text-nowrap'
                     },
                     @if (auth()->check() && auth()->user()->canActAsAdmin())
                         {
@@ -193,7 +199,7 @@
                             name: 'actions',
                             orderable: false,
                             searchable: false,
-                            className: 'app-index-actions-cell'
+                            className: 'app-index-actions-cell text-nowrap'
                         }
                     @endif
                 ],

@@ -289,14 +289,10 @@
             }
         }
 
-        /* Prevent horizontal overflow on layout */
-        html, body {
-            overflow-x: hidden;
-            max-width: 100vw;
-        }
-        .app-wrapper {
-            overflow-x: hidden;
-            max-width: 100vw;
+        /* Constrain main content area to prevent wide tables from breaking layout without interfering with sticky sidebar */
+        .app-main {
+            min-width: 0;
+            max-width: 100%;
         }
 
         /* Sidebar layout polish lives in sidebar-redesigned.css (OwnFleet-aligned) */

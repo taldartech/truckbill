@@ -37,12 +37,12 @@
         <div class="card app-index-list-card mb-4">
             <div class="card-header">
                 <h3 class="card-title mb-0">Truck Owner Management</h3>
-                <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+                <div class="app-index-card-toolbar d-flex flex-nowrap gap-1 gap-sm-2 align-items-center">
                     <a href="{{ route('truck_owners.create') }}" class="btn app-index-header-btn" aria-label="Create truck owner">
-                        <i class="fas fa-plus"></i> Create
+                        <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Create</span>
                     </a>
                     <a href="{{ route('reports.transporter-master-export', ['type' => 'owner']) }}" class="btn app-index-header-btn" aria-label="Export truck owners">
-                        <i class="fas fa-file-excel"></i> Export
+                        <i class="bi bi-file-earmark-excel"></i> <span class="d-none d-sm-inline">Export</span>
                     </a>
                 </div>
             </div>
@@ -51,14 +51,14 @@
                     <table id="truckOwnersTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
                         <thead class="table-light">
                             <tr>
-                                <th>Name</th>
-                                <th>Short Name</th>
-                                <th>PAN Number</th>
-                                <th>Location</th>
-                                <th>Contact Number</th>
-                                <th>Declaration Given</th>
-                                <th class="text-end">Book Balance</th>
-                                <th class="app-index-actions-cell" style="width: 120px;">Actions</th>
+                                <th class="text-nowrap">Name</th>
+                                <th class="text-nowrap">Short Name</th>
+                                <th class="text-nowrap">PAN Number</th>
+                                <th class="text-nowrap">Location</th>
+                                <th class="text-nowrap">Contact Number</th>
+                                <th class="text-nowrap">Declaration Given</th>
+                                <th class="text-end text-nowrap">Book Balance</th>
+                                <th class="app-index-actions-cell text-nowrap" style="width: 120px;">Actions</th>
                             </tr>
                         </thead>
                     </table>

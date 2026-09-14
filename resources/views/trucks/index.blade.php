@@ -21,10 +21,10 @@
     <div class="card app-index-list-card mb-4">
         <div class="card-header">
             <h3 class="card-title mb-0">Truck Management</h3>
-            <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+            <div class="app-index-card-toolbar d-flex flex-nowrap gap-1 gap-sm-2 align-items-center">
                 @if(auth()->check() && in_array(auth()->user()->userRole->name, ['admin', 'moderator', 'super_admin']))
                     <a href="{{ route('trucks.create') }}" class="btn app-index-header-btn" aria-label="Add truck">
-                        <i class="fas fa-plus"></i> Add Truck
+                        <i class="bi bi-plus"></i><span class="d-none d-sm-inline"> Add Truck</span>
                     </a>
                 @endif
             </div>
@@ -34,12 +34,12 @@
                 <table id="trucksTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
                     <thead class="table-light">
                         <tr>
-                            <th style="width: 80px;">Sr. No</th>
-                            <th>Truck Number</th>
-                            <th>Truck Type</th>
-                            <th>Registration Date</th>
-                            <th>Truck Owner</th>
-                            <th>Driver</th>
+                            <th style="width: 80px;" class="text-nowrap">Sr. No</th>
+                            <th class="text-nowrap">Truck Number</th>
+                            <th class="text-nowrap">Truck Type</th>
+                            <th class="text-nowrap">Registration Date</th>
+                            <th class="text-nowrap">Truck Owner</th>
+                            <th class="text-nowrap">Driver</th>
                             @if(auth()->check() && auth()->user()->canActAsAdmin())
                             <th class="app-index-actions-cell" style="width: 120px;">Actions</th>
                             @endif

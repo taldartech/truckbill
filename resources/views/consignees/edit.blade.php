@@ -14,11 +14,14 @@
     word-wrap: break-word;
 }
 
-/* Ensure consistent column widths */
-.row .col-md-4 {
-    flex: 0 0 33.333333%;
-    max-width: 33.333333%;
+/* Ensure consistent column widths on desktop */
+@media (min-width: 768px) {
+    .row .col-md-4 {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+    }
 }
+
 
 /* Prevent card from expanding */
 .card {
@@ -47,7 +50,7 @@
         @method('PUT')
         <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
 
-        <div class="card-body">
+        <div class="card-body p-2 p-md-4">
             <!-- Basic Details -->
             <div class="row mb-3">
                 <div class="col-md-4">

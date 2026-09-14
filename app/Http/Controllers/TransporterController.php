@@ -167,7 +167,7 @@ class TransporterController extends Controller
 
                     return [
                         'sr_no' => $start + $index + 1,
-                        'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold transporter-name-link" data-id="'.$transporter->id.'" style="cursor: pointer; text-decoration: none;">'.($transporter->transporterMaster?->name ?: '-').'</a>',
+                        'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold transporter-name-link text-nowrap" data-id="'.$transporter->id.'" style="cursor: pointer; text-decoration: none; white-space: nowrap;">'.($transporter->transporterMaster?->name ?: '-').'</a>',
                         'short_name' => $transporter->short_name ?: '-',
                         'beneficiary_id' => $transporter->beneficiary_id ?: '-',
                         'pan_number' => $transporter->transporterMaster?->pan_number ?: '-',
@@ -298,7 +298,7 @@ class TransporterController extends Controller
             $data = $transporters->map(function ($transporter, $index) use ($start) {
                 return [
                     'sr_no' => $start + $index + 1,
-                    'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold transporter-name-link" data-id="'.$transporter->id.'" style="cursor: pointer; text-decoration: none;">'.($transporter->transporter_name ?: '-').'</a>',
+                    'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold transporter-name-link text-nowrap" data-id="'.$transporter->id.'" style="cursor: pointer; text-decoration: none; white-space: nowrap;">'.($transporter->transporter_name ?: '-').'</a>',
                     'short_name' => $transporter->short_name ?: '-',
                     'beneficiary_id' => $transporter->beneficiary_id ?: '-',
                     'pan_number' => $transporter->transporter_pan_number ?: '-',

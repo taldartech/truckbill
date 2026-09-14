@@ -21,9 +21,9 @@
     <div class="card app-index-list-card mb-4">
         <div class="card-header">
             <h3 class="card-title mb-0">Drivers Management</h3>
-            <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
-                <button type="button" class="btn app-index-header-btn" data-bs-toggle="modal" data-bs-backdrop="false" data-bs-target="#addDriverModal" aria-label="Create driver">
-                    <i class="fas fa-plus"></i> Create
+            <div class="app-index-card-toolbar d-flex flex-nowrap gap-1 gap-sm-2 align-items-center">
+                <button type="button" class="btn app-index-header-btn" data-bs-toggle="modal" data-bs-backdrop="false" data-bs-target="#addDriverModal" aria-label="Create driver" title="Create Driver">
+                    <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Create</span>
                 </button>
             </div>
         </div>
@@ -32,12 +32,12 @@
                 <table id="driversTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
                     <thead class="table-light">
                         <tr>
-                            <th style="width: 80px;">Sr. No</th>
-                            <th>Name</th>
-                            <th>Mobile</th>
-                            <th>License Number</th>
-                            <th>Address</th>
-                            <th class="app-index-actions-cell" style="width: 120px;">Actions</th>
+                            <th style="width: 80px;" class="text-nowrap">Sr. No</th>
+                            <th class="text-nowrap">Name</th>
+                            <th class="text-nowrap">Mobile</th>
+                            <th class="text-nowrap">License Number</th>
+                            <th class="text-nowrap">Address</th>
+                            <th class="app-index-actions-cell text-nowrap" style="width: 120px;">Actions</th>
                         </tr>
                     </thead>
                 </table>

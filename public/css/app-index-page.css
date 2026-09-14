@@ -532,12 +532,23 @@
 
 @media (max-width: 767.98px) {
     .app-index-list-card > .card-header {
-        align-items: flex-start;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
     }
 
     .app-index-list-card > .card-header .app-index-card-toolbar {
-        width: 100%;
-        margin-left: 0;
+        width: auto;
+        margin-left: auto;
+        display: inline-flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 0.35rem;
+        flex-shrink: 0;
     }
 
     .app-index-dt-toolbar {
@@ -604,10 +615,53 @@
 }
 
 @media (max-width: 575.98px) {
+    .app-index-list-card > .card-header {
+        padding: 0.45rem 0.65rem;
+        gap: 0.35rem;
+    }
+
     .app-index-list-card > .card-header .card-title,
     .app-index-list-card > .card-header h3.card-title {
         font-size: 0.95rem;
         line-height: 1.3;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex-shrink: 1;
+    }
+
+    .app-index-list-card > .card-header .app-index-card-toolbar {
+        gap: 0.25rem;
+    }
+
+    .app-index-list-card > .card-header .app-index-card-toolbar .app-index-header-btn,
+    .app-index-list-card > .card-header .app-index-card-toolbar .btn {
+        padding: 0.25rem 0.45rem;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .app-index-table th,
+    .app-index-table td,
+    table.dataTable.app-index-table th,
+    table.dataTable.app-index-table td {
+        font-size: 0.72rem !important;
+        padding: 0.25rem 0.35rem !important;
+        white-space: nowrap;
+    }
+
+    .app-index-table .badge,
+    table.dataTable.app-index-table .badge {
+        font-size: 0.65rem !important;
+        padding: 0.2em 0.35em !important;
+    }
+
+    .app-index-table .btn,
+    table.dataTable.app-index-table .btn {
+        padding: 0.15rem 0.3rem !important;
+        font-size: 0.72rem !important;
     }
 
     .table-responsive .app-index-table-actions,
@@ -798,4 +852,175 @@
 
 .app-index-page .table-responsive::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
+}
+
+/* Responsive Modals & Modal Tables (Details, Payments, Assign, Edit) */
+@media (max-width: 767.98px) {
+    .modal-dialog {
+        margin: 0.5rem auto !important;
+        max-width: calc(100% - 1rem) !important;
+    }
+
+    .modal-header {
+        padding: 0.55rem 0.85rem !important;
+    }
+
+    .modal-header .modal-title {
+        font-size: 0.95rem !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    .modal-body {
+        padding: 0.65rem 0.75rem !important;
+        font-size: 0.8rem !important;
+    }
+
+    .modal-body .card {
+        margin-bottom: 0.65rem !important;
+        border-radius: 8px !important;
+    }
+
+    .modal-body .card-header {
+        padding: 0.4rem 0.65rem !important;
+    }
+
+    .modal-body .card-header h5,
+    .modal-body .card-header h6 {
+        font-size: 0.82rem !important;
+        margin: 0 !important;
+        white-space: nowrap !important;
+    }
+
+    .modal-body .card-body {
+        padding: 0.5rem 0.65rem !important;
+    }
+
+    /* Modal Tables */
+    .modal table,
+    .modal-body table,
+    .modal .table,
+    .modal-body .table {
+        font-size: 0.74rem !important;
+        margin-bottom: 0 !important;
+    }
+
+    .modal table th,
+    .modal table td,
+    .modal-body table th,
+    .modal-body table td,
+    .modal .table th,
+    .modal .table td,
+    .modal-body .table th,
+    .modal-body .table td {
+        padding: 0.25rem 0.35rem !important;
+        font-size: 0.74rem !important;
+        line-height: 1.35 !important;
+        vertical-align: middle !important;
+    }
+
+    .modal table th,
+    .modal-body table th,
+    .modal-body table td.fw-bold,
+    .modal table td.fw-bold {
+        white-space: nowrap !important;
+        font-weight: 600 !important;
+    }
+
+    .modal-body .table-borderless td {
+        padding-top: 0.2rem !important;
+        padding-bottom: 0.2rem !important;
+    }
+
+    .modal-body .badge,
+    .modal .badge {
+        font-size: 0.65rem !important;
+        padding: 0.18em 0.35em !important;
+    }
+
+    /* Modal Form Controls */
+    .modal-body .form-label {
+        font-size: 0.78rem !important;
+        margin-bottom: 0.2rem !important;
+        font-weight: 600 !important;
+    }
+
+    .modal-body .form-control,
+    .modal-body .form-select,
+    .modal-body .input-group-text {
+        font-size: 0.8rem !important;
+        padding: 0.3rem 0.5rem !important;
+        min-height: 32px !important;
+        height: 32px !important;
+    }
+
+    .modal-body textarea.form-control {
+        min-height: 55px !important;
+        height: auto !important;
+    }
+
+    .modal-body small,
+    .modal-body .form-text {
+        font-size: 0.7rem !important;
+        line-height: 1.25 !important;
+    }
+
+    /* Modal Footer & Buttons */
+    .modal-footer {
+        padding: 0.45rem 0.75rem !important;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 0.35rem !important;
+    }
+
+    .modal-footer .btn {
+        padding: 0.28rem 0.65rem !important;
+        font-size: 0.8rem !important;
+        white-space: nowrap !important;
+        flex: 1 1 auto !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.25rem !important;
+        border-radius: 6px !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .modal-header {
+        padding: 0.45rem 0.65rem !important;
+    }
+
+    .modal-header .modal-title {
+        font-size: 0.9rem !important;
+    }
+
+    .modal-body {
+        padding: 0.5rem !important;
+    }
+
+    .modal-body table th,
+    .modal-body table td,
+    .modal table th,
+    .modal table td {
+        padding: 0.2rem 0.28rem !important;
+        font-size: 0.7rem !important;
+    }
+
+    .modal-footer .btn {
+        font-size: 0.75rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+
+    /* Actions Cell in table */
+    .app-index-actions-cell,
+    th.app-index-actions-cell,
+    td.app-index-actions-cell {
+        white-space: nowrap !important;
+        width: 1% !important;
+        padding-left: 0.25rem !important;
+        padding-right: 0.25rem !important;
+    }
 }

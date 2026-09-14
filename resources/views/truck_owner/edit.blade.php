@@ -15,11 +15,14 @@
     word-wrap: break-word;
 }
 
-/* Ensure consistent column widths */
-.row .col-md-4 {
-    flex: 0 0 33.333333%;
-    max-width: 33.333333%;
+/* Ensure consistent column widths on desktop */
+@media (min-width: 768px) {
+    .row .col-md-4 {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+    }
 }
+
 
 /* Prevent card from expanding */
 .card {
@@ -67,13 +70,13 @@
         @error('registered_truck_id')
             <div class="text-danger">{{ $message }}</div>
         @enderror
-        <div class="card-body">
+        <div class="card-body p-2 p-md-4">
             <input type="hidden" name="is_owner" value="1">
             <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
             <input type="hidden" name="advance_amount" value="{{ $truck_owner->advance_amount }}">
 
             @php $master = $truck_owner->transporterMaster; @endphp
-            <div class="card mb-4 p-3 bg-light" id="masterDataSection">
+            <div class="card mb-3 mb-md-4 p-2 p-md-3 bg-light" id="masterDataSection">
                 <div class="row"><div class="col"><h5 class="mb-3 text-muted"><i class="fas fa-lock me-2"></i> Master Data (Read-only)</h5></div></div>
                 <div class="row mb-3">
                     <div class="col-md-4">
