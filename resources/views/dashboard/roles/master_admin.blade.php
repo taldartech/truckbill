@@ -111,10 +111,10 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="bg-soft-secondary">
                             <tr>
-                                <th class="ps-4">Company Name</th>
-                                <th>Plan End Date</th>
-                                <th>Status</th>
-                                <th class="pe-4">Contact</th>
+                                <th class="ps-4 text-nowrap">Company Name</th>
+                                <th class="text-nowrap">Plan End Date</th>
+                                <th class="text-nowrap">Status</th>
+                                <th class="pe-4 text-nowrap">Contact</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -124,18 +124,18 @@
                                     $today = \Carbon\Carbon::today();
                                 @endphp
                                 <tr>
-                                    <td class="ps-4 fw-bold text-dark">{{ $company->name }}</td>
-                                    <td>{{ $expiryDate->format('d M, Y') }}</td>
-                                    <td>
+                                    <td class="ps-4 fw-bold text-dark"><div class="text-truncate" style="max-width: 220px;" title="{{ $company->name }}">{{ $company->name }}</div></td>
+                                    <td class="text-nowrap">{{ $expiryDate->format('d M, Y') }}</td>
+                                    <td class="text-nowrap">
                                         @if($expiryDate->isPast())
-                                            <span class="badge bg-soft-danger text-danger px-3 rounded-pill">Expired</span>
+                                            <span class="badge bg-soft-danger text-danger px-3 rounded-pill text-nowrap">Expired</span>
                                         @elseif($expiryDate->isSameDay($today))
-                                            <span class="badge bg-soft-warning text-warning px-3 rounded-pill">Expires Today</span>
+                                            <span class="badge bg-soft-warning text-warning px-3 rounded-pill text-nowrap">Expires Today</span>
                                         @else
-                                            <span class="badge bg-soft-info text-info px-3 rounded-pill">Expires Soon</span>
+                                            <span class="badge bg-soft-info text-info px-3 rounded-pill text-nowrap">Expires Soon</span>
                                         @endif
                                     </td>
-                                    <td class="pe-4">{{ $company->contact_person ?? 'N/A' }}</td>
+                                    <td class="pe-4 text-nowrap">{{ $company->contact_person ?? 'N/A' }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -160,15 +160,15 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="bg-soft-secondary">
                             <tr>
-                                <th class="ps-4">Company</th>
-                                <th class="text-end pe-4">Monthly Revenue</th>
+                                <th class="ps-4 text-nowrap">Company</th>
+                                <th class="text-end pe-4 text-nowrap">Monthly Revenue</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($topCompaniesByRevenue->take(5) as $company)
                                 <tr>
-                                    <td class="ps-4 fw-medium">{{ Str::limit($company->name, 35) }}</td>
-                                    <td class="text-end pe-4 fw-bold text-success">{{ number_format($company->monthly_revenue ?? 0, 2) }}</td>
+                                    <td class="ps-4 fw-medium"><div class="text-truncate" style="max-width: 220px;" title="{{ $company->name }}">{{ Str::limit($company->name, 35) }}</div></td>
+                                    <td class="text-end pe-4 fw-bold text-success text-nowrap">₹{{ number_format($company->monthly_revenue ?? 0, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -189,21 +189,21 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="bg-soft-secondary">
                             <tr>
-                                <th class="ps-4">Company</th>
-                                <th>Joined</th>
-                                <th class="pe-4">Status</th>
+                                <th class="ps-4 text-nowrap">Company</th>
+                                <th class="text-nowrap">Joined</th>
+                                <th class="pe-4 text-nowrap">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($recentCompanies->take(5) as $company)
                                 <tr>
-                                    <td class="ps-4 fw-medium">{{ Str::limit($company->name, 30) }}</td>
-                                    <td>{{ $company->created_at->format('d M Y') }}</td>
-                                    <td class="pe-4">
+                                    <td class="ps-4 fw-medium"><div class="text-truncate" style="max-width: 220px;" title="{{ $company->name }}">{{ Str::limit($company->name, 30) }}</div></td>
+                                    <td class="text-nowrap">{{ $company->created_at->format('d M Y') }}</td>
+                                    <td class="pe-4 text-nowrap">
                                         @if($company->is_blocked)
-                                            <span class="badge bg-soft-danger text-danger px-3 rounded-pill">Blocked</span>
+                                            <span class="badge bg-soft-danger text-danger px-3 rounded-pill text-nowrap">Blocked</span>
                                         @else
-                                            <span class="badge bg-soft-success text-success px-3 rounded-pill">Active</span>
+                                            <span class="badge bg-soft-success text-success px-3 rounded-pill text-nowrap">Active</span>
                                         @endif
                                     </td>
                                 </tr>

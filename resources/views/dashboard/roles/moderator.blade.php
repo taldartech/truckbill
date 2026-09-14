@@ -142,11 +142,11 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="bg-soft-secondary">
                             <tr>
-                                <th class="ps-4">LR Number</th>
-                                <th>Truck & Destination</th>
-                                <th>Driver Mobile</th>
-                                <th>Expiry Date</th>
-                                <th class="text-end pe-4">Action</th>
+                                <th class="ps-4 text-nowrap">LR Number</th>
+                                <th class="text-nowrap">Truck & Destination</th>
+                                <th class="text-nowrap">Driver Mobile</th>
+                                <th class="text-nowrap">Expiry Date</th>
+                                <th class="text-end pe-4 text-nowrap">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -168,17 +168,17 @@
                                     }
                                 @endphp
                                 <tr>
-                                    <td class="ps-4"><span class="fw-bold text-dark">#{{ $ewayBill->lr->lr_number }}</span></td>
+                                    <td class="ps-4 text-nowrap"><span class="fw-bold text-dark">#{{ $ewayBill->lr->lr_number }}</span></td>
                                     <td>
                                         <div class="d-flex flex-column">
-                                            <span class="fw-medium">{{ $ewayBill->lr->truck->truck_number ?? 'N/A' }}</span>
-                                            <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i> {{ $ewayBill->lr->destination_city }}</small>
+                                            <span class="fw-medium text-nowrap">{{ $ewayBill->lr->truck->truck_number ?? 'N/A' }}</span>
+                                            <small class="text-muted text-truncate" style="max-width: 160px;"><i class="fas fa-map-marker-alt me-1"></i> {{ $ewayBill->lr->destination_city }}</small>
                                         </div>
                                     </td>
-                                    <td>{{ $ewayBill->lr?->truck?->driver?->mobile ?? '-' }}</td>
-                                    <td><span class="badge {{ $bgClass }} {{ $expiryClass }} px-3 py-2 rounded-pill fw-bold"> {{ formatDate(optional($ewayBill)->eway_bill_expiry) }}</span></td>
-                                    <td class="text-end pe-4 align-middle">
-                                        <a href="{{ route('freight_bookings.show', $ewayBill->id) }}" class="btn btn-icon btn-view rounded-circle">
+                                    <td class="text-nowrap">{{ $ewayBill->lr?->truck?->driver?->mobile ?? '-' }}</td>
+                                    <td class="text-nowrap"><span class="badge {{ $bgClass }} {{ $expiryClass }} px-3 py-2 rounded-pill fw-bold text-nowrap"> {{ formatDate(optional($ewayBill)->eway_bill_expiry) }}</span></td>
+                                    <td class="text-end pe-4 align-middle text-nowrap">
+                                        <a href="{{ route('freight_bookings.show', $ewayBill->id) }}" class="btn btn-icon btn-view rounded-circle" title="View">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                     </td>

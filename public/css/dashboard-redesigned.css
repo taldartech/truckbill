@@ -4,9 +4,12 @@
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
+    width: 100%;
     max-width: 1280px;
     margin: 0 auto;
     padding: 0.75rem 0.75rem 2rem;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .dashboard-page__hero {
@@ -170,6 +173,8 @@
     flex-direction: column;
     gap: 0.85rem;
     height: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     padding: 1.1rem 1.15rem;
     border: 1px solid rgba(226, 232, 240, 0.85);
     border-radius: 1.15rem;
@@ -210,6 +215,7 @@ button.dashboard-stat-card:focus-visible {
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
+    min-width: 0;
 }
 
 .dashboard-stat-card__icon {
@@ -250,13 +256,17 @@ button.dashboard-stat-card:focus-visible {
     font-size: 0.84rem;
     font-weight: 650;
     color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .dashboard-stat-card__value {
-    font-size: 1.65rem;
-    line-height: 1.1;
+    font-size: clamp(1.3rem, 3.5vw, 1.65rem);
+    line-height: 1.15;
     font-weight: 800;
     color: #0f172a;
+    word-break: break-word;
 }
 
 .dashboard-stat-card__meta {
@@ -274,6 +284,7 @@ button.dashboard-stat-card:focus-visible {
     font-weight: 700;
     background: #f1f5f9;
     color: #475569;
+    white-space: nowrap;
 }
 
 .dashboard-stat-card__chip--success { background: #dcfce7; color: #166534; }
@@ -493,9 +504,33 @@ button.dashboard-stat-card:focus-visible {
     display: none !important;
 }
 
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive::-webkit-scrollbar {
+    height: 5px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.25);
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f8fafc;
+}
+
+.dashboard-panel__body--flush .table-responsive {
+    border-radius: 0 0 1.25rem 1.25rem;
+}
+
 @media (max-width: 1199.98px) {
     .dashboard-stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
     }
 
     .dashboard-analytics-grid {
@@ -505,34 +540,137 @@ button.dashboard-stat-card:focus-visible {
 
 @media (max-width: 767.98px) {
     .dashboard-page {
-        padding: 0.5rem 0.4rem 1.5rem;
-        gap: 0.9rem;
+        padding: 0.5rem 0.5rem 1.5rem;
+        gap: 0.85rem;
     }
 
     .dashboard-page__hero {
-        padding: 1rem 1rem;
+        padding: 0.95rem 1rem;
+        border-radius: 1rem;
+        gap: 0.75rem;
+    }
+
+    .dashboard-page__title {
+        font-size: clamp(1.15rem, 4.5vw, 1.45rem);
+    }
+
+    .dashboard-page__subtitle {
+        font-size: 0.82rem;
+        line-height: 1.35;
     }
 
     .dashboard-page__hero-actions {
         width: 100%;
         justify-content: flex-start;
+        gap: 0.5rem;
     }
 
-    .dashboard-stats {
-        grid-template-columns: 1fr;
+    .dashboard-page__quick-actions {
+        gap: 0.35rem;
+    }
+
+    .dashboard-page__quick-action {
+        padding: 0.3rem 0.65rem;
+        font-size: 0.74rem;
+        min-height: 32px;
+    }
+
+    .dashboard-page__period {
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .dashboard-page__period-btn {
+        font-size: 0.7rem;
+        padding: 0.3rem 0.55rem;
+    }
+
+    .dashboard-stat-card {
+        padding: 0.85rem 1rem;
+        gap: 0.65rem;
+        border-radius: 0.95rem;
+    }
+
+    .dashboard-stat-card__icon {
+        width: 2.35rem;
+        height: 2.35rem;
+        font-size: 0.95rem;
+        border-radius: 0.65rem;
+    }
+
+    .dashboard-stat-card__title {
+        font-size: 0.8rem;
     }
 
     .dashboard-stat-card__value {
-        font-size: 1.4rem;
+        font-size: clamp(1.25rem, 4vw, 1.45rem);
+    }
+
+    .dashboard-panel {
+        border-radius: 1rem;
     }
 
     .dashboard-panel__header {
-        align-items: flex-start;
+        padding: 0.75rem 0.95rem;
+        align-items: center;
+    }
+
+    .dashboard-panel__title {
+        font-size: 0.88rem;
     }
 
     .dashboard-tabs {
         width: 100%;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .dashboard-tabs__btn {
+        padding: 0.32rem 0.65rem;
+        font-size: 0.72rem;
+    }
+
+    .dashboard-analytics-card {
+        padding: 0.9rem;
+        border-radius: 0.85rem;
+    }
+
+    .dashboard-analytics-card__chart {
+        min-height: 190px;
+        height: 205px;
+        max-height: 220px;
+    }
+
+    .dashboard-table {
+        font-size: 0.76rem;
+    }
+
+    .dashboard-table thead th {
+        padding: 0.45rem 0.6rem;
+        font-size: 0.68rem;
+    }
+
+    .dashboard-table tbody td {
+        padding: 0.5rem 0.6rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .dashboard-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .trip-status-grid {
+        gap: 0.45rem;
+    }
+
+    .trip-status-card {
+        padding: 0.55rem 0.65rem;
+    }
+
+    .trip-status-card__value {
+        font-size: 1.1rem;
     }
 }
 

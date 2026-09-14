@@ -92,22 +92,22 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="bg-soft-secondary">
                                 <tr>
-                                    <th class="ps-4">LR Number</th>
-                                    <th>Date</th>
-                                    <th>Route</th>
-                                    <th>Status</th>
-                                    <th class="text-end pe-4">Action</th>
+                                    <th class="ps-4 text-nowrap">LR Number</th>
+                                    <th class="text-nowrap">Date</th>
+                                    <th class="text-nowrap">Route</th>
+                                    <th class="text-nowrap">Status</th>
+                                    <th class="text-end pe-4 text-nowrap">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($recentLorryReceipts as $lr)
                                     <tr>
-                                        <td class="ps-4">#{{ $lr->lr_number }}</td>
-                                        <td>{{ $lr->gr_date ? \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') : '-' }}</td>
-                                        <td>{{ $lr->source_city ?? '-' }} to {{ $lr->destination_city ?? '-' }}</td>
-                                        <td><span class="badge bg-info">{{ $lr->delivery_status ?? 'Pending' }}</span></td>
-                                        <td class="text-end pe-4">
-                                            <a href="{{ route('customer.lorry-receipts.show', $lr) }}" class="btn btn-sm btn-view"><i class="fas fa-eye"></i></a>
+                                        <td class="ps-4 text-nowrap">#{{ $lr->lr_number }}</td>
+                                        <td class="text-nowrap">{{ $lr->gr_date ? \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') : '-' }}</td>
+                                        <td><div class="text-truncate" style="max-width: 180px;">{{ $lr->source_city ?? '-' }} to {{ $lr->destination_city ?? '-' }}</div></td>
+                                        <td class="text-nowrap"><span class="badge bg-info text-nowrap">{{ $lr->delivery_status ?? 'Pending' }}</span></td>
+                                        <td class="text-end pe-4 text-nowrap">
+                                            <a href="{{ route('customer.lorry-receipts.show', $lr) }}" class="btn btn-sm btn-view" title="View LR"><i class="fas fa-eye"></i></a>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -126,26 +126,26 @@
             <div class="card glass-card">
                 <div class="card-header bg-transparent border-0 py-3 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 fw-bold"><i class="fas fa-wallet text-brand-primary me-2"></i> Recent Invoice Payments</h5>
-                    <a href="{{ route('customer.payments.index') }}" class="btn btn-sm btn-brand-primary">View All</a>
+                    <a href="{{ route('customer.payments.index') }}" class="btn btn-sm btn-brand-primary text-nowrap">View All</a>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="bg-soft-secondary">
                                 <tr>
-                                    <th class="ps-4">Invoice</th>
-                                    <th>Mode</th>
-                                    <th>Date</th>
-                                    <th>Amount</th>
+                                    <th class="ps-4 text-nowrap">Invoice</th>
+                                    <th class="text-nowrap">Mode</th>
+                                    <th class="text-nowrap">Date</th>
+                                    <th class="text-end pe-4 text-nowrap">Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($recentInvoicePayments as $payment)
                                     <tr>
-                                        <td class="ps-4">{{ $payment->invoice->invoice_number ?? 'N/A' }}</td>
-                                        <td>{{ ucfirst($payment->mode ?? '-') }}</td>
-                                        <td>{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : '-' }}</td>
-                                        <td>{{ number_format($payment->amount ?? 0, 2) }}</td>
+                                        <td class="ps-4 text-nowrap">{{ $payment->invoice->invoice_number ?? 'N/A' }}</td>
+                                        <td class="text-nowrap">{{ ucfirst($payment->mode ?? '-') }}</td>
+                                        <td class="text-nowrap">{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : '-' }}</td>
+                                        <td class="text-end pe-4 fw-bold text-success text-nowrap">₹{{ number_format($payment->amount ?? 0, 2) }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

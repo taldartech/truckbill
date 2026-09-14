@@ -246,11 +246,11 @@
                 <table class="table dashboard-table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>LR Number</th>
-                            <th>Truck &amp; Destination</th>
-                            <th>Driver Mobile</th>
-                            <th>Expiry</th>
-                            <th class="text-end">Action</th>
+                            <th class="text-nowrap">LR Number</th>
+                            <th class="text-nowrap">Truck &amp; Destination</th>
+                            <th class="text-nowrap">Driver Mobile</th>
+                            <th class="text-nowrap">Expiry</th>
+                            <th class="text-end text-nowrap">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -260,18 +260,18 @@
                                 $isPastOrToday = $expiryDate->isPast() || $expiryDate->isToday();
                             @endphp
                             <tr>
-                                <td><strong>#{{ $ewayBill->lr->lr_number ?? '—' }}</strong></td>
+                                <td class="text-nowrap"><strong>#{{ $ewayBill->lr->lr_number ?? '—' }}</strong></td>
                                 <td>
-                                    <div>{{ $ewayBill->lr->truck->truck_number ?? 'N/A' }}</div>
-                                    <small class="text-muted">{{ $ewayBill->lr->destination_city ?? '—' }}</small>
+                                    <div class="text-nowrap fw-semibold">{{ $ewayBill->lr->truck->truck_number ?? 'N/A' }}</div>
+                                    <small class="text-muted text-truncate d-block" style="max-width: 160px;">{{ $ewayBill->lr->destination_city ?? '—' }}</small>
                                 </td>
-                                <td>{{ $ewayBill->lr?->truck?->driver?->mobile ?? '—' }}</td>
-                                <td>
-                                    <span class="dashboard-stat-card__chip {{ $isPastOrToday ? 'dashboard-stat-card__chip--danger' : 'dashboard-stat-card__chip--warning' }}">
+                                <td class="text-nowrap">{{ $ewayBill->lr?->truck?->driver?->mobile ?? '—' }}</td>
+                                <td class="text-nowrap">
+                                    <span class="dashboard-stat-card__chip text-nowrap {{ $isPastOrToday ? 'dashboard-stat-card__chip--danger' : 'dashboard-stat-card__chip--warning' }}">
                                         {{ formatDate(optional($ewayBill)->eway_bill_expiry) }}
                                     </span>
                                 </td>
-                                <td class="text-end">
+                                <td class="text-end text-nowrap">
                                     <a href="{{ route('freight_bookings.show', $ewayBill->id) }}"
                                         class="btn btn-sm btn-icon btn-action-view" title="View hire">
                                         <i class="bi bi-eye"></i>
@@ -293,19 +293,19 @@
                 <i class="bi bi-receipt"></i>
                 Pending Invoices
             </h2>
-            <a href="{{ route('invoices.index') }}" class="btn btn-sm btn-outline-success rounded-pill px-3">View all</a>
+            <a href="{{ route('invoices.index') }}" class="btn btn-sm btn-outline-success rounded-pill px-3 text-nowrap">View all</a>
         </div>
         <div class="dashboard-panel__body--flush">
             <div class="table-responsive">
                 <table class="table dashboard-table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>Invoice #</th>
-                            <th>Customer</th>
-                            <th class="text-end">Balance / Total</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th class="text-end">Action</th>
+                            <th class="text-nowrap">Invoice #</th>
+                            <th class="text-nowrap">Customer</th>
+                            <th class="text-end text-nowrap">Balance / Total</th>
+                            <th class="text-nowrap">Status</th>
+                            <th class="text-nowrap">Date</th>
+                            <th class="text-end text-nowrap">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -323,21 +323,25 @@
                                 }
                             @endphp
                             <tr>
-                                <td>
+                                <td class="text-nowrap">
                                     <strong>
                                         #{{ $invoice->invoice_number
                                             ? $invoice->invoice_number.($invoice->manual_invoice_number ? ' ('.$invoice->manual_invoice_number.')' : '')
-                                            : ($invoice->manual_invoice_number ?? $invoice->id) }}
+                                             : ($invoice->manual_invoice_number ?? $invoice->id) }}
                                     </strong>
                                 </td>
-                                <td>{{ Str::limit($invoice->consignee->name ?? 'N/A', 28) }}</td>
-                                <td class="text-end">
+                                <td>
+                                    <div class="text-truncate" style="max-width: 170px;" title="{{ $invoice->consignee->name ?? 'N/A' }}">
+                                        {{ Str::limit($invoice->consignee->name ?? 'N/A', 28) }}
+                                    </div>
+                                </td>
+                                <td class="text-end text-nowrap">
                                     <div class="fw-bold text-danger">₹{{ number_format($remainingAmount, 2) }}</div>
                                     <small class="text-muted">of ₹{{ number_format($amountToCollect, 2) }}</small>
                                 </td>
-                                <td><span class="dashboard-stat-card__chip {{ $statusClass }}">{{ $statusText }}</span></td>
-                                <td>{{ $invoice->generated_date ? \Carbon\Carbon::parse($invoice->generated_date)->format('d M Y') : '—' }}</td>
-                                <td class="text-end">
+                                <td class="text-nowrap"><span class="dashboard-stat-card__chip text-nowrap {{ $statusClass }}">{{ $statusText }}</span></td>
+                                <td class="text-nowrap">{{ $invoice->generated_date ? \Carbon\Carbon::parse($invoice->generated_date)->format('d M Y') : '—' }}</td>
+                                <td class="text-end text-nowrap">
                                     <a href="{{ route('invoices.show', $invoice->id) }}"
                                         class="btn btn-sm btn-icon btn-action-view" title="View invoice">
                                         <i class="bi bi-eye"></i>
