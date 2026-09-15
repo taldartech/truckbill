@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\AdvancePayment;
 use App\Models\Company;
 use App\Models\FreightBooking;
 use App\Models\Invoice;
@@ -84,7 +85,7 @@ class BackfillAccountingLedgersCommand extends Command
             $this->info("  ✓ Backfilled {$invCount} sales invoices and {$payCount} invoice receipts.");
 
             // 2. Backfill Freight Bookings
-            $bookings = FreightBooking::with(['company', 'transporter', 'truck', 'lr'])
+            $bookings = FreightBooking::with(['company', 'transporter', 'truck', 'lr', 'customAmounts'])
                 ->where('company_id', $company->id)
                 ->get();
 
@@ -92,8 +93,10 @@ class BackfillAccountingLedgersCommand extends Command
             foreach ($bookings as $booking) {
                 try {
                     if ($booking->transporter) {
-                        $this->postingService->postFreightBooking($booking);
-                        $fbCount++;
+                        $voucher = $this->postingService->postFreightBooking($booking);
+                        if ($voucher) {
+                            $fbCount++;
+                        }
                     }
                 } catch (Throwable $e) {
                     $this->error("  Error posting Freight Booking #{$booking->id}: {$e->getMessage()}");
@@ -110,14 +113,35 @@ class BackfillAccountingLedgersCommand extends Command
             foreach ($voucherPayments as $vp) {
                 try {
                     if ($vp->freight_booking?->transporter) {
-                        $this->postingService->postVoucherPayment($vp);
-                        $vpCount++;
+                        $voucher = $this->postingService->postVoucherPayment($vp);
+                        if ($voucher) {
+                            $vpCount++;
+                        }
                     }
                 } catch (Throwable $e) {
                     $this->error("  Error posting Voucher Payment #{$vp->id}: {$e->getMessage()}");
                 }
             }
             $this->info("  ✓ Backfilled {$vpCount} payment vouchers.");
+
+            // 4. Backfill Transporter Advance Payments
+            $advances = AdvancePayment::with(['company', 'transporter'])
+                ->where('company_id', $company->id)
+                ->where('advance_amount', '>', 0)
+                ->get();
+
+            $advCount = 0;
+            foreach ($advances as $advance) {
+                try {
+                    $voucher = $this->postingService->postAdvancePayment($advance);
+                    if ($voucher) {
+                        $advCount++;
+                    }
+                } catch (Throwable $e) {
+                    $this->error("  Error posting Advance Payment #{$advance->id}: {$e->getMessage()}");
+                }
+            }
+            $this->info("  ✓ Backfilled {$advCount} transporter advance payment vouchers.");
         }
 
         $this->info('---------------------------------------------------------');

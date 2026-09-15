@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\AccountGroup;
 use App\Models\AccountingVoucher;
 use App\Models\AccountingVoucherItem;
+use App\Models\AdvancePayment;
 use App\Models\Company;
 use App\Models\Consignee;
 use App\Models\CostCentre;
@@ -126,9 +127,13 @@ class AccountingPostingService
     /**
      * Post a Sales Voucher for an Invoice.
      */
-    public function postInvoice(Invoice $invoice): AccountingVoucher
+    public function postInvoice(Invoice $invoice): ?AccountingVoucher
     {
         $company = $invoice->company;
+        if (! $company) {
+            return null;
+        }
+
         $this->provisioner->provisionForCompany($company);
 
         $customer = $invoice->consignee;
@@ -251,10 +256,14 @@ class AccountingPostingService
     /**
      * Post a Receipt Voucher when customer payment is recorded.
      */
-    public function postInvoicePayment(InvoicePayment $payment): AccountingVoucher
+    public function postInvoicePayment(InvoicePayment $payment): ?AccountingVoucher
     {
         $invoice = $payment->invoice;
-        $company = $invoice->company;
+        $company = $invoice?->company;
+        if (! $company) {
+            return null;
+        }
+
         $this->provisioner->provisionForCompany($company);
 
         $customer = $invoice->consignee;
@@ -313,12 +322,30 @@ class AccountingPostingService
     /**
      * Post a Purchase / Freight Hiring Voucher for a confirmed Freight Booking.
      */
-    public function postFreightBooking(FreightBooking $booking): AccountingVoucher
+    public function postFreightBooking(FreightBooking $booking): ?AccountingVoucher
     {
         $company = $booking->company;
-        $this->provisioner->provisionForCompany($company);
+        if (! $company) {
+            return null;
+        }
+
+        // If booking was cancelled, remove any previous voucher
+        if ($booking->is_cancelled) {
+            AccountingVoucher::where('company_id', $company->id)
+                ->where('source_type', FreightBooking::class)
+                ->where('source_id', $booking->id)
+                ->delete();
+
+            return null;
+        }
 
         $transporter = $booking->transporter;
+        if (! $transporter) {
+            return null;
+        }
+
+        $this->provisioner->provisionForCompany($company);
+
         $transporterLedger = $this->getOrCreatePartyLedger($company, $transporter);
 
         $hiringExpenseLedger = Ledger::where('company_id', $company->id)
@@ -329,6 +356,10 @@ class AccountingPostingService
             ->where('code', 'TDS_194C')
             ->first();
 
+        $recoveryLedger = Ledger::where('company_id', $company->id)
+            ->where('code', 'SHORTAGE_REC')
+            ->first();
+
         $costCentre = $this->getOrCreateTruckCostCentre($company, $booking->truck);
 
         return DB::transaction(function () use (
@@ -337,6 +368,7 @@ class AccountingPostingService
             $transporterLedger,
             $hiringExpenseLedger,
             $tdsLedger,
+            $recoveryLedger,
             $costCentre
         ): AccountingVoucher {
             AccountingVoucher::where('company_id', $company->id)
@@ -345,8 +377,23 @@ class AccountingPostingService
                 ->delete();
 
             $grossFreight = (float) $booking->tr_amount;
+            $detention = (float) ($booking->detention ?? 0.0);
+            $deviation = (float) ($booking->deviation ?? 0.0);
+            $miscExpense = (float) ($booking->misc_expense ?? 0.0);
+            $damageAmount = (float) ($booking->damage_amount ?? 0.0);
+            $shortageAmount = (float) ($booking->shortage_amount ?? 0.0);
             $tdsAmount = (float) ($booking->tds_amount ?? 0.0);
-            $netCredited = round($grossFreight - $tdsAmount, 2);
+
+            $customAmounts = $booking->relationLoaded('customAmounts')
+                ? $booking->customAmounts
+                : $booking->customAmounts()->get();
+            $positiveCustom = (float) $customAmounts->where('amount', '>', 0)->sum('amount');
+            $negativeCustom = abs((float) $customAmounts->where('amount', '<', 0)->sum('amount'));
+
+            $totalHiringExpense = round($grossFreight + $detention + $deviation + $positiveCustom, 2);
+            $recoveryAmount = round($damageAmount + $shortageAmount + $miscExpense + $negativeCustom, 2);
+            $tdsAmount = round($tdsAmount, 2);
+            $netCredited = round($totalHiringExpense - $recoveryAmount - $tdsAmount, 2);
 
             $voucher = AccountingVoucher::create([
                 'company_id' => $company->id,
@@ -357,7 +404,7 @@ class AccountingPostingService
                 'narration' => 'Freight hiring for Truck #'.($booking->truck?->truck_number ?? 'N/A').' LR #'.($booking->lr?->lr_number ?? 'N/A'),
                 'source_type' => FreightBooking::class,
                 'source_id' => $booking->id,
-                'total_amount' => $grossFreight,
+                'total_amount' => $totalHiringExpense,
                 'is_posted' => true,
             ]);
 
@@ -367,20 +414,22 @@ class AccountingPostingService
                 'accounting_voucher_id' => $voucher->id,
                 'ledger_id' => $hiringExpenseLedger->id,
                 'type' => 'debit',
-                'amount' => $grossFreight,
+                'amount' => $totalHiringExpense,
                 'cost_centre_id' => $costCentre?->id,
                 'particulars_note' => 'Freight hiring trip charges',
             ]);
 
             // Cr: Transporter (Net Amount)
-            AccountingVoucherItem::create([
-                'company_id' => $company->id,
-                'accounting_voucher_id' => $voucher->id,
-                'ledger_id' => $transporterLedger->id,
-                'type' => 'credit',
-                'amount' => $netCredited,
-                'particulars_note' => 'Gross freight less TDS',
-            ]);
+            if (abs($netCredited) > 0.001) {
+                AccountingVoucherItem::create([
+                    'company_id' => $company->id,
+                    'accounting_voucher_id' => $voucher->id,
+                    'ledger_id' => $transporterLedger->id,
+                    'type' => $netCredited >= 0 ? 'credit' : 'debit',
+                    'amount' => abs($netCredited),
+                    'particulars_note' => 'Net freight payable after deductions & TDS',
+                ]);
+            }
 
             // Cr: TDS 194C Payable
             if ($tdsAmount > 0 && $tdsLedger) {
@@ -394,6 +443,18 @@ class AccountingPostingService
                 ]);
             }
 
+            // Cr: Shortage & Damage Recovery
+            if ($recoveryAmount > 0 && $recoveryLedger) {
+                AccountingVoucherItem::create([
+                    'company_id' => $company->id,
+                    'accounting_voucher_id' => $voucher->id,
+                    'ledger_id' => $recoveryLedger->id,
+                    'type' => 'credit',
+                    'amount' => $recoveryAmount,
+                    'particulars_note' => 'Trip shortage, damage & deduction recovery',
+                ]);
+            }
+
             return $voucher;
         });
     }
@@ -401,16 +462,32 @@ class AccountingPostingService
     /**
      * Post a Payment Voucher for a trip VoucherPayment (Bank/Cash/Pump/Advance).
      */
-    public function postVoucherPayment(VoucherPayment $voucherPayment): AccountingVoucher
+    public function postVoucherPayment(VoucherPayment $voucherPayment): ?AccountingVoucher
     {
         $company = $voucherPayment->company;
-        $this->provisioner->provisionForCompany($company);
+        if (! $company) {
+            return null;
+        }
 
         $booking = $voucherPayment->freight_booking;
         $transporter = $booking?->transporter;
         if (! $transporter) {
-            throw new InvalidArgumentException('VoucherPayment does not have an associated Transporter.');
+            return null;
         }
+
+        $paymentMode = strtolower(trim((string) $voucherPayment->payment_mode));
+
+        // When payment is settled by adjusting against prior advance, do not disburse bank/cash funds.
+        if (str_contains($paymentMode, 'advance')) {
+            AccountingVoucher::where('company_id', $company->id)
+                ->where('source_type', VoucherPayment::class)
+                ->where('source_id', $voucherPayment->id)
+                ->delete();
+
+            return null;
+        }
+
+        $this->provisioner->provisionForCompany($company);
 
         $transporterLedger = $this->getOrCreatePartyLedger($company, $transporter);
 
@@ -431,7 +508,8 @@ class AccountingPostingService
             $transporterLedger,
             $bankLedger,
             $cashLedger,
-            $costCentre
+            $costCentre,
+            $paymentMode
         ): AccountingVoucher {
             AccountingVoucher::where('company_id', $company->id)
                 ->where('source_type', VoucherPayment::class)
@@ -439,7 +517,6 @@ class AccountingPostingService
                 ->delete();
 
             $amount = (float) $voucherPayment->amount;
-            $paymentMode = strtolower(trim((string) $voucherPayment->payment_mode));
 
             // Determine credit ledger based on payment mode
             $creditLedger = match ($paymentMode) {
@@ -485,5 +562,113 @@ class AccountingPostingService
 
             return $voucher;
         });
+    }
+
+    /**
+     * Post a Payment Voucher for an Advance Payment to a Transporter.
+     */
+    public function postAdvancePayment(AdvancePayment $advancePayment): ?AccountingVoucher
+    {
+        $amount = (float) $advancePayment->advance_amount;
+        $remark = strtolower(trim((string) $advancePayment->remark));
+
+        // Skip internal negative adjustments or zero amounts
+        if ($amount <= 0 || str_contains($remark, 'negative balance adjustment')) {
+            AccountingVoucher::where('company_id', $advancePayment->company_id)
+                ->where('source_type', AdvancePayment::class)
+                ->where('source_id', $advancePayment->id)
+                ->delete();
+
+            return null;
+        }
+
+        $company = $advancePayment->company;
+        if (! $company) {
+            return null;
+        }
+
+        $transporter = $advancePayment->transporter;
+        if (! $transporter) {
+            return null;
+        }
+
+        $this->provisioner->provisionForCompany($company);
+
+        $transporterLedger = $this->getOrCreatePartyLedger($company, $transporter);
+
+        $bankLedger = Ledger::where('company_id', $company->id)
+            ->where('code', 'BANK_PRIMARY')
+            ->first() ?? Ledger::where('company_id', $company->id)->where('code', 'CASH')->firstOrFail();
+
+        $cashLedger = Ledger::where('company_id', $company->id)
+            ->where('code', 'CASH')
+            ->firstOrFail();
+
+        $creditLedger = str_contains($remark, 'cash') ? $cashLedger : $bankLedger;
+
+        return DB::transaction(function () use (
+            $advancePayment,
+            $company,
+            $transporter,
+            $transporterLedger,
+            $creditLedger,
+            $amount
+        ): AccountingVoucher {
+            AccountingVoucher::where('company_id', $company->id)
+                ->where('source_type', AdvancePayment::class)
+                ->where('source_id', $advancePayment->id)
+                ->delete();
+
+            $voucher = AccountingVoucher::create([
+                'company_id' => $company->id,
+                'voucher_type' => 'payment',
+                'voucher_number' => 'PAY-ADV-'.$advancePayment->id,
+                'voucher_date' => $advancePayment->payment_date ?: now()->toDateString(),
+                'reference_number' => 'ADV-'.$advancePayment->id,
+                'reference_date' => $advancePayment->payment_date ?: now()->toDateString(),
+                'narration' => 'Advance payment to '.$transporter->name.($advancePayment->remark ? ' ('.$advancePayment->remark.')' : ''),
+                'source_type' => AdvancePayment::class,
+                'source_id' => $advancePayment->id,
+                'total_amount' => $amount,
+                'is_posted' => true,
+            ]);
+
+            // Dr: Transporter (Advance disbursement)
+            AccountingVoucherItem::create([
+                'company_id' => $company->id,
+                'accounting_voucher_id' => $voucher->id,
+                'ledger_id' => $transporterLedger->id,
+                'type' => 'debit',
+                'amount' => $amount,
+                'particulars_note' => 'Advance to Transporter',
+            ]);
+
+            // Cr: Bank or Cash
+            AccountingVoucherItem::create([
+                'company_id' => $company->id,
+                'accounting_voucher_id' => $voucher->id,
+                'ledger_id' => $creditLedger->id,
+                'type' => 'credit',
+                'amount' => $amount,
+                'particulars_note' => 'Disbursed via '.$creditLedger->name,
+            ]);
+
+            return $voucher;
+        });
+    }
+
+    /**
+     * Delete any accounting voucher associated with a given source model.
+     */
+    public function deleteVoucherFor(string $sourceType, int|string $sourceId, ?int $companyId = null): void
+    {
+        $query = AccountingVoucher::where('source_type', $sourceType)
+            ->where('source_id', $sourceId);
+
+        if ($companyId) {
+            $query->where('company_id', $companyId);
+        }
+
+        $query->delete();
     }
 }
