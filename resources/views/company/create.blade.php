@@ -65,7 +65,7 @@
                                 <label for="digital_signature" class="form-label">Digital Signature</label>
                                 <input type="file" class="form-control @error('digital_signature') is-invalid @enderror" id="digital_signature" name="digital_signature" accept="image/jpeg,image/png,image/jpg">
                                 @error('digital_signature') <div class="text-danger">{{ $message }}</div> @enderror
-                                <div class="app-form-section__hint mt-1 mb-0">Printed on bilty, voucher &amp; invoice copies. Max 250 KB.</div>
+                                <div class="app-form-section__hint mt-1 mb-0">Recommended size: 300 × 100 px (PNG, transparent background). Printed on bilty, voucher &amp; invoice. Max 250 KB.</div>
                             </div>
                         </div>
                     </div>
