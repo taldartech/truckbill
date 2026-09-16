@@ -277,14 +277,32 @@
     <div class="sig">
         <table style="width: 100%;">
             <tr>
-                <td style="width: 50%; border-top: 1px solid #000; padding-top: 4px;">Owner / Driver</td>
-                <td style="width: 50%; border-top: 1px solid #000; padding-top: 4px; text-align: right;">For {{ $company->setting?->template_name ?? $company->name }}</td>
+                <td style="width: 50%; border-top: 1px solid #000; padding-top: 4px; vertical-align: top;">Owner / Driver</td>
+                <td style="width: 50%; border-top: 1px solid #000; padding-top: 4px; text-align: right; vertical-align: top;">
+                    @php
+                        $signatureSrc = $company->signatureFilesystemPathForPdf() ?: $company->signaturePublicUrl();
+                        $challanSignName = $company->setting?->template_name ?? $company->name;
+                    @endphp
+                    For {{ $challanSignName }}
+                    @include('reports.exports.partials.pdf-company-signature-slot', [
+                        'signatureSrc' => $signatureSrc,
+                        'companyName' => $challanSignName,
+                        'slotWidthPx' => 90,
+                        'slotHeightPx' => 32,
+                        'align' => 'right',
+                    ])
+                    @if (empty($signatureSrc))
+                        <br><br>
+                    @endif
+                    Authorized Signature
+                    <br>
+                    <span class="muted" style="font-size: 7px;">Digitally Managed by TruckBill (www.truckbill.in)</span>
+                </td>
             </tr>
         </table>
         <p class="muted" style="margin-top: 6px;">
             Checklist (manual): engine/chassis impression, licence &amp; documents, insurance, permit — not tracked in software; use physical form where required.
         </p>
-        <p class="muted" style="margin-top: 6px; font-size: 7px; text-align: right;">Digitally Managed by TruckBill (www.truckbill.in)</p>
     </div>
 </div>
 </body>

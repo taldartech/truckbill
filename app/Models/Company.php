@@ -33,6 +33,7 @@ class Company extends Model
         'user_id',
         'is_blocked',
         'company_logo',
+        'digital_signature',
         'gst_slab',
     ];
 
@@ -244,6 +245,38 @@ class Company extends Model
         }
 
         return Storage::disk('public')->path($this->company_logo);
+    }
+
+    /**
+     * Public URL for the uploaded digital signature image.
+     */
+    public function signaturePublicUrl(): ?string
+    {
+        if (empty($this->digital_signature)) {
+            return null;
+        }
+
+        if (! Storage::disk('public')->exists($this->digital_signature)) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->digital_signature);
+    }
+
+    /**
+     * Absolute path for DomPDF / mPDF embedding of the digital signature.
+     */
+    public function signatureFilesystemPathForPdf(): ?string
+    {
+        if (empty($this->digital_signature)) {
+            return null;
+        }
+
+        if (! Storage::disk('public')->exists($this->digital_signature)) {
+            return null;
+        }
+
+        return Storage::disk('public')->path($this->digital_signature);
     }
 
     /**
