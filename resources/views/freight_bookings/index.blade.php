@@ -12,15 +12,15 @@
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <style>
         .select2-container--bootstrap-5 .select2-selection {
-            min-height: 31px !important;
-            padding: 2px 6px !important;
+            min-height: 2.125rem !important;
+            padding: 0.2rem 0.55rem !important;
             font-size: 0.8125rem !important;
-            border-radius: 6px !important;
-            border-color: rgba(0, 0, 0, 0.15) !important;
+            border-radius: 0.55rem !important;
+            border-color: var(--brand-border, #e5e7eb) !important;
         }
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
             padding-left: 0 !important;
-            line-height: 25px !important;
+            line-height: 1.7rem !important;
             color: #334155 !important;
         }
         .select2-container--bootstrap-5 .select2-dropdown {
@@ -91,7 +91,8 @@
             border-radius: 50px !important;
             font-size: 11px !important;
             font-weight: 600 !important;
-            padding: 4px 12px !important;
+            height: 32px;
+            padding: 0 16px !important;
             display: inline-flex;
             align-items: center;
             transition: all 0.2s ease;
@@ -102,111 +103,8 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
         }
 
-        .input-group-custom {
-            background: white;
-            border-radius: 8px;
-            padding: 1px 6px;
-            border: 1px solid rgba(0,0,0,0.12);
-            display: inline-flex;
-            align-items: center;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-            height: 31px;
-        }
-
-        .input-group-custom span {
-            font-size: 9px;
-            text-transform: uppercase;
-            font-weight: 700;
-            color: var(--slate-600);
-            margin-right: 4px;
-        }
-
-        .input-group-custom input {
-            border: none !important;
-            font-size: 11px !important;
-            padding: 2px 0 !important;
-            background: transparent !important;
-            outline: none !important;
-            box-shadow: none !important;
-            max-width: 98px;
-        }
-
-        /* Compact Status Legend */
-        .status-legend {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            font-size: 11px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .legend-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 3px;
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-
-        .legend-delivered { background-color: #d1e7dd; }
-        .legend-cancelled { background-color: #f8d7da; }
-        .legend-pending   { background-color: #ffffff; }
-
         .table-success { background-color: #d1e7dd !important; border-color: #badbcc !important; }
         .table-danger  { background-color: #f8d7da !important; border-color: #f5c2c7 !important; }
-
-        .filter-action-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: none;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            position: relative;
-            flex-shrink: 0;
-        }
-
-        .filter-action-btn i {
-            font-size: 12px;
-        }
-
-        .filter-action-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-
-        .filter-action-btn[data-tooltip]::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            top: calc(100% + 6px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1e293b;
-            color: #ffffff;
-            font-size: 11px;
-            font-weight: 500;
-            padding: 3px 8px;
-            border-radius: 6px;
-            white-space: nowrap;
-            pointer-events: none;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.15s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            z-index: 1060;
-        }
-
-        .filter-action-btn[data-tooltip]:hover::after {
-            opacity: 1;
-            visibility: visible;
-        }
     </style>
 @endpush
 
@@ -259,105 +157,124 @@
             </div>
 
             <div class="app-index-dt-toolbar">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                    <div class="d-flex flex-wrap align-items-center gap-3">
-                        <h6 class="mb-0" style="font-size: 0.8125rem; color: var(--brand-text-muted);">Search & Filters</h6>
-                        <div class="status-legend mb-0 d-none d-md-flex">
-                            <div class="legend-item">
-                                <div class="legend-color legend-delivered"></div>
-                                <span class="small">Delivered</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-color legend-cancelled"></div>
-                                <span class="small">Cancelled</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-color legend-pending"></div>
-                                <span class="small">Pending</span>
+                <div class="app-index-filters" data-app-index-filters>
+                    <div class="app-index-filters__top">
+                        <div class="app-index-filters__intro">
+                            <h6 class="app-index-filters__title">Search &amp; Filters</h6>
+                            <div class="app-index-filters__legend d-none d-md-inline-flex">
+                                <span class="app-index-filters__legend-item">
+                                    <span class="app-index-filters__swatch app-index-filters__swatch--delivered"></span>
+                                    Delivered
+                                </span>
+                                <span class="app-index-filters__legend-item">
+                                    <span class="app-index-filters__swatch app-index-filters__swatch--cancelled"></span>
+                                    Cancelled
+                                </span>
+                                <span class="app-index-filters__legend-item">
+                                    <span class="app-index-filters__swatch app-index-filters__swatch--pending"></span>
+                                    Pending
+                                </span>
                             </div>
                         </div>
+                        <div class="app-index-filters__top-actions">
+                            <div class="app-index-filters__bulk">
+                                <button id="bulk-memo-id-btn" class="header-pill-btn btn btn-primary border-0" style="display: none;" data-bs-toggle="modal" data-bs-target="#bulkMemoIdModal">
+                                    <i class="bi bi-clipboard-check"></i> Bulk Memo
+                                </button>
+                                <button id="voucher-payment-btn" class="header-pill-btn btn btn-brand-primary border-0" style="display: none;">
+                                    <i class="bi bi-receipt"></i> Voucher
+                                </button>
+                                <button id="combined-payment-btn" class="header-pill-btn btn btn-warning border-0" style="display: none;">
+                                    <i class="bi bi-collection"></i> Combined
+                                </button>
+                            </div>
+                            <button type="button"
+                                class="app-index-filters__toggle d-md-none"
+                                data-app-index-filters-toggle
+                                aria-expanded="false"
+                                aria-controls="fbIndexFiltersBody">
+                                <i class="bi bi-sliders"></i>
+                                <span>Filters</span>
+                                <i class="bi bi-chevron-down app-index-filters__toggle-chevron"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="d-flex flex-wrap gap-2">
-                        <button id="bulk-memo-id-btn" class="header-pill-btn btn btn-primary border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;" data-bs-toggle="modal" data-bs-target="#bulkMemoIdModal">
-                            <i class="bi bi-clipboard-check"></i> Bulk Memo
-                        </button>
-                        <button id="voucher-payment-btn" class="header-pill-btn btn btn-brand-primary border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;">
-                            <i class="bi bi-receipt"></i> Voucher
-                        </button>
-                        <button id="combined-payment-btn" class="header-pill-btn btn btn-warning border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;">
-                            <i class="bi bi-collection"></i> Combined
-                        </button>
+
+                    <div class="app-index-filters__body" id="fbIndexFiltersBody">
+                        <form method="GET" action="{{ route('freight_bookings.index') }}" id="searchForm" class="app-index-filters__form">
+                            <div class="app-index-filters__controls">
+                                <div class="app-index-filters__field app-index-filters__field--search">
+                                    <label class="app-index-filters__label" for="filterFbSearch">Search</label>
+                                    <input type="text" class="form-control form-control-sm" name="search" id="filterFbSearch"
+                                        value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'search', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}"
+                                        placeholder="LR, city, route...">
+                                </div>
+                                <div class="app-index-filters__field app-index-filters__field--lr">
+                                    <label class="app-index-filters__label" for="filterFbLrNumber">Bilty / LR</label>
+                                    <input type="text" class="form-control form-control-sm" name="lr_number" id="filterFbLrNumber"
+                                        value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'lr_number', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}"
+                                        placeholder="LR number">
+                                </div>
+                                <div class="app-index-filters__field app-index-filters__field--party">
+                                    <label class="app-index-filters__label" for="filterFbCustomerId">Customer</label>
+                                    <select name="customer_id" id="filterFbCustomerId" class="form-select form-select-sm select2-fb-filter">
+                                        <option value="">All Customers</option>
+                                        @if(isset($selectedCustomer) && $selectedCustomer)
+                                            <option value="{{ $selectedCustomer->id }}" selected>{{ $selectedCustomer->name }}</option>
+                                        @endif
+                                    </select>
+                                </div>
+                                <div class="app-index-filters__field app-index-filters__field--party">
+                                    <label class="app-index-filters__label" for="filterFbTransporterId">Transporter</label>
+                                    <select name="transporter_id" id="filterFbTransporterId" class="form-select form-select-sm select2-fb-filter">
+                                        <option value="">All Transporters</option>
+                                        @if(isset($selectedTransporter) && $selectedTransporter)
+                                            <option value="{{ $selectedTransporter->id }}" selected>{{ $selectedTransporter->displayNameWithShortName() }}</option>
+                                        @endif
+                                    </select>
+                                </div>
+                                <div class="app-index-filters__field app-index-filters__field--truck">
+                                    <label class="app-index-filters__label" for="filterFbTruckId">Truck</label>
+                                    <select name="truck_id" id="filterFbTruckId" class="form-select form-select-sm select2-fb-filter">
+                                        <option value="">All Trucks</option>
+                                        @if(isset($selectedTruck) && $selectedTruck)
+                                            <option value="{{ $selectedTruck->id }}" selected>{{ $selectedTruck->truck_number }}</option>
+                                        @endif
+                                    </select>
+                                </div>
+                                <div class="app-index-filters__field app-index-filters__field--date">
+                                    <label class="app-index-filters__label" for="fbStartDate">From</label>
+                                    <input type="date" class="form-control form-control-sm" name="start_date" id="fbStartDate" value="{{ $startDate }}">
+                                </div>
+                                <div class="app-index-filters__field app-index-filters__field--date">
+                                    <label class="app-index-filters__label" for="fbEndDate">To</label>
+                                    <input type="date" class="form-control form-control-sm" name="end_date" id="fbEndDate" value="{{ $endDate }}">
+                                </div>
+                                <label class="app-index-filters__chip{{ request('pending_memo') ? ' is-active' : '' }}" for="pendingMemoFilter">
+                                    <input class="form-check-input" type="checkbox" name="pending_memo" value="1"
+                                        id="pendingMemoFilter" {{ request('pending_memo') ? 'checked' : '' }}>
+                                    <span class="app-index-filters__chip-label">Pending Memo</span>
+                                </label>
+                                <div class="app-index-filters__actions">
+                                    <button type="submit" class="app-index-filters__btn app-index-filters__btn--apply" id="filterFbBtn" data-tooltip="Filter" aria-label="Filter">
+                                        <i class="bi bi-funnel-fill"></i>
+                                    </button>
+                                    <a href="{{ route('freight_bookings.index') }}" class="app-index-filters__btn app-index-filters__btn--reset" id="resetFbBtn" data-tooltip="Reset" aria-label="Reset">
+                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+
+                        @if (request('search'))
+                            <div class="app-index-filters__result">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Results for: <strong>"{{ request('search') }}"</strong>
+                                <a href="{{ route('freight_bookings.index') }}" class="btn btn-link btn-sm p-0 ms-2" style="font-size: 0.75rem;">Clear Search</a>
+                            </div>
+                        @endif
                     </div>
                 </div>
-                <form method="GET" action="{{ route('freight_bookings.index') }}" id="searchForm">
-                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
-                        <div style="flex: 1 1 145px; max-width: 175px;">
-                            <input type="text" class="form-control form-control-sm" name="search" id="filterFbSearch"
-                                style="font-size: 0.8125rem; height: 31px; padding: 2px 8px;"
-                                value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'search', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" placeholder="Search LR, City...">
-                        </div>
-                        <div style="flex: 1 1 115px; max-width: 135px;">
-                            <input type="text" class="form-control form-control-sm" name="lr_number" id="filterFbLrNumber"
-                                style="font-size: 0.8125rem; height: 31px; padding: 2px 8px;"
-                                value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'lr_number', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" placeholder="Bilty / LR No">
-                        </div>
-                        <div style="flex: 1.2 1 145px; max-width: 175px; min-width: 120px;">
-                            <select name="customer_id" id="filterFbCustomerId" class="form-select form-select-sm select2-fb-filter">
-                                <option value="">All Customers</option>
-                                @if(isset($selectedCustomer) && $selectedCustomer)
-                                    <option value="{{ $selectedCustomer->id }}" selected>{{ $selectedCustomer->name }}</option>
-                                @endif
-                            </select>
-                        </div>
-                        <div style="flex: 1.2 1 145px; max-width: 175px; min-width: 120px;">
-                            <select name="transporter_id" id="filterFbTransporterId" class="form-select form-select-sm select2-fb-filter">
-                                <option value="">All Transporters</option>
-                                @if(isset($selectedTransporter) && $selectedTransporter)
-                                    <option value="{{ $selectedTransporter->id }}" selected>{{ $selectedTransporter->displayNameWithShortName() }}</option>
-                                @endif
-                            </select>
-                        </div>
-                        <div style="flex: 1 1 120px; max-width: 145px; min-width: 110px;">
-                            <select name="truck_id" id="filterFbTruckId" class="form-select form-select-sm select2-fb-filter">
-                                <option value="">All Trucks</option>
-                                @if(isset($selectedTruck) && $selectedTruck)
-                                    <option value="{{ $selectedTruck->id }}" selected>{{ $selectedTruck->truck_number }}</option>
-                                @endif
-                            </select>
-                        </div>
-                        <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                            <div class="input-group-custom">
-                                <span>From</span>
-                                <input type="date" name="start_date" id="fbStartDate" value="{{ $startDate }}">
-                            </div>
-                            <div class="input-group-custom">
-                                <span>To</span>
-                                <input type="date" name="end_date" id="fbEndDate" value="{{ $endDate }}">
-                            </div>
-                        </div>
-                        <div class="form-check form-switch mb-0 flex-shrink-0">
-                            <input class="form-check-input" type="checkbox" name="pending_memo" value="1"
-                                id="pendingMemoFilter" {{ request('pending_memo') ? 'checked' : '' }}>
-                            <label class="form-check-label small" for="pendingMemoFilter" style="font-size: 11px; white-space: nowrap;">
-                                Pending Memo
-                            </label>
-                        </div>
-                        <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-1">
-                            <button type="submit" class="filter-action-btn" id="filterFbBtn" style="background: var(--brand-primary); color: white;" data-tooltip="Filter" aria-label="Filter">
-                                <i class="bi bi-funnel-fill"></i>
-                            </button>
-                            <a href="{{ route('freight_bookings.index') }}" class="filter-action-btn" id="resetFbBtn" style="background: var(--brand-text-primary); color: white;" data-tooltip="Reset" aria-label="Reset">
-                                <i class="bi bi-arrow-counterclockwise"></i>
-                            </a>
-                        </div>
-                    </div>
-                </form>
-                @if (request('search'))
-                    <div class="alert alert-info py-1 px-3 mb-0 mt-2" style="font-size: 11px;">
-                        <i class="bi bi-info-circle me-1"></i> Results for: <strong>"{{ request('search') }}"</strong>
-                        <a href="{{ route('freight_bookings.index') }}" class="btn btn-link btn-sm p-0 ms-2" style="font-size: 11px;">Clear Search</a>
-                    </div>
-                @endif
             </div>
 
             <div class="card-body">
@@ -2042,11 +1959,7 @@
                 ordering: true,
                 theme: 'bootstrap-5',
                 responsive: true,
-                lengthChange: true,
-                lengthMenu: [
-                    [10, 25, 50, 100],
-                    [10, 25, 50, 100]
-                ],
+                lengthChange: false,
                 order: [
                     [1, 'desc']
                 ],
@@ -2054,8 +1967,7 @@
                     orderable: false,
                     targets: [0, 3, 4, 5, 6, -1]
                 }],
-                dom: '<"app-index-dt-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2"<"d-flex flex-wrap align-items-center gap-2"l>>' +
-                    't' +
+                dom: 't' +
                     '<"app-index-partload-pagination d-flex flex-wrap align-items-center justify-content-between gap-2"<"app-index-partload-pagination__summary"i><"app-index-partload-pagination__nav"p>>',
                 language: {
                     emptyTable: `<div class="text-muted">
@@ -2148,6 +2060,7 @@
             });
 
             $('#pendingMemoFilter').on('change', function() {
+                $(this).closest('.app-index-filters__chip').toggleClass('is-active', this.checked);
                 syncFbListingQueryToUrl();
                 table.ajax.reload();
             });

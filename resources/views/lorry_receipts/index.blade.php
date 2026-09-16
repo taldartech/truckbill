@@ -13,13 +13,14 @@
     <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
     <style>
         .lorry-receipts-index .select2-container--bootstrap-5 .select2-selection {
-            min-height: 31px;
+            min-height: 2.125rem;
+            height: 2.125rem;
             font-size: 0.8125rem;
-            padding: 0.15rem 0.5rem;
-            border-radius: 6px;
+            padding: 0.2rem 0.55rem;
+            border-radius: 0.55rem;
         }
         .lorry-receipts-index .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-            line-height: 24px;
+            line-height: 1.7rem;
             padding-left: 0;
             font-size: 0.8125rem;
         }
@@ -229,79 +230,6 @@
             font-weight: 500;
         }
 
-        .filter-action-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: none;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            position: relative;
-        }
-
-        .filter-action-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-
-        .filter-action-btn[data-tooltip]::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            top: calc(100% + 6px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1e293b;
-            color: #ffffff;
-            font-size: 11px;
-            font-weight: 500;
-            padding: 3px 8px;
-            border-radius: 6px;
-            white-space: nowrap;
-            pointer-events: none;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.15s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            z-index: 1060;
-        }
-
-        .filter-action-btn[data-tooltip]:hover::after {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .input-group-custom {
-            background: white;
-            border-radius: 8px;
-            padding: 1px 6px;
-            border: 1px solid rgba(0,0,0,0.12);
-            display: inline-flex;
-            align-items: center;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-            height: 31px;
-        }
-
-        .input-group-custom span {
-            font-size: 9px;
-            text-transform: uppercase;
-            font-weight: 700;
-            color: var(--slate-600);
-            margin-right: 4px;
-        }
-
-        .input-group-custom input {
-            border: none !important;
-            font-size: 11px !important;
-            padding: 1px 0 !important;
-            background: transparent !important;
-            outline: none !important;
-            box-shadow: none !important;
-            max-width: 98px;
-        }
-
         .lorry-receipts-index .app-index-list-card {
             margin-bottom: 0.75rem !important;
         }
@@ -312,7 +240,7 @@
         }
 
         .lorry-receipts-index .app-index-dt-toolbar {
-            padding: 0.4rem 0.75rem !important;
+            padding: 0.65rem 0.85rem !important;
         }
 
         .lorry-receipts-index .app-index-partload-pagination {
@@ -353,51 +281,73 @@
             </div>
 
             <div class="app-index-dt-toolbar">
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                    <div style="flex: 1 1 135px; max-width: 160px;">
-                        <input type="text" id="filterLrNumber" class="form-control form-control-sm" style="font-size: 0.8125rem; height: 31px; padding: 2px 8px;" placeholder="Bilty / LR No" value="{{ request('lr_number') }}">
-                    </div>
-                    <div style="flex: 1.5 1 165px; max-width: 210px; min-width: 140px;">
-                        <select id="filterCustomerId" class="form-select form-select-sm select2-filter">
-                            <option value="">All Customers</option>
-                            @if(isset($selectedCustomer) && $selectedCustomer)
-                                <option value="{{ $selectedCustomer->id }}" selected>{{ $selectedCustomer->name }}</option>
-                            @endif
-                        </select>
-                    </div>
-                    <div style="flex: 1.5 1 165px; max-width: 210px; min-width: 140px;">
-                        <select id="filterTransporterId" class="form-select form-select-sm select2-filter">
-                            <option value="">All Transporters</option>
-                            @if(isset($selectedTransporter) && $selectedTransporter)
-                                <option value="{{ $selectedTransporter->id }}" selected>{{ $selectedTransporter->displayNameWithShortName() }}</option>
-                            @endif
-                        </select>
-                    </div>
-                    <div style="flex: 1 1 135px; max-width: 165px; min-width: 125px;">
-                        <select id="filterTruckId" class="form-select form-select-sm select2-filter">
-                            <option value="">All Trucks</option>
-                            @if(isset($selectedTruck) && $selectedTruck)
-                                <option value="{{ $selectedTruck->id }}" selected>{{ $selectedTruck->truck_number }}</option>
-                            @endif
-                        </select>
-                    </div>
-                    <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                        <div class="input-group-custom">
-                            <span>From</span>
-                            <input type="date" id="fromDate">
+                <div class="app-index-filters" data-app-index-filters>
+                    <div class="app-index-filters__top">
+                        <div class="app-index-filters__intro">
+                            <h6 class="app-index-filters__title">Search &amp; Filters</h6>
                         </div>
-                        <div class="input-group-custom">
-                            <span>To</span>
-                            <input type="date" id="toDate">
+                        <div class="app-index-filters__top-actions">
+                            <button type="button"
+                                class="app-index-filters__toggle d-md-none"
+                                data-app-index-filters-toggle
+                                aria-expanded="false"
+                                aria-controls="lrIndexFiltersBody">
+                                <i class="bi bi-sliders"></i>
+                                <span>Filters</span>
+                                <i class="bi bi-chevron-down app-index-filters__toggle-chevron"></i>
+                            </button>
                         </div>
                     </div>
-                    <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-1">
-                        <button type="button" class="filter-action-btn" id="filterBtn" style="background: var(--brand-primary); color: white;" data-tooltip="Filter" aria-label="Filter">
-                            <i class="bi bi-funnel-fill"></i>
-                        </button>
-                        <button type="button" class="filter-action-btn" id="resetDateFilter" style="background: var(--brand-text-primary); color: white;" data-tooltip="Reset" aria-label="Reset">
-                            <i class="bi bi-arrow-counterclockwise"></i>
-                        </button>
+                    <div class="app-index-filters__body" id="lrIndexFiltersBody">
+                        <div class="app-index-filters__controls">
+                            <div class="app-index-filters__field app-index-filters__field--lr">
+                                <label class="app-index-filters__label" for="filterLrNumber">Bilty / LR</label>
+                                <input type="text" id="filterLrNumber" class="form-control form-control-sm" placeholder="LR number" value="{{ request('lr_number') }}">
+                            </div>
+                            <div class="app-index-filters__field app-index-filters__field--party">
+                                <label class="app-index-filters__label" for="filterCustomerId">Customer</label>
+                                <select id="filterCustomerId" class="form-select form-select-sm select2-filter">
+                                    <option value="">All Customers</option>
+                                    @if(isset($selectedCustomer) && $selectedCustomer)
+                                        <option value="{{ $selectedCustomer->id }}" selected>{{ $selectedCustomer->name }}</option>
+                                    @endif
+                                </select>
+                            </div>
+                            <div class="app-index-filters__field app-index-filters__field--party">
+                                <label class="app-index-filters__label" for="filterTransporterId">Transporter</label>
+                                <select id="filterTransporterId" class="form-select form-select-sm select2-filter">
+                                    <option value="">All Transporters</option>
+                                    @if(isset($selectedTransporter) && $selectedTransporter)
+                                        <option value="{{ $selectedTransporter->id }}" selected>{{ $selectedTransporter->displayNameWithShortName() }}</option>
+                                    @endif
+                                </select>
+                            </div>
+                            <div class="app-index-filters__field app-index-filters__field--truck">
+                                <label class="app-index-filters__label" for="filterTruckId">Truck</label>
+                                <select id="filterTruckId" class="form-select form-select-sm select2-filter">
+                                    <option value="">All Trucks</option>
+                                    @if(isset($selectedTruck) && $selectedTruck)
+                                        <option value="{{ $selectedTruck->id }}" selected>{{ $selectedTruck->truck_number }}</option>
+                                    @endif
+                                </select>
+                            </div>
+                            <div class="app-index-filters__field app-index-filters__field--date">
+                                <label class="app-index-filters__label" for="fromDate">From</label>
+                                <input type="date" class="form-control form-control-sm" id="fromDate">
+                            </div>
+                            <div class="app-index-filters__field app-index-filters__field--date">
+                                <label class="app-index-filters__label" for="toDate">To</label>
+                                <input type="date" class="form-control form-control-sm" id="toDate">
+                            </div>
+                            <div class="app-index-filters__actions">
+                                <button type="button" class="app-index-filters__btn app-index-filters__btn--apply" id="filterBtn" data-tooltip="Filter" aria-label="Filter">
+                                    <i class="bi bi-funnel-fill"></i>
+                                </button>
+                                <button type="button" class="app-index-filters__btn app-index-filters__btn--reset" id="resetDateFilter" data-tooltip="Reset" aria-label="Reset">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1030,11 +980,12 @@
                     ],
                     order: [[0, 'desc']],
                     pageLength: 25,
+                    lengthChange: false,
+                    searching: false,
                     responsive: false,
                     scrollX: false,
                     autoWidth: false,
-                    dom: '<"app-index-dt-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2"<"d-flex flex-wrap align-items-center gap-2"l><"d-flex flex-wrap align-items-center gap-2"f>>' +
-                        't' +
+                    dom: 't' +
                         '<"app-index-partload-pagination d-flex flex-wrap align-items-center justify-content-between gap-2"<"app-index-partload-pagination__summary"i><"app-index-partload-pagination__nav"p>>',
                     drawCallback: function(settings) {
                         $('[data-bs-toggle="tooltip"]').tooltip();
