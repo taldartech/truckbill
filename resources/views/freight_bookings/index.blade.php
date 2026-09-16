@@ -290,13 +290,18 @@
                     </div>
                 </div>
                 <form method="GET" action="{{ route('freight_bookings.index') }}" id="searchForm">
-                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                        <div style="flex: 1 1 100px; max-width: 125px;">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                        <div style="flex: 1 1 145px; max-width: 175px;">
+                            <input type="text" class="form-control form-control-sm" name="search" id="filterFbSearch"
+                                style="font-size: 0.8125rem; height: 31px; padding: 2px 8px;"
+                                value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'search', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" placeholder="Search LR, City...">
+                        </div>
+                        <div style="flex: 1 1 115px; max-width: 135px;">
                             <input type="text" class="form-control form-control-sm" name="lr_number" id="filterFbLrNumber"
                                 style="font-size: 0.8125rem; height: 31px; padding: 2px 8px;"
                                 value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'lr_number', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" placeholder="Bilty / LR No">
                         </div>
-                        <div style="flex: 2 1 135px; min-width: 125px;">
+                        <div style="flex: 1.2 1 145px; max-width: 175px; min-width: 120px;">
                             <select name="customer_id" id="filterFbCustomerId" class="form-select form-select-sm select2-fb-filter">
                                 <option value="">All Customers</option>
                                 @if(isset($selectedCustomer) && $selectedCustomer)
@@ -304,7 +309,7 @@
                                 @endif
                             </select>
                         </div>
-                        <div style="flex: 2 1 135px; min-width: 125px;">
+                        <div style="flex: 1.2 1 145px; max-width: 175px; min-width: 120px;">
                             <select name="transporter_id" id="filterFbTransporterId" class="form-select form-select-sm select2-fb-filter">
                                 <option value="">All Transporters</option>
                                 @if(isset($selectedTransporter) && $selectedTransporter)
@@ -312,7 +317,7 @@
                                 @endif
                             </select>
                         </div>
-                        <div style="flex: 1 1 110px; max-width: 135px; min-width: 110px;">
+                        <div style="flex: 1 1 120px; max-width: 145px; min-width: 110px;">
                             <select name="truck_id" id="filterFbTruckId" class="form-select form-select-sm select2-fb-filter">
                                 <option value="">All Trucks</option>
                                 @if(isset($selectedTruck) && $selectedTruck)
@@ -330,6 +335,13 @@
                                 <input type="date" name="end_date" id="fbEndDate" value="{{ $endDate }}">
                             </div>
                         </div>
+                        <div class="form-check form-switch mb-0 flex-shrink-0">
+                            <input class="form-check-input" type="checkbox" name="pending_memo" value="1"
+                                id="pendingMemoFilter" {{ request('pending_memo') ? 'checked' : '' }}>
+                            <label class="form-check-label small" for="pendingMemoFilter" style="font-size: 11px; white-space: nowrap;">
+                                Pending Memo
+                            </label>
+                        </div>
                         <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-1">
                             <button type="submit" class="filter-action-btn" id="filterFbBtn" style="background: var(--brand-primary); color: white;" data-tooltip="Filter" aria-label="Filter">
                                 <i class="bi bi-funnel-fill"></i>
@@ -337,21 +349,6 @@
                             <a href="{{ route('freight_bookings.index') }}" class="filter-action-btn" id="resetFbBtn" style="background: var(--brand-text-primary); color: white;" data-tooltip="Reset" aria-label="Reset">
                                 <i class="bi bi-arrow-counterclockwise"></i>
                             </a>
-                        </div>
-                    </div>
-                    <div class="row g-2 align-items-center">
-                        <div class="col-12 col-md-9 col-lg-10">
-                            <input type="text" class="form-control form-control-sm" name="search" id="filterFbSearch"
-                                value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'search', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" placeholder="Search LR, Customer, Truck, City...">
-                        </div>
-                        <div class="col-12 col-md-3 col-lg-2 d-flex align-items-center justify-content-md-end">
-                            <div class="form-check form-switch mb-0">
-                                <input class="form-check-input" type="checkbox" name="pending_memo" value="1"
-                                    id="pendingMemoFilter" {{ request('pending_memo') ? 'checked' : '' }}>
-                                <label class="form-check-label small" for="pendingMemoFilter">
-                                    Pending Memo
-                                </label>
-                            </div>
                         </div>
                     </div>
                 </form>

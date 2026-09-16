@@ -354,10 +354,10 @@
 
             <div class="app-index-dt-toolbar">
                 <div class="d-flex flex-wrap align-items-center gap-2">
-                    <div style="flex: 1 1 100px; max-width: 125px;">
+                    <div style="flex: 1 1 135px; max-width: 160px;">
                         <input type="text" id="filterLrNumber" class="form-control form-control-sm" style="font-size: 0.8125rem; height: 31px; padding: 2px 8px;" placeholder="Bilty / LR No" value="{{ request('lr_number') }}">
                     </div>
-                    <div style="flex: 2 1 135px; min-width: 125px;">
+                    <div style="flex: 1.5 1 165px; max-width: 210px; min-width: 140px;">
                         <select id="filterCustomerId" class="form-select form-select-sm select2-filter">
                             <option value="">All Customers</option>
                             @if(isset($selectedCustomer) && $selectedCustomer)
@@ -365,7 +365,7 @@
                             @endif
                         </select>
                     </div>
-                    <div style="flex: 2 1 135px; min-width: 125px;">
+                    <div style="flex: 1.5 1 165px; max-width: 210px; min-width: 140px;">
                         <select id="filterTransporterId" class="form-select form-select-sm select2-filter">
                             <option value="">All Transporters</option>
                             @if(isset($selectedTransporter) && $selectedTransporter)
@@ -373,7 +373,7 @@
                             @endif
                         </select>
                     </div>
-                    <div style="flex: 1 1 110px; max-width: 135px; min-width: 110px;">
+                    <div style="flex: 1 1 135px; max-width: 165px; min-width: 125px;">
                         <select id="filterTruckId" class="form-select form-select-sm select2-filter">
                             <option value="">All Trucks</option>
                             @if(isset($selectedTruck) && $selectedTruck)
