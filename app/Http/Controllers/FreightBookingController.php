@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Models\Consignee;
 use App\Models\FreightBooking;
 use App\Models\GoodType;
 use App\Models\LorryReceipt;
@@ -226,12 +227,40 @@ class FreightBookingController extends Controller
                 ->get()
         );
 
+        $companyId = auth()->user()->userRole?->name === 'super_admin'
+            ? session('super_admin_company_id')
+            : auth()->user()->company_id;
+
+        $selectedCustomer = $request->filled('customer_id')
+            ? Consignee::where('company_id', $companyId)->find($request->customer_id)
+            : null;
+
+        $selectedTransporter = $request->filled('transporter_id')
+            ? Transporter::where('company_id', $companyId)->with('transporterMaster')->find($request->transporter_id)
+            : null;
+
+        $selectedTruck = $request->filled('truck_id')
+            ? Truck::where(function ($query) use ($companyId) {
+                if ($companyId) {
+                    $query->whereHas('transporter', function ($transporterQuery) use ($companyId) {
+                        $transporterQuery->where('company_id', $companyId);
+                    })->orWhere(function ($orphanQuery) use ($companyId) {
+                        $orphanQuery->whereNull('transporter_id')
+                            ->where('company_id', $companyId);
+                    });
+                }
+            })->find($request->truck_id)
+            : null;
+
         return view('freight_bookings.index', compact(
             'paymentTypes',
             'paymentModes',
             'startDate',
             'endDate',
-            'pumps'
+            'pumps',
+            'selectedCustomer',
+            'selectedTransporter',
+            'selectedTruck'
         ));
     }
 
@@ -274,11 +303,24 @@ class FreightBookingController extends Controller
 
             $query->whereBetween('list_lr.gr_date', [$grStart, $grEnd]);
 
+            if ($request->filled('lr_number')) {
+                $query->where('list_lr.lr_number', 'LIKE', '%'.trim($request->lr_number).'%');
+            }
+
+            if ($request->filled('customer_id')) {
+                $query->where('list_lr.customer_id', $request->customer_id);
+            }
+
             if ($request->filled('transporter_id')) {
                 $query->where(function ($q) use ($request) {
                     $q->where('freight_bookings.transporter_id', $request->transporter_id)
+                        ->orWhere('list_lr.transporter_id', $request->transporter_id)
                         ->orWhere('freight_bookings.transporter_name', 'LIKE', "%{$request->transporter_id}%");
                 });
+            }
+
+            if ($request->filled('truck_id')) {
+                $query->where('list_lr.truck_id', $request->truck_id);
             }
 
             if ($request->filled('truck_owner_id')) {

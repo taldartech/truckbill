@@ -44,6 +44,10 @@
     --action-advance-hover: #ea580c;
     --action-mark-paid: #10b981;
     --action-mark-paid-hover: #059669;
+    --action-print: #475569;
+    --action-print-hover: #334155;
+    --action-printed: #10b981;
+    --action-printed-hover: #059669;
 }
 
 .btn.btn-icon.btn-action-view,
@@ -448,21 +452,28 @@ a.btn.btn-icon.btn-action-pay i {
 
 .btn.btn-icon.btn-action-print,
 a.btn.btn-icon.btn-action-print {
-    background-color: var(--action-bilty) !important;
-    border: 1px solid var(--action-bilty) !important;
+    background-color: var(--action-print) !important;
+    border: 1px solid var(--action-print) !important;
 }
 
 .btn.btn-icon.btn-action-print:hover,
 a.btn.btn-icon.btn-action-print:hover {
-    background-color: var(--action-bilty-hover) !important;
-    border-color: var(--action-bilty-hover) !important;
+    background-color: var(--action-print-hover) !important;
+    border-color: var(--action-print-hover) !important;
     color: #fff !important;
 }
 
 .btn.btn-icon.btn-action-print.is-printed,
 a.btn.btn-icon.btn-action-print.is-printed {
-    background-color: var(--action-view) !important;
-    border-color: var(--action-view) !important;
+    background-color: var(--action-printed) !important;
+    border-color: var(--action-printed) !important;
+}
+
+.btn.btn-icon.btn-action-print.is-printed:hover,
+a.btn.btn-icon.btn-action-print.is-printed:hover {
+    background-color: var(--action-printed-hover) !important;
+    border-color: var(--action-printed-hover) !important;
+    color: #fff !important;
 }
 
 .btn.btn-icon.btn-action-pay,

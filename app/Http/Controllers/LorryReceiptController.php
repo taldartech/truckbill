@@ -119,7 +119,30 @@ class LorryReceiptController extends Controller
             return $this->getLorryReceiptsData($request);
         }
 
-        return view('lorry_receipts.index');
+        $companyId = $this->getCurrentCompanyId();
+
+        $selectedCustomer = $request->filled('customer_id')
+            ? Consignee::where('company_id', $companyId)->find($request->customer_id)
+            : null;
+
+        $selectedTransporter = $request->filled('transporter_id')
+            ? Transporter::where('company_id', $companyId)->with('transporterMaster')->find($request->transporter_id)
+            : null;
+
+        $selectedTruck = $request->filled('truck_id')
+            ? Truck::where(function ($query) use ($companyId) {
+                if ($companyId) {
+                    $query->whereHas('transporter', function ($transporterQuery) use ($companyId) {
+                        $transporterQuery->where('company_id', $companyId);
+                    })->orWhere(function ($orphanQuery) use ($companyId) {
+                        $orphanQuery->whereNull('transporter_id')
+                            ->where('company_id', $companyId);
+                    });
+                }
+            })->find($request->truck_id)
+            : null;
+
+        return view('lorry_receipts.index', compact('selectedCustomer', 'selectedTransporter', 'selectedTruck'));
     }
 
     private function getLorryReceiptsData(Request $request): JsonResponse
@@ -156,8 +179,20 @@ class LorryReceiptController extends Controller
                 $query->where('lorry_receipts.company_id', $user->company_id);
             }
             $query->orderBy('lorry_receipts.gr_date', 'desc')->orderBy('lorry_receipts.linked_lr_id', 'desc');
-            $query->when($request->has('gr_date_from') && $request->has('gr_date_to'), function ($query) use ($request) {
+            $query->when($request->filled('gr_date_from') && $request->filled('gr_date_to'), function ($query) use ($request) {
                 $query->whereBetween('lorry_receipts.gr_date', [$request->gr_date_from, $request->gr_date_to]);
+            });
+            $query->when($request->filled('lr_number'), function ($query) use ($request) {
+                $query->where('lorry_receipts.lr_number', 'like', '%'.trim($request->lr_number).'%');
+            });
+            $query->when($request->filled('customer_id'), function ($query) use ($request) {
+                $query->where('lorry_receipts.customer_id', $request->customer_id);
+            });
+            $query->when($request->filled('transporter_id'), function ($query) use ($request) {
+                $query->where('lorry_receipts.transporter_id', $request->transporter_id);
+            });
+            $query->when($request->filled('truck_id'), function ($query) use ($request) {
+                $query->where('lorry_receipts.truck_id', $request->truck_id);
             });
 
             return DataTables::of($query)
