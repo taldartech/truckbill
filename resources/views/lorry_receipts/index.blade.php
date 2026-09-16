@@ -8,8 +8,21 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
     <style>
+        .lorry-receipts-index .select2-container--bootstrap-5 .select2-selection {
+            min-height: 31px;
+            font-size: 0.8125rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+        }
+        .lorry-receipts-index .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            line-height: 24px;
+            padding-left: 0;
+            font-size: 0.8125rem;
+        }
         :root {
             --glass-bg: rgba(255, 255, 255, 0.75);
             --glass-border: rgba(255, 255, 255, 0.3);
@@ -226,6 +239,7 @@
             border: none;
             transition: all 0.2s ease;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative;
         }
 
         .filter-action-btn:hover {
@@ -233,14 +247,41 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
+        .filter-action-btn[data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 3px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.15s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 1060;
+        }
+
+        .filter-action-btn[data-tooltip]:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+
         .input-group-custom {
             background: white;
             border-radius: 8px;
             padding: 1px 6px;
-            border: 1px solid rgba(0,0,0,0.08);
-            display: flex;
+            border: 1px solid rgba(0,0,0,0.12);
+            display: inline-flex;
             align-items: center;
             box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            height: 31px;
         }
 
         .input-group-custom span {
@@ -248,7 +289,7 @@
             text-transform: uppercase;
             font-weight: 700;
             color: var(--slate-600);
-            margin-right: 6px;
+            margin-right: 4px;
         }
 
         .input-group-custom input {
@@ -258,6 +299,7 @@
             background: transparent !important;
             outline: none !important;
             box-shadow: none !important;
+            max-width: 98px;
         }
 
         .lorry-receipts-index .app-index-list-card {
@@ -310,24 +352,53 @@
                 </div>
             </div>
 
-            <div class="app-index-dt-toolbar d-flex flex-wrap justify-content-end align-items-center gap-2">
+            <div class="app-index-dt-toolbar">
                 <div class="d-flex flex-wrap align-items-center gap-2">
-                    <div class="input-group-custom">
-                        <span>From</span>
-                        <input type="date" id="fromDate">
+                    <div style="flex: 1 1 100px; max-width: 125px;">
+                        <input type="text" id="filterLrNumber" class="form-control form-control-sm" style="font-size: 0.8125rem; height: 31px; padding: 2px 8px;" placeholder="Bilty / LR No" value="{{ request('lr_number') }}">
                     </div>
-                    <div class="input-group-custom">
-                        <span>To</span>
-                        <input type="date" id="toDate">
+                    <div style="flex: 2 1 135px; min-width: 125px;">
+                        <select id="filterCustomerId" class="form-select form-select-sm select2-filter">
+                            <option value="">All Customers</option>
+                            @if(isset($selectedCustomer) && $selectedCustomer)
+                                <option value="{{ $selectedCustomer->id }}" selected>{{ $selectedCustomer->name }}</option>
+                            @endif
+                        </select>
                     </div>
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="button" class="filter-action-btn" id="filterBtn" style="background: var(--brand-primary); color: white;" title="Filter" data-bs-toggle="tooltip">
-                        <i class="bi bi-funnel-fill"></i>
-                    </button>
-                    <button type="button" class="filter-action-btn" id="resetDateFilter" style="background: var(--brand-text-primary); color: white;" title="Reset" data-bs-toggle="tooltip">
-                        <i class="bi bi-arrow-counterclockwise"></i>
-                    </button>
+                    <div style="flex: 2 1 135px; min-width: 125px;">
+                        <select id="filterTransporterId" class="form-select form-select-sm select2-filter">
+                            <option value="">All Transporters</option>
+                            @if(isset($selectedTransporter) && $selectedTransporter)
+                                <option value="{{ $selectedTransporter->id }}" selected>{{ $selectedTransporter->displayNameWithShortName() }}</option>
+                            @endif
+                        </select>
+                    </div>
+                    <div style="flex: 1 1 110px; max-width: 135px; min-width: 110px;">
+                        <select id="filterTruckId" class="form-select form-select-sm select2-filter">
+                            <option value="">All Trucks</option>
+                            @if(isset($selectedTruck) && $selectedTruck)
+                                <option value="{{ $selectedTruck->id }}" selected>{{ $selectedTruck->truck_number }}</option>
+                            @endif
+                        </select>
+                    </div>
+                    <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                        <div class="input-group-custom">
+                            <span>From</span>
+                            <input type="date" id="fromDate">
+                        </div>
+                        <div class="input-group-custom">
+                            <span>To</span>
+                            <input type="date" id="toDate">
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-1">
+                        <button type="button" class="filter-action-btn" id="filterBtn" style="background: var(--brand-primary); color: white;" data-tooltip="Filter" aria-label="Filter">
+                            <i class="bi bi-funnel-fill"></i>
+                        </button>
+                        <button type="button" class="filter-action-btn" id="resetDateFilter" style="background: var(--brand-text-primary); color: white;" data-tooltip="Reset" aria-label="Reset">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -661,10 +732,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* Tooltip enhancement */
-        [data-bs-toggle="tooltip"] {
-            position: relative;
-        }
+
 
         /* Memo badge */
         .memo-badge {
@@ -698,6 +766,7 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
         <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
         <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
         <script>
             $(document).ready(function() {
@@ -708,6 +777,85 @@
 
                     return `${year}-${month}-${day}`;
                 };
+
+                // Initialize Select2 for filters
+                $('#filterCustomerId').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    placeholder: 'All Customers',
+                    allowClear: true,
+                    minimumInputLength: 0,
+                    ajax: {
+                        url: '{{ route('api.consignees.search') }}',
+                        dataType: 'json',
+                        delay: 250,
+                        data: function(params) {
+                            return {
+                                q: params.term || '',
+                                page: params.page || 1
+                            };
+                        },
+                        processResults: function(data, params) {
+                            params.page = params.page || 1;
+                            return {
+                                results: data.results,
+                                pagination: data.pagination
+                            };
+                        }
+                    }
+                });
+
+                $('#filterTransporterId').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    placeholder: 'All Transporters',
+                    allowClear: true,
+                    minimumInputLength: 0,
+                    ajax: {
+                        url: '/api/transporters/search',
+                        dataType: 'json',
+                        delay: 250,
+                        data: function(params) {
+                            return {
+                                q: params.term || '',
+                                page: params.page || 1
+                            };
+                        },
+                        processResults: function(data, params) {
+                            params.page = params.page || 1;
+                            return {
+                                results: data.results,
+                                pagination: data.pagination
+                            };
+                        }
+                    }
+                });
+
+                $('#filterTruckId').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    placeholder: 'All Trucks',
+                    allowClear: true,
+                    minimumInputLength: 0,
+                    ajax: {
+                        url: '/api/trucks/search',
+                        dataType: 'json',
+                        delay: 250,
+                        data: function(params) {
+                            return {
+                                q: params.term || '',
+                                page: params.page || 1
+                            };
+                        },
+                        processResults: function(data, params) {
+                            params.page = params.page || 1;
+                            return {
+                                results: data.results,
+                                pagination: data.pagination
+                            };
+                        }
+                    }
+                });
 
                 function loadListingQueryFromUrl() {
                     const params = new URLSearchParams(window.location.search);
@@ -720,20 +868,39 @@
                         $('#toDate').val(params.get('gr_date_to'));
                     }
 
-                    return params.has('gr_date_from') || params.has('gr_date_to');
+                    if (params.has('lr_number')) {
+                        $('#filterLrNumber').val(params.get('lr_number'));
+                    }
+
+                    return params.has('gr_date_from') || params.has('gr_date_to') || params.has('lr_number') || params.has('customer_id') || params.has('transporter_id') || params.has('truck_id');
                 }
 
                 function syncListingQueryToUrl() {
                     const params = new URLSearchParams();
                     const fromDate = $('#fromDate').val();
                     const toDate = $('#toDate').val();
+                    const lrNumber = $('#filterLrNumber').val();
+                    const customerId = $('#filterCustomerId').val();
+                    const transporterId = $('#filterTransporterId').val();
+                    const truckId = $('#filterTruckId').val();
 
                     if (fromDate) {
                         params.set('gr_date_from', fromDate);
                     }
-
                     if (toDate) {
                         params.set('gr_date_to', toDate);
+                    }
+                    if (lrNumber) {
+                        params.set('lr_number', lrNumber);
+                    }
+                    if (customerId) {
+                        params.set('customer_id', customerId);
+                    }
+                    if (transporterId) {
+                        params.set('transporter_id', transporterId);
+                    }
+                    if (truckId) {
+                        params.set('truck_id', truckId);
                     }
 
                     const query = params.toString();
@@ -782,6 +949,10 @@
                         data: function(d) {
                             d.gr_date_from = $('#fromDate').val();
                             d.gr_date_to = $('#toDate').val();
+                            d.lr_number = $('#filterLrNumber').val();
+                            d.customer_id = $('#filterCustomerId').val();
+                            d.transporter_id = $('#filterTransporterId').val();
+                            d.truck_id = $('#filterTruckId').val();
                         },
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
@@ -872,12 +1043,28 @@
 
                 $('#filterBtn').on('click', function() {
                     syncListingQueryToUrl();
-                    $('#lorryReceiptsTable').DataTable().ajax.reload();
+                    table.ajax.reload();
+                });
+
+                $('#filterLrNumber').on('keypress', function(e) {
+                    if (e.which === 13) {
+                        e.preventDefault();
+                        syncListingQueryToUrl();
+                        table.ajax.reload();
+                    }
+                });
+
+                $('#filterCustomerId, #filterTransporterId, #filterTruckId').on('change', function() {
+                    syncListingQueryToUrl();
+                    table.ajax.reload();
                 });
 
                 $('#resetDateFilter').on('click', function() {
-                    $('#fromDate').val('');
-                    $('#toDate').val('');
+                    $('#filterLrNumber').val('');
+                    $('#filterCustomerId').val('').trigger('change.select2');
+                    $('#filterTransporterId').val('').trigger('change.select2');
+                    $('#filterTruckId').val('').trigger('change.select2');
+                    setDefaultDates();
                     syncListingQueryToUrl();
                     table.ajax.reload();
                 });

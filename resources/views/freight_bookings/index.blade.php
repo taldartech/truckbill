@@ -8,7 +8,30 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <style>
+        .select2-container--bootstrap-5 .select2-selection {
+            min-height: 31px !important;
+            padding: 2px 6px !important;
+            font-size: 0.8125rem !important;
+            border-radius: 6px !important;
+            border-color: rgba(0, 0, 0, 0.15) !important;
+        }
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            padding-left: 0 !important;
+            line-height: 25px !important;
+            color: #334155 !important;
+        }
+        .select2-container--bootstrap-5 .select2-dropdown {
+            font-size: 0.8125rem !important;
+            border-radius: 8px !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+        }
+        .select2-container--bootstrap-5 .select2-results__option {
+            padding: 4px 8px !important;
+        }
+
         :root {
             --glass-bg: rgba(255, 255, 255, 0.75);
             --glass-border: rgba(255, 255, 255, 0.3);
@@ -81,29 +104,31 @@
 
         .input-group-custom {
             background: white;
-            border-radius: 10px;
-            padding: 2px 8px;
-            border: 1px solid rgba(0,0,0,0.08);
-            display: flex;
+            border-radius: 8px;
+            padding: 1px 6px;
+            border: 1px solid rgba(0,0,0,0.12);
+            display: inline-flex;
             align-items: center;
             box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            height: 31px;
         }
 
         .input-group-custom span {
-            font-size: 10px;
+            font-size: 9px;
             text-transform: uppercase;
             font-weight: 700;
             color: var(--slate-600);
-            margin-right: 8px;
+            margin-right: 4px;
         }
 
         .input-group-custom input {
             border: none !important;
-            font-size: 12px !important;
+            font-size: 11px !important;
             padding: 2px 0 !important;
             background: transparent !important;
             outline: none !important;
             box-shadow: none !important;
+            max-width: 98px;
         }
 
         /* Compact Status Legend */
@@ -135,20 +160,52 @@
         .table-danger  { background-color: #f8d7da !important; border-color: #f5c2c7 !important; }
 
         .filter-action-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 10px;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             border: none;
             transition: all 0.2s ease;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .filter-action-btn i {
+            font-size: 12px;
         }
 
         .filter-action-btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .filter-action-btn[data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 3px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.15s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 1060;
+        }
+
+        .filter-action-btn[data-tooltip]:hover::after {
+            opacity: 1;
+            visibility: visible;
         }
     </style>
 @endpush
@@ -233,41 +290,68 @@
                     </div>
                 </div>
                 <form method="GET" action="{{ route('freight_bookings.index') }}" id="searchForm">
-                    <div class="row g-2 align-items-end">
-                        <div class="col-12 col-md-5">
-                            <input type="text" class="form-control form-control-sm" name="search"
-                                value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'search', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" placeholder="LR, Customer, Truck, City...">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <div style="flex: 1 1 100px; max-width: 125px;">
+                            <input type="text" class="form-control form-control-sm" name="lr_number" id="filterFbLrNumber"
+                                style="font-size: 0.8125rem; height: 31px; padding: 2px 8px;"
+                                value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'lr_number', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" placeholder="Bilty / LR No">
                         </div>
-                        <div class="col-12 col-md-4">
-                            <div class="d-flex  gap-2">
-                                <div class="input-group-custom flex-grow-1">
-                                    <span>From</span>
-                                    <input type="date" name="start_date" value="{{ $startDate }}">
-                                </div>
-                                <div class="input-group-custom flex-grow-1">
-                                    <span>To</span>
-                                    <input type="date" name="end_date" value="{{ $endDate }}">
-                                </div>
+                        <div style="flex: 2 1 135px; min-width: 125px;">
+                            <select name="customer_id" id="filterFbCustomerId" class="form-select form-select-sm select2-fb-filter">
+                                <option value="">All Customers</option>
+                                @if(isset($selectedCustomer) && $selectedCustomer)
+                                    <option value="{{ $selectedCustomer->id }}" selected>{{ $selectedCustomer->name }}</option>
+                                @endif
+                            </select>
+                        </div>
+                        <div style="flex: 2 1 135px; min-width: 125px;">
+                            <select name="transporter_id" id="filterFbTransporterId" class="form-select form-select-sm select2-fb-filter">
+                                <option value="">All Transporters</option>
+                                @if(isset($selectedTransporter) && $selectedTransporter)
+                                    <option value="{{ $selectedTransporter->id }}" selected>{{ $selectedTransporter->displayNameWithShortName() }}</option>
+                                @endif
+                            </select>
+                        </div>
+                        <div style="flex: 1 1 110px; max-width: 135px; min-width: 110px;">
+                            <select name="truck_id" id="filterFbTruckId" class="form-select form-select-sm select2-fb-filter">
+                                <option value="">All Trucks</option>
+                                @if(isset($selectedTruck) && $selectedTruck)
+                                    <option value="{{ $selectedTruck->id }}" selected>{{ $selectedTruck->truck_number }}</option>
+                                @endif
+                            </select>
+                        </div>
+                        <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                            <div class="input-group-custom">
+                                <span>From</span>
+                                <input type="date" name="start_date" id="fbStartDate" value="{{ $startDate }}">
+                            </div>
+                            <div class="input-group-custom">
+                                <span>To</span>
+                                <input type="date" name="end_date" id="fbEndDate" value="{{ $endDate }}">
                             </div>
                         </div>
-
-
-                        <div class="col-12 col-sm-6 col-md-2 d-flex align-items-end">
-                            <div class="form-check form-switch">
+                        <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-1">
+                            <button type="submit" class="filter-action-btn" id="filterFbBtn" style="background: var(--brand-primary); color: white;" data-tooltip="Filter" aria-label="Filter">
+                                <i class="bi bi-funnel-fill"></i>
+                            </button>
+                            <a href="{{ route('freight_bookings.index') }}" class="filter-action-btn" id="resetFbBtn" style="background: var(--brand-text-primary); color: white;" data-tooltip="Reset" aria-label="Reset">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row g-2 align-items-center">
+                        <div class="col-12 col-md-9 col-lg-10">
+                            <input type="text" class="form-control form-control-sm" name="search" id="filterFbSearch"
+                                value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'search', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" placeholder="Search LR, Customer, Truck, City...">
+                        </div>
+                        <div class="col-12 col-md-3 col-lg-2 d-flex align-items-center justify-content-md-end">
+                            <div class="form-check form-switch mb-0">
                                 <input class="form-check-input" type="checkbox" name="pending_memo" value="1"
                                     id="pendingMemoFilter" {{ request('pending_memo') ? 'checked' : '' }}>
-                                <label class="form-check-label" for="pendingMemoFilter">
+                                <label class="form-check-label small" for="pendingMemoFilter">
                                     Pending Memo
                                 </label>
                             </div>
-                        </div>
-                        <div class="col-12 col-sm-6 col-md-1 d-flex gap-2 justify-content-sm-end">
-                            <button type="submit" class="filter-action-btn" style="background: var(--brand-primary); color: white;" title="Filter" data-bs-toggle="tooltip">
-                                <i class="bi bi-funnel-fill"></i>
-                            </button>
-                            <a href="{{ route('freight_bookings.index') }}" class="filter-action-btn" style="background: var(--brand-text-primary); color: white;" title="Reset" data-bs-toggle="tooltip">
-                                <i class="bi bi-arrow-counterclockwise"></i>
-                            </a>
                         </div>
                     </div>
                 </form>
@@ -1533,10 +1617,6 @@
         letter-spacing: 0.5px;
     }
 
-    /* Tooltip enhancement */
-    [data-bs-toggle="tooltip"] {
-        position: relative;
-    }
 </style>
 
 @push('scripts')
@@ -1737,10 +1817,111 @@
         }
     </style>
 
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $(document).ready(function() {
-            // Initialize tooltips
-            $('[data-bs-toggle="tooltip"]').tooltip();
+            // Initialize Select2 filter dropdowns
+            $('#filterFbCustomerId').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'All Customers',
+                allowClear: true,
+                minimumInputLength: 0,
+                ajax: {
+                    url: '/api/consignees/search',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term || '',
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        return {
+                            results: data.results,
+                            pagination: data.pagination
+                        };
+                    }
+                }
+            });
+
+            $('#filterFbTransporterId').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'All Transporters',
+                allowClear: true,
+                minimumInputLength: 0,
+                ajax: {
+                    url: '/api/transporters/search',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term || '',
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        return {
+                            results: data.results,
+                            pagination: data.pagination
+                        };
+                    }
+                }
+            });
+
+            $('#filterFbTruckId').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'All Trucks',
+                allowClear: true,
+                minimumInputLength: 0,
+                ajax: {
+                    url: '/api/trucks/search',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term || '',
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        return {
+                            results: data.results,
+                            pagination: data.pagination
+                        };
+                    }
+                }
+            });
+
+            function syncFbListingQueryToUrl() {
+                const params = new URLSearchParams();
+                const lrNumber = $('#filterFbLrNumber').val();
+                const customerId = $('#filterFbCustomerId').val();
+                const transporterId = $('#filterFbTransporterId').val();
+                const truckId = $('#filterFbTruckId').val();
+                const startDate = $('#fbStartDate').val();
+                const endDate = $('#fbEndDate').val();
+                const search = $('#filterFbSearch').val();
+                const pendingMemo = $('#pendingMemoFilter').is(':checked');
+
+                if (lrNumber) params.set('lr_number', lrNumber);
+                if (customerId) params.set('customer_id', customerId);
+                if (transporterId) params.set('transporter_id', transporterId);
+                if (truckId) params.set('truck_id', truckId);
+                if (startDate) params.set('start_date', startDate);
+                if (endDate) params.set('end_date', endDate);
+                if (search) params.set('search', search);
+                if (pendingMemo) params.set('pending_memo', '1');
+
+                const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+                window.history.pushState({}, '', newUrl);
+            }
 
             // DataTable initialization (server-side; rows load via AJAX)
             var table = $('#freightBookingsTable').DataTable({
@@ -1960,6 +2141,23 @@
             $('#bulk-payment-btn').on('click', function(e) {
                 e.preventDefault();
                 handleBulkPayment();
+            });
+
+            // Filter form submission and changes
+            $('#searchForm').on('submit', function(e) {
+                e.preventDefault();
+                syncFbListingQueryToUrl();
+                table.ajax.reload();
+            });
+
+            $('#pendingMemoFilter').on('change', function() {
+                syncFbListingQueryToUrl();
+                table.ajax.reload();
+            });
+
+            $('#filterFbCustomerId, #filterFbTransporterId, #filterFbTruckId').on('change', function() {
+                syncFbListingQueryToUrl();
+                table.ajax.reload();
             });
         });
     </script>
