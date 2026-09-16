@@ -264,14 +264,16 @@ class CompanyController extends Controller
         } else {
             if ($company->is_blocked) {
                 $unblockUrl = route('company.unblock', $company->id);
-                $buttons .= '<a href="'.$unblockUrl.'" class="btn btn-sm btn-icon btn-action-restore" title="Unblock User"
-                          onclick="return confirm(\'Are you sure you want to unblock this company?\');">
-                          <i class="bi bi-unlock"></i></a>';
+                $buttons .= '<form action="'.$unblockUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to unblock this company?\')">';
+                $buttons .= csrf_field();
+                $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-restore" title="Unblock User">';
+                $buttons .= '<i class="bi bi-unlock"></i></button></form>';
             } else {
                 $blockUrl = route('company.block', $company->id);
-                $buttons .= '<a href="'.$blockUrl.'" class="btn btn-sm btn-icon btn-action-cancel" title="Block User"
-                          onclick="return confirm(\'Are you sure you want to block this company?\');">
-                          <i class="bi bi-lock"></i></a>';
+                $buttons .= '<form action="'.$blockUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to block this company?\')">';
+                $buttons .= csrf_field();
+                $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-cancel" title="Block User">';
+                $buttons .= '<i class="bi bi-lock"></i></button></form>';
             }
             $buttons .= '</div>';
 
