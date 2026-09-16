@@ -919,11 +919,66 @@
             lrItemsContainer.addEventListener('input', function(e) {
                 const scope = e.target.closest('.lr-item');
                 if (!scope) return;
-                if (e.target.classList.contains('weight') || e.target.classList.contains(
-                        'fr-rate')) {
+
+                if (e.target.classList.contains('weight-per-unit')) {
+                    syncLinkedWeightFromPerUnit(scope);
+                } else if (e.target.classList.contains('units') || e.target.classList.contains('weight')) {
+                    syncLinkedPerUnitFromWeight(scope);
+                }
+
+                if (e.target.classList.contains('weight') || e.target.classList.contains('fr-rate')) {
                     calculateAmount(scope);
                 }
             });
+
+            function formatLinkedWeightValue(value) {
+                return Number(value.toFixed(3)).toString();
+            }
+
+            function syncLinkedWeightFromPerUnit(scope) {
+                const unitsInput = scope.querySelector('.units');
+                const perUnitInput = scope.querySelector('.weight-per-unit');
+                const weightInput = scope.querySelector('.weight');
+
+                if (!unitsInput || !perUnitInput || !weightInput) {
+                    return;
+                }
+
+                const units = parseFloat(unitsInput.value);
+                const perUnit = parseFloat(perUnitInput.value);
+
+                if (!(units > 0) || !(perUnit > 0)) {
+                    return;
+                }
+
+                scope.dataset.weightPerUnitSync = '1';
+                weightInput.value = formatLinkedWeightValue(units * perUnit);
+                weightInput.dispatchEvent(new Event('input', { bubbles: true }));
+                delete scope.dataset.weightPerUnitSync;
+            }
+
+            function syncLinkedPerUnitFromWeight(scope) {
+                if (scope.dataset.weightPerUnitSync === '1') {
+                    return;
+                }
+
+                const unitsInput = scope.querySelector('.units');
+                const perUnitInput = scope.querySelector('.weight-per-unit');
+                const weightInput = scope.querySelector('.weight');
+
+                if (!unitsInput || !perUnitInput || !weightInput) {
+                    return;
+                }
+
+                const units = parseFloat(unitsInput.value);
+                const weight = parseFloat(weightInput.value);
+
+                if (!(units > 0) || !(weight > 0)) {
+                    return;
+                }
+
+                perUnitInput.value = formatLinkedWeightValue(weight / units);
+            }
 
             // Per-item amount calc
             function calculateAmount(scope) {
