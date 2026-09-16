@@ -318,9 +318,17 @@ class CompanyBranchTest extends TestCase
         $master = $this->makeMasterAdmin();
         $company = $this->createCompanyFor($master);
 
+        $this->actingAs($master)
+            ->get(route('company.block', $company->id))
+            ->assertMethodNotAllowed();
+
         $blockResponse = $this->actingAs($master)->post(route('company.block', $company->id));
         $blockResponse->assertRedirect();
         $this->assertSame(true, (bool) $company->fresh()->is_blocked);
+
+        $this->actingAs($master)
+            ->get(route('company.unblock', $company->id))
+            ->assertMethodNotAllowed();
 
         $unblockResponse = $this->actingAs($master)->post(route('company.unblock', $company->id));
         $unblockResponse->assertRedirect();

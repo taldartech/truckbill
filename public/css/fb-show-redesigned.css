@@ -90,15 +90,21 @@
 }
 
 .fb-detail-actions .btn-action-print {
-    background: #8b5cf6 !important;
+    background: #475569 !important;
+    border-color: #475569 !important;
 }
 
 .fb-detail-actions .btn-action-print:hover {
-    background: #7c3aed !important;
+    background: #334155 !important;
+    border-color: #334155 !important;
 }
 
 .fb-detail-actions .btn-action-print.is-printed {
-    background: #3b82f6 !important;
+    background: #10b981 !important;
+}
+
+.fb-detail-actions .btn-action-print.is-printed:hover {
+    background: #059669 !important;
 }
 
 .fb-detail-actions .btn-action-edit {
