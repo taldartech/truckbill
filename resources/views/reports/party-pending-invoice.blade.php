@@ -10,9 +10,9 @@
                     <h3 class="card-title mb-0">Party Pending Invoice</h3>
                 </div>
                 <div class="d-flex">
-                    <a class="btn btn-warning ms-2" target="_blank"
+                    <a class="btn btn-warning btn-sm ms-2" target="_blank"
                         href="{{ route('reports.party-pending-invoice-export') }}">
-                        <i class="bi bi-file-earmark-spreadsheet"></i> Export
+                        <i class="bi bi-file-earmark-spreadsheet"></i> <span class="d-none d-sm-inline ms-1">Export</span>
                     </a>
                 </div>
             </div>
@@ -26,12 +26,14 @@
             @if (!$hasRows)
                 <div class="alert alert-info mb-0">No records found.</div>
             @else
-                @include('reports.exports.party-pending-invoice', [
-                    'partyRows' => $partyRows,
-                    'grandTotalCollect' => $grandTotalCollect,
-                    'grandTotalPaid' => $grandTotalPaid,
-                    'grandTotalPending' => $grandTotalPending,
-                ])
+                <div class="table-responsive">
+                    @include('reports.exports.party-pending-invoice', [
+                        'partyRows' => $partyRows,
+                        'grandTotalCollect' => $grandTotalCollect,
+                        'grandTotalPaid' => $grandTotalPaid,
+                        'grandTotalPending' => $grandTotalPending,
+                    ])
+                </div>
                 @if ($partyRows instanceof \Illuminate\Pagination\LengthAwarePaginator)
                     <div class="mt-3 d-flex justify-content-end">
                         {{ $partyRows->links() }}

@@ -124,6 +124,11 @@
             background-color: var(--brand-row-hover) !important;
         }
 
+        .form-select-sm,
+        .form-select-sm option {
+            font-size: 0.875rem !important;
+        }
+
         .app-sidebar,
         .main-sidebar {
             width: 250px !important;

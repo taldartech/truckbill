@@ -137,15 +137,20 @@
             }
 
             .daily-filter-actions {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 0.4rem;
+                flex-direction: row;
+                flex-wrap: nowrap;
+                align-items: center;
+                gap: 0.35rem;
+                width: 100%;
             }
 
             .daily-filter-actions .btn {
-                width: 100%;
+                flex: 1 1 0;
+                width: auto;
+                min-width: 0;
                 margin: 0 !important;
                 text-align: center;
+                white-space: nowrap;
             }
         }
     </style>
@@ -170,13 +175,13 @@
 
         <div class="card app-index-list-card mb-4">
             <div class="card-header">
-                <h3 class="card-title mb-0">Daily Payments</h3>
+                <h3 class="card-title mb-0 fs-6 fs-md-5">Daily Payments</h3>
             </div>
 
             <!-- Search and Filter Section -->
             <div class="app-index-dt-toolbar">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                    <h5 class="mb-0" style="font-size: 0.9rem; font-weight: 700;">Search & Filter</h5>
+                    <h5 class="mb-0 fs-6 fw-bold">Search & Filter</h5>
                     <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleAdvancedSearch()">
                         <i class="bi bi-funnel"></i> Toggle Filters
                     </button>
@@ -271,12 +276,12 @@
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-end gap-2 mt-3 daily-filter-actions">
-                            <button type="submit" class="btn btn-secondary btn-sm">
+                        <div class="d-flex justify-content-end align-items-center gap-2 mt-3 flex-nowrap daily-filter-actions">
+                            <button type="submit" class="btn btn-secondary btn-sm flex-fill flex-sm-grow-0 text-nowrap">
                                 <i class="bi bi-search"></i> Search
                             </button>
                             <a href="{{ route('voucher_payments.daily') }}?date={{ $selectedDate }}"
-                                class="btn btn-outline-secondary btn-sm">
+                                class="btn btn-outline-secondary btn-sm flex-fill flex-sm-grow-0 text-nowrap">
                                 <i class="bi bi-arrow-clockwise"></i> Reset
                             </a>
                         </div>
@@ -288,7 +293,7 @@
         <!-- Payments List -->
         <div class="card app-index-list-card mb-4">
             <div class="card-header">
-                <h3 class="card-title mb-0">Voucher Payments —
+                <h3 class="card-title mb-0 fs-6 fs-md-5">Voucher Payments —
                     {{ \Carbon\Carbon::parse($selectedDate)->format('d M Y') }}</h3>
                 @if (auth()->user()->canActAsAdmin())
                     <div class="app-index-card-toolbar">

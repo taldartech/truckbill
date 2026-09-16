@@ -336,20 +336,6 @@
                 padding: 0.5rem 0.75rem !important;
             }
 
-            .freight-bookings-index .fb-header-actions {
-                width: 100%;
-                display: flex;
-                gap: 0.4rem;
-            }
-
-            .freight-bookings-index .fb-header-actions .header-pill-btn {
-                flex: 1 1 auto;
-                justify-content: center;
-                text-align: center;
-                padding: 0 10px !important;
-            }
-
-
             .freight-bookings-index .modal-footer {
                 flex-direction: column;
                 align-items: stretch;
@@ -480,9 +466,20 @@
 
             <div class="app-index-dt-toolbar">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                    <div class="d-flex flex-wrap align-items-center gap-3">
-                        <h6 class="mb-0" style="font-size: 0.8125rem; color: var(--brand-text-muted);">Search & Filters</h6>
-                        <div class="status-legend mb-0 d-none d-md-flex">
+                    <div class="d-flex flex-wrap align-items-center gap-2 gap-sm-3">
+                        <h6 class="mb-0 text-nowrap" style="font-size: 0.8125rem; color: var(--brand-text-muted);">Search & Filters</h6>
+                        <div class="d-inline-flex align-items-center gap-1 fb-header-actions">
+                            <button id="voucher-payment-btn" class="header-pill-btn btn btn-brand-primary border-0" style="display: none; height: 28px; padding: 0 10px !important; font-size: 12px !important;" title="Voucher Payment" aria-label="Voucher Payment">
+                                <i class="bi bi-receipt"></i><span class="d-none d-sm-inline ms-1">Voucher</span>
+                            </button>
+                            <button id="combined-payment-btn" class="header-pill-btn btn btn-warning border-0" style="display: none; height: 28px; padding: 0 10px !important; font-size: 12px !important;" title="Combined Payment" aria-label="Combined Payment">
+                                <i class="bi bi-collection"></i><span class="d-none d-sm-inline ms-1">Combined</span>
+                            </button>
+                            <button id="bulk-memo-id-btn" class="header-pill-btn btn btn-primary border-0" style="display: none; height: 28px; padding: 0 10px !important; font-size: 12px !important;" data-bs-toggle="modal" data-bs-target="#bulkMemoIdModal" title="Bulk Memo" aria-label="Bulk Memo">
+                                <i class="bi bi-clipboard-check"></i><span class="d-none d-sm-inline ms-1">Bulk Memo</span>
+                            </button>
+                        </div>
+                        <div class="status-legend mb-0 d-none d-md-flex ms-2">
                             <div class="legend-item">
                                 <div class="legend-color legend-delivered"></div>
                                 <span class="small">Delivered</span>
@@ -496,17 +493,6 @@
                                 <span class="small">Pending</span>
                             </div>
                         </div>
-                    </div>
-                    <div class="d-flex flex-wrap gap-2 fb-header-actions">
-                        <button id="bulk-memo-id-btn" class="header-pill-btn btn btn-primary border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;" data-bs-toggle="modal" data-bs-target="#bulkMemoIdModal">
-                            <i class="bi bi-clipboard-check"></i> Bulk Memo
-                        </button>
-                        <button id="voucher-payment-btn" class="header-pill-btn btn btn-brand-primary border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;">
-                            <i class="bi bi-receipt"></i> Voucher
-                        </button>
-                        <button id="combined-payment-btn" class="header-pill-btn btn btn-warning border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;">
-                            <i class="bi bi-collection"></i> Combined
-                        </button>
                     </div>
                 </div>
                 <form method="GET" action="{{ route('freight_bookings.index') }}" id="searchForm">
@@ -642,10 +628,9 @@
                 <div class="modal-body" id="voucherPaymentBody">
                     <!-- Dynamic content will be loaded here -->
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success" onclick="submitVoucherPayment()"><i class="bi bi-currency-rupee"></i> Process
-                        Payment</button>
+                <div class="modal-footer d-flex flex-nowrap gap-2 p-2">
+                    <button type="button" class="btn btn-secondary btn-sm flex-fill" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success btn-sm flex-fill text-nowrap" onclick="submitVoucherPayment()"><i class="bi bi-currency-rupee"></i> Process Payment</button>
                 </div>
             </div>
         </div>
@@ -2311,12 +2296,12 @@
 
             // Header: show truck number once at top-right
             modalBody.innerHTML += `
-                  <div class="lr-details-section">
-                      <h5>Selected Good Hires (Lorry Hire)</h5>
+                  <div class="lr-details-section mb-3">
+                      <h5 class="fs-6 fw-bold mb-2">Selected Good Hires (Lorry Hire)</h5>
                       <div class="lr-details-content">
-                          <div class="d-flex justify-content-between align-items-center">
-                              <div class="badge bg-info fs-6">Truck Number: ${firstTruck || 'N/A'}</div>
-                              <div class="badge bg-secondary fs-6">${checkedBoxes.length} booking(s) selected</div>
+                          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                              <span class="badge bg-info small">Truck Number: ${firstTruck || 'N/A'}</span>
+                              <span class="badge bg-secondary small">${checkedBoxes.length} booking(s) selected</span>
                           </div>
                       </div>
                   </div>
@@ -2338,28 +2323,28 @@
             const firstAdvanceAmount = firstData.advance_amount;
 
             modalBody.innerHTML += `
-                  <div class="alert alert-primary mb-3">
-                      <h6 class="mb-2"><i class="fas fa-truck"></i> Transporter Details</h6>
-                      <div class="row">
-                            <div class="col-md-4">
+                  <div class="alert alert-primary mb-3 py-2 px-3">
+                      <h6 class="mb-2 fs-6 fw-bold"><i class="fas fa-truck me-1"></i> Transporter Details</h6>
+                      <div class="row g-2 small">
+                            <div class="col-12 col-sm-6 col-md-4">
                                 <strong>Transporter:</strong> ${firstTransporterName || 'N/A'}
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-sm-6 col-md-4">
                                 <strong>Mobile:</strong> ${firstTransporterMobileNumber || 'N/A'}
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-sm-6 col-md-4">
                                 <strong>Short Name:</strong> ${firstTransporterShortName || 'N/A'}
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-sm-6 col-md-4">
                                 <strong>Beneficiary ID:</strong> ${firstTransporterBeneficiaryId || 'N/A'}
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-sm-6 col-md-4">
                               <strong>TDS Percentage:</strong> ${firstTdsPercentage ? firstTdsPercentage + '%' : 'N/A'}
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-sm-6 col-md-4">
                                 <strong>Truck Number:</strong> ${firstTruck || 'N/A'}
                             </div>
-                            <div class="col-md-4 text-danger">
+                            <div class="col-12 col-sm-6 col-md-4 text-danger">
                                 <strong>Advance Amount:</strong> ${firstAdvanceAmount || 'N/A'}
                             </div>
                       </div>
@@ -2377,29 +2362,29 @@
                             : payment.payment_mode;
                         paymentRows += `
                             <tr>
-                                <td>${new Date(payment.date).toLocaleDateString()}</td>
-                                <td>${payment.freight_booking_id || 'N/A'}</td>
-                                <td>${payment.freight_booking?.lr?.lr_number || 'N/A'}</td>
-                                <td>${payment.payment_type}</td>
-                                <td>${paymentModeDisplay}</td>
-                                <td class="text-end">${parseFloat(payment.amount).toFixed(2)}</td>
+                                <td class="text-nowrap">${new Date(payment.date).toLocaleDateString()}</td>
+                                <td class="text-nowrap">${payment.freight_booking_id || 'N/A'}</td>
+                                <td class="text-nowrap">${payment.freight_booking?.lr?.lr_number || 'N/A'}</td>
+                                <td class="text-nowrap">${payment.payment_type}</td>
+                                <td class="text-nowrap">${paymentModeDisplay}</td>
+                                <td class="text-end text-nowrap">${parseFloat(payment.amount).toFixed(2)}</td>
                             </tr>
                         `;
                     });
 
                     modalBody.innerHTML += `
-                        <div class="alert alert-info mb-3">
-                            <h6 class="mb-2"><i class="fas fa-history"></i> Previous Payments</h6>
+                        <div class="alert alert-info mb-3 py-2 px-3">
+                            <h6 class="mb-2 fs-6 fw-bold"><i class="fas fa-history me-1"></i> Previous Payments</h6>
                             <div class="table-responsive">
-                                <table class="table table-sm table-striped mb-0">
-                                    <thead>
+                                <table class="table table-sm table-striped mb-0 small">
+                                    <thead class="table-light">
                                         <tr>
-                                            <th>Date</th>
-                                            <th>FR No.</th>
-                                            <th>LR Number</th>
-                                            <th>Type</th>
-                                            <th>Mode</th>
-                                            <th class="text-end">Amount</th>
+                                            <th class="text-nowrap">Date</th>
+                                            <th class="text-nowrap">FR No.</th>
+                                            <th class="text-nowrap">LR Number</th>
+                                            <th class="text-nowrap">Type</th>
+                                            <th class="text-nowrap">Mode</th>
+                                            <th class="text-end text-nowrap">Amount</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -2411,7 +2396,7 @@
                     `;
                 }
 
-                // Continue with original layout - show payment form in original SweetAlert style
+                // Show payment form
                 const lrRows = checkedBoxes.map((data, index) => {
                     const voucherNumber = data.voucher_number || '-';
                     const freightBookingId = data.freight_booking_id;
@@ -2419,15 +2404,16 @@
                     const balance = data.balance;
                     return `
                         <tr>
-                            <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${freightBookingId || 'N/A'}</td>
-                            <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${lrNumber || 'N/A'}</td>
-                            <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${firstTruck || 'N/A'}</td>
-                            <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${voucherNumber || 'N/A'}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">${balance.toFixed(2)}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">
+                            <td class="text-start text-nowrap">${freightBookingId || 'N/A'}</td>
+                            <td class="text-start text-nowrap">${lrNumber || 'N/A'}</td>
+                            <td class="text-center text-nowrap">${firstTruck || 'N/A'}</td>
+                            <td class="text-center text-nowrap">${voucherNumber || 'N/A'}</td>
+                            <td class="text-end text-nowrap">${balance.toFixed(2)}</td>
+                            <td class="text-end text-nowrap">
                                 <input type="number" step="0.01" min="0" max="${balance}"
-                                      style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
-                                      class="allocated-input" data-lr="${lrNumber}"
+                                      class="form-control form-control-sm d-inline-block text-end allocated-input"
+                                      style="width: 85px;"
+                                      data-lr="${lrNumber}"
                                       oninput="updateTotalPayment()" onchange="updateTotalPayment()">
                             </td>
                         </tr>
@@ -2435,57 +2421,59 @@
                 }).join('');
 
                 modalBody.innerHTML += `
-                  <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-                      <thead>
-                          <tr style="background-color: #f8f9fa;">
-                              <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">FR NO.</th>
-                              <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">LR NUMBER</th>
-                              <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">TRUCK NUMBER</th>
-                              <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">VOUCHER NUMBER</th>
-                              <th style="text-align: right; padding: 8px; border: 1px solid #ddd;">BALANCE AMOUNT</th>
-                              <th style="text-align: right; padding: 8px; border: 1px solid #ddd;">PAYMENT AMOUNT</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-                          ${lrRows}
-                      </tbody>
-                  </table>
-
-                  <div style="background-color: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 4px;">
-                      <strong>TOTAL PAYMENT: <span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
+                  <div class="table-responsive my-2">
+                      <table class="table table-bordered table-sm table-striped align-middle mb-0 small">
+                          <thead class="table-light">
+                              <tr>
+                                  <th class="text-start text-nowrap">FR NO.</th>
+                                  <th class="text-start text-nowrap">LR NUMBER</th>
+                                  <th class="text-center text-nowrap">TRUCK NUMBER</th>
+                                  <th class="text-center text-nowrap">VOUCHER NUMBER</th>
+                                  <th class="text-end text-nowrap">BALANCE AMOUNT</th>
+                                  <th class="text-end text-nowrap">PAYMENT AMOUNT</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              ${lrRows}
+                          </tbody>
+                      </table>
                   </div>
-                  <div style="margin: 15px 0;">
-                      <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-                          <div style="flex: 1;">
-                              <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Type *</label>
-                              <select id="paymentType" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+
+                  <div class="alert alert-info py-2 px-3 my-2 fw-bold d-flex justify-content-between align-items-center small">
+                      <span>TOTAL PAYMENT:</span>
+                      <span id="totalPaymentAmount" class="fs-6">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span>
+                  </div>
+
+                  <div class="my-3">
+                      <div class="row g-2 mb-2">
+                          <div class="col-12 col-md-6 col-lg-4">
+                              <label class="form-label mb-1 small fw-bold">Payment Type *</label>
+                              <select id="paymentType" class="form-select form-select-sm" required>
                                   <option value="">Select Payment Type</option>
                                   ${paymentTypes.map(type =>
                                       `<option value="${type.id}">${type.name}</option>`
                                   ).join('')}
                               </select>
                           </div>
-                          <div style="flex: 1;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Mode *</label>
-                            <select id="paymentMode" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+                          <div class="col-12 col-md-6 col-lg-4">
+                            <label class="form-label mb-1 small fw-bold">Payment Mode *</label>
+                            <select id="paymentMode" class="form-select form-select-sm" required>
                                 <option value="">Select Payment Mode</option>
                                 ${paymentModes.map(mode =>
                                     `<option value="${mode.id}">${mode.name}</option>`
                                 ).join('')}
                             </select>
                           </div>
-                          <div id="pumpNameContainer" style="display: none ; margin-bottom: 15px; flex: 1;">
-                           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                         <label style="display: block; margin-bottom: 0; font-weight: bold;">
-                          Pump Name *
-                           </label>
-                       <a href="javascript:void(0)"
-                       class="lrf-quick-add js-open-quick-add-pump"
-                       data-pump-select="pumpName">
-                         <i class="bi bi-plus-lg"></i> Add
-                        </a>
-                             </div>
-                            <select id="pumpName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                          <div id="pumpNameContainer" class="col-12 col-md-6 col-lg-4" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                              <label class="form-label mb-0 small fw-bold">Pump Name *</label>
+                              <a href="javascript:void(0)"
+                                 class="lrf-quick-add js-open-quick-add-pump small"
+                                 data-pump-select="pumpName">
+                                 <i class="bi bi-plus-lg"></i> Add
+                              </a>
+                            </div>
+                            <select id="pumpName" class="form-select form-select-sm">
                                 <option value="">Select Pump</option>
                                 @foreach ($pumps as $pump)
                                     <option value="{{ $pump->id }}">{{ $pump->pump_name }} {{ $pump->contact_name ? '('.$pump->contact_name.')' : '' }} </option>
@@ -2493,20 +2481,16 @@
                             </select>
                           </div>
                       </div>
-                      <div style="display: flex; gap: 20px; margin-bottom: 15px;">
-                         <!-- Payment Date -->
-                          <div style="flex: 1;">
-                              <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Date</label>
-                              <input type="date" id="paymentDate" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                      <div class="row g-2 mb-2">
+                          <div class="col-12 col-md-6">
+                              <label class="form-label mb-1 small fw-bold">Payment Date</label>
+                              <input type="date" id="paymentDate" class="form-control form-control-sm">
                           </div>
-                          <!-- Reference Transaction ID -->
-                          <div style="flex: 1;">
-                             <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
-                          <textarea id="paymentRemarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
+                          <div class="col-12 col-md-6">
+                              <label class="form-label mb-1 small fw-bold">Remarks</label>
+                              <textarea id="paymentRemarks" class="form-control form-control-sm" rows="2" placeholder="Enter any remarks..."></textarea>
                           </div>
-
                       </div>
-
                   </div>
                 `;
 
@@ -2515,7 +2499,7 @@
                 updatePaymentTypeFromAmounts();
             }).catch(error => {
                 console.error('Error fetching payment history:', error);
-                // Continue with original layout even if history fetch fails
+                // Continue with layout even if history fetch fails
                 const lrRows = checkedBoxes.map((data, index) => {
                     const voucherNumber = data.voucher_number || '-';
                     const freightBookingId = data.freight_booking_id;
@@ -2523,15 +2507,16 @@
                     const balance = data.balance;
                     return `
                         <tr>
-                            <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${freightBookingId || 'N/A'}</td>
-                            <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${lrNumber || 'N/A'}</td>
-                            <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${firstTruck || 'N/A'}</td>
-                            <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${voucherNumber || 'N/A'}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">${balance.toFixed(2)}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">
+                            <td class="text-start text-nowrap">${freightBookingId || 'N/A'}</td>
+                            <td class="text-start text-nowrap">${lrNumber || 'N/A'}</td>
+                            <td class="text-center text-nowrap">${firstTruck || 'N/A'}</td>
+                            <td class="text-center text-nowrap">${voucherNumber || 'N/A'}</td>
+                            <td class="text-end text-nowrap">${balance.toFixed(2)}</td>
+                            <td class="text-end text-nowrap">
                                 <input type="number" step="0.01" min="0" max="${balance}"
-                                      style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
-                                      class="allocated-input" data-lr="${lrNumber}"
+                                      class="form-control form-control-sm d-inline-block text-end allocated-input"
+                                      style="width: 85px;"
+                                      data-lr="${lrNumber}"
                                       oninput="updateTotalPayment()" onchange="updateTotalPayment()">
                             </td>
                         </tr>
@@ -2539,56 +2524,59 @@
                 }).join('');
 
                 modalBody.innerHTML += `
-                    <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-                        <thead>
-                            <tr style="background-color: #f8f9fa;">
-                                <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">FR NO.</th>
-                                <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">LR NUMBER</th>
-                                <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">TRUCK NUMBER</th>
-                                <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">VOUCHER NUMBER</th>
-                                <th style="text-align: right; padding: 8px; border: 1px solid #ddd;">BALANCE AMOUNT</th>
-                                <th style="text-align: right; padding: 8px; border: 1px solid #ddd;">PAYMENT AMOUNT</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${lrRows}
-                        </tbody>
-                    </table>
-
-                    <div style="background-color: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 4px;">
-                        <strong>TOTAL PAYMENT: <span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
+                    <div class="table-responsive my-2">
+                        <table class="table table-bordered table-sm table-striped align-middle mb-0 small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-start text-nowrap">FR NO.</th>
+                                    <th class="text-start text-nowrap">LR NUMBER</th>
+                                    <th class="text-center text-nowrap">TRUCK NUMBER</th>
+                                    <th class="text-center text-nowrap">VOUCHER NUMBER</th>
+                                    <th class="text-end text-nowrap">BALANCE AMOUNT</th>
+                                    <th class="text-end text-nowrap">PAYMENT AMOUNT</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${lrRows}
+                            </tbody>
+                        </table>
                     </div>
 
-                    <div style="margin: 15px 0;">
-                        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-                            <div style="flex: 1;">
-                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Type *</label>
-                                <select id="paymentType" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+                    <div class="alert alert-info py-2 px-3 my-2 fw-bold d-flex justify-content-between align-items-center small">
+                        <strong>TOTAL PAYMENT:</strong>
+                        <span id="totalPaymentAmount" class="fs-6">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span>
+                    </div>
+
+                    <div class="my-3">
+                        <div class="row g-2 mb-2">
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <label class="form-label mb-1 small fw-bold">Payment Type *</label>
+                                <select id="paymentType" class="form-select form-select-sm" required>
                                     <option value="">Select Payment Type</option>
                                     ${paymentTypes.map(type =>
                                         `<option value="${type.id}">${type.name}</option>`
                                     ).join('')}
                                 </select>
                             </div>
-                            <div style="flex: 1;">
-                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Mode *</label>
-                                <select id="paymentMode" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <label class="form-label mb-1 small fw-bold">Payment Mode *</label>
+                                <select id="paymentMode" class="form-select form-select-sm" required>
                                     <option value="">Select Payment Mode</option>
                                     ${paymentModes.map(mode =>
                                         `<option value="${mode.id}">${mode.name}</option>`
                                     ).join('')}
                                 </select>
                             </div>
-                            <div id="pumpNameContainer" style="display: none; flex: 1;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                                    <label style="display: block; margin-bottom: 0; font-weight: bold;">Pump Name *</label>
+                            <div id="pumpNameContainer" class="col-12 col-md-6 col-lg-4" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label mb-0 small fw-bold">Pump Name *</label>
                                     <a href="javascript:void(0)"
-                                        class="lrf-quick-add js-open-quick-add-pump"
+                                        class="lrf-quick-add js-open-quick-add-pump small"
                                         data-pump-select="pumpName">
                                         <i class="bi bi-plus-lg"></i> Add
                                     </a>
                                 </div>
-                                <select id="pumpName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                                <select id="pumpName" class="form-select form-select-sm">
                                     <option value="">Select Pump</option>
                                     @foreach ($pumps as $pump)
                                         <option value="{{ $pump->id }}">{{ $pump->pump_name }} {{ $pump->contact_name ? '('.$pump->contact_name.')' : '' }}</option>
@@ -2596,13 +2584,13 @@
                                 </select>
                             </div>
                         </div>
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Reference Transaction ID</label>
-                            <input type="text" id="referenceId" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter reference/transaction ID (optional)">
+                        <div class="mb-2">
+                            <label class="form-label mb-1 small fw-bold">Reference Transaction ID</label>
+                            <input type="text" id="referenceId" class="form-control form-control-sm" placeholder="Enter reference/transaction ID (optional)">
                         </div>
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
-                            <textarea id="paymentRemarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
+                        <div class="mb-2">
+                            <label class="form-label mb-1 small fw-bold">Remarks</label>
+                            <textarea id="paymentRemarks" class="form-control form-control-sm" rows="2" placeholder="Enter any remarks..."></textarea>
                         </div>
                     </div>
                 `;

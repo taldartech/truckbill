@@ -18,9 +18,9 @@
     <div class="card app-index-list-card mb-4">
         <div class="card-header">
             <h3 class="card-title mb-0">Pump Management</h3>
-            <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
-                <a href="{{ route('master.pump.create') }}" class="btn app-index-header-btn" aria-label="Create pump">
-                    <i class="fas fa-plus"></i> Create
+            <div class="app-index-card-toolbar d-flex flex-nowrap gap-1 gap-sm-2 align-items-center">
+                <a href="{{ route('master.pump.create') }}" class="btn app-index-header-btn" aria-label="Create pump" title="Create Pump">
+                    <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Create</span>
                 </a>
             </div>
         </div>

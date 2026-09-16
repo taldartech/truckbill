@@ -13,19 +13,19 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.memo-copy') }}" id="searchForm" class="tb-report-customer-select2-form">
-                <div class="row mb-2">
-                    <div class="col-md-3">
-                        <label class="form-label">Customer <span class="text-danger">*</span></label>
-                        <select name="customer_id" id="memo_copy_customer_id" class="form-select" required>
+                <div class="row g-2 align-items-end mb-2">
+                    <div class="col-6 col-md-4">
+                        <label class="form-label small mb-1">Customer <span class="text-danger">*</span></label>
+                        <select name="customer_id" id="memo_copy_customer_id" class="form-select form-select-sm" required>
                             <option value=""></option>
                             @if ($presetCustomer)
                                 <option value="{{ $presetCustomer->id }}" selected>{{ $presetCustomer->name }}</option>
                             @endif
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Memo ID <span class="text-danger">*</span></label>
-                        <select name="memo_id" id="memo_copy_memo_id" class="form-select" required>
+                    <div class="col-6 col-md-4">
+                        <label class="form-label small mb-1">Memo ID <span class="text-danger">*</span></label>
+                        <select name="memo_id" id="memo_copy_memo_id" class="form-select form-select-sm" required>
                             <option value="">Select Memo ID</option>
                             @foreach ($memo_ids as $id)
                                 <option @if ($memo_id == $id) selected @endif value="{{ $id }}">
@@ -33,13 +33,13 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3 text-end d-flex align-items-end justify-content-end gap-2">
-                        <button type="submit" class="btn btn-brand-primary">
-                            <i class="bi bi-search"></i> Search
+                    <div class="col-12 col-md-4 text-end d-flex align-items-end justify-content-end gap-1 gap-sm-2 mt-2 mt-md-0">
+                        <button type="submit" class="btn btn-brand-primary btn-sm" title="Search">
+                            <i class="bi bi-search"></i><span class="d-none d-sm-inline ms-1">Search</span>
                         </button>
                         <a href="{{ route('reports.memo-copy') }}?date={{ date('Y-m-d') }}"
-                            class="btn btn-secondary">
-                            <i class="bi bi-arrow-clockwise"></i> Reset
+                            class="btn btn-secondary btn-sm" title="Reset">
+                            <i class="bi bi-arrow-clockwise"></i><span class="d-none d-sm-inline ms-1">Reset</span>
                         </a>
                     </div>
                 </div>
@@ -58,20 +58,22 @@
                     <div>
                         <h3 class="card-title mb-0">Memo Copy</h3>
                     </div>
-                    <div class="d-flex">
-                        <a class="btn btn-warning ms-2" target="_blank"
+                    <div class="d-flex gap-1 gap-sm-2">
+                        <a class="btn btn-warning btn-sm" target="_blank"
                             href="{{ route('reports.memo-copy-export', ['memo_id' => $memo_id]) }}">
-                            <i class="bi bi-file-earmark-spreadsheet"></i> Export
+                            <i class="bi bi-file-earmark-spreadsheet"></i> <span class="d-none d-sm-inline ms-1">Export</span>
                         </a>
-                        <a class="btn btn-danger ms-2" target="_blank"
-                        href="{{ route('reports.memo-copy-export', ['memo_id' => $memo_id, 'type' => 'pdf']) }}">
-                        <i class="bi bi-file-earmark-pdf"></i> PDF
-                    </a>
+                        <a class="btn btn-danger btn-sm" target="_blank"
+                            href="{{ route('reports.memo-copy-export', ['memo_id' => $memo_id, 'type' => 'pdf']) }}">
+                            <i class="bi bi-file-earmark-pdf"></i> <span class="d-none d-sm-inline ms-1">PDF</span>
+                        </a>
                     </div>
                 </div>
             </div>
-            <div class="card-body" style="overflow-x: auto;">
-              @include('reports.exports.memo-copy')
+            <div class="card-body">
+                <div class="table-responsive">
+                    @include('reports.exports.memo-copy')
+                </div>
             </div>
         </div>
     @endif

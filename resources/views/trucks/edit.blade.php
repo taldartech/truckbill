@@ -107,7 +107,9 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <a href="{{ route('drivers.create') }}" class="btn btn-secondary" target="_blank">Add New Driver</a>
+                                    <a href="{{ route('drivers.create') }}" class="btn btn-secondary text-nowrap px-2 px-sm-3 d-inline-flex align-items-center" target="_blank" title="Add New Driver">
+                                        <i class="bi bi-person-plus-fill me-1"></i><span class="d-none d-sm-inline">Add New Driver</span><span class="d-inline d-sm-none">New Driver</span>
+                                    </a>
                                 </div>
                                 @error('driver_id') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>

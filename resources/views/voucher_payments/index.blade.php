@@ -324,19 +324,19 @@
 
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-striped table-hover align-middle mb-0 app-index-table w-100" id="voucherPaymentsTable">
+                <table class="table table-sm table-striped table-hover align-middle mb-0 app-index-table text-nowrap w-100" id="voucherPaymentsTable">
                     <thead class="table-light">
                         <tr>
-                            <th>Voucher #</th>
-                            <th>Good Receipt (Bilty) No</th>
-                            <th>Customer</th>
-                            <th>Truck No</th>
-                            <th>Transporter</th>
-                            <th>Source</th>
-                            <th>Destination</th>
+                            <th class="px-2 py-2 text-nowrap">Voucher #</th>
+                            <th class="px-2 py-2 text-nowrap">Good Receipt (Bilty) No</th>
+                            <th class="px-2 py-2 text-nowrap">Customer</th>
+                            <th class="px-2 py-2 text-nowrap">Truck No</th>
+                            <th class="px-2 py-2 text-nowrap">Transporter</th>
+                            <th class="px-2 py-2 text-nowrap">Source</th>
+                            <th class="px-2 py-2 text-nowrap">Destination</th>
 
                             @if(auth()->check() && auth()->user()->canActAsAdmin())
-                            <th class="app-index-actions-cell">Actions</th>
+                            <th class="app-index-actions-cell px-2 py-2 text-nowrap text-end">Actions</th>
                             @endif
                         </tr>
                     </thead>
@@ -348,34 +348,34 @@
                             @endphp
                             <tr class="align-middle">
 
-                                <td>
+                                <td class="px-2 py-1 text-nowrap">
                                     <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}" class="fw-bold text-decoration-none">
                                         {{ $payment->voucher_number }}
                                         <i class="bi bi-box-arrow-up-right ms-1 small"></i>
                                     </a>
                                 </td>
-                                <td>
+                                <td class="px-2 py-1 text-nowrap">
                                     @if($payment->freight_booking && $payment->freight_booking->lr)
                                         <span class="badge text-dark">{{ $payment->freight_booking->lr->lr_number }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td>
+                                <td class="px-2 py-1 text-nowrap">
                                     @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->customer)
                                         <span class="badge text-dark">{{ $payment->freight_booking->lr->customer->name }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td>
+                                <td class="px-2 py-1 text-nowrap">
                                     @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->truck)
                                         <span class="badge text-dark">{{ $payment->freight_booking->lr->truck->truck_number }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td>
+                                <td class="px-2 py-1 text-nowrap">
                                     @if($payment->freight_booking && $payment->freight_booking->transporter)
                                         @if($payment->freight_booking->transporter->is_owner)
                                             <span class="badge bg-light text-dark"><i class="bi bi-truck"></i> {{ $payment->freight_booking->transporter->name }}</span>
@@ -386,14 +386,14 @@
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td>
+                                <td class="px-2 py-1 text-nowrap">
                                     @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->consignor && $payment->freight_booking->lr->consignor->city)
                                         <span class="badge text-dark">{{ $payment->freight_booking->lr->consignor->city->name }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td>
+                                <td class="px-2 py-1 text-nowrap">
                                     @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->consignee && $payment->freight_booking->lr->consignee->city)
                                         <span class="badge text-dark">{{ $payment->freight_booking->lr->consignee->city->name }}</span>
                                     @else
@@ -402,8 +402,8 @@
                                 </td>
 
                                 @if(auth()->check() && auth()->user()->canActAsAdmin())
-                                <td class="app-index-actions-cell">
-                                    <div class="app-index-table-actions">
+                                <td class="app-index-actions-cell px-2 py-1 text-nowrap text-end">
+                                    <div class="app-index-table-actions justify-content-end">
                                         <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}" class="btn btn-sm btn-icon btn-action-view" data-bs-toggle="tooltip"
                                             data-bs-placement="top" title="View Details">
                                             <i class="bi bi-eye"></i>

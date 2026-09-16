@@ -49,10 +49,9 @@
                                         name="gst_number" placeholder="Enter GST Number">
                                 </div>
                                 <div class="col-md-4">
-                                    <label for="quick_customer_pan_number" class="form-label">PAN Number</label>
-                                    <input type="text" class="form-control" id="quick_customer_pan_number"
-                                        name="pan_number" maxlength="10" placeholder="Enter PAN Number"
-                                        style="text-transform: uppercase;">
+                                    <label for="quick_customer_pan_number" class="form-label small fw-semibold">PAN Number</label>
+                                    <input type="text" class="form-control form-control-sm text-uppercase" id="quick_customer_pan_number"
+                                        name="pan_number" maxlength="10" placeholder="10-digit PAN">
                                 </div>
                             </div>
                         </div>

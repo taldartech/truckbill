@@ -79,8 +79,8 @@
                     @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-4">
-                    <label for="pan_number" class="form-label">PAN Number</label>
-                    <input placeholder="Enter PAN Number (e.g., ABCDE1234F)" type="text" class="form-control" id="pan_number" name="pan_number" value="{{ old('pan_number', $consignee->pan_number) }}" maxlength="10" style="text-transform: uppercase;">
+                    <label for="pan_number" class="form-label small fw-semibold">PAN Number</label>
+                    <input placeholder="10-digit PAN (e.g., ABCDE1234F)" type="text" class="form-control form-control-sm text-uppercase" id="pan_number" name="pan_number" value="{{ old('pan_number', $consignee->pan_number) }}" maxlength="10">
                     <div class="invalid-feedback" id="pan_number_feedback"></div>
                     @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>

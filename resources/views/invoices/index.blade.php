@@ -240,9 +240,9 @@
                 </div>
             </div>
 
-            <div class="app-index-dt-toolbar">
+            <div class="p-2 p-md-3 border-bottom bg-white">
                 {{-- Quick Stats --}}
-                <div class="invoice-stats">
+                <div class="invoice-stats mb-0">
                     <div class="invoice-stat invoice-stat--total">
                         <span class="invoice-stat__icon"><i class="bi bi-receipt"></i></span>
                         <span class="invoice-stat__meta">
@@ -363,7 +363,7 @@
                 </form>
             </div>
 
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="table-responsive">
                     <table id="invoicesTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
                         <thead class="table-light">
@@ -573,9 +573,9 @@
                 order: [
                     [0, 'desc']
                 ],
-                dom: '<"app-index-dt-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2"<"d-flex flex-wrap align-items-center gap-2"l><"d-flex flex-wrap align-items-center gap-2"f>>' +
+                dom: '<"d-flex flex-wrap justify-content-between align-items-center gap-1 gap-sm-2 p-2 p-sm-3 border-bottom"<"d-flex align-items-center gap-1"l><"d-flex align-items-center gap-1"f>>' +
                     't' +
-                    '<"app-index-partload-pagination d-flex flex-wrap align-items-center justify-content-between gap-2"<"app-index-partload-pagination__summary"i><"app-index-partload-pagination__nav"p>>',
+                    '<"app-index-partload-pagination d-flex flex-wrap align-items-center justify-content-between gap-2 p-2 p-sm-3"<"app-index-partload-pagination__summary"i><"app-index-partload-pagination__nav"p>>',
                 drawCallback: function() {
                     initTooltips();
                 }

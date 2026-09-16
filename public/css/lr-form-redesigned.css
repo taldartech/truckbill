@@ -23,7 +23,7 @@
 .lrf-page__toolbar {
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
     margin-bottom: 1rem;
@@ -44,9 +44,10 @@
 }
 
 .lrf-page__toolbar-actions {
-    display: flex;
-    flex-wrap: wrap;
+    display: inline-flex;
+    align-items: center;
     gap: 0.45rem;
+    flex-wrap: nowrap;
 }
 
 .lrf-page__toolbar-actions .btn {
@@ -54,6 +55,11 @@
     font-size: 0.8rem;
     font-weight: 600;
     border-radius: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .lrf-section {
@@ -1808,12 +1814,26 @@
         padding: 12px;
     }
 
+    .lrf-page__toolbar {
+        align-items: center;
+    }
+
     .lrf-page__toolbar-actions {
-        width: 100%;
+        width: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        flex-wrap: nowrap;
     }
 
     .lrf-page__toolbar-actions .btn {
-        flex: 1 1 auto;
+        width: auto;
+        flex: 0 0 auto;
+        min-height: 30px;
+        padding: 0.28rem 0.6rem;
+        font-size: 0.76rem;
+        border-radius: 0.45rem;
+        white-space: nowrap;
     }
 }
 
@@ -1822,13 +1842,45 @@
         padding: 12px 10px 24px;
     }
 
+    .lrf-page__toolbar {
+        align-items: center;
+        gap: 0.5rem;
+    }
+
     .lrf-page__toolbar-title {
-        font-size: 1.05rem;
-        line-height: 1.3;
+        font-size: 0.95rem;
+        line-height: 1.25;
     }
 
     .lrf-page__toolbar-sub {
-        font-size: 0.74rem;
+        font-size: 0.72rem;
+    }
+
+    .lrf-page__toolbar-actions {
+        width: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        flex-wrap: nowrap;
+    }
+
+    .lrf-page__toolbar-actions .btn {
+        width: auto;
+        flex: 0 0 auto;
+        min-height: 28px;
+        padding: 0.24rem 0.5rem;
+        font-size: 0.72rem;
+        font-weight: 550;
+        border-radius: 0.375rem;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .lrf-page__toolbar-actions .btn i {
+        font-size: 0.72rem;
+        margin-right: 0.2rem !important;
     }
 
     .lrf-section__body {
@@ -1856,13 +1908,32 @@
     }
 
     .lrf-actions {
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: center;
+        align-items: center;
+        gap: 0.4rem;
+        width: 100%;
+        margin-top: 0.6rem;
     }
 
     .lrf-actions .btn {
-        width: 100%;
+        flex: 1 1 0;
+        width: auto;
         min-width: 0;
+        min-height: 34px;
+        padding: 0.38rem 0.35rem;
+        font-size: 0.76rem;
+        font-weight: 600;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .lrf-actions .btn i {
+        font-size: 0.76rem;
+        margin-right: 0.2rem !important;
     }
 
     .lrf-linked__route-pill {
@@ -1877,6 +1948,42 @@
 @media (max-width: 575px) {
     .lrf-page {
         padding: 10px 8px 20px;
+    }
+
+    .lrf-page__toolbar {
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .lrf-page__toolbar-title {
+        font-size: 0.85rem;
+        line-height: 1.2;
+    }
+
+    .lrf-page__toolbar-sub {
+        font-size: 0.66rem;
+    }
+
+    .lrf-page__toolbar-actions {
+        width: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        flex-wrap: nowrap;
+    }
+
+    .lrf-page__toolbar-actions .btn {
+        width: auto;
+        flex: 0 0 auto;
+        min-height: 26px;
+        padding: 0.2rem 0.42rem;
+        font-size: 0.68rem;
+        white-space: nowrap;
+    }
+
+    .lrf-page__toolbar-actions .btn i {
+        font-size: 0.68rem;
+        margin-right: 0.15rem !important;
     }
 
     .lrf-step-num {
@@ -1915,5 +2022,21 @@
     .lrf-goods-lane__label,
     .lrf-goods-lane__sub {
         max-width: 100%;
+    }
+
+    .lrf-actions {
+        gap: 0.25rem;
+        padding: 0.2rem 0 0.35rem;
+    }
+
+    .lrf-actions .btn {
+        min-height: 32px;
+        padding: 0.32rem 0.2rem;
+        font-size: 0.7rem;
+    }
+
+    .lrf-actions .btn i {
+        font-size: 0.7rem;
+        margin-right: 0.15rem !important;
     }
 }

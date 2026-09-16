@@ -12,10 +12,10 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.transporter-master') }}" id="searchForm">
-                <div class="row" style="align-items: end;">
-                    <div class="col-md-3">
-                        <label class="form-label">Type</label>
-                        <select name="type" class="form-select">
+                <div class="row g-2 align-items-end mb-2">
+                    <div class="col-6 col-md-3">
+                        <label class="form-label small mb-1">Type</label>
+                        <select name="type" class="form-select form-select-sm">
                             <option value="transporter" {{ ($type ?? 'transporter') === 'transporter' ? 'selected' : '' }}>
                                 Transporter
                             </option>
@@ -27,17 +27,15 @@
                             </option>
                         </select>
                     </div>
-               
 
-               <div class="col-md-4 d-flex align-items-end justify-content-end gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-search"></i> Search
+                    <div class="col-6 col-md-4 d-flex align-items-end justify-content-end gap-1 gap-sm-2 mt-2 mt-md-0">
+                        <button type="submit" class="btn btn-brand-primary btn-sm" title="Search">
+                            <i class="bi bi-search"></i><span class="d-none d-sm-inline ms-1">Search</span>
                         </button>
-                        <a href="{{ route('reports.transporter-master') }}" class="btn btn-secondary">
-                            <i class="bi bi-arrow-clockwise"></i> Reset
+                        <a href="{{ route('reports.transporter-master') }}" class="btn btn-secondary btn-sm" title="Reset">
+                            <i class="bi bi-arrow-clockwise"></i><span class="d-none d-sm-inline ms-1">Reset</span>
                         </a>
-                    
-                     </div>
+                    </div>
                 </div>
             </form>
         </div>
@@ -55,26 +53,16 @@
                         <h3 class="card-title mb-0">Transporter / Truck Owner Details</h3>
                     </div>
                     <div class="d-flex">
-                        <a class="btn btn-warning ms-2"
+                        <a class="btn btn-warning btn-sm ms-2"
                             href="{{ route('reports.transporter-master-export', ['type' => $type ?? 'transporter']) }}">
-                            <i class="bi bi-file-earmark-spreadsheet"></i> Export
+                            <i class="bi bi-file-earmark-spreadsheet"></i> <span class="d-none d-sm-inline ms-1">Export</span>
                         </a>
                     </div>
                 </div>
             </div>
-            <style>
-                .select2-dropdown {
-                    border: 1px solid var(--brand-border);
-                    border-radius: 0.375rem;
-                }
-
-                .select2-results__option--highlighted {
-                    background-color: var(--brand-primary);
-                    color: white;
-                }
-            </style>
-            <div class="card-body table-sticky">
-                <table class="table table-bordered table-striped" style="font-size: 12px !important;">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover align-middle mb-0 text-nowrap small">
                     <thead>
                         <tr>
                             <th>S. No</th>
@@ -122,6 +110,7 @@
                         @endforeach
                     </tbody>
                 </table>
+                </div>
             </div>
             <div class="mt-3 d-flex justify-content-end">
                 {{ $transporters->links() }}
