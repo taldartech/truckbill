@@ -57,62 +57,94 @@
 <div class="card mb-4">
     <div class="card-body">
         <form method="GET" action="{{ route('reports.transporter-report') }}" id="searchForm">
-            <div class="row mb-2">
-                <div class="col-md-3">
-                    <label class="form-label">Start Date <span class="text-danger">*</span></label>
-                    <input type="date" name="start_date" class="form-control" value="{{ $startDate }}" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">End Date <span class="text-danger">*</span></label>
-                    <input type="date" name="end_date" class="form-control" value="{{ $endDate }}" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Transporter/Truck Owner</label>
-                    <select name="transporter_id" id="transporterFilter" class="form-select select2">
-                        <option value="">Select Transporter/Truck Owner</option>
-                        @foreach ($transporters as $transporter)
-                        <option @if ($transporterId==$transporter->id) selected @endif value="{{ $transporter->id }}">
-                            {{ $transporter->name }} (@if ($transporter->is_owner)
-                            Owner
-                            @else
-                            Transporter
-                            @endif)
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Truck No</label>
-                    <select name="truck_id" id="truckFilter" class="form-select select2">
-                        <option value="">Select Truck No</option>
-                        @foreach ($trucks as $truck)
-                        <option @if ($truckId==$truck->id) selected @endif value="{{ $truck->id }}">
-                            {{ $truck->truck_number }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3 ">
-                    <label class="form-label">Reference By</label>
-                    <select name="reference_by" id="referenceFilter" class="form-select select2">
-                        <option value="">Select Reference By</option>
-                        @foreach ($references as $reference)
-                        <option @if ($referenceId==$reference->id) selected @endif value="{{ $reference->id }}">
-                            {{ $reference->name }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-               
-                    <div class="col-md-3 d-flex align-items-end justify-content-end gap-2">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-search"></i> Search
-                    </button>
-                    <a href="{{ route('reports.transporter-report') }}" class="btn btn-secondary">
-                        <i class="bi bi-arrow-clockwise"></i> Reset
-                    </a>
-                </div>
-            </div>
+       <div class="row g-2 align-items-end mb-2">
+
+    <div class="col">
+        <label class="form-label">Start Date <span class="text-danger">*</span></label>
+        <input type="date"
+               name="start_date"
+               class="form-control"
+               value="{{ $startDate }}"
+               required>
+    </div>
+
+    <div class="col">
+        <label class="form-label">End Date <span class="text-danger">*</span></label>
+        <input type="date"
+               name="end_date"
+               class="form-control"
+               value="{{ $endDate }}"
+               required>
+    </div>
+
+    <div class="col">
+        <label class="form-label">Transporter/Owner</label>
+        <select name="transporter_id"
+                id="transporterFilter"
+                class="form-select select2">
+            <option value="">Select Transporter/Owner</option>
+
+            @foreach ($transporters as $transporter)
+                <option
+                    @if ($transporterId == $transporter->id) selected @endif
+                    value="{{ $transporter->id }}">
+                    {{ $transporter->name }}
+                    (@if ($transporter->is_owner)
+                        Owner
+                    @else
+                        Transporter
+                    @endif)
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    <div class="col">
+        <label class="form-label">Truck No</label>
+        <select name="truck_id"
+                id="truckFilter"
+                class="form-select select2">
+            <option value="">Select Truck No</option>
+
+            @foreach ($trucks as $truck)
+                <option
+                    @if ($truckId == $truck->id) selected @endif
+                    value="{{ $truck->id }}">
+                    {{ $truck->truck_number }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    <div class="col">
+        <label class="form-label">Reference</label>
+        <select name="reference_by"
+                id="referenceFilter"
+                class="form-select select2">
+            <option value="">Select Reference</option>
+
+            @foreach ($references as $reference)
+                <option
+                    @if ($referenceId == $reference->id) selected @endif
+                    value="{{ $reference->id }}">
+                    {{ $reference->name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    <div class="col-auto d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-search"></i> Search
+        </button>
+
+        <a href="{{ route('reports.transporter-report') }}"
+           class="btn btn-secondary">
+            <i class="bi bi-arrow-clockwise"></i> Reset
+        </a>
+    </div>
+
+</div>
 
 
             <div class="row mb-2">
