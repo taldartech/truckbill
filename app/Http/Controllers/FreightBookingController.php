@@ -779,7 +779,7 @@ class FreightBookingController extends Controller
                 return $this->redirectToFreightBookingsIndex($request, 'error', 'This Good Receipt (Bilty) is already linked to a Good Hire (Lorry Hire).');
             }
 
-            $nextVoucherNumber = FreightBooking::max('voucher_number') + 1;
+            $nextVoucherNumber = FreightBooking::allocateNextVoucherNumber();
 
             $transporterInfo = [];
             if ($lorryReceipt->transporter) {

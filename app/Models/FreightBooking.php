@@ -123,6 +123,22 @@ class FreightBooking extends Model implements Auditable
         return (float) $this->customAmounts()->sum('amount');
     }
 
+    /**
+     * Allocate the next hire voucher number. Call inside an open DB transaction.
+     * Uses withTrashed() because the unique index still covers soft-deleted rows,
+     * and locks the current max row to serialize concurrent creates.
+     */
+    public static function allocateNextVoucherNumber(): int
+    {
+        static::query()
+            ->withTrashed()
+            ->orderByDesc('voucher_number')
+            ->lockForUpdate()
+            ->first();
+
+        return ((int) static::withTrashed()->max('voucher_number')) + 1;
+    }
+
     public function effectivePayableAmount(): float
     {
         return (float) $this->tr_amount
