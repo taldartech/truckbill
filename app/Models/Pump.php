@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -16,4 +17,10 @@ class Pump extends Model
         'contact_number',
         'remark',
     ];
+
+    protected function name(): Attribute
+    {
+        return Attribute::get(fn () => $this->pump_name ?? '');
+    }
 }
+

@@ -56,47 +56,91 @@ class AccountingPostingService
         }
 
         if ($entity instanceof Transporter) {
+            $groupName = $entity->is_owner ? 'Truck Owners' : 'Transporters';
             $group = AccountGroup::where('company_id', $company->id)
-                ->where('name', 'Sundry Creditors')
+                ->where('name', $groupName)
+                ->first()
+                ?? AccountGroup::where('company_id', $company->id)
+                    ->where('name', 'Sundry Creditors')
+                    ->first();
+
+            $expectedName = $entity->name.($entity->is_owner ? ' (Owner)' : ' (Transporter)');
+
+            $ledger = Ledger::where('company_id', $company->id)
+                ->where('entity_type', Transporter::class)
+                ->where('entity_id', $entity->id)
                 ->first();
 
-            return Ledger::firstOrCreate(
-                [
-                    'company_id' => $company->id,
-                    'entity_type' => Transporter::class,
-                    'entity_id' => $entity->id,
-                ],
-                [
-                    'account_group_id' => $group->id,
-                    'name' => $entity->name.($entity->is_owner ? ' (Owner)' : ' (Transporter)'),
-                    'gstin' => $entity->gst_number,
-                    'pan_number' => $entity->pan_number,
-                    'tds_section' => '194C',
-                    'tds_rate' => $entity->tds_percentage,
-                    'opening_balance' => 0.00,
-                    'opening_balance_type' => 'credit',
-                ]
-            );
+            $tdsRate = ($entity->declaration_given ?? false) ? 0.00 : $entity->tds_percentage;
+
+            if ($ledger) {
+                if ($group && $ledger->account_group_id !== $group->id) {
+                    $ledger->account_group_id = $group->id;
+                }
+                if ($ledger->name !== $expectedName && ! empty($entity->name)) {
+                    $ledger->name = $expectedName;
+                }
+                $ledger->tds_rate = $tdsRate;
+                $ledger->save();
+
+                return $ledger;
+            }
+
+            return Ledger::create([
+                'company_id' => $company->id,
+                'account_group_id' => $group->id,
+                'name' => $expectedName,
+                'entity_type' => Transporter::class,
+                'entity_id' => $entity->id,
+                'gstin' => $entity->gst_number,
+                'pan_number' => $entity->pan_number,
+                'tds_section' => '194C',
+                'tds_rate' => $tdsRate,
+                'opening_balance' => 0.00,
+                'opening_balance_type' => 'credit',
+            ]);
         }
 
         if ($entity instanceof Pump) {
             $group = AccountGroup::where('company_id', $company->id)
-                ->where('name', 'Sundry Creditors')
+                ->where('name', 'Fuel Pumps')
+                ->first()
+                ?? AccountGroup::where('company_id', $company->id)
+                    ->where('name', 'Sundry Creditors')
+                    ->first();
+
+            $pumpName = trim((string) ($entity->pump_name ?: $entity->name ?: $entity->contact_name));
+            if ($pumpName === '') {
+                $pumpName = 'Pump #'.$entity->id;
+            }
+            $expectedName = $pumpName.' (Fuel Pump)';
+
+            $ledger = Ledger::where('company_id', $company->id)
+                ->where('entity_type', Pump::class)
+                ->where('entity_id', $entity->id)
                 ->first();
 
-            return Ledger::firstOrCreate(
-                [
-                    'company_id' => $company->id,
-                    'entity_type' => Pump::class,
-                    'entity_id' => $entity->id,
-                ],
-                [
-                    'account_group_id' => $group->id,
-                    'name' => $entity->name.' (Fuel Pump)',
-                    'opening_balance' => 0.00,
-                    'opening_balance_type' => 'credit',
-                ]
-            );
+            if ($ledger) {
+                if ($group && $ledger->account_group_id !== $group->id) {
+                    $ledger->account_group_id = $group->id;
+                }
+                if ($ledger->name !== $expectedName) {
+                    $ledger->name = $expectedName;
+                }
+                $ledger->save();
+
+                return $ledger;
+            }
+
+            return Ledger::create([
+                'company_id' => $company->id,
+                'account_group_id' => $group->id,
+                'name' => $expectedName,
+                'entity_type' => Pump::class,
+                'entity_id' => $entity->id,
+                'opening_balance' => 0.00,
+                'opening_balance_type' => 'credit',
+            ]);
         }
 
         throw new InvalidArgumentException('Unsupported entity for ledger creation: '.get_debug_type($entity));
@@ -269,51 +313,121 @@ class AccountingPostingService
         $customer = $invoice->consignee;
         $customerLedger = $this->getOrCreatePartyLedger($company, $customer);
 
+        $paymentMode = strtolower(trim((string) $payment->mode));
+        $cashLedger = Ledger::where('company_id', $company->id)->where('code', 'CASH')->firstOrFail();
         $bankLedger = Ledger::where('company_id', $company->id)
             ->where('code', 'BANK_PRIMARY')
-            ->first() ?? Ledger::where('company_id', $company->id)->where('code', 'CASH')->firstOrFail();
+            ->first() ?? $cashLedger;
 
-        return DB::transaction(function () use ($payment, $company, $invoice, $customerLedger, $bankLedger): AccountingVoucher {
+        // Use selected bank/wallet ledger if available, otherwise default by mode
+        if (! empty($payment->bank_ledger_id)) {
+            $remittanceLedger = Ledger::where('company_id', $company->id)->find($payment->bank_ledger_id)
+                ?? ($paymentMode === 'cash' ? $cashLedger : $bankLedger);
+        } else {
+            $remittanceLedger = $paymentMode === 'cash' ? $cashLedger : $bankLedger;
+        }
+
+        $tdsLedger = Ledger::where('company_id', $company->id)
+            ->where('code', 'TDS_194C_REC')
+            ->first();
+
+        $deductionsLedger = Ledger::where('company_id', $company->id)
+            ->where('code', 'CUSTOMER_DEDUCTIONS')
+            ->first();
+
+        return DB::transaction(function () use (
+            $payment,
+            $company,
+            $invoice,
+            $customerLedger,
+            $remittanceLedger,
+            $tdsLedger,
+            $deductionsLedger
+        ): AccountingVoucher {
             AccountingVoucher::where('company_id', $company->id)
                 ->where('source_type', InvoicePayment::class)
                 ->where('source_id', $payment->id)
                 ->delete();
 
-            $amount = (float) $payment->amount;
+            $receivedAmount = (float) $payment->amount;
+            $tdsAmount = (float) ($payment->tds_amount ?? 0.0);
+            $deductionAmount = (float) ($payment->deduction_amount ?? 0.0);
+            $totalSettled = round($receivedAmount + $tdsAmount + $deductionAmount, 2);
+
+            $invRef = $invoice->invoice_number ?: ($invoice->manual_invoice_number ?: 'INV-'.$invoice->id);
+            $narrationParts = ['Payment received for Invoice #'.$invRef];
+            if ($tdsAmount > 0) {
+                $narrationParts[] = 'TDS 194C: ₹'.number_format($tdsAmount, 2);
+            }
+            if ($deductionAmount > 0) {
+                $narrationParts[] = 'Deductions: ₹'.number_format($deductionAmount, 2).($payment->deduction_reason ? ' ('.$payment->deduction_reason.')' : '');
+            }
+            if ($payment->remark) {
+                $narrationParts[] = $payment->remark;
+            }
 
             $voucher = AccountingVoucher::create([
                 'company_id' => $company->id,
                 'voucher_type' => 'receipt',
                 'voucher_number' => 'RCPT-'.$payment->id,
                 'voucher_date' => $payment->payment_date ?: now()->toDateString(),
-                'reference_number' => $payment->reference_number ?: 'INV-'.$invoice->id,
+                'reference_number' => $invRef,
                 'reference_date' => $payment->payment_date ?: now()->toDateString(),
-                'narration' => 'Payment received for Invoice #'.($invoice->invoice_number ?: $invoice->manual_invoice_number),
+                'narration' => implode(' | ', $narrationParts),
                 'source_type' => InvoicePayment::class,
                 'source_id' => $payment->id,
-                'total_amount' => $amount,
+                'total_amount' => $totalSettled,
                 'is_posted' => true,
             ]);
 
-            // Dr: Bank / Cash
-            AccountingVoucherItem::create([
-                'company_id' => $company->id,
-                'accounting_voucher_id' => $voucher->id,
-                'ledger_id' => $bankLedger->id,
-                'type' => 'debit',
-                'amount' => $amount,
-                'particulars_note' => 'Payment received',
-            ]);
+            // 1. Dr: Bank or Cash (Actual Remittance)
+            if ($receivedAmount > 0) {
+                AccountingVoucherItem::create([
+                    'company_id' => $company->id,
+                    'accounting_voucher_id' => $voucher->id,
+                    'ledger_id' => $remittanceLedger->id,
+                    'type' => 'debit',
+                    'amount' => $receivedAmount,
+                    'particulars_note' => 'Remittance against Invoice #'.$invRef.' via '.$remittanceLedger->name,
+                ]);
+            }
 
-            // Cr: Customer
-            AccountingVoucherItem::create([
-                'company_id' => $company->id,
-                'accounting_voucher_id' => $voucher->id,
-                'ledger_id' => $customerLedger->id,
-                'type' => 'credit',
-                'amount' => $amount,
-                'particulars_note' => 'Against Invoice #'.($invoice->invoice_number ?: $invoice->id),
-            ]);
+            // 2. Dr: TDS Receivable u/s 194C (TDS Deducted by Customer)
+            if ($tdsAmount > 0 && $tdsLedger) {
+                AccountingVoucherItem::create([
+                    'company_id' => $company->id,
+                    'accounting_voucher_id' => $voucher->id,
+                    'ledger_id' => $tdsLedger->id,
+                    'type' => 'debit',
+                    'amount' => $tdsAmount,
+                    'particulars_note' => 'TDS deducted by customer u/s 194C on Invoice #'.$invRef,
+                ]);
+            }
+
+            // 3. Dr: Customer Deductions & Shortage (Claims/Penalties)
+            if ($deductionAmount > 0 && $deductionsLedger) {
+                $dedReason = $payment->deduction_reason ? ': '.$payment->deduction_reason : '';
+                AccountingVoucherItem::create([
+                    'company_id' => $company->id,
+                    'accounting_voucher_id' => $voucher->id,
+                    'ledger_id' => $deductionsLedger->id,
+                    'type' => 'debit',
+                    'amount' => $deductionAmount,
+                    'particulars_note' => 'Customer transit loss/deduction on Invoice #'.$invRef.$dedReason,
+                ]);
+            }
+
+            // 4. Cr: Customer (Total Cleared)
+            if ($totalSettled > 0) {
+                AccountingVoucherItem::create([
+                    'company_id' => $company->id,
+                    'accounting_voucher_id' => $voucher->id,
+                    'ledger_id' => $customerLedger->id,
+                    'type' => 'credit',
+                    'amount' => $totalSettled,
+                    'particulars_note' => 'Settled against Invoice #'.$invRef,
+                ]);
+            }
 
             return $voucher;
         });
@@ -339,7 +453,7 @@ class AccountingPostingService
             return null;
         }
 
-        $transporter = $booking->transporter;
+        $transporter = $booking->transporter ?? $booking->truck?->transporter ?? $booking->lr?->transporter;
         if (! $transporter) {
             return null;
         }
@@ -361,15 +475,20 @@ class AccountingPostingService
             ->first();
 
         $costCentre = $this->getOrCreateTruckCostCentre($company, $booking->truck);
+        $truckNo = $booking->truck?->truck_number ?? 'N/A';
+        $lrNo = $booking->lr?->lr_number ?? ($booking->lr_id ? 'LR-'.$booking->lr_id : 'N/A');
 
         return DB::transaction(function () use (
             $booking,
             $company,
+            $transporter,
             $transporterLedger,
             $hiringExpenseLedger,
             $tdsLedger,
             $recoveryLedger,
-            $costCentre
+            $costCentre,
+            $truckNo,
+            $lrNo
         ): AccountingVoucher {
             AccountingVoucher::where('company_id', $company->id)
                 ->where('source_type', FreightBooking::class)
@@ -400,8 +519,8 @@ class AccountingPostingService
                 'voucher_type' => 'purchase',
                 'voucher_number' => 'PUR-FB-'.$booking->id,
                 'voucher_date' => $booking->created_at?->toDateString() ?: now()->toDateString(),
-                'reference_number' => $booking->voucher_number ?: 'LR-'.$booking->lr_id,
-                'narration' => 'Freight hiring for Truck #'.($booking->truck?->truck_number ?? 'N/A').' LR #'.($booking->lr?->lr_number ?? 'N/A'),
+                'reference_number' => 'Truck: '.$truckNo.' | LR: '.$lrNo,
+                'narration' => 'Freight hiring for Truck #'.$truckNo.' LR #'.$lrNo.($booking->voucher_number ? ' (Voucher: '.$booking->voucher_number.')' : ''),
                 'source_type' => FreightBooking::class,
                 'source_id' => $booking->id,
                 'total_amount' => $totalHiringExpense,
@@ -416,7 +535,7 @@ class AccountingPostingService
                 'type' => 'debit',
                 'amount' => $totalHiringExpense,
                 'cost_centre_id' => $costCentre?->id,
-                'particulars_note' => 'Freight hiring trip charges',
+                'particulars_note' => 'Truck #'.$truckNo.' | LR #'.$lrNo.' - Freight hiring charges',
             ]);
 
             // Cr: Transporter (Net Amount)
@@ -427,7 +546,8 @@ class AccountingPostingService
                     'ledger_id' => $transporterLedger->id,
                     'type' => $netCredited >= 0 ? 'credit' : 'debit',
                     'amount' => abs($netCredited),
-                    'particulars_note' => 'Net freight payable after deductions & TDS',
+                    'cost_centre_id' => $costCentre?->id,
+                    'particulars_note' => 'Truck #'.$truckNo.' | LR #'.$lrNo.' - Net freight payable after deductions & TDS',
                 ]);
             }
 
@@ -439,7 +559,7 @@ class AccountingPostingService
                     'ledger_id' => $tdsLedger->id,
                     'type' => 'credit',
                     'amount' => $tdsAmount,
-                    'particulars_note' => 'TDS u/s 194C @ '.($booking->transporter?->tds_percentage ?? 1).'%',
+                    'particulars_note' => 'TDS u/s 194C @ '.($transporter->tds_percentage ?? 1).'%',
                 ]);
             }
 
@@ -470,22 +590,14 @@ class AccountingPostingService
         }
 
         $booking = $voucherPayment->freight_booking;
-        $transporter = $booking?->transporter;
+        $transporter = $booking?->transporter ?? $booking?->truck?->transporter ?? $booking?->lr?->transporter;
         if (! $transporter) {
             return null;
         }
 
         $paymentMode = strtolower(trim((string) $voucherPayment->payment_mode));
-
-        // When payment is settled by adjusting against prior advance, do not disburse bank/cash funds.
-        if (str_contains($paymentMode, 'advance')) {
-            AccountingVoucher::where('company_id', $company->id)
-                ->where('source_type', VoucherPayment::class)
-                ->where('source_id', $voucherPayment->id)
-                ->delete();
-
-            return null;
-        }
+        $truckNo = $booking?->truck?->truck_number ?? 'N/A';
+        $lrNo = $booking?->lr?->lr_number ?? ($booking?->lr_id ? 'LR-'.$booking->lr_id : 'N/A');
 
         $this->provisioner->provisionForCompany($company);
 
@@ -501,15 +613,96 @@ class AccountingPostingService
 
         $costCentre = $this->getOrCreateTruckCostCentre($company, $booking?->truck);
 
+        // Check payment mode type
+        $isFuelPump = str_contains($paymentMode, 'fuel') || str_contains($paymentMode, 'pump') || ! empty($voucherPayment->pump_id);
+        $isAdvanceAdjust = str_contains($paymentMode, 'advance');
+
+        if ($isAdvanceAdjust) {
+            // Post journal adjustment against prior advance so trip settlement is visible in ledger
+            return DB::transaction(function () use (
+                $voucherPayment,
+                $company,
+                $transporterLedger,
+                $costCentre,
+                $truckNo,
+                $lrNo,
+                $paymentMode
+            ): AccountingVoucher {
+                AccountingVoucher::where('company_id', $company->id)
+                    ->where('source_type', VoucherPayment::class)
+                    ->where('source_id', $voucherPayment->id)
+                    ->delete();
+
+                $amount = (float) $voucherPayment->amount;
+
+                $voucher = AccountingVoucher::create([
+                    'company_id' => $company->id,
+                    'voucher_type' => 'journal',
+                    'voucher_number' => 'JRN-'.($voucherPayment->voucher_number ?: $voucherPayment->id),
+                    'voucher_date' => $voucherPayment->date ?: now()->toDateString(),
+                    'reference_number' => 'Truck: '.$truckNo.' | LR: '.$lrNo,
+                    'narration' => 'Advance adjustment for Truck #'.$truckNo.' LR #'.$lrNo.' (Voucher #'.($voucherPayment->voucher_number ?: $voucherPayment->id).')',
+                    'source_type' => VoucherPayment::class,
+                    'source_id' => $voucherPayment->id,
+                    'total_amount' => $amount,
+                    'is_posted' => true,
+                    'user_id' => $voucherPayment->user_id,
+                ]);
+
+                $advanceAssetLedger = Ledger::where('company_id', $company->id)
+                    ->where('code', 'ADV_TRANSPORTER')
+                    ->first()
+                    ?? $this->provisioner->ensureLedger($company, 'Advance to Transporters & Truck Owners A/c', 'Loans & Advances', 'ADV_TRANSPORTER', 'debit');
+
+                // Dr: Transporter Payable (reducing hiring payable for trip)
+                AccountingVoucherItem::create([
+                    'company_id' => $company->id,
+                    'accounting_voucher_id' => $voucher->id,
+                    'ledger_id' => $transporterLedger->id,
+                    'type' => 'debit',
+                    'amount' => $amount,
+                    'cost_centre_id' => $costCentre?->id,
+                    'particulars_note' => 'Truck #'.$truckNo.' | LR #'.$lrNo.' - Advance adjusted against trip hiring',
+                ]);
+
+                // Cr: Advance to Transporters & Truck Owners A/c (clearing advance asset)
+                AccountingVoucherItem::create([
+                    'company_id' => $company->id,
+                    'accounting_voucher_id' => $voucher->id,
+                    'ledger_id' => $advanceAssetLedger->id,
+                    'type' => 'credit',
+                    'amount' => $amount,
+                    'cost_centre_id' => $costCentre?->id,
+                    'particulars_note' => 'Truck #'.$truckNo.' | LR #'.$lrNo.' - Advance settled against Voucher #'.($voucherPayment->voucher_number ?: $voucherPayment->id),
+                ]);
+
+                return $voucher;
+            });
+        }
+
+        // Determine credit ledger based on payment mode / selected bank_ledger_id
+        if ($isFuelPump) {
+            $pump = $voucherPayment->pump ?? ($voucherPayment->pump_id ? Pump::find($voucherPayment->pump_id) : null);
+            $creditLedger = $pump ? $this->getOrCreatePartyLedger($company, $pump) : $cashLedger;
+        } elseif (! empty($voucherPayment->bank_ledger_id)) {
+            $creditLedger = Ledger::where('company_id', $company->id)->find($voucherPayment->bank_ledger_id)
+                ?? ($paymentMode === 'cash' ? $cashLedger : $bankLedger);
+        } elseif ($paymentMode === 'cash') {
+            $creditLedger = $cashLedger;
+        } else {
+            $creditLedger = $bankLedger;
+        }
+
         return DB::transaction(function () use (
             $voucherPayment,
             $company,
-            $booking,
+            $transporter,
             $transporterLedger,
-            $bankLedger,
-            $cashLedger,
+            $creditLedger,
             $costCentre,
-            $paymentMode
+            $paymentMode,
+            $truckNo,
+            $lrNo
         ): AccountingVoucher {
             AccountingVoucher::where('company_id', $company->id)
                 ->where('source_type', VoucherPayment::class)
@@ -518,20 +711,13 @@ class AccountingPostingService
 
             $amount = (float) $voucherPayment->amount;
 
-            // Determine credit ledger based on payment mode
-            $creditLedger = match ($paymentMode) {
-                'cash' => $cashLedger,
-                'pump' => $voucherPayment->pump ? $this->getOrCreatePartyLedger($company, $voucherPayment->pump) : $cashLedger,
-                default => $bankLedger,
-            };
-
             $voucher = AccountingVoucher::create([
                 'company_id' => $company->id,
                 'voucher_type' => 'payment',
                 'voucher_number' => 'PAY-'.($voucherPayment->voucher_number ?: $voucherPayment->id),
                 'voucher_date' => $voucherPayment->date ?: now()->toDateString(),
-                'reference_number' => $voucherPayment->reference_transaction_id ?: $voucherPayment->voucher_number,
-                'narration' => 'Payment to '.($booking?->transporter?->name ?? 'Transporter').' (Mode: '.$paymentMode.')',
+                'reference_number' => 'Truck: '.$truckNo.' | LR: '.$lrNo,
+                'narration' => 'Payment for Truck #'.$truckNo.' LR #'.$lrNo.' to '.($transporter->name ?? 'Transporter').' (Mode: '.$paymentMode.')',
                 'source_type' => VoucherPayment::class,
                 'source_id' => $voucherPayment->id,
                 'total_amount' => $amount,
@@ -547,17 +733,17 @@ class AccountingPostingService
                 'type' => 'debit',
                 'amount' => $amount,
                 'cost_centre_id' => $costCentre?->id,
-                'particulars_note' => 'Voucher #'.($voucherPayment->voucher_number ?: $voucherPayment->id),
+                'particulars_note' => 'Truck #'.$truckNo.' | LR #'.$lrNo.' - Voucher #'.($voucherPayment->voucher_number ?: $voucherPayment->id).' ('.$paymentMode.')',
             ]);
 
-            // Cr: Bank, Cash, or Pump
+            // Cr: Bank, Cash, or Fuel Pump
             AccountingVoucherItem::create([
                 'company_id' => $company->id,
                 'accounting_voucher_id' => $voucher->id,
                 'ledger_id' => $creditLedger->id,
                 'type' => 'credit',
                 'amount' => $amount,
-                'particulars_note' => 'Disbursed via '.$creditLedger->name,
+                'particulars_note' => 'Truck #'.$truckNo.' | LR #'.$lrNo.' - Disbursed via '.$creditLedger->name,
             ]);
 
             return $voucher;
@@ -582,19 +768,22 @@ class AccountingPostingService
             return null;
         }
 
-        $company = $advancePayment->company;
+        $company = $advancePayment->company ?? ($advancePayment->company_id ? Company::find($advancePayment->company_id) : null);
         if (! $company) {
             return null;
         }
 
-        $transporter = $advancePayment->transporter;
+        $transporter = $advancePayment->transporter ?? ($advancePayment->transporter_id ? Transporter::find($advancePayment->transporter_id) : null);
         if (! $transporter) {
             return null;
         }
 
         $this->provisioner->provisionForCompany($company);
 
-        $transporterLedger = $this->getOrCreatePartyLedger($company, $transporter);
+        $advanceAssetLedger = Ledger::where('company_id', $company->id)
+            ->where('code', 'ADV_TRANSPORTER')
+            ->first()
+            ?? $this->provisioner->ensureLedger($company, 'Advance to Transporters & Truck Owners A/c', 'Loans & Advances', 'ADV_TRANSPORTER', 'debit');
 
         $bankLedger = Ledger::where('company_id', $company->id)
             ->where('code', 'BANK_PRIMARY')
@@ -604,13 +793,18 @@ class AccountingPostingService
             ->where('code', 'CASH')
             ->firstOrFail();
 
-        $creditLedger = str_contains($remark, 'cash') ? $cashLedger : $bankLedger;
+        if (! empty($advancePayment->bank_ledger_id)) {
+            $creditLedger = Ledger::where('company_id', $company->id)->find($advancePayment->bank_ledger_id)
+                ?? (str_contains($remark, 'cash') ? $cashLedger : $bankLedger);
+        } else {
+            $creditLedger = str_contains($remark, 'cash') ? $cashLedger : $bankLedger;
+        }
 
         return DB::transaction(function () use (
             $advancePayment,
             $company,
             $transporter,
-            $transporterLedger,
+            $advanceAssetLedger,
             $creditLedger,
             $amount
         ): AccountingVoucher {
@@ -633,14 +827,14 @@ class AccountingPostingService
                 'is_posted' => true,
             ]);
 
-            // Dr: Transporter (Advance disbursement)
+            // Dr: Advance to Transporters & Truck Owners (Asset)
             AccountingVoucherItem::create([
                 'company_id' => $company->id,
                 'accounting_voucher_id' => $voucher->id,
-                'ledger_id' => $transporterLedger->id,
+                'ledger_id' => $advanceAssetLedger->id,
                 'type' => 'debit',
                 'amount' => $amount,
-                'particulars_note' => 'Advance to Transporter',
+                'particulars_note' => 'Advance to '.($transporter->name ?? 'Transporter'),
             ]);
 
             // Cr: Bank or Cash
@@ -651,6 +845,159 @@ class AccountingPostingService
                 'type' => 'credit',
                 'amount' => $amount,
                 'particulars_note' => 'Disbursed via '.$creditLedger->name,
+            ]);
+
+            return $voucher;
+        });
+    }
+
+    /**
+     * Post a Credit Note (GST Section 34) for an Invoice adjustment / rate revision.
+     */
+    public function postCreditNote(Invoice $invoice, float $amount, ?string $reason = null, float $taxAmount = 0.0): AccountingVoucher
+    {
+        $company = $invoice->company ?? Company::findOrFail($invoice->company_id);
+        $this->provisioner->provisionForCompany($company);
+
+        $customer = $invoice->consignee;
+        $customerLedger = $this->getOrCreatePartyLedger($company, $customer);
+
+        $revenueLedger = Ledger::where('company_id', $company->id)
+            ->where('code', 'FR_INCOME')
+            ->firstOrFail();
+
+        $totalCreditNoteAmount = round($amount + $taxAmount, 2);
+        $invRef = $invoice->invoice_number ?: ($invoice->manual_invoice_number ?: 'INV-'.$invoice->id);
+
+        return DB::transaction(function () use (
+            $invoice,
+            $company,
+            $customerLedger,
+            $revenueLedger,
+            $amount,
+            $taxAmount,
+            $totalCreditNoteAmount,
+            $reason,
+            $invRef
+        ): AccountingVoucher {
+            $voucherNumber = 'CRN-'.now()->format('ymd').'-'.rand(1000, 9999);
+
+            $voucher = AccountingVoucher::create([
+                'company_id' => $company->id,
+                'voucher_type' => 'credit_note',
+                'voucher_number' => $voucherNumber,
+                'voucher_date' => now()->toDateString(),
+                'reference_number' => $invRef,
+                'reference_date' => $invoice->generated_date ?: now()->toDateString(),
+                'narration' => 'Credit Note against Invoice #'.$invRef.($reason ? ' ('.$reason.')' : ''),
+                'source_type' => Invoice::class,
+                'source_id' => $invoice->id,
+                'total_amount' => $totalCreditNoteAmount,
+                'is_posted' => true,
+            ]);
+
+            // 1. Dr: Freight Revenue
+            AccountingVoucherItem::create([
+                'company_id' => $company->id,
+                'accounting_voucher_id' => $voucher->id,
+                'ledger_id' => $revenueLedger->id,
+                'type' => 'debit',
+                'amount' => $amount,
+                'particulars_note' => 'Freight rate revision / discount on Invoice #'.$invRef,
+            ]);
+
+            // 2. Dr: Output GST if tax adjustment
+            if ($taxAmount > 0) {
+                $taxLedger = Ledger::where('company_id', $company->id)->where('code', 'IGST_OUT')->first()
+                    ?? Ledger::where('company_id', $company->id)->where('code', 'CGST_OUT')->first();
+                if ($taxLedger) {
+                    AccountingVoucherItem::create([
+                        'company_id' => $company->id,
+                        'accounting_voucher_id' => $voucher->id,
+                        'ledger_id' => $taxLedger->id,
+                        'type' => 'debit',
+                        'amount' => $taxAmount,
+                        'particulars_note' => 'GST output adjustment u/s 34 on Invoice #'.$invRef,
+                    ]);
+                }
+            }
+
+            // 3. Cr: Customer (reducing receivable)
+            AccountingVoucherItem::create([
+                'company_id' => $company->id,
+                'accounting_voucher_id' => $voucher->id,
+                'ledger_id' => $customerLedger->id,
+                'type' => 'credit',
+                'amount' => $totalCreditNoteAmount,
+                'particulars_note' => 'Credit Note issued on Invoice #'.$invRef,
+            ]);
+
+            return $voucher;
+        });
+    }
+
+    /**
+     * Post a Debit Note to an attached Transporter / Truck Owner for penalties or damage deductions.
+     */
+    public function postDebitNote(Transporter $transporter, float $amount, string $reason, ?FreightBooking $booking = null): AccountingVoucher
+    {
+        $company = $transporter->company ?? Company::findOrFail($transporter->company_id);
+        $this->provisioner->provisionForCompany($company);
+
+        $transporterLedger = $this->getOrCreatePartyLedger($company, $transporter);
+
+        $recoveryLedger = Ledger::where('company_id', $company->id)
+            ->where('code', 'SHORTAGE_REC')
+            ->first()
+            ?? $this->provisioner->ensureLedger($company, 'Shortage & Damage Recovery A/c', 'Shortage & Damage Recovery', 'SHORTAGE_REC', 'credit');
+
+        $truckNo = $booking?->truck?->truck_number ?? 'General';
+        $lrNo = $booking?->lr?->lr_number ?? ($booking?->lr_id ? 'LR-'.$booking->lr_id : '-');
+
+        return DB::transaction(function () use (
+            $company,
+            $transporter,
+            $transporterLedger,
+            $recoveryLedger,
+            $amount,
+            $reason,
+            $truckNo,
+            $lrNo,
+            $booking
+        ): AccountingVoucher {
+            $voucherNumber = 'DBN-'.now()->format('ymd').'-'.rand(1000, 9999);
+
+            $voucher = AccountingVoucher::create([
+                'company_id' => $company->id,
+                'voucher_type' => 'debit_note',
+                'voucher_number' => $voucherNumber,
+                'voucher_date' => now()->toDateString(),
+                'reference_number' => 'Truck: '.$truckNo.' | LR: '.$lrNo,
+                'narration' => 'Debit Note to '.($transporter->name ?? 'Transporter').': '.$reason,
+                'source_type' => $booking ? FreightBooking::class : Transporter::class,
+                'source_id' => $booking?->id ?? $transporter->id,
+                'total_amount' => $amount,
+                'is_posted' => true,
+            ]);
+
+            // 1. Dr: Transporter (reducing payable)
+            AccountingVoucherItem::create([
+                'company_id' => $company->id,
+                'accounting_voucher_id' => $voucher->id,
+                'ledger_id' => $transporterLedger->id,
+                'type' => 'debit',
+                'amount' => $amount,
+                'particulars_note' => 'Debit Note: '.$reason,
+            ]);
+
+            // 2. Cr: Shortage & Damage Recovery
+            AccountingVoucherItem::create([
+                'company_id' => $company->id,
+                'accounting_voucher_id' => $voucher->id,
+                'ledger_id' => $recoveryLedger->id,
+                'type' => 'credit',
+                'amount' => $amount,
+                'particulars_note' => 'Recovery from '.($transporter->name ?? 'Transporter'),
             ]);
 
             return $voucher;

@@ -27,6 +27,10 @@ class AccountingVoucher extends Model
         'total_amount',
         'is_posted',
         'user_id',
+        'challan_bsr_code',
+        'challan_serial_no',
+        'challan_tender_date',
+        'challan_head',
     ];
 
     /**
@@ -39,6 +43,7 @@ class AccountingVoucher extends Model
         return [
             'voucher_date' => 'date',
             'reference_date' => 'date',
+            'challan_tender_date' => 'date',
             'total_amount' => 'decimal:2',
             'is_posted' => 'boolean',
         ];

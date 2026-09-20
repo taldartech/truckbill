@@ -270,7 +270,6 @@ class TruckOwnerController extends Controller
             $calculatedTds = $this->tdsCalculator->calculate((bool) $validated['declaration_given'], (string) $master->pan_number, (bool) $master->pan_active);
             $submittedTds = round((float) $validated['tds_percentage'], 2);
 
-            $isDummyPan = strtoupper((string) $master->pan_number) === $dummyPan;
             if ($isDummyPan) {
                 // Default UI baseline is 0%; keep the user-submitted value and always require a remark.
                 $remark = trim((string) ($validated['tds_adjustment_remark'] ?? ''));
@@ -279,6 +278,9 @@ class TruckOwnerController extends Controller
                         'tds_adjustment_remark' => ['TDS adjustment remark is required for dummy PAN.'],
                     ]);
                 }
+            } elseif ((bool) $validated['declaration_given']) {
+                $submittedTds = 0.00;
+                $remark = null;
             } else {
                 $remark = abs($submittedTds - round($calculatedTds, 2)) > 0.01
                     ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
@@ -292,10 +294,11 @@ class TruckOwnerController extends Controller
                 'mobile_number' => $validated['mobile_number'],
                 'short_name' => $validated['short_name'] ?? null,
                 'declaration_given' => $validated['declaration_given'],
+                'declaration_194c6_date' => $validated['declaration_given'] ? ($validated['declaration_194c6_date'] ?? now()->toDateString()) : null,
                 'total_trucks' => $validated['total_trucks'],
                 'advance_amount' => $validated['advance_amount'],
-                'tds_percentage' => $submittedTds,
-                'tds_adjustment_remark' => $remark,
+                'tds_percentage' => $isDummyPan ? $submittedTds : ($validated['declaration_given'] ? 0.00 : $submittedTds),
+                'tds_adjustment_remark' => $isDummyPan ? $remark : ($validated['declaration_given'] ? null : $remark),
             ]);
 
             return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
@@ -316,6 +319,9 @@ class TruckOwnerController extends Controller
                     'tds_adjustment_remark' => ['TDS adjustment remark is required for dummy PAN.'],
                 ]);
             }
+        } elseif ((bool) $validated['declaration_given']) {
+            $submittedTds = 0.00;
+            $tdsRemark = null;
         } else {
             $tdsRemark = abs($submittedTds - round($calculatedTds, 2)) > 0.01
                 ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
@@ -344,10 +350,11 @@ class TruckOwnerController extends Controller
             'mobile_number' => $validated['mobile_number'],
             'short_name' => $validated['short_name'] ?? null,
             'declaration_given' => $validated['declaration_given'],
+            'declaration_194c6_date' => $validated['declaration_given'] ? ($validated['declaration_194c6_date'] ?? now()->toDateString()) : null,
             'total_trucks' => $validated['total_trucks'],
             'advance_amount' => $validated['advance_amount'],
-            'tds_percentage' => $submittedTds,
-            'tds_adjustment_remark' => $tdsRemark,
+            'tds_percentage' => $isDummyPan ? $submittedTds : ($validated['declaration_given'] ? 0.00 : $submittedTds),
+            'tds_adjustment_remark' => $isDummyPan ? $tdsRemark : ($validated['declaration_given'] ? null : $tdsRemark),
         ]);
 
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
@@ -518,15 +525,17 @@ class TruckOwnerController extends Controller
                 : null;
         }
 
+        $declGiven = (bool) ($validated['declaration_given'] ?? false);
         $updateData = [
             'company_id' => $validated['company_id'],
             'contact_person_name' => $validated['contact_person_name'] ?? null,
             'mobile_number' => $validated['mobile_number'],
-            'declaration_given' => $validated['declaration_given'],
+            'declaration_given' => $declGiven,
+            'declaration_194c6_date' => $declGiven ? ($validated['declaration_194c6_date'] ?? now()->toDateString()) : null,
             'total_trucks' => $validated['total_trucks'],
             'advance_amount' => $validated['advance_amount'] ?? 0,
-            'tds_percentage' => $submittedTds,
-            'tds_adjustment_remark' => $tdsRemark,
+            'tds_percentage' => $isDummyPan ? $submittedTds : ($declGiven ? 0.00 : $submittedTds),
+            'tds_adjustment_remark' => $isDummyPan ? $tdsRemark : ($declGiven ? null : $tdsRemark),
         ];
 
         if (auth()->user()->userRole->name === 'super_admin') {

@@ -21,7 +21,7 @@
     <div class="card shadow-sm border-0 mb-3" style="border: 1px solid var(--brand-border) !important; border-radius: 12px;">
         <div class="card-body p-3">
             <label class="form-label small fw-semibold text-muted d-block mb-2">Voucher Type (press F4 - F7 to switch):</label>
-            <div class="d-flex flex-wrap gap-2">
+            <div class="d-flex flex-wrap align-items-center gap-2">
                 <button type="button" class="btn vch-type-btn active" data-type="payment">
                     <span class="badge bg-warning text-dark me-1">F5</span> Payment
                 </button>
@@ -33,6 +33,15 @@
                 </button>
                 <button type="button" class="btn vch-type-btn" data-type="contra">
                     <span class="badge bg-secondary text-white me-1">F4</span> Contra
+                </button>
+                <button type="button" class="btn vch-type-btn" data-type="credit_note">
+                    <span class="badge bg-danger text-white me-1">Ctrl+F8</span> Credit Note
+                </button>
+                <button type="button" class="btn vch-type-btn" data-type="debit_note">
+                    <span class="badge bg-dark text-white me-1">Ctrl+F9</span> Debit Note
+                </button>
+                <button type="button" class="btn btn-outline-primary ms-auto" id="btnTdsDepositTemplate">
+                    <i class="bi bi-bank me-1"></i> TDS Deposit (Challan ITNS 281)
                 </button>
             </div>
         </div>
@@ -82,6 +91,37 @@
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Narration</label>
                         <input type="text" name="narration" class="form-control form-control-sm" placeholder="Voucher remarks / explanation">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Govt TDS Challan (ITNS 281) Details Section -->
+        <div class="app-form-section mb-3 d-none" id="challan281Section" style="background-color: #f8fafc; border: 1px dashed var(--brand-primary) !important;">
+            <div class="app-form-section__header d-flex justify-content-between align-items-center">
+                <h5 class="app-form-section__title text-primary"><i class="bi bi-file-earmark-check me-1"></i>Govt TDS Challan (ITNS 281) Details</h5>
+                <span class="badge bg-primary text-white">Form 26Q & 3CD Clause 34</span>
+            </div>
+            <div class="app-form-section__body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold">BSR Code (7 Digits)</label>
+                        <input type="text" name="challan_bsr_code" id="challan_bsr_code" class="form-control form-control-sm" placeholder="e.g. 0210001" maxlength="20">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold">Challan Serial No (5 Digits)</label>
+                        <input type="text" name="challan_serial_no" id="challan_serial_no" class="form-control form-control-sm" placeholder="e.g. 00123" maxlength="30">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold">Challan Tender Date</label>
+                        <input type="date" name="challan_tender_date" id="challan_tender_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold">Major Head</label>
+                        <select name="challan_head" id="challan_head" class="form-select form-select-sm">
+                            <option value="0021 - Non-Company Deductees (194C)">0021 - Non-Company Deductees</option>
+                            <option value="0020 - Company Deductees (194C)">0020 - Company Deductees</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -229,17 +269,66 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Keyboard shortcuts: F4, F5, F6, F7, Ctrl+Enter
+    // Keyboard shortcuts: F4-F7, Ctrl+F8, Ctrl+F9, Ctrl+Enter
     window.addEventListener('keydown', function(e) {
         if (e.key === 'F5') { e.preventDefault(); document.querySelector('[data-type="payment"]').click(); }
         if (e.key === 'F6') { e.preventDefault(); document.querySelector('[data-type="receipt"]').click(); }
         if (e.key === 'F7') { e.preventDefault(); document.querySelector('[data-type="journal"]').click(); }
         if (e.key === 'F4') { e.preventDefault(); document.querySelector('[data-type="contra"]').click(); }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'F8') { e.preventDefault(); document.querySelector('[data-type="credit_note"]').click(); }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'F9') { e.preventDefault(); document.querySelector('[data-type="debit_note"]').click(); }
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             const saveBtn = document.getElementById('saveVoucherBtn');
             if (!saveBtn.disabled) { saveBtn.click(); }
         }
     });
+
+    // TDS Deposit Template Shortcut
+    const tdsTemplateBtn = document.getElementById('btnTdsDepositTemplate');
+    if (tdsTemplateBtn) {
+        tdsTemplateBtn.addEventListener('click', function() {
+            const paymentBtn = document.querySelector('[data-type="payment"]');
+            if (paymentBtn) paymentBtn.click();
+
+            const challanSec = document.getElementById('challan281Section');
+            if (challanSec) challanSec.classList.remove('d-none');
+
+            const narrationInput = document.querySelector('input[name="narration"]');
+            if (narrationInput && !narrationInput.value) {
+                narrationInput.value = 'TDS u/s 194C deposit to Govt of India via Challan ITNS 281';
+            }
+
+            const rows = document.querySelectorAll('#itemsBody .item-row');
+            if (rows.length >= 2) {
+                const row0Type = rows[0].querySelector('.item-type');
+                const row0Ledger = rows[0].querySelector('select[name*="[ledger_id]"]');
+                const row1Type = rows[1].querySelector('.item-type');
+                const row1Ledger = rows[1].querySelector('select[name*="[ledger_id]"]');
+
+                if (row0Type) row0Type.value = 'debit';
+                if (row1Type) row1Type.value = 'credit';
+
+                if (row0Ledger) {
+                    for (let i = 0; i < row0Ledger.options.length; i++) {
+                        if (row0Ledger.options[i].text.toLowerCase().includes('tds u/s 194c payable')) {
+                            row0Ledger.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (row1Ledger) {
+                    for (let i = 0; i < row1Ledger.options.length; i++) {
+                        if (row1Ledger.options[i].text.toLowerCase().includes('bank') || row1Ledger.options[i].text.toLowerCase().includes('cash')) {
+                            row1Ledger.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+            }
+            calculateBalances();
+        });
+    }
 
     // Add Row
     document.getElementById('addRowBtn').addEventListener('click', function() {

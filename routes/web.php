@@ -363,6 +363,8 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/balance-sheet', [AccountingReportController::class, 'balanceSheet'])->name('balance-sheet');
         Route::get('/export-tally-masters', [AccountingReportController::class, 'exportTallyMasters'])->name('export-tally-masters');
         Route::get('/export-tally-vouchers', [AccountingReportController::class, 'exportTallyVouchers'])->name('export-tally-vouchers');
+        Route::get('/gstr1', [AccountingReportController::class, 'gstr1'])->name('gstr1');
+        Route::get('/debtors-aging', [AccountingReportController::class, 'debtorsAging'])->name('debtors-aging');
         Route::resource('vouchers', AccountingVoucherController::class)->only(['index', 'create', 'store', 'show']);
         Route::resource('ledgers', LedgerController::class)->only(['index', 'store']);
     });

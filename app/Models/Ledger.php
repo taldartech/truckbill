@@ -21,6 +21,7 @@ class Ledger extends Model
         'opening_balance',
         'opening_balance_type',
         'opening_balance_date',
+        'opening_balance_reference',
         'current_balance',
         'entity_type',
         'entity_id',

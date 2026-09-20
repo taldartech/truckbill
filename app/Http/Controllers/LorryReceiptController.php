@@ -703,23 +703,39 @@ class LorryReceiptController extends Controller
                         $amountInput
                     );
 
+                    $sourceCity = $item['source_city'] ?? null;
+                    $sourceState = $item['source_state'] ?? null;
+                    if (empty($sourceCity) && ! empty($item['consignor_id'])) {
+                        $consignorParty = Consignee::with(['city', 'state'])->find($item['consignor_id']);
+                        $sourceCity = $consignorParty?->city?->name ?? 'N/A';
+                        $sourceState = $consignorParty?->state?->name ?? 'N/A';
+                    }
+
+                    $destCity = $item['destination_city'] ?? null;
+                    $destState = $item['destination_state'] ?? null;
+                    if (empty($destCity) && ! empty($item['consignee_id'])) {
+                        $consigneeParty = Consignee::with(['city', 'state'])->find($item['consignee_id']);
+                        $destCity = $consigneeParty?->city?->name ?? 'N/A';
+                        $destState = $consigneeParty?->state?->name ?? 'N/A';
+                    }
+
                     $data = [
                         'lr_number' => $item['lr_number'],
                         'gr_number' => $item['gr_number'],
                         'invoice_number' => $item['invoice_number'],
                         'customer_id' => $item['customer_id'],
                         'consignor_id' => $item['consignor_id'],
-                        'consignor_contact_number' => $item['consignor_contact_number'],
+                        'consignor_contact_number' => $item['consignor_contact_number'] ?? null,
                         'consignee_id' => $item['consignee_id'],
-                        'consignee_contact_number' => $item['consignee_contact_number'],
-                        'source_city' => $item['source_city'],
-                        'source_state' => $item['source_state'],
-                        'destination_city' => $item['destination_city'],
-                        'destination_state' => $item['destination_state'],
+                        'consignee_contact_number' => $item['consignee_contact_number'] ?? null,
+                        'source_city' => $sourceCity ?? 'N/A',
+                        'source_state' => $sourceState ?? 'N/A',
+                        'destination_city' => $destCity ?? 'N/A',
+                        'destination_state' => $destState ?? 'N/A',
                         'loading_station' => $item['loading_station'] ?? null,
                         'unloading_station' => $item['unloading_station'] ?? null,
-                        'lane' => $item['lane'],
-                        'good_type' => $item['good_type'],
+                        'lane' => $item['lane'] ?? null,
+                        'good_type' => $item['good_type'] ?? null,
                         'goods_value' => $item['goods_value'] ?? null,
                         'weight' => $item['weight'],
                         'unloading_weight' => $itemWeight,
@@ -1588,7 +1604,9 @@ class LorryReceiptController extends Controller
         // Add company_id to validated data
         $validated['company_id'] = $companyId;
 
-        $freightBooking = FreightBooking::find($lorry_receipt->freight_booking_id);
+        $freightBooking = $lorry_receipt->freight_booking_id
+            ? FreightBooking::find($lorry_receipt->freight_booking_id)
+            : FreightBooking::where('lr_id', $lorry_receipt->id)->first();
         if ($freightBooking) {
             if (! $freightBooking->canChangeTdsAmount() && isset($validated['transporter_id']) && $validated['transporter_id'] != $lorry_receipt->transporter_id) {
                 return redirect()->back()->withErrors([

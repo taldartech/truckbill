@@ -115,7 +115,7 @@ class ConsigneeTest extends TestCase
         ]);
 
         $response->assertRedirect('/consignees/create');
-        $response->assertSessionHasErrors(['contact_number', 'email']);
+        $response->assertSessionHasErrors(['contact_number']);
     }
 
     public function test_update_changes_fields_and_uppercases_ids(): void

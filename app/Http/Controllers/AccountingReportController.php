@@ -51,6 +51,9 @@ class AccountingReportController extends Controller
         $fromDate = $request->input('from_date', now()->startOfMonth()->toDateString());
         $toDate = $request->input('to_date', now()->toDateString());
 
+        $searchQuery = $request->input('search');
+        $billFilter = $request->input('bill_filter');
+
         $selectedLedgerId = $ledgerId ?: $request->input('ledger_id');
         $ledgers = Ledger::where('company_id', $company->id)
             ->where('is_active', true)
@@ -58,12 +61,24 @@ class AccountingReportController extends Controller
             ->get();
 
         $statement = null;
+        $outstandings = null;
         if ($selectedLedgerId) {
             $ledger = Ledger::where('company_id', $company->id)->findOrFail($selectedLedgerId);
-            $statement = $this->reportService->getLedgerStatement($ledger, $fromDate, $toDate);
+            $statement = $this->reportService->getLedgerStatement($ledger, $fromDate, $toDate, $searchQuery);
+            $outstandings = $this->reportService->getBillToBillOutstandings($ledger, $billFilter);
         }
 
-        return view('accounting.ledger_statement', compact('company', 'ledgers', 'selectedLedgerId', 'statement', 'fromDate', 'toDate'));
+        return view('accounting.ledger_statement', compact(
+            'company',
+            'ledgers',
+            'selectedLedgerId',
+            'statement',
+            'outstandings',
+            'fromDate',
+            'toDate',
+            'searchQuery',
+            'billFilter'
+        ));
     }
 
     /**
@@ -140,4 +155,32 @@ class AccountingReportController extends Controller
             'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
         ]);
     }
+
+    /**
+     * GSTR-1 Return Preparation (Table 4A Forward vs Table 4B Reverse Charge).
+     */
+    public function gstr1(Request $request)
+    {
+        $company = $this->getActiveCompany();
+        $fromDate = $request->input('from_date', now()->startOfMonth()->toDateString());
+        $toDate = $request->input('to_date', now()->toDateString());
+
+        $report = $this->reportService->getGstr1Report($company, $fromDate, $toDate);
+
+        return view('accounting.gstr1', compact('company', 'report', 'fromDate', 'toDate'));
+    }
+
+    /**
+     * Trade Receivables (Sundry Debtors) Aging Report with MSME alerts.
+     */
+    public function debtorsAging(Request $request)
+    {
+        $company = $this->getActiveCompany();
+        $asOfDate = $request->input('as_of_date', now()->toDateString());
+
+        $report = $this->reportService->getDebtorsAgingReport($company, $asOfDate);
+
+        return view('accounting.debtors_aging', compact('company', 'report', 'asOfDate'));
+    }
 }
+

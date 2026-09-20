@@ -53,12 +53,20 @@ class InvoiceController extends Controller
         $unpaidCount = (int) ($stats->unpaid_count ?? 0);
         $partialCount = (int) ($stats->partial_count ?? 0);
 
+        $companyId = Auth::user()->company_id;
+        $bankLedgers = $companyId ? \App\Models\Ledger::where('company_id', $companyId)
+            ->whereHas('accountGroup', fn ($q) => $q->whereIn('code', ['BANK_ACCOUNTS', 'CASH_IN_HAND']))
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get() : collect();
+
         return view('invoices.index', compact(
             'totalInvoices',
             'totalAmount',
             'paidCount',
             'unpaidCount',
-            'partialCount'
+            'partialCount',
+            'bankLedgers'
         ));
     }
 
@@ -507,7 +515,14 @@ class InvoiceController extends Controller
             ]);
         }
 
-        return view('invoices.show', compact('invoice', 'memos', 'customDetails', 'companyLogoUrl'));
+        $companyId = $invoice->company_id ?: Auth::user()->company_id;
+        $bankLedgers = $companyId ? \App\Models\Ledger::where('company_id', $companyId)
+            ->whereHas('accountGroup', fn ($q) => $q->whereIn('code', ['BANK_ACCOUNTS', 'CASH_IN_HAND']))
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get() : collect();
+
+        return view('invoices.show', compact('invoice', 'memos', 'customDetails', 'companyLogoUrl', 'bankLedgers'));
     }
 
     public function edit(Invoice $invoice)
@@ -801,28 +816,44 @@ class InvoiceController extends Controller
         }
         $validated = $request->validate([
             'mode' => 'required|string|max:255',
-            'amount' => 'required|numeric|min:0.01',
+            'amount' => 'required|numeric|min:0',
+            'tds_amount' => 'nullable|numeric|min:0',
+            'deduction_amount' => 'nullable|numeric|min:0',
+            'deduction_reason' => 'nullable|string|max:255',
             'remark' => 'nullable|string|max:1000',
             'payment_date' => 'required|date',
+            'bank_ledger_id' => 'nullable|exists:ledgers,id',
         ]);
 
-        $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
-        $paidAmount = $invoice->payments()->sum('amount');
-        $remainingAmount = $amountToCollect - $paidAmount;
+        $validated['tds_amount'] = (float) ($validated['tds_amount'] ?? 0);
+        $validated['deduction_amount'] = (float) ($validated['deduction_amount'] ?? 0);
+        $totalSettledThisTransaction = round((float) $validated['amount'] + $validated['tds_amount'] + $validated['deduction_amount'], 2);
 
-        if ($validated['amount'] > $remainingAmount) {
+        if ($totalSettledThisTransaction <= 0) {
             return response()->json([
                 'success' => false,
-                'message' => 'Payment amount cannot exceed the remaining balance of '.number_format($remainingAmount, 2),
+                'message' => 'Total payment settlement (Remitted Amount + TDS + Deductions) must be greater than zero.',
+            ], 422);
+        }
+
+        $amountToCollect = (float) ($invoice->net_amount ?? $invoice->total_amount);
+        $currentPaidAmount = (float) $invoice->paid_amount;
+        $remainingAmount = max(0.0, round($amountToCollect - $currentPaidAmount, 2));
+
+        if ($totalSettledThisTransaction > ($remainingAmount + 0.01)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Total settlement amount (₹'.number_format($totalSettledThisTransaction, 2).') cannot exceed the remaining balance of ₹'.number_format($remainingAmount, 2),
             ], 422);
         }
 
         $payment = $invoice->payments()->create($validated);
+        $invoice->refresh();
 
-        $newPaidAmount = $invoice->payments()->sum('amount');
-        if ($newPaidAmount >= $amountToCollect) {
+        $newPaidAmount = (float) $invoice->paid_amount;
+        if ($newPaidAmount >= ($amountToCollect - 0.01)) {
             $invoice->payment_status = 'paid';
-        } elseif ($newPaidAmount > 0) {
+        } elseif ($newPaidAmount > 0.01) {
             $invoice->payment_status = 'partial';
         } else {
             $invoice->payment_status = 'pending';
@@ -845,7 +876,7 @@ class InvoiceController extends Controller
             'message' => 'Payment added successfully',
             'payment' => $payment,
             'paid_amount' => $newPaidAmount,
-            'remaining_amount' => max(0, $amountToCollect - $newPaidAmount),
+            'remaining_amount' => max(0.0, round($amountToCollect - $newPaidAmount, 2)),
             'payment_status' => $invoice->payment_status,
         ]);
     }
@@ -859,9 +890,9 @@ class InvoiceController extends Controller
             abort(403, 'Unauthorized access to this invoice.');
         }
         $payments = $invoice->payments()->orderByRaw('COALESCE(payment_date, created_at) DESC')->get();
-        $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
-        $paidAmount = $invoice->payments()->sum('amount');
-        $remainingAmount = max(0, $amountToCollect - $paidAmount);
+        $amountToCollect = (float) ($invoice->net_amount ?? $invoice->total_amount);
+        $paidAmount = (float) $invoice->paid_amount;
+        $remainingAmount = max(0.0, round($amountToCollect - $paidAmount, 2));
 
         return response()->json([
             'payments' => $payments,

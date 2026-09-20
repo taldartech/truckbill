@@ -81,84 +81,150 @@
             </div>
         </div>
         <div class="card-body p-0">
-            <div class="row g-0">
-                <!-- Left: Expenses Column -->
+            <!-- 1. TRADING ACCOUNT SECTION -->
+            <div class="row g-0 border-bottom">
+                <!-- Left: Direct Expenses (Dr) -->
                 <div class="col-md-6 border-end">
                     <div class="p-3 border-bottom fw-bold text-uppercase small" style="background-color: var(--brand-table-header-bg); color: var(--brand-danger);">
-                        <i class="bi bi-dash-circle me-1"></i>Transportation Expenses & Overheads (Dr)
+                        <i class="bi bi-dash-circle me-1"></i>Trading Account - Direct Costs (Dr)
                     </div>
-                    <div class="p-4">
-                        <h6 class="fw-bold border-bottom pb-2 text-dark">Direct Fleet & Trip Hiring Costs</h6>
-                        <ul class="list-group list-group-flush mb-4">
+                    <div class="p-3">
+                        <ul class="list-group list-group-flush mb-2">
                             @forelse($pnl['direct_expenses'] as $exp)
                             <li class="list-group-item d-flex justify-content-between px-0 py-2 border-0">
-                                <span class="text-dark fw-medium">{{ $exp['name'] }}</span>
+                                <a href="{{ route('accounting.ledger-statement', $exp['id']) }}" class="text-decoration-none text-dark fw-medium" title="View Ledger">
+                                    <i class="bi bi-file-earmark-text text-muted me-1 small"></i>{{ $exp['name'] }}
+                                </a>
                                 <span class="fw-semibold text-dark">₹{{ number_format($exp['amount'], 2) }}</span>
                             </li>
                             @empty
                             <li class="list-group-item px-0 py-2 text-muted small border-0">No direct expenses recorded.</li>
                             @endforelse
-                            <li class="list-group-item d-flex justify-content-between px-2 py-2 fw-bold rounded" style="background: var(--brand-soft-danger); color: var(--brand-danger);">
-                                <span>Total Direct Costs:</span>
-                                <span>₹{{ number_format($pnl['total_direct_expense'], 2) }}</span>
-                            </li>
-                        </ul>
 
-                        <h6 class="fw-bold border-bottom pb-2 text-dark">Indirect Administrative Overheads</h6>
-                        <ul class="list-group list-group-flush">
-                            @forelse($pnl['indirect_expenses'] as $exp)
-                            <li class="list-group-item d-flex justify-content-between px-0 py-2 border-0">
-                                <span class="text-dark fw-medium">{{ $exp['name'] }}</span>
-                                <span class="fw-semibold text-dark">₹{{ number_format($exp['amount'], 2) }}</span>
+                            @if($pnl['gross_profit'] >= 0)
+                            <li class="list-group-item d-flex justify-content-between px-2 py-2 fw-bold rounded mt-2" style="background: var(--brand-soft-success); color: var(--brand-success);">
+                                <span><i class="bi bi-arrow-down-right-circle me-1"></i>To Gross Profit c/d</span>
+                                <span>₹{{ number_format($pnl['gross_profit'], 2) }}</span>
                             </li>
-                            @empty
-                            <li class="list-group-item px-0 py-2 text-muted small border-0">No indirect expenses recorded.</li>
-                            @endforelse
-                            <li class="list-group-item d-flex justify-content-between px-2 py-2 fw-bold rounded" style="background: var(--brand-soft-secondary); color: var(--brand-text-muted);">
-                                <span>Total Indirect Overheads:</span>
-                                <span>₹{{ number_format($pnl['total_indirect_expense'], 2) }}</span>
-                            </li>
+                            @endif
                         </ul>
+                    </div>
+                    <div class="p-3 border-top d-flex justify-content-between fw-bold fs-6" style="background-color: var(--brand-table-header-bg);">
+                        <span class="text-uppercase small text-muted">Trading Total (Dr):</span>
+                        <span style="color: var(--brand-text-primary);">₹{{ number_format($pnl['trading_total'], 2) }}</span>
                     </div>
                 </div>
 
-                <!-- Right: Incomes Column -->
+                <!-- Right: Direct Incomes (Cr) -->
                 <div class="col-md-6">
                     <div class="p-3 border-bottom fw-bold text-uppercase small" style="background-color: var(--brand-table-header-bg); color: var(--brand-success);">
-                        <i class="bi bi-plus-circle me-1"></i>Freight Revenues & Incomes (Cr)
+                        <i class="bi bi-plus-circle me-1"></i>Trading Account - Direct Revenue (Cr)
                     </div>
-                    <div class="p-4">
-                        <h6 class="fw-bold border-bottom pb-2 text-dark">Direct Freight Revenues</h6>
-                        <ul class="list-group list-group-flush mb-4">
+                    <div class="p-3">
+                        <ul class="list-group list-group-flush mb-2">
                             @forelse($pnl['direct_incomes'] as $inc)
                             <li class="list-group-item d-flex justify-content-between px-0 py-2 border-0">
-                                <span class="text-dark fw-medium">{{ $inc['name'] }}</span>
+                                <a href="{{ route('accounting.ledger-statement', $inc['id']) }}" class="text-decoration-none text-dark fw-medium" title="View Ledger">
+                                    <i class="bi bi-file-earmark-text text-muted me-1 small"></i>{{ $inc['name'] }}
+                                </a>
                                 <span class="fw-semibold text-dark">₹{{ number_format($inc['amount'], 2) }}</span>
                             </li>
                             @empty
                             <li class="list-group-item px-0 py-2 text-muted small border-0">No direct revenue recorded.</li>
                             @endforelse
-                            <li class="list-group-item d-flex justify-content-between px-2 py-2 fw-bold rounded" style="background: var(--brand-soft-success); color: var(--brand-success);">
-                                <span>Total Direct Revenue:</span>
-                                <span>₹{{ number_format($pnl['total_direct_income'], 2) }}</span>
-                            </li>
-                        </ul>
 
-                        <h6 class="fw-bold border-bottom pb-2 text-dark">Indirect Incomes & Claim Recoveries</h6>
-                        <ul class="list-group list-group-flush">
+                            @if($pnl['gross_profit'] < 0)
+                            <li class="list-group-item d-flex justify-content-between px-2 py-2 fw-bold rounded mt-2" style="background: var(--brand-soft-danger); color: var(--brand-danger);">
+                                <span><i class="bi bi-arrow-down-right-circle me-1"></i>By Gross Loss c/d</span>
+                                <span>₹{{ number_format(abs($pnl['gross_profit']), 2) }}</span>
+                            </li>
+                            @endif
+                        </ul>
+                    </div>
+                    <div class="p-3 border-top d-flex justify-content-between fw-bold fs-6" style="background-color: var(--brand-table-header-bg);">
+                        <span class="text-uppercase small text-muted">Trading Total (Cr):</span>
+                        <span style="color: var(--brand-text-primary);">₹{{ number_format($pnl['trading_total'], 2) }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. PROFIT & LOSS ACCOUNT SECTION -->
+            <div class="row g-0">
+                <!-- Left: Indirect Expenses & Net Profit (Dr) -->
+                <div class="col-md-6 border-end">
+                    <div class="p-3 border-bottom fw-bold text-uppercase small" style="background-color: var(--brand-table-header-bg); color: var(--brand-danger);">
+                        <i class="bi bi-receipt me-1"></i>Profit & Loss - Overheads & Net Profit (Dr)
+                    </div>
+                    <div class="p-3">
+                        <ul class="list-group list-group-flush mb-2">
+                            @if($pnl['gross_profit'] < 0)
+                            <li class="list-group-item d-flex justify-content-between px-2 py-2 fw-bold rounded mb-2" style="background: var(--brand-soft-danger); color: var(--brand-danger);">
+                                <span><i class="bi bi-arrow-return-right me-1"></i>To Gross Loss b/d</span>
+                                <span>₹{{ number_format(abs($pnl['gross_profit']), 2) }}</span>
+                            </li>
+                            @endif
+
+                            @forelse($pnl['indirect_expenses'] as $exp)
+                            <li class="list-group-item d-flex justify-content-between px-0 py-2 border-0">
+                                <a href="{{ route('accounting.ledger-statement', $exp['id']) }}" class="text-decoration-none text-dark fw-medium" title="View Ledger">
+                                    <i class="bi bi-file-earmark-text text-muted me-1 small"></i>{{ $exp['name'] }}
+                                </a>
+                                <span class="fw-semibold text-dark">₹{{ number_format($exp['amount'], 2) }}</span>
+                            </li>
+                            @empty
+                            <li class="list-group-item px-0 py-2 text-muted small border-0">No indirect expenses recorded.</li>
+                            @endforelse
+
+                            @if($pnl['net_profit'] >= 0)
+                            <li class="list-group-item d-flex justify-content-between px-2 py-2 fw-bold rounded mt-3" style="background: var(--brand-soft-success); color: var(--brand-success); border: 1px solid rgba(34,197,94,0.3) !important;">
+                                <span><i class="bi bi-check2-circle me-1"></i>To Net Profit (Transferred to Capital A/c)</span>
+                                <span>₹{{ number_format($pnl['net_profit'], 2) }}</span>
+                            </li>
+                            @endif
+                        </ul>
+                    </div>
+                    <div class="p-3 border-top d-flex justify-content-between fw-bold fs-6" style="background-color: var(--brand-table-header-bg);">
+                        <span class="text-uppercase small text-muted">Total (Dr):</span>
+                        <span style="color: var(--brand-primary-dark);">₹{{ number_format($pnl['pnl_total'], 2) }}</span>
+                    </div>
+                </div>
+
+                <!-- Right: Indirect Incomes & Net Loss (Cr) -->
+                <div class="col-md-6">
+                    <div class="p-3 border-bottom fw-bold text-uppercase small" style="background-color: var(--brand-table-header-bg); color: var(--brand-success);">
+                        <i class="bi bi-piggy-bank me-1"></i>Profit & Loss - Incomes & Net Loss (Cr)
+                    </div>
+                    <div class="p-3">
+                        <ul class="list-group list-group-flush mb-2">
+                            @if($pnl['gross_profit'] >= 0)
+                            <li class="list-group-item d-flex justify-content-between px-2 py-2 fw-bold rounded mb-2" style="background: var(--brand-soft-success); color: var(--brand-success);">
+                                <span><i class="bi bi-arrow-return-right me-1"></i>By Gross Profit b/d</span>
+                                <span>₹{{ number_format($pnl['gross_profit'], 2) }}</span>
+                            </li>
+                            @endif
+
                             @forelse($pnl['indirect_incomes'] as $inc)
                             <li class="list-group-item d-flex justify-content-between px-0 py-2 border-0">
-                                <span class="text-dark fw-medium">{{ $inc['name'] }}</span>
+                                <a href="{{ route('accounting.ledger-statement', $inc['id']) }}" class="text-decoration-none text-dark fw-medium" title="View Ledger">
+                                    <i class="bi bi-file-earmark-text text-muted me-1 small"></i>{{ $inc['name'] }}
+                                </a>
                                 <span class="fw-semibold text-dark">₹{{ number_format($inc['amount'], 2) }}</span>
                             </li>
                             @empty
                             <li class="list-group-item px-0 py-2 text-muted small border-0">No indirect income recorded.</li>
                             @endforelse
-                            <li class="list-group-item d-flex justify-content-between px-2 py-2 fw-bold rounded" style="background: var(--brand-soft-info); color: var(--brand-info);">
-                                <span>Total Indirect Incomes:</span>
-                                <span>₹{{ number_format($pnl['total_indirect_income'], 2) }}</span>
+
+                            @if($pnl['net_profit'] < 0)
+                            <li class="list-group-item d-flex justify-content-between px-2 py-2 fw-bold rounded mt-3" style="background: var(--brand-soft-danger); color: var(--brand-danger); border: 1px solid rgba(239,68,68,0.3) !important;">
+                                <span><i class="bi bi-exclamation-circle me-1"></i>By Net Loss (Transferred to Capital A/c)</span>
+                                <span>₹{{ number_format(abs($pnl['net_profit']), 2) }}</span>
                             </li>
+                            @endif
                         </ul>
+                    </div>
+                    <div class="p-3 border-top d-flex justify-content-between fw-bold fs-6" style="background-color: var(--brand-table-header-bg);">
+                        <span class="text-uppercase small text-muted">Total (Cr):</span>
+                        <span style="color: var(--brand-primary-dark);">₹{{ number_format($pnl['pnl_total'], 2) }}</span>
                     </div>
                 </div>
             </div>

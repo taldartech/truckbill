@@ -20,7 +20,7 @@
     <div class="card shadow-sm border-0 mb-3" style="border: 1px solid var(--brand-border) !important; border-radius: 12px;">
         <div class="card-body p-3">
             <form method="GET" action="{{ route('accounting.ledger-statement') }}" class="row g-2 align-items-end">
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <label class="form-label small fw-semibold text-muted mb-1">Select Ledger Account <span class="text-danger">*</span></label>
                     <select name="ledger_id" class="form-select form-select-sm select2" required>
                         <option value="">-- Choose Ledger Account --</option>
@@ -39,12 +39,16 @@
                     <label class="form-label small fw-semibold text-muted mb-1">To Date</label>
                     <input type="date" name="to_date" class="form-control form-control-sm" value="{{ $toDate }}">
                 </div>
-                <div class="col-md-3 d-flex gap-2">
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-muted mb-1">Search LR / Truck / Vch</label>
+                    <input type="text" name="search" class="form-control form-control-sm" placeholder="e.g. MH12, LR-101" value="{{ $searchQuery ?? '' }}">
+                </div>
+                <div class="col-md-2 d-flex gap-2">
                     <button type="submit" class="btn btn-brand-primary btn-sm flex-grow-1">
                         <i class="bi bi-search"></i> Search
                     </button>
-                    <a href="{{ route('accounting.ledger-statement') }}" class="btn btn-secondary btn-sm">
-                        <i class="bi bi-arrow-clockwise"></i> Reset
+                    <a href="{{ route('accounting.ledger-statement') }}" class="btn btn-secondary btn-sm" title="Reset All Filters">
+                        <i class="bi bi-arrow-clockwise"></i>
                     </a>
                 </div>
             </form>
@@ -72,6 +76,11 @@
                             <div class="border rounded p-2 bg-light">
                                 <small class="text-muted d-block small">Opening Balance</small>
                                 <span class="fw-bold text-dark">{{ $statement['opening_balance']['formatted'] }}</span>
+                                @if(!empty($statement['opening_balance']['reference']))
+                                    <small class="badge bg-white text-secondary border d-block mt-1 text-truncate" title="Opening Balance Reference: {{ $statement['opening_balance']['reference'] }}">
+                                        Ref: {{ $statement['opening_balance']['reference'] }}
+                                    </small>
+                                @endif
                             </div>
                         </div>
                         <div class="col-6 col-sm-3">
@@ -87,16 +96,150 @@
                             </div>
                         </div>
                         <div class="col-6 col-sm-3">
-                            <div class="border rounded p-2" style="background: var(--brand-active-bg); border-color: var(--brand-primary) !important;">
-                                <small class="text-muted d-block small">Closing Balance</small>
-                                <span class="fw-bold" style="color: var(--brand-primary-dark);">{{ $statement['closing_balance']['formatted'] }}</span>
-                            </div>
+                            @if(!empty($statement['closing_balance']['is_negative_cash']))
+                                <div class="border rounded p-2" style="background: var(--brand-soft-danger); border-color: var(--brand-danger) !important;">
+                                    <small class="text-danger fw-bold d-block small"><i class="bi bi-exclamation-triangle-fill me-1"></i>Closing (Overdrawn)</small>
+                                    <span class="fw-bold text-danger">{{ $statement['closing_balance']['formatted'] }}</span>
+                                </div>
+                            @else
+                                <div class="border rounded p-2" style="background: var(--brand-active-bg); border-color: var(--brand-primary) !important;">
+                                    <small class="text-muted d-block small">Closing Balance</small>
+                                    <span class="fw-bold" style="color: var(--brand-primary-dark);">{{ $statement['closing_balance']['formatted'] }}</span>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Bill-to-Bill Outstandings Section (Item 6 & 7) -->
+    @if($outstandings)
+    <div class="card shadow-sm border-0 mb-3" style="border-radius: 12px; border: 1px solid var(--brand-border) !important;">
+        <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center py-2.5 gap-2">
+            <h6 class="mb-0 fw-bold" style="color: var(--brand-text-primary);">
+                <i class="bi bi-card-checklist me-2" style="color: var(--brand-primary);"></i>Bill-to-Bill Outstandings & Matched Payments ({{ $outstandings['entity_type'] }})
+            </h6>
+            <!-- Filter Pills -->
+            <div class="btn-group btn-group-sm">
+                @php
+                    $routeParams = ['ledger_id' => $selectedLedgerId, 'from_date' => $fromDate, 'to_date' => $toDate, 'search' => $searchQuery];
+                @endphp
+                <a href="{{ route('accounting.ledger-statement', array_merge($routeParams, ['bill_filter' => null])) }}" class="btn {{ empty($billFilter) ? 'btn-brand-primary' : 'btn-outline-secondary' }}">
+                    All ({{ $outstandings['unfiltered_count'] }})
+                </a>
+                <a href="{{ route('accounting.ledger-statement', array_merge($routeParams, ['bill_filter' => 'pending'])) }}" class="btn {{ $billFilter === 'pending' ? 'btn-danger' : 'btn-outline-danger' }}">
+                    Pending
+                </a>
+                <a href="{{ route('accounting.ledger-statement', array_merge($routeParams, ['bill_filter' => 'partial'])) }}" class="btn {{ $billFilter === 'partial' ? 'btn-warning' : 'btn-outline-warning' }}">
+                    Partially Paid
+                </a>
+                <a href="{{ route('accounting.ledger-statement', array_merge($routeParams, ['bill_filter' => 'settled'])) }}" class="btn {{ $billFilter === 'settled' ? 'btn-success' : 'btn-outline-success' }}">
+                    Settled
+                </a>
+            </div>
+        </div>
+        <div class="card-body p-3">
+            <div class="row g-2 mb-3 text-center">
+                <div class="col-md-4">
+                    <div class="p-2 border rounded bg-light">
+                        <small class="text-muted d-block small">Total Invoiced / Trip Freight</small>
+                        <span class="fw-bold text-dark fs-6">₹{{ number_format($outstandings['total_billed'], 2) }}</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-2 border rounded" style="background: var(--brand-soft-success);">
+                        <small class="text-muted d-block small">Total Settled / Cleared</small>
+                        <span class="fw-bold fs-6" style="color: var(--brand-success);">₹{{ number_format($outstandings['total_cleared'], 2) }}</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-2 border rounded" style="background: var(--brand-soft-danger);">
+                        <small class="text-muted d-block small">Total Pending / Outstanding</small>
+                        <span class="fw-bold fs-6" style="color: var(--brand-danger);">₹{{ number_format($outstandings['total_pending'], 2) }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead style="background-color: var(--brand-table-header-bg);">
+                        <tr>
+                            <th class="ps-2">Bill / Inv / Ref</th>
+                            <th>Date</th>
+                            @if($outstandings['entity_type'] !== 'Customer')
+                                <th>Truck No / LR No</th>
+                            @endif
+                            <th class="text-end">Total Amount (₹)</th>
+                            <th class="text-end">Cleared (₹)</th>
+                            <th class="text-end">Pending (₹)</th>
+                            <th class="text-center">Status</th>
+                            <th>Matched Payments</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($outstandings['bills'] as $bill)
+                        <tr>
+                            <td class="ps-2 fw-semibold">
+                                @if($bill['type'] === 'invoice')
+                                    <a href="{{ route('invoices.show', $bill['id']) }}" class="text-decoration-none">
+                                        {{ $bill['bill_no'] }}
+                                    </a>
+                                @else
+                                    <a href="{{ route('freight-bookings.show', $bill['id']) }}" class="text-decoration-none">
+                                        {{ $bill['bill_no'] }}
+                                    </a>
+                                @endif
+                            </td>
+                            <td class="small">{{ $bill['bill_date'] }}</td>
+                            @if($outstandings['entity_type'] !== 'Customer')
+                                <td>
+                                    <span class="badge border bg-light text-dark">{{ $bill['truck_no'] ?? '-' }}</span>
+                                    <span class="badge border bg-light text-primary">LR: {{ $bill['lr_no'] ?? '-' }}</span>
+                                </td>
+                            @endif
+                            <td class="text-end fw-semibold">₹{{ number_format($bill['total_amount'], 2) }}</td>
+                            <td class="text-end text-success fw-semibold">₹{{ number_format($bill['cleared_amount'], 2) }}</td>
+                            <td class="text-end fw-bold {{ $bill['pending_amount'] > 0 ? 'text-danger' : 'text-muted' }}">
+                                ₹{{ number_format($bill['pending_amount'], 2) }}
+                            </td>
+                            <td class="text-center">
+                                @if($bill['status'] === 'settled')
+                                    <span class="badge bg-success">Settled</span>
+                                @elseif($bill['status'] === 'partial')
+                                    <span class="badge bg-warning text-dark">Partial</span>
+                                @else
+                                    <span class="badge bg-danger">Pending</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if(!empty($bill['payments']) && count($bill['payments']) > 0)
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach($bill['payments'] as $p)
+                                            <span class="badge bg-light text-dark border small" title="{{ $p['remark'] ?? '' }}">
+                                                {{ $p['date'] }}: ₹{{ number_format($p['amount'], 2) }} ({{ $p['mode'] }})
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <span class="text-muted small">No payment recorded</span>
+                                @endif
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="{{ $outstandings['entity_type'] !== 'Customer' ? 8 : 7 }}" class="text-center py-3 text-muted small">
+                                No bills found for the selected filter.
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Main Table Card -->
     <div class="card app-index-list-card shadow-sm">
@@ -110,6 +253,19 @@
                 </button>
             </div>
         </div>
+
+        @if(!empty($statement['is_filtered']))
+            <div class="alert alert-info py-2 px-3 mx-3 my-2 d-flex justify-content-between align-items-center small" style="border-radius: 8px;">
+                <span>
+                    <i class="bi bi-funnel-fill me-1"></i> Filter active: <strong>"{{ $statement['search_query'] }}"</strong>
+                    (Showing {{ count($statement['rows']) }} of {{ $statement['unfiltered_count'] }} transactions)
+                </span>
+                <a href="{{ route('accounting.ledger-statement', ['ledger_id' => $selectedLedgerId, 'from_date' => $fromDate, 'to_date' => $toDate, 'bill_filter' => $billFilter]) }}" class="btn btn-outline-primary btn-sm py-0 px-2">
+                    Clear Search
+                </a>
+            </div>
+        @endif
+
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table app-index-table table-hover align-middle mb-0">
@@ -152,10 +308,12 @@
                                         'payment' => 'background-color: var(--brand-soft-warning); color: var(--brand-warning);',
                                         'receipt' => 'background-color: var(--brand-soft-info); color: var(--brand-info);',
                                         'contra' => 'background-color: var(--brand-soft-secondary); color: var(--brand-text-muted);',
+                                        'credit_note' => 'background-color: #fee2e2; color: #dc2626;',
+                                        'debit_note' => 'background-color: #fef3c7; color: #b45309;',
                                         default => 'background-color: var(--brand-soft-primary); color: var(--brand-primary);'
                                     };
                                 @endphp
-                                <span class="badge border" style="{{ $badgeStyle }} font-weight: 600;">{{ $row['voucher_type'] }}</span>
+                                <span class="badge border" style="{{ $badgeStyle }} font-weight: 600;">{{ ucwords(str_replace('_', ' ', $row['voucher_type'])) }}</span>
                             </td>
                             <td>
                                 <a href="{{ route('accounting.vouchers.show', $row['voucher_id']) }}" class="text-decoration-none fw-semibold">
@@ -164,8 +322,19 @@
                             </td>
                             <td>
                                 <div class="fw-bold text-dark">{{ $row['particulars'] }}</div>
+                                <div class="mt-1 d-flex flex-wrap gap-1">
+                                    @if(!empty($row['truck_number']))
+                                        <span class="badge border small" style="background-color: var(--brand-soft-info); color: var(--brand-info);"><i class="bi bi-truck me-1"></i>{{ $row['truck_number'] }}</span>
+                                    @endif
+                                    @if(!empty($row['lr_number']))
+                                        <span class="badge border small" style="background-color: var(--brand-soft-primary); color: var(--brand-primary);"><i class="bi bi-file-earmark-text me-1"></i>LR: {{ $row['lr_number'] }}</span>
+                                    @endif
+                                    @if(!empty($row['reference_number']))
+                                        <span class="badge bg-light text-secondary border small">Ref: {{ $row['reference_number'] }}</span>
+                                    @endif
+                                </div>
                                 @if($row['narration'])
-                                    <small class="text-muted d-block text-truncate" style="max-width: 350px;">{{ $row['narration'] }}</small>
+                                    <small class="text-muted d-block text-truncate mt-1" style="max-width: 350px;">{{ $row['narration'] }}</small>
                                 @endif
                                 @if($row['cost_centre'])
                                     <span class="badge border small mt-1" style="background-color: var(--brand-soft-info); color: var(--brand-info);"><i class="bi bi-truck me-1"></i>{{ $row['cost_centre'] }}</span>
@@ -194,7 +363,9 @@
                             <td colspan="4" class="text-end pe-3 text-uppercase small">Total Period Activity:</td>
                             <td class="text-end" style="color: var(--brand-success);">₹{{ number_format($statement['total_debit'], 2) }}</td>
                             <td class="text-end" style="color: var(--brand-danger);">₹{{ number_format($statement['total_credit'], 2) }}</td>
-                            <td class="text-end pe-3 fw-bold" style="color: var(--brand-primary-dark);">{{ $statement['closing_balance']['formatted'] }}</td>
+                            <td class="text-end pe-3 fw-bold {{ !empty($statement['closing_balance']['is_negative_cash']) ? 'text-danger' : '' }}" style="{{ empty($statement['closing_balance']['is_negative_cash']) ? 'color: var(--brand-primary-dark);' : '' }}">
+                                {{ $statement['closing_balance']['formatted'] }}
+                            </td>
                         </tr>
                     </tbody>
                 </table>

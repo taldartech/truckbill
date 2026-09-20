@@ -26,6 +26,8 @@
                         <option value="receipt" {{ $voucherType === 'receipt' ? 'selected' : '' }}>Receipt (F6)</option>
                         <option value="journal" {{ $voucherType === 'journal' ? 'selected' : '' }}>Journal (F7)</option>
                         <option value="contra" {{ $voucherType === 'contra' ? 'selected' : '' }}>Contra (F4)</option>
+                        <option value="credit_note" {{ $voucherType === 'credit_note' ? 'selected' : '' }}>Credit Note (Ctrl+F8)</option>
+                        <option value="debit_note" {{ $voucherType === 'debit_note' ? 'selected' : '' }}>Debit Note (Ctrl+F9)</option>
                     </select>
                 </div>
                 <div class="col-md-3 d-flex gap-2">
@@ -119,10 +121,12 @@
                                         'payment' => 'background-color: var(--brand-soft-warning); color: var(--brand-warning);',
                                         'receipt' => 'background-color: var(--brand-soft-info); color: var(--brand-info);',
                                         'contra' => 'background-color: var(--brand-soft-secondary); color: var(--brand-text-muted);',
+                                        'credit_note' => 'background-color: #fee2e2; color: #dc2626;',
+                                        'debit_note' => 'background-color: #fef3c7; color: #b45309;',
                                         default => 'background-color: var(--brand-soft-primary); color: var(--brand-primary);'
                                     };
                                 @endphp
-                                <span class="badge border" style="{{ $badgeStyle }} font-weight: 600;">{{ $t['voucher_type'] }}</span>
+                                <span class="badge border" style="{{ $badgeStyle }} font-weight: 600;">{{ ucwords(str_replace('_', ' ', $t['voucher_type'])) }}</span>
                             </td>
                             <td class="fw-bold" style="color: var(--brand-text-primary);">{{ $t['particulars'] }}</td>
                             <td class="text-end fw-bold" style="color: var(--brand-primary);">₹{{ number_format($t['amount'], 2) }}</td>

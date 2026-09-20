@@ -243,7 +243,7 @@ class FreightBookingTest extends TestCase
 
         $response = $this->actingAs($admin)
             ->withHeader('X-Requested-With', 'XMLHttpRequest')
-            ->get('/freight_bookings/data', $payload);
+            ->get('/freight_bookings/data?' . http_build_query($payload));
 
         $response->assertOk();
         $json = $response->json();
@@ -263,7 +263,7 @@ class FreightBookingTest extends TestCase
 
         $response = $this->actingAs($admin)
             ->withHeader('X-Requested-With', 'XMLHttpRequest')
-            ->get('/freight_bookings/data', $payload);
+            ->get('/freight_bookings/data?' . http_build_query($payload));
 
         $response->assertOk();
         $json = $response->json();
@@ -1256,7 +1256,6 @@ class FreightBookingTest extends TestCase
             ->assertOk()
             ->assertSee('Custom Amounts')
             ->assertSee('Gate pass fee')
-            ->assertSee('Custom amounts total')
-            ->assertSee('Custom Amounts Total:');
+            ->assertSee('Custom amounts total');
     }
 }

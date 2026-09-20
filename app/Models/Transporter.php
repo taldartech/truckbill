@@ -20,6 +20,7 @@ class Transporter extends Model
         'contact_person_name',
         'mobile_number',
         'declaration_given',
+        'declaration_194c6_date',
         'total_trucks',
         'advance_amount',
         'short_name',
@@ -33,6 +34,7 @@ class Transporter extends Model
         return [
             'is_owner' => 'boolean',
             'declaration_given' => 'boolean',
+            'declaration_194c6_date' => 'date',
         ];
     }
 

@@ -41,7 +41,7 @@
                             <span class="text-muted fw-semibold">#{{ $voucherNumber }}</span>
                         </strong>
                         <div class="fb-detail-actions ms-auto">
-                            <a href="{{ $backUrl }}" class="btn btn-sm btn-icon btn-action-back" title="Back to list">
+                            <a href="{{ $backUrl }}" class="btn btn-sm btn-icon btn-action-back" title="Back to List">
                                 <i class="bi bi-arrow-left"></i>
                             </a>
                             @if ($freightBooking)

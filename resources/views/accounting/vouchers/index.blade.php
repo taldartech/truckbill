@@ -18,6 +18,8 @@
                         <option value="receipt" {{ request('voucher_type') === 'receipt' ? 'selected' : '' }}>Receipt (F6)</option>
                         <option value="journal" {{ request('voucher_type') === 'journal' ? 'selected' : '' }}>Journal (F7)</option>
                         <option value="contra" {{ request('voucher_type') === 'contra' ? 'selected' : '' }}>Contra (F4)</option>
+                        <option value="credit_note" {{ request('voucher_type') === 'credit_note' ? 'selected' : '' }}>Credit Note (Ctrl+F8)</option>
+                        <option value="debit_note" {{ request('voucher_type') === 'debit_note' ? 'selected' : '' }}>Debit Note (Ctrl+F9)</option>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -82,10 +84,12 @@
                                         'payment' => 'background-color: var(--brand-soft-warning); color: var(--brand-warning);',
                                         'receipt' => 'background-color: var(--brand-soft-info); color: var(--brand-info);',
                                         'contra' => 'background-color: var(--brand-soft-secondary); color: var(--brand-text-muted);',
+                                        'credit_note' => 'background-color: #fee2e2; color: #dc2626;',
+                                        'debit_note' => 'background-color: #fef3c7; color: #b45309;',
                                         default => 'background-color: var(--brand-soft-primary); color: var(--brand-primary);'
                                     };
                                 @endphp
-                                <span class="badge border" style="{{ $badgeStyle }} font-weight: 600;">{{ ucfirst($v->voucher_type) }}</span>
+                                <span class="badge border" style="{{ $badgeStyle }} font-weight: 600;">{{ ucwords(str_replace('_', ' ', $v->voucher_type)) }}</span>
                             </td>
                             <td>
                                 @foreach($v->items->where('type', 'debit') as $deb)

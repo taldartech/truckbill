@@ -56,6 +56,7 @@ class LedgerController extends Controller
             'code' => 'nullable|string|max:50',
             'opening_balance' => 'nullable|numeric|min:0',
             'opening_balance_type' => 'required|in:debit,credit',
+            'opening_balance_reference' => 'nullable|string|max:100',
             'gstin' => 'nullable|string|max:20',
             'pan_number' => 'nullable|string|max:15',
         ]);
@@ -68,6 +69,7 @@ class LedgerController extends Controller
             'opening_balance' => $validated['opening_balance'] ?? 0.00,
             'opening_balance_type' => $validated['opening_balance_type'],
             'opening_balance_date' => now()->startOfYear()->toDateString(),
+            'opening_balance_reference' => $validated['opening_balance_reference'] ?? null,
             'gstin' => $validated['gstin'] ?? null,
             'pan_number' => $validated['pan_number'] ?? null,
             'is_builtin' => false,

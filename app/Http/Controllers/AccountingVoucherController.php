@@ -72,10 +72,14 @@ class AccountingVoucherController extends Controller
         $company = $this->getActiveCompany();
 
         $validated = $request->validate([
-            'voucher_type' => 'required|in:contra,payment,receipt,journal,sales,purchase',
+            'voucher_type' => 'required|in:contra,payment,receipt,journal,sales,purchase,debit_note,credit_note',
             'voucher_date' => 'required|date',
             'reference_number' => 'nullable|string|max:100',
             'narration' => 'nullable|string|max:1000',
+            'challan_bsr_code' => 'nullable|string|max:20',
+            'challan_serial_no' => 'nullable|string|max:30',
+            'challan_tender_date' => 'nullable|date',
+            'challan_head' => 'nullable|string|max:50',
             'items' => 'required|array|min:2',
             'items.*.ledger_id' => 'required|exists:ledgers,id',
             'items.*.type' => 'required|in:debit,credit',
@@ -102,7 +106,11 @@ class AccountingVoucherController extends Controller
         }
 
         $voucher = DB::transaction(function () use ($validated, $company, $items, $totalDebit) {
-            $prefix = strtoupper(substr($validated['voucher_type'], 0, 3));
+            $prefix = match ($validated['voucher_type']) {
+                'credit_note' => 'CRN',
+                'debit_note' => 'DBN',
+                default => strtoupper(substr($validated['voucher_type'], 0, 3)),
+            };
             $voucherNumber = $prefix.'-'.now()->format('ymd').'-'.rand(1000, 9999);
 
             $voucher = AccountingVoucher::create([
@@ -111,6 +119,10 @@ class AccountingVoucherController extends Controller
                 'voucher_number' => $voucherNumber,
                 'voucher_date' => $validated['voucher_date'],
                 'reference_number' => $validated['reference_number'] ?? null,
+                'challan_bsr_code' => $validated['challan_bsr_code'] ?? null,
+                'challan_serial_no' => $validated['challan_serial_no'] ?? null,
+                'challan_tender_date' => $validated['challan_tender_date'] ?? null,
+                'challan_head' => $validated['challan_head'] ?? null,
                 'narration' => $validated['narration'] ?? null,
                 'total_amount' => $totalDebit,
                 'is_posted' => true,

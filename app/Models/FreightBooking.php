@@ -239,6 +239,12 @@ class FreightBooking extends Model implements Auditable
 
     protected static function booted(): void
     {
+        static::creating(function (FreightBooking $booking): void {
+            if (empty($booking->voucher_number)) {
+                $booking->voucher_number = (int) (static::withTrashed()->max('voucher_number') ?? 0) + 1;
+            }
+        });
+
         static::deleting(function (FreightBooking $freightBooking): void {
             $freightBooking->customAmounts()->each(function (FreightBookingCustomAmount $customAmount): void {
                 $customAmount->delete();

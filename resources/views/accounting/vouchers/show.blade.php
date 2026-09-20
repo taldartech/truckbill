@@ -31,11 +31,13 @@
                             'payment' => 'background-color: var(--brand-soft-warning); color: var(--brand-warning);',
                             'receipt' => 'background-color: var(--brand-soft-info); color: var(--brand-info);',
                             'contra' => 'background-color: var(--brand-soft-secondary); color: var(--brand-text-muted);',
+                            'credit_note' => 'background-color: #fee2e2; color: #dc2626;',
+                            'debit_note' => 'background-color: #fef3c7; color: #b45309;',
                             default => 'background-color: var(--brand-soft-primary); color: var(--brand-primary);'
                         };
                     @endphp
                     <span class="badge border mt-1" style="{{ $badgeStyle }} font-size: 0.875rem; font-weight: 600;">
-                        {{ ucfirst($voucher->voucher_type) }}
+                        {{ ucwords(str_replace('_', ' ', $voucher->voucher_type)) }}
                     </span>
                 </div>
                 <div class="col-md-3 col-sm-6">
@@ -51,6 +53,34 @@
                     <span class="fw-semibold text-dark fs-6">{{ $voucher->user?->name ?: 'System Auto-Post' }}</span>
                 </div>
             </div>
+
+            @if($voucher->challan_bsr_code || $voucher->challan_serial_no)
+            <!-- Statutory TDS Challan ITNS 281 Banner -->
+            <div class="p-3 rounded mb-4 border" style="background-color: #eff6ff; border-color: #bfdbfe !important;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-bold text-primary"><i class="bi bi-file-earmark-check me-1"></i>Govt TDS Challan ITNS 281 Details</span>
+                    <span class="badge bg-primary text-white">Form 26Q & 3CD Audit</span>
+                </div>
+                <div class="row g-3 small">
+                    <div class="col-md-3">
+                        <span class="text-muted d-block">BSR Code:</span>
+                        <strong class="text-dark">{{ $voucher->challan_bsr_code ?: '-' }}</strong>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="text-muted d-block">Challan Serial No:</span>
+                        <strong class="text-dark">{{ $voucher->challan_serial_no ?: '-' }}</strong>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="text-muted d-block">Tender Date:</span>
+                        <strong class="text-dark">{{ $voucher->challan_tender_date ? $voucher->challan_tender_date->format('d-m-Y') : '-' }}</strong>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="text-muted d-block">Major Head:</span>
+                        <strong class="text-dark">{{ $voucher->challan_head ?: '0021 - Non-Company Deductees' }}</strong>
+                    </div>
+                </div>
+            </div>
+            @endif
 
             <!-- Double-Entry Particulars Table -->
             <div class="table-responsive mb-4">

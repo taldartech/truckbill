@@ -54,17 +54,55 @@
                         <span><i class="bi bi-shield-check me-1" style="color: var(--brand-accent-blue);"></i>Capital & Liabilities</span>
                         <span>Amount (₹)</span>
                     </div>
-                    <div class="p-4">
-                        <ul class="list-group list-group-flush mb-3">
-                            @forelse($balanceSheet['liabilities'] as $liab)
-                            <li class="list-group-item d-flex justify-content-between px-0 py-2 border-0">
-                                <span class="fw-medium text-dark">{{ $liab['name'] }}</span>
-                                <span class="fw-semibold text-dark">₹{{ number_format($liab['amount'], 2) }}</span>
-                            </li>
-                            @empty
-                            <li class="list-group-item px-0 py-2 text-muted small border-0">No liabilities or equity recorded.</li>
-                            @endforelse
-                        </ul>
+                    <div class="p-3">
+                        @forelse($balanceSheet['liability_groups'] as $pGroup)
+                            <div class="mb-3 border rounded p-2" style="border-color: var(--brand-border) !important; background: #fafbfc;">
+                                <div class="d-flex justify-content-between align-items-center pb-2 border-bottom fw-bold text-dark">
+                                    <span class="fs-6"><i class="bi bi-folder2-open text-warning me-1"></i>{{ $pGroup['name'] }}</span>
+                                    <span class="fw-bold fs-6" style="color: var(--brand-primary-dark);">₹{{ number_format($pGroup['subtotal'], 2) }}</span>
+                                </div>
+
+                                <!-- Direct ledgers in primary group -->
+                                @if(!empty($pGroup['direct_ledgers']))
+                                    <ul class="list-group list-group-flush mb-2 ps-2">
+                                        @foreach($pGroup['direct_ledgers'] as $dl)
+                                        <li class="list-group-item d-flex justify-content-between px-1 py-1 border-0 bg-transparent">
+                                            @if($dl['id'])
+                                                <a href="{{ route('accounting.ledger-statement', $dl['id']) }}" class="text-decoration-none text-dark fw-medium" title="View Statement">
+                                                    <i class="bi bi-file-earmark-text text-muted me-1 small"></i>{{ $dl['name'] }}
+                                                </a>
+                                            @else
+                                                <span class="fw-bold text-dark"><i class="bi bi-pie-chart text-info me-1"></i>{{ $dl['name'] }}</span>
+                                            @endif
+                                            <span class="fw-semibold text-dark">₹{{ number_format($dl['amount'], 2) }}</span>
+                                        </li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+
+                                <!-- Sub groups -->
+                                @foreach($pGroup['sub_groups'] as $subG)
+                                    <div class="mt-2 ms-2 ps-2 border-start border-2" style="border-color: var(--brand-border) !important;">
+                                        <div class="d-flex justify-content-between align-items-center py-1 fw-semibold small text-muted">
+                                            <span><i class="bi bi-diagram-2 me-1"></i>{{ $subG['name'] }}</span>
+                                            <span class="badge bg-light text-dark border">₹{{ number_format($subG['subtotal'], 2) }}</span>
+                                        </div>
+                                        <ul class="list-group list-group-flush ps-2">
+                                            @foreach($subG['ledgers'] as $l)
+                                            <li class="list-group-item d-flex justify-content-between px-1 py-1 border-0 bg-transparent small">
+                                                <a href="{{ route('accounting.ledger-statement', $l['id']) }}" class="text-decoration-none text-dark" title="View Statement">
+                                                    {{ $l['name'] }}
+                                                </a>
+                                                <span class="fw-medium text-dark">₹{{ number_format($l['amount'], 2) }}</span>
+                                            </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @empty
+                            <div class="text-muted small py-4 text-center">No liabilities or equity recorded.</div>
+                        @endforelse
                     </div>
                     <div class="p-3 border-top d-flex justify-content-between fw-bold fs-6" style="background-color: var(--brand-table-header-bg);">
                         <span class="text-uppercase small text-muted">Total Liabilities & Equity:</span>
@@ -78,17 +116,69 @@
                         <span><i class="bi bi-wallet-fill me-1" style="color: var(--brand-primary);"></i>Assets & Receivables</span>
                         <span>Amount (₹)</span>
                     </div>
-                    <div class="p-4">
-                        <ul class="list-group list-group-flush mb-3">
-                            @forelse($balanceSheet['assets'] as $asset)
-                            <li class="list-group-item d-flex justify-content-between px-0 py-2 border-0">
-                                <span class="fw-medium text-dark">{{ $asset['name'] }}</span>
-                                <span class="fw-semibold text-dark">₹{{ number_format($asset['amount'], 2) }}</span>
-                            </li>
-                            @empty
-                            <li class="list-group-item px-0 py-2 text-muted small border-0">No assets recorded.</li>
-                            @endforelse
-                        </ul>
+                    <div class="p-3">
+                        @forelse($balanceSheet['asset_groups'] as $pGroup)
+                            <div class="mb-3 border rounded p-2" style="border-color: var(--brand-border) !important; background: #fafbfc;">
+                                <div class="d-flex justify-content-between align-items-center pb-2 border-bottom fw-bold text-dark">
+                                    <span class="fs-6"><i class="bi bi-folder2-open text-warning me-1"></i>{{ $pGroup['name'] }}</span>
+                                    <span class="fw-bold fs-6" style="color: var(--brand-primary-dark);">₹{{ number_format($pGroup['subtotal'], 2) }}</span>
+                                </div>
+
+                                <!-- Direct ledgers in primary group -->
+                                @if(!empty($pGroup['direct_ledgers']))
+                                    <ul class="list-group list-group-flush mb-2 ps-2">
+                                        @foreach($pGroup['direct_ledgers'] as $dl)
+                                        <li class="list-group-item d-flex justify-content-between px-1 py-1 border-0 bg-transparent">
+                                            <div>
+                                                @if($dl['id'])
+                                                    <a href="{{ route('accounting.ledger-statement', $dl['id']) }}" class="text-decoration-none text-dark fw-medium" title="View Statement">
+                                                        <i class="bi bi-file-earmark-text text-muted me-1 small"></i>{{ $dl['name'] }}
+                                                    </a>
+                                                @else
+                                                    <span class="fw-bold text-dark">{{ $dl['name'] }}</span>
+                                                @endif
+                                                @if(!empty($dl['is_negative_cash']))
+                                                    <span class="badge bg-danger ms-1">Negative Cash</span>
+                                                @endif
+                                            </div>
+                                            <span class="fw-semibold {{ !empty($dl['is_negative_cash']) ? 'text-danger fw-bold' : 'text-dark' }}">
+                                                ₹{{ number_format($dl['amount'], 2) }}
+                                            </span>
+                                        </li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+
+                                <!-- Sub groups -->
+                                @foreach($pGroup['sub_groups'] as $subG)
+                                    <div class="mt-2 ms-2 ps-2 border-start border-2" style="border-color: var(--brand-border) !important;">
+                                        <div class="d-flex justify-content-between align-items-center py-1 fw-semibold small text-muted">
+                                            <span><i class="bi bi-diagram-2 me-1"></i>{{ $subG['name'] }}</span>
+                                            <span class="badge bg-light text-dark border">₹{{ number_format($subG['subtotal'], 2) }}</span>
+                                        </div>
+                                        <ul class="list-group list-group-flush ps-2">
+                                            @foreach($subG['ledgers'] as $l)
+                                            <li class="list-group-item d-flex justify-content-between px-1 py-1 border-0 bg-transparent small">
+                                                <div>
+                                                    <a href="{{ route('accounting.ledger-statement', $l['id']) }}" class="text-decoration-none text-dark" title="View Statement">
+                                                        {{ $l['name'] }}
+                                                    </a>
+                                                    @if(!empty($l['is_negative_cash']))
+                                                        <span class="badge bg-danger ms-1">Negative Cash</span>
+                                                    @endif
+                                                </div>
+                                                <span class="fw-medium {{ !empty($l['is_negative_cash']) ? 'text-danger fw-bold' : 'text-dark' }}">
+                                                    ₹{{ number_format($l['amount'], 2) }}
+                                                </span>
+                                            </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @empty
+                            <div class="text-muted small py-4 text-center">No assets recorded.</div>
+                        @endforelse
                     </div>
                     <div class="p-3 border-top d-flex justify-content-between fw-bold fs-6" style="background-color: var(--brand-table-header-bg);">
                         <span class="text-uppercase small text-muted">Total Assets:</span>

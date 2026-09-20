@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\AccountGroup;
 use App\Models\Company;
 use App\Models\Ledger;
+use App\Models\Pump;
 
 class ChartOfAccountsProvisioner
 {
@@ -130,6 +131,30 @@ class ChartOfAccountsProvisioner
             }
         }
 
+        // Sub-groups under Sundry Creditors (Truck Owners, Transporters, Fuel Pumps)
+        $sundryCreditorsGroup = $createdGroups['Sundry Creditors'] ?? null;
+        if ($sundryCreditorsGroup) {
+            $creditorSubGroups = [
+                'Truck Owners' => 'liability',
+                'Transporters' => 'liability',
+                'Fuel Pumps' => 'liability',
+            ];
+            foreach ($creditorSubGroups as $subName => $subType) {
+                $subGroup = AccountGroup::firstOrCreate(
+                    [
+                        'company_id' => $company->id,
+                        'name' => $subName,
+                    ],
+                    [
+                        'primary_type' => $subType,
+                        'parent_id' => $sundryCreditorsGroup->id,
+                        'is_builtin' => true,
+                    ]
+                );
+                $createdGroups[$subName] = $subGroup;
+            }
+        }
+
         // 2. Default System Ledgers
         $defaultLedgers = [
             [
@@ -193,6 +218,25 @@ class ChartOfAccountsProvisioner
                 'code' => 'ROUND_OFF',
                 'type' => 'debit',
             ],
+            [
+                'name' => 'TDS Receivable u/s 194C',
+                'group' => 'Loans & Advances',
+                'code' => 'TDS_194C_REC',
+                'tds_section' => '194C',
+                'type' => 'debit',
+            ],
+            [
+                'name' => 'Customer Deductions & Shortage A/c',
+                'group' => 'Indirect Expenses',
+                'code' => 'CUSTOMER_DEDUCTIONS',
+                'type' => 'debit',
+            ],
+            [
+                'name' => 'Advance to Transporters & Truck Owners A/c',
+                'group' => 'Loans & Advances',
+                'code' => 'ADV_TRANSPORTER',
+                'type' => 'debit',
+            ],
         ];
 
         // Add company bank account if available
@@ -227,6 +271,44 @@ class ChartOfAccountsProvisioner
                     'is_active' => true,
                 ]
             );
+        }
+
+        // Provision & sync ledgers for all active Fuel Pumps
+        $pumpGroup = $createdGroups['Fuel Pumps'] ?? $createdGroups['Sundry Creditors'] ?? null;
+        if ($pumpGroup && $company->user_id) {
+            $pumps = Pump::where('user_id', $company->user_id)->get();
+            foreach ($pumps as $pump) {
+                $pumpName = trim((string) ($pump->pump_name ?: $pump->contact_name));
+                if ($pumpName === '') {
+                    continue;
+                }
+
+                $pumpLedger = Ledger::where('company_id', $company->id)
+                    ->where('entity_type', Pump::class)
+                    ->where('entity_id', $pump->id)
+                    ->first();
+
+                if ($pumpLedger) {
+                    if ($pumpLedger->name !== $pumpName.' (Fuel Pump)' || $pumpLedger->account_group_id !== $pumpGroup->id) {
+                        $pumpLedger->update([
+                            'name' => $pumpName.' (Fuel Pump)',
+                            'account_group_id' => $pumpGroup->id,
+                        ]);
+                    }
+                } else {
+                    Ledger::create([
+                        'company_id' => $company->id,
+                        'account_group_id' => $pumpGroup->id,
+                        'name' => $pumpName.' (Fuel Pump)',
+                        'entity_type' => Pump::class,
+                        'entity_id' => $pump->id,
+                        'opening_balance' => 0.00,
+                        'opening_balance_type' => 'credit',
+                        'is_builtin' => false,
+                        'is_active' => true,
+                    ]);
+                }
+            }
         }
     }
 }

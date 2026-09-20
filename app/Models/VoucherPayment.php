@@ -25,14 +25,29 @@ class VoucherPayment extends Model implements Auditable
         'payment_status',
         'company_id',
         'pump_id',
+        'bank_ledger_id',
         'reference_transaction_id',
         'date',
         'linked_voucher_id',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (VoucherPayment $payment): void {
+            if (empty($payment->voucher_number)) {
+                $payment->voucher_number = 'VP-' . str_pad((string) ((int) (static::withTrashed()->max('id') ?? 0) + 1), 6, '0', STR_PAD_LEFT);
+            }
+        });
+    }
+
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function bankLedger()
+    {
+        return $this->belongsTo(Ledger::class, 'bank_ledger_id');
     }
 
     public function freight_booking()

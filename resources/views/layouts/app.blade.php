@@ -943,7 +943,7 @@
                                     data-lte-toggle="collapse">
                                     <i class="nav-icon bi bi-calculator"></i>
                                     <p>
-                                        Accounting
+                                        Accounting <span class="badge bg-warning text-dark ms-1 fw-bold" style="font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; vertical-align: middle;">(BETA)</span>
                                         <i class="nav-arrow bi bi-chevron-right"></i>
                                     </p>
                                 </a>
@@ -982,6 +982,20 @@
                                             class="nav-link{{ Request::is('accounting/balance-sheet*') ? ' active' : '' }}">
                                             <i class="nav-icon fas fa-file-invoice-dollar"></i>
                                             <p>Balance Sheet</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.debtors-aging') }}"
+                                            class="nav-link{{ Request::is('accounting/debtors-aging*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-hourglass-half"></i>
+                                            <p>Debtors Aging (MSME)</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.gstr1') }}"
+                                            class="nav-link{{ Request::is('accounting/gstr1*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-file-invoice"></i>
+                                            <p>GSTR-1 Preparation</p>
                                         </a>
                                     </li>
                                     <li class="nav-item">

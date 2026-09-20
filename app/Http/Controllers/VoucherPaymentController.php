@@ -352,6 +352,7 @@ class VoucherPaymentController extends Controller
             'payment_status' => 'required|in:pending,in-progress,paid',
             'pump_id' => 'nullable|exists:pumps,id',
             'date' => 'nullable|date',
+            'bank_ledger_id' => 'nullable|exists:ledgers,id',
         ]);
         // If payment date is omitted, keep behavior aligned with legacy flow.
         if ($request->date == null) {

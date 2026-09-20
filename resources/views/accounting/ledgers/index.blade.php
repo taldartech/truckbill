@@ -130,9 +130,15 @@
                             </select>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold text-muted">Opening Balance (₹)</label>
-                        <input type="number" step="0.01" min="0" name="opening_balance" class="form-control form-control-sm" value="0.00">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-muted">Opening Balance (₹)</label>
+                            <input type="number" step="0.01" min="0" name="opening_balance" class="form-control form-control-sm" value="0.00">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-muted">Opening Balance Ref / Bill No</label>
+                            <input type="text" name="opening_balance_reference" class="form-control form-control-sm" placeholder="e.g. OB-2025/26, INV-1002">
+                        </div>
                     </div>
                     <div class="row g-2">
                         <div class="col-md-6">

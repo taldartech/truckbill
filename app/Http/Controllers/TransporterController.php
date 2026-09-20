@@ -463,14 +463,18 @@ class TransporterController extends Controller
                         'tds_adjustment_remark' => ['TDS adjustment remark is required for dummy PAN.'],
                     ]);
                 }
+            } elseif ($declarationGiven) {
+                $submittedTds = 0.00;
+                $remark = null;
             } else {
                 $remark = abs($submittedTds - round($calculated, 2)) > 0.01
                     ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
                     : null;
             }
             $validated['declaration_given'] = $declarationGiven;
-            $validated['tds_percentage'] = $submittedTds;
-            $validated['tds_adjustment_remark'] = $remark;
+            $validated['declaration_194c6_date'] = $declarationGiven ? ($validated['declaration_194c6_date'] ?? now()->toDateString()) : null;
+            $validated['tds_percentage'] = $isDummyPan ? $submittedTds : ($declarationGiven ? 0.00 : $submittedTds);
+            $validated['tds_adjustment_remark'] = $isDummyPan ? $remark : ($declarationGiven ? null : $remark);
             Transporter::create($validated);
 
             return redirect()->route('transporters.index')->with('success', 'Transporter created successfully!');
@@ -519,9 +523,10 @@ class TransporterController extends Controller
                 'short_name' => $validated['short_name'] ?? null,
                 'advance_amount' => $validated['advance_amount'] ?? 0,
                 'declaration_given' => $declarationGiven,
+                'declaration_194c6_date' => $declarationGiven ? ($validated['declaration_194c6_date'] ?? now()->toDateString()) : null,
                 'total_trucks' => 0,
-                'tds_percentage' => $submittedTds,
-                'tds_adjustment_remark' => $remark,
+                'tds_percentage' => $isDummyPan ? $submittedTds : ($declarationGiven ? 0.00 : $submittedTds),
+                'tds_adjustment_remark' => $isDummyPan ? $remark : ($declarationGiven ? null : $remark),
             ];
             Transporter::create($transporterData);
 
@@ -646,15 +651,17 @@ class TransporterController extends Controller
                 : null;
         }
 
+        $declGiven = (bool) ($validated['declaration_given'] ?? false);
         $updateData = [
             'company_id' => $validated['company_id'],
             'contact_person_name' => $validated['contact_person_name'] ?? null,
             'mobile_number' => $validated['mobile_number'],
             'advance_amount' => $validated['advance_amount'] ?? 0,
-            'declaration_given' => $validated['declaration_given'],
+            'declaration_given' => $declGiven,
+            'declaration_194c6_date' => $declGiven ? ($validated['declaration_194c6_date'] ?? now()->toDateString()) : null,
             'total_trucks' => $validated['total_trucks'] ?? 0,
-            'tds_percentage' => $submittedTds,
-            'tds_adjustment_remark' => $tdsRemark,
+            'tds_percentage' => $isDummyPan ? $submittedTds : ($declGiven ? 0.00 : $submittedTds),
+            'tds_adjustment_remark' => $isDummyPan ? $tdsRemark : ($declGiven ? null : $tdsRemark),
         ];
 
         if (auth()->user()->userRole->name === 'super_admin') {

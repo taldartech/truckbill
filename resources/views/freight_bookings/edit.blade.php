@@ -267,7 +267,7 @@
                             <div class="lrf-pf__hint">Read-only</div>
                         </div>
                         <div class="lrf-pf">
-                            <label for="negative_adjusted_amount_display" class="lrf-pf__lbl">Negative Adjusted</label>
+                            <label for="negative_adjusted_amount_display" class="lrf-pf__lbl">Negative Adjusted Amount</label>
                             <input type="number" step="0.01"
                                 class="form-control is-auto {{ ($freightBooking->negative_adjusted_amount ?? 0) > 0 ? '' : 'text-muted' }}"
                                 id="negative_adjusted_amount_display"
@@ -278,6 +278,16 @@
                             <div class="lrf-pf__hint">System-managed</div>
                         </div>
                     </div>
+
+                    @if (! ($canChangeTds ?? true))
+                        <div class="alert alert-warning py-2 mb-3 small">
+                            <i class="bi bi-lock me-1"></i> TDS already submitted; amount cannot be changed.
+                        </div>
+                    @else
+                        <div class="form-text small text-muted mb-2">
+                            Auto-calculated based on transporter TDS percentage
+                        </div>
+                    @endif
 
                     <input type="hidden" name="tds_amount" id="tds_amount"
                         value="{{ old('tds_amount', $freightBooking->tds_amount) }}">
