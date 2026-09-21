@@ -48,6 +48,17 @@ class TallyAccountingTest extends TestCase
             });
         }
 
+        if (! Schema::hasTable('users')) {
+            Schema::create('users', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->string('email')->unique();
+                $table->string('password');
+                $table->foreignId('company_id')->nullable();
+                $table->timestamps();
+            });
+        }
+
         if (! Schema::hasTable('company_settings')) {
             Schema::create('company_settings', function (Blueprint $table) {
                 $table->id();
@@ -1568,6 +1579,88 @@ class TallyAccountingTest extends TestCase
         $this->assertStringContainsString('card shadow-sm border-0 mb-3 d-print-none', $view);
         $this->assertStringContainsString('card app-index-list-card shadow-sm d-print-none', $view);
         $this->assertStringContainsString('@media print', $view);
+    }
+
+    public function test_voucher_create_view_and_store_workflow(): void
+    {
+        $company = Company::create(['name' => 'Demo Company']);
+        $provisioner = new ChartOfAccountsProvisioner;
+        $provisioner->provisionForCompany($company);
+
+        $ledgers = Ledger::where('company_id', $company->id)->get();
+        $costCentres = \App\Models\CostCentre::where('company_id', $company->id)->get();
+
+        $view = view('accounting.vouchers.create', [
+            'company' => $company,
+            'ledgers' => $ledgers,
+            'costCentres' => $costCentres,
+        ])->render();
+
+        $this->assertStringContainsString('id="saveVoucherBtn"', $view);
+        $this->assertStringContainsString('id="totalDebitDisplay"', $view);
+        $this->assertStringContainsString('id="totalCreditDisplay"', $view);
+        $this->assertStringContainsString('id="balanceAlert"', $view);
+        $this->assertStringNotContainsString("document.getElementById('diffDisplay')", $view);
+        $this->assertStringContainsString('Voucher is perfectly balanced!', $view);
+
+        // Test posting payment voucher directly
+        $cashLedger = Ledger::where('company_id', $company->id)->where('code', 'CASH')->first();
+        $officeRentLedger = Ledger::where('company_id', $company->id)->where('name', 'like', '%Rent%')->first();
+
+        if (! $officeRentLedger) {
+            $indirectExpGroup = AccountGroup::where('company_id', $company->id)->where('name', 'Indirect Expenses')->first();
+            $officeRentLedger = Ledger::create([
+                'company_id' => $company->id,
+                'account_group_id' => $indirectExpGroup->id,
+                'name' => 'Office Rent',
+                'code' => 'OFFICE_RENT',
+                'is_active' => true,
+            ]);
+        }
+
+        $user = \App\Models\User::create([
+            'name' => 'Admin User',
+            'email' => 'admin_vch_test@truckbill.test',
+            'password' => bcrypt('password'),
+            'company_id' => $company->id,
+        ]);
+
+        $this->actingAs($user);
+
+        $controller = new \App\Http\Controllers\AccountingVoucherController;
+        $request = new \Illuminate\Http\Request([
+            'voucher_type' => 'payment',
+            'voucher_date' => '2026-09-21',
+            'reference_number' => 'CHQ-10029',
+            'narration' => 'Rent August',
+            'items' => [
+                [
+                    'type' => 'debit',
+                    'ledger_id' => $officeRentLedger->id,
+                    'amount' => 10000.00,
+                    'particulars_note' => 'Office Rent for August',
+                ],
+                [
+                    'type' => 'credit',
+                    'ledger_id' => $cashLedger->id,
+                    'amount' => 10000.00,
+                    'particulars_note' => 'Cash paid',
+                ],
+            ],
+        ]);
+
+        $response = $controller->store($request);
+        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
+
+        $createdVoucher = \App\Models\AccountingVoucher::where('company_id', $company->id)
+            ->where('narration', 'Rent August')
+            ->first();
+
+        $this->assertNotNull($createdVoucher);
+        $this->assertEquals('payment', $createdVoucher->voucher_type);
+        $this->assertEquals(10000.00, (float) $createdVoucher->total_amount);
+        $this->assertTrue($createdVoucher->isBalanced());
+        $this->assertCount(2, $createdVoucher->items);
     }
 }
 

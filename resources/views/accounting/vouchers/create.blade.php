@@ -231,8 +231,8 @@
                                     <div>Cr: <span id="totalCreditDisplay" class="fw-bold" style="color: var(--brand-danger);">₹0.00</span></div>
                                 </td>
                                 <td colspan="3">
-                                    <div id="balanceAlert" class="alert alert-warning py-1 px-2 mb-0 small" style="border-radius: 8px;">
-                                        Difference: <span id="diffDisplay" class="fw-bold">₹0.00</span>
+                                    <div id="balanceAlert" class="alert alert-secondary py-1 px-2 mb-0 small" style="border-radius: 8px;">
+                                        <i class="bi bi-info-circle me-1"></i>Enter debit and credit amounts (Debits must equal Credits)
                                     </div>
                                 </td>
                             </tr>
@@ -271,15 +271,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Keyboard shortcuts: F4-F7, Ctrl+F8, Ctrl+F9, Ctrl+Enter
     window.addEventListener('keydown', function(e) {
-        if (e.key === 'F5') { e.preventDefault(); document.querySelector('[data-type="payment"]').click(); }
-        if (e.key === 'F6') { e.preventDefault(); document.querySelector('[data-type="receipt"]').click(); }
-        if (e.key === 'F7') { e.preventDefault(); document.querySelector('[data-type="journal"]').click(); }
-        if (e.key === 'F4') { e.preventDefault(); document.querySelector('[data-type="contra"]').click(); }
-        if ((e.ctrlKey || e.metaKey) && e.key === 'F8') { e.preventDefault(); document.querySelector('[data-type="credit_note"]').click(); }
-        if ((e.ctrlKey || e.metaKey) && e.key === 'F9') { e.preventDefault(); document.querySelector('[data-type="debit_note"]').click(); }
+        if (e.key === 'F5') { e.preventDefault(); document.querySelector('[data-type="payment"]')?.click(); }
+        if (e.key === 'F6') { e.preventDefault(); document.querySelector('[data-type="receipt"]')?.click(); }
+        if (e.key === 'F7') { e.preventDefault(); document.querySelector('[data-type="journal"]')?.click(); }
+        if (e.key === 'F4') { e.preventDefault(); document.querySelector('[data-type="contra"]')?.click(); }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'F8') { e.preventDefault(); document.querySelector('[data-type="credit_note"]')?.click(); }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'F9') { e.preventDefault(); document.querySelector('[data-type="debit_note"]')?.click(); }
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             const saveBtn = document.getElementById('saveVoucherBtn');
-            if (!saveBtn.disabled) { saveBtn.click(); }
+            if (saveBtn && !saveBtn.disabled) {
+                e.preventDefault();
+                saveBtn.click();
+            }
         }
     });
 
@@ -330,36 +333,58 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Update delete button states based on row count
+    function updateDeleteButtons() {
+        const rows = document.querySelectorAll('.item-row');
+        rows.forEach(r => {
+            const btn = r.querySelector('.delete-row-btn');
+            if (btn) {
+                btn.disabled = (rows.length <= 2);
+            }
+        });
+    }
+
     // Add Row
-    document.getElementById('addRowBtn').addEventListener('click', function() {
+    document.getElementById('addRowBtn')?.addEventListener('click', function() {
         const tbody = document.getElementById('itemsBody');
         const firstRow = tbody.querySelector('.item-row');
         const newRow = firstRow.cloneNode(true);
 
         newRow.querySelectorAll('input, select').forEach(el => {
             el.name = el.name.replace(/\[\d+\]/, `[${rowIndex}]`);
-            if (el.tagName === 'INPUT') el.value = '';
+            if (el.tagName === 'INPUT') {
+                el.value = '';
+            } else if (el.tagName === 'SELECT') {
+                if (el.classList.contains('ledger-select') || el.name.includes('cost_centre_id')) {
+                    el.selectedIndex = 0;
+                }
+            }
         });
 
-        newRow.querySelector('.delete-row-btn').disabled = false;
         tbody.appendChild(newRow);
         rowIndex++;
         attachEvents(newRow);
+        updateDeleteButtons();
         calculateBalances();
     });
 
     function attachEvents(row) {
-        row.querySelectorAll('.item-amount, .item-type').forEach(el => {
+        row.querySelectorAll('.item-amount, .item-type, .ledger-select').forEach(el => {
             el.addEventListener('input', calculateBalances);
             el.addEventListener('change', calculateBalances);
+            el.addEventListener('keyup', calculateBalances);
         });
 
-        row.querySelector('.delete-row-btn').addEventListener('click', function() {
-            if (document.querySelectorAll('.item-row').length > 2) {
-                row.remove();
-                calculateBalances();
-            }
-        });
+        const delBtn = row.querySelector('.delete-row-btn');
+        if (delBtn) {
+            delBtn.addEventListener('click', function() {
+                if (document.querySelectorAll('.item-row').length > 2) {
+                    row.remove();
+                    updateDeleteButtons();
+                    calculateBalances();
+                }
+            });
+        }
     }
 
     document.querySelectorAll('.item-row').forEach(row => attachEvents(row));
@@ -369,29 +394,59 @@ document.addEventListener('DOMContentLoaded', function() {
         let credits = 0;
 
         document.querySelectorAll('.item-row').forEach(row => {
-            const type = row.querySelector('.item-type').value;
-            const amount = parseFloat(row.querySelector('.item-amount').value) || 0;
+            const typeEl = row.querySelector('.item-type');
+            const amountEl = row.querySelector('.item-amount');
+            const type = typeEl ? typeEl.value : 'debit';
+            const amount = parseFloat(amountEl ? amountEl.value : 0) || 0;
             if (type === 'debit') debits += amount;
             else credits += amount;
         });
 
-        const diff = Math.abs(debits - credits);
-        document.getElementById('totalDebitDisplay').textContent = '₹' + debits.toFixed(2);
-        document.getElementById('totalCreditDisplay').textContent = '₹' + credits.toFixed(2);
-        document.getElementById('diffDisplay').textContent = '₹' + diff.toFixed(2);
+        // Round to 2 decimal places to avoid floating point imprecision
+        debits = Math.round(debits * 100) / 100;
+        credits = Math.round(credits * 100) / 100;
+        const diff = Math.round(Math.abs(debits - credits) * 100) / 100;
+
+        const totalDebitDisplay = document.getElementById('totalDebitDisplay');
+        const totalCreditDisplay = document.getElementById('totalCreditDisplay');
+        if (totalDebitDisplay) totalDebitDisplay.textContent = '₹' + debits.toFixed(2);
+        if (totalCreditDisplay) totalCreditDisplay.textContent = '₹' + credits.toFixed(2);
 
         const alertBox = document.getElementById('balanceAlert');
         const saveBtn = document.getElementById('saveVoucherBtn');
 
-        if (diff < 0.01 && debits > 0) {
-            alertBox.className = 'alert alert-success py-1 px-2 mb-0 small';
-            alertBox.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Voucher is perfectly balanced!';
-            saveBtn.disabled = false;
+        if (debits === 0 && credits === 0) {
+            if (alertBox) {
+                alertBox.className = 'alert alert-secondary py-1 px-2 mb-0 small';
+                alertBox.innerHTML = '<i class="bi bi-info-circle me-1"></i>Enter debit and credit amounts (Debits must equal Credits)';
+            }
+            if (saveBtn) saveBtn.disabled = true;
+        } else if (diff < 0.01 && debits > 0) {
+            if (alertBox) {
+                alertBox.className = 'alert alert-success py-1 px-2 mb-0 small';
+                alertBox.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i><strong>Voucher is perfectly balanced!</strong> (Dr = Cr)';
+            }
+            if (saveBtn) saveBtn.disabled = false;
         } else {
-            alertBox.className = 'alert alert-warning py-1 px-2 mb-0 small';
-            alertBox.innerHTML = 'Difference: <span class="fw-bold">₹' + diff.toFixed(2) + '</span> (Debits must equal Credits)';
-            saveBtn.disabled = true;
+            const hint = debits > credits ? 'Debits exceed Credits' : 'Credits exceed Debits';
+            if (alertBox) {
+                alertBox.className = 'alert alert-warning py-1 px-2 mb-0 small';
+                alertBox.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>Difference: <span class="fw-bold">₹' + diff.toFixed(2) + '</span> (' + hint + ')';
+            }
+            if (saveBtn) saveBtn.disabled = true;
         }
+    }
+
+    // Optional: add submit handler to prevent duplicate submission
+    const form = document.getElementById('voucherForm');
+    if (form) {
+        form.addEventListener('submit', function() {
+            const saveBtn = document.getElementById('saveVoucherBtn');
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Posting Voucher...';
+            }
+        });
     }
 
     calculateBalances();
