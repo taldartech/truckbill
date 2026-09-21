@@ -2,8 +2,302 @@
 
 @section('title', 'Voucher #' . $voucher->voucher_number . ' - ' . $company->name)
 
+@push('styles')
+<style>
+    @media print {
+        @page {
+            size: A4 portrait;
+            margin: 10mm 10mm 10mm 10mm;
+        }
+
+        /* Hide all web application chrome, overlays, backdrops, banners, and buttons */
+        .sidebar-overlay,
+        .modal-backdrop,
+        .loading-overlay,
+        .overlay,
+        [class*="overlay"],
+        [class*="backdrop"],
+        .app-sidebar,
+        .main-sidebar,
+        .sidebar-wrapper,
+        .app-header,
+        .app-footer,
+        .app-index-card-toolbar,
+        .btn,
+        .btn-group,
+        .dropdown,
+        .d-print-none,
+        .no-print,
+        #subscription-access-banner,
+        .alert {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            background: transparent !important;
+            width: 0 !important;
+            height: 0 !important;
+            pointer-events: none !important;
+        }
+
+        /* Force pure white background on all page wrappers */
+        html,
+        body,
+        body.layout-fixed,
+        body.bg-body-tertiary,
+        body.sidebar-open,
+        .app-wrapper,
+        .app-main,
+        .app-content,
+        .app-content-header,
+        .container-fluid,
+        .app-index-page--standard {
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+            background-image: none !important;
+            color: #000000 !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+
+        /* Dedicated Tally Print Container */
+        .voucher-print {
+            display: block !important;
+            width: 100% !important;
+            color: #000000 !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+            font-size: 9pt !important;
+            line-height: 1.35 !important;
+        }
+
+        .tally-print-header {
+            text-align: center !important;
+            margin-bottom: 10px !important;
+            color: #000000 !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+
+        .tally-company-name {
+            font-size: 14pt !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            color: #000000 !important;
+            margin-bottom: 2px !important;
+        }
+
+        .tally-company-city {
+            font-size: 10pt !important;
+            font-weight: 400 !important;
+            color: #000000 !important;
+            margin-bottom: 3px !important;
+        }
+
+        .tally-company-tax-info {
+            font-size: 8.5pt !important;
+            color: #333333 !important;
+            margin-bottom: 4px !important;
+        }
+
+        .tally-report-title {
+            font-size: 12pt !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            color: #000000 !important;
+            border-top: 1px solid #000000 !important;
+            border-bottom: 1px solid #000000 !important;
+            padding: 3px 0 !important;
+            margin-top: 4px !important;
+            margin-bottom: 10px !important;
+        }
+
+        /* Voucher Meta Info Box */
+        .tally-meta-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin-bottom: 10px !important;
+            font-size: 9pt !important;
+            border: 1px solid #000000 !important;
+        }
+
+        .tally-meta-table td {
+            padding: 4px 8px !important;
+            vertical-align: top !important;
+        }
+
+        /* Particulars Table */
+        .tally-voucher-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            table-layout: fixed !important;
+            background: #ffffff !important;
+            margin-bottom: 10px !important;
+            page-break-inside: auto !important;
+            break-inside: auto !important;
+            border: 1px solid #000000 !important;
+        }
+
+        .tally-voucher-table thead {
+            display: table-header-group !important;
+        }
+
+        .tally-voucher-table tfoot {
+            display: table-footer-group !important;
+        }
+
+        .tally-th-row th {
+            padding: 6px 8px !important;
+            border-top: 1px solid #000000 !important;
+            border-bottom: 1px solid #000000 !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            font-size: 9pt !important;
+            font-weight: 700 !important;
+        }
+
+        .tally-title-spaced {
+            letter-spacing: 2px !important;
+            font-weight: 700 !important;
+        }
+
+        .tally-voucher-table th:not(:last-child),
+        .tally-voucher-table td:not(:last-child) {
+            border-right: 1px solid #cccccc !important;
+        }
+
+        .tally-row-tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+
+        .tally-row-tr td {
+            padding: 5px 8px !important;
+            vertical-align: top !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            border-bottom: 1px solid #e5e5e5 !important;
+        }
+
+        .tally-total-tr td {
+            padding: 6px 8px !important;
+            border-top: 1px solid #000000 !important;
+            border-bottom: 3px double #000000 !important;
+            font-weight: 700 !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+        }
+
+        /* Amount in Words & Narration */
+        .tally-box-section {
+            border: 1px solid #000000 !important;
+            padding: 6px 8px !important;
+            margin-bottom: 8px !important;
+            font-size: 9pt !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+
+        .tally-box-title {
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            font-size: 8pt !important;
+            color: #333333 !important;
+            margin-bottom: 2px !important;
+        }
+
+        .tally-box-content {
+            color: #000000 !important;
+        }
+
+        /* ITNS 281 Challan Table */
+        .tally-challan-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            font-size: 8.5pt !important;
+        }
+
+        .tally-challan-table td {
+            padding: 2px 4px !important;
+        }
+
+        /* Signature block */
+        .tally-signatures-row {
+            display: flex !important;
+            justify-content: space-between !important;
+            margin-top: 45px !important;
+            padding-top: 5px !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+
+        .tally-sign-box {
+            text-align: center !important;
+            width: 28% !important;
+        }
+
+        .tally-sign-line {
+            border-top: 1px solid #000000 !important;
+            margin-bottom: 4px !important;
+        }
+
+        .tally-sign-title {
+            font-size: 8.5pt !important;
+            font-weight: 600 !important;
+            color: #000000 !important;
+        }
+
+        .tally-print-footer {
+            margin-top: 25px !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            font-size: 7.5pt !important;
+            color: #666666 !important;
+            border-top: 1px dashed #cccccc !important;
+            padding-top: 4px !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="container-fluid py-3 app-index-page--standard">
+@php
+    $totalDebit = (float) $voucher->items->where('type', 'debit')->sum('amount');
+    $totalCredit = (float) $voucher->items->where('type', 'credit')->sum('amount');
+    $cityName = $company->city?->name ?? ($company->address ?? '');
+
+    $formatAmount = function($num) {
+        $absNum = abs((float) $num);
+        $parts = explode('.', sprintf("%.2f", $absNum));
+        $intPart = $parts[0];
+        $decPart = '.' . $parts[1];
+
+        $len = strlen($intPart);
+        if ($len > 3) {
+            $lastThree = substr($intPart, -3);
+            $remaining = substr($intPart, 0, -3);
+            $reversed = strrev($remaining);
+            $chunks = str_split($reversed, 2);
+            $formattedRemaining = strrev(implode(',', $chunks));
+            $formatted = $formattedRemaining . ',' . $lastThree;
+        } else {
+            $formatted = $intPart;
+        }
+
+        $formatted .= $decPart;
+        return $formatted;
+    };
+
+    $amountInWords = function_exists('getIndianCurrency') ? trim(getIndianCurrency($totalDebit)) : '';
+@endphp
+
+<!-- ON-SCREEN INTERACTIVE CONTAINER (Hidden on Print) -->
+<div class="container-fluid py-3 app-index-page--standard d-print-none">
     <!-- Main Card -->
     <div class="card app-index-list-card shadow-sm mb-3">
         <div class="card-header">
@@ -130,10 +424,10 @@
                         <tr>
                             <td colspan="4" class="text-end pe-3">Voucher Total:</td>
                             <td class="text-end" style="color: var(--brand-success);">
-                                ₹{{ number_format($voucher->items->where('type', 'debit')->sum('amount'), 2) }}
+                                ₹{{ number_format($totalDebit, 2) }}
                             </td>
                             <td class="text-end" style="color: var(--brand-danger);">
-                                ₹{{ number_format($voucher->items->where('type', 'credit')->sum('amount'), 2) }}
+                                ₹{{ number_format($totalCredit, 2) }}
                             </td>
                         </tr>
                     </tfoot>
@@ -151,27 +445,165 @@
     </div>
 </div>
 
-<style>
-@media print {
-    .app-sidebar, .main-sidebar, .app-header, .app-index-card-toolbar, .btn, footer {
-        display: none !important;
-    }
-    .card {
-        border: none !important;
-        box-shadow: none !important;
-    }
-    .card-header {
-        background: transparent !important;
-        color: #000 !important;
-        border-bottom: 2px solid #333 !important;
-        padding-left: 0 !important;
-    }
-    .card-header .card-title {
-        color: #000 !important;
-    }
-    body {
-        background: #fff !important;
-    }
-}
-</style>
+<!-- DEDICATED PRINT CONTAINER (Standard Tally Format - Visible ONLY on Print) -->
+<div class="d-none d-print-block voucher-print">
+    <!-- Header -->
+    <div class="tally-print-header">
+        <div class="tally-company-name">{{ $company->name }}</div>
+        @if($company->address || $cityName)
+            <div class="tally-company-city">
+                <u>{{ $company->address ?: $cityName }}</u>
+            </div>
+        @endif
+        @if($company->gst_number || $company->pan_number)
+            <div class="tally-company-tax-info">
+                @if($company->gst_number) GSTIN: <strong>{{ $company->gst_number }}</strong> @endif
+                @if($company->gst_number && $company->pan_number) | @endif
+                @if($company->pan_number) PAN: <strong>{{ $company->pan_number }}</strong> @endif
+                @if($company->contact_number) | Ph: {{ $company->contact_number }} @endif
+            </div>
+        @endif
+        <div class="tally-report-title">
+            {{ strtoupper(str_replace('_', ' ', $voucher->voucher_type)) }} VOUCHER
+        </div>
+    </div>
+
+    <!-- Voucher Details Meta Header Table -->
+    <table class="tally-meta-table">
+        <tr>
+            <td style="width: 55%;">
+                <strong>Voucher No. :</strong> <span style="font-size: 10pt; font-weight: 700;">{{ $voucher->voucher_number }}</span>
+            </td>
+            <td style="width: 45%; text-align: right;">
+                <strong>Date :</strong> <span style="font-size: 10pt; font-weight: 700;">{{ $voucher->voucher_date->format('d-M-Y') }}</span>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Ref. / Cheque No. :</strong> {{ $voucher->reference_number ?: '-' }}
+            </td>
+            <td style="text-align: right;">
+                <strong>Entered By :</strong> {{ $voucher->user?->name ?: 'System Auto-Post' }}
+            </td>
+        </tr>
+    </table>
+
+    <!-- Particulars Table -->
+    <table class="tally-voucher-table">
+        <thead>
+            <tr class="tally-th-row">
+                <th style="width: 50px;" class="text-center">
+                    <span class="tally-title-spaced">Type</span>
+                </th>
+                <th>
+                    <span class="tally-title-spaced">P a r t i c u l a r s</span>
+                </th>
+                <th style="width: 150px;">
+                    <span class="tally-title-spaced">Cost Centre</span>
+                </th>
+                <th class="text-end" style="width: 120px;">
+                    <span class="tally-title-spaced">Debit (₹)</span>
+                </th>
+                <th class="text-end" style="width: 120px;">
+                    <span class="tally-title-spaced">Credit (₹)</span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($voucher->items as $item)
+            <tr class="tally-row-tr">
+                <td class="text-center fw-bold">
+                    {{ $item->type === 'debit' ? 'Dr' : 'Cr' }}
+                </td>
+                <td>
+                    <div style="font-weight: 700; font-size: 9.5pt;">{{ $item->ledger?->name }}</div>
+                    <div style="font-size: 8pt; color: #555555;">{{ $item->ledger?->accountGroup?->name }}</div>
+                    @if($item->particulars_note)
+                        <div style="font-size: 8pt; font-style: italic; color: #333333; margin-top: 2px;">
+                            Note: {{ $item->particulars_note }}
+                        </div>
+                    @endif
+                </td>
+                <td>
+                    {{ $item->costCentre?->name ?: '-' }}
+                </td>
+                <td class="text-end fw-bold">
+                    {{ $item->type === 'debit' ? $formatAmount($item->amount) : '-' }}
+                </td>
+                <td class="text-end fw-bold">
+                    {{ $item->type === 'credit' ? $formatAmount($item->amount) : '-' }}
+                </td>
+            </tr>
+            @endforeach
+        </tbody>
+        <tfoot>
+            <tr class="tally-total-tr">
+                <td colspan="3" class="text-end pe-3">
+                    <span class="tally-title-spaced">T o t a l :</span>
+                </td>
+                <td class="text-end fw-bold">
+                    ₹{{ $formatAmount($totalDebit) }}
+                </td>
+                <td class="text-end fw-bold">
+                    ₹{{ $formatAmount($totalCredit) }}
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <!-- Amount in Words Box -->
+    <div class="tally-box-section">
+        <div class="tally-box-title">Amount (in words):</div>
+        <div class="tally-box-content fw-bold">
+            INR {{ $amountInWords ?: $formatAmount($totalDebit) }} Only
+        </div>
+    </div>
+
+    <!-- Narration Box -->
+    @if($voucher->narration)
+    <div class="tally-box-section">
+        <div class="tally-box-title">Narration / Remarks:</div>
+        <div class="tally-box-content">
+            {{ $voucher->narration }}
+        </div>
+    </div>
+    @endif
+
+    <!-- Statutory TDS ITNS 281 Challan (if applicable) -->
+    @if($voucher->challan_bsr_code || $voucher->challan_serial_no)
+    <div class="tally-box-section" style="background: #fafafa !important;">
+        <div class="tally-box-title">Govt TDS Challan (ITNS 281) Details (Form 26Q / 3CD):</div>
+        <table class="tally-challan-table">
+            <tr>
+                <td style="width: 25%;"><strong>BSR Code:</strong> {{ $voucher->challan_bsr_code ?: '-' }}</td>
+                <td style="width: 25%;"><strong>Challan No.:</strong> {{ $voucher->challan_serial_no ?: '-' }}</td>
+                <td style="width: 25%;"><strong>Tender Date:</strong> {{ $voucher->challan_tender_date ? $voucher->challan_tender_date->format('d-M-Y') : '-' }}</td>
+                <td style="width: 25%;"><strong>Major Head:</strong> {{ $voucher->challan_head ?: '0021 - Non-Company Deductees' }}</td>
+            </tr>
+        </table>
+    </div>
+    @endif
+
+    <!-- Signatures Row -->
+    <div class="tally-signatures-row">
+        <div class="tally-sign-box">
+            <div class="tally-sign-line"></div>
+            <div class="tally-sign-title">Prepared by: {{ $voucher->user?->name ?: 'Administrator' }}</div>
+        </div>
+        <div class="tally-sign-box">
+            <div class="tally-sign-line"></div>
+            <div class="tally-sign-title">Verified / Checked by</div>
+        </div>
+        <div class="tally-sign-box">
+            <div class="tally-sign-line"></div>
+            <div class="tally-sign-title">Authorised Signatory</div>
+        </div>
+    </div>
+
+    <!-- Print Footer -->
+    <div class="tally-print-footer">
+        <span>This is a computer generated accounting voucher.</span>
+        <span>Printed on: {{ now()->format('d-M-Y h:i A') }}</span>
+    </div>
+</div>
 @endsection

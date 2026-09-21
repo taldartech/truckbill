@@ -1662,5 +1662,93 @@ class TallyAccountingTest extends TestCase
         $this->assertTrue($createdVoucher->isBalanced());
         $this->assertCount(2, $createdVoucher->items);
     }
+
+    public function test_voucher_show_view_renders_standard_print_format(): void
+    {
+        $company = Company::create([
+            'name' => 'Demo Company',
+            'address' => 'Building 5, DLF Cyber Hub, Sector 24',
+            'gst_number' => '29AAACH7409R1ZX',
+            'pan_number' => 'AABAD1452A',
+            'contact_number' => '7838833900',
+        ]);
+
+        $provisioner = new ChartOfAccountsProvisioner;
+        $provisioner->provisionForCompany($company);
+
+        $cashLedger = Ledger::where('company_id', $company->id)->where('code', 'CASH')->first();
+        $indirectExpGroup = AccountGroup::where('company_id', $company->id)->where('name', 'Indirect Expenses')->first();
+        $teaExpenseLedger = Ledger::create([
+            'company_id' => $company->id,
+            'account_group_id' => $indirectExpGroup->id,
+            'name' => 'Tea/coffee/Snacks',
+            'code' => 'TEA_COFFEE',
+            'is_active' => true,
+        ]);
+
+        $voucher = \App\Models\AccountingVoucher::create([
+            'company_id' => $company->id,
+            'voucher_type' => 'payment',
+            'voucher_number' => 'PAY-260921-4955',
+            'voucher_date' => '2026-09-21',
+            'total_amount' => 500.00,
+            'narration' => 'Tea 21st sept',
+            'is_posted' => true,
+        ]);
+
+        \App\Models\AccountingVoucherItem::create([
+            'company_id' => $company->id,
+            'accounting_voucher_id' => $voucher->id,
+            'ledger_id' => $teaExpenseLedger->id,
+            'type' => 'debit',
+            'amount' => 500.00,
+        ]);
+
+        \App\Models\AccountingVoucherItem::create([
+            'company_id' => $company->id,
+            'accounting_voucher_id' => $voucher->id,
+            'ledger_id' => $cashLedger->id,
+            'type' => 'credit',
+            'amount' => 500.00,
+        ]);
+
+        $voucher->load(['items.ledger.accountGroup', 'items.costCentre', 'user']);
+
+        $view = view('accounting.vouchers.show', [
+            'company' => $company,
+            'voucher' => $voucher,
+        ])->render();
+
+        // Dedicated print container
+        $this->assertStringContainsString('d-none d-print-block voucher-print', $view);
+
+        // Header elements
+        $this->assertStringContainsString('Demo Company', $view);
+        $this->assertStringContainsString('Building 5, DLF Cyber Hub, Sector 24', $view);
+        $this->assertStringContainsString('PAYMENT VOUCHER', $view);
+
+        // Meta and Particulars table
+        $this->assertStringContainsString('tally-meta-table', $view);
+        $this->assertStringContainsString('PAY-260921-4955', $view);
+        $this->assertStringContainsString('21-Sep-2026', $view);
+        $this->assertStringContainsString('tally-voucher-table', $view);
+        $this->assertStringContainsString('Tea/coffee/Snacks', $view);
+        $this->assertStringContainsString('Cash A/c', $view);
+        $this->assertStringContainsString('500.00', $view);
+
+        // Amount in words and Narration
+        $this->assertStringContainsString('Amount (in words):', $view);
+        $this->assertStringContainsString('Five Hundred Rupees', $view);
+        $this->assertStringContainsString('Tea 21st sept', $view);
+
+        // Signature row
+        $this->assertStringContainsString('tally-signatures-row', $view);
+        $this->assertStringContainsString('Prepared by:', $view);
+        $this->assertStringContainsString('Authorised Signatory', $view);
+
+        // Ensure screen interactive elements are hidden from print
+        $this->assertStringContainsString('d-print-none', $view);
+        $this->assertStringContainsString('@media print', $view);
+    }
 }
 
