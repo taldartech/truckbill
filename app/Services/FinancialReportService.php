@@ -425,7 +425,7 @@ class FinancialReportService
         }
 
         return [
-            'entity_type' => $ledger->entity_type === Consignee::class ? 'customer' : 'transporter',
+            'entity_type' => $ledger->entity_type === Consignee::class ? 'Customer' : 'Transporter',
             'status_filter' => $statusFilter,
             'total_billed' => $totalBilled,
             'total_cleared' => $totalCleared,
@@ -433,6 +433,7 @@ class FinancialReportService
             'pending_count' => $bills->whereIn('status', ['pending', 'partial'])->count(),
             'settled_count' => $bills->where('status', 'settled')->count(),
             'total_count' => $bills->count(),
+            'unfiltered_count' => $bills->count(),
             'bills' => $filteredBills,
         ];
     }

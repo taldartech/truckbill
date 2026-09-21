@@ -37,6 +37,10 @@ class TallyAccountingTest extends TestCase
                 $table->string('name');
                 $table->string('short_name')->nullable();
                 $table->string('dummy_pan_number')->nullable();
+                $table->string('gst_number')->nullable();
+                $table->string('pan_number')->nullable();
+                $table->text('address')->nullable();
+                $table->string('contact_number')->nullable();
                 $table->string('bank')->nullable();
                 $table->string('account_number')->nullable();
                 $table->timestamps();
@@ -1220,6 +1224,145 @@ class TallyAccountingTest extends TestCase
         $msmeCustomer = $report['customers']->firstWhere('customer_id', $customer2->id);
         $this->assertTrue($msmeCustomer['has_msme_alert']);
         $this->assertEquals(75000.00, $msmeCustomer['msme_overdue_amount']);
+    }
+
+    public function test_bill_to_bill_outstandings_and_unfiltered_count(): void
+    {
+        $company = Company::create(['name' => 'Bill Outstandings Transport']);
+        $customer = Consignee::create([
+            'company_id' => $company->id,
+            'name' => 'Outstandings Customer',
+        ]);
+
+        $ledger = Ledger::create([
+            'company_id' => $company->id,
+            'name' => 'Outstandings Customer Ledger',
+            'entity_type' => Consignee::class,
+            'entity_id' => $customer->id,
+        ]);
+
+        Invoice::create([
+            'company_id' => $company->id,
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-OUT-01',
+            'generated_date' => '2026-09-05',
+            'total_amount' => 50000.00,
+            'net_amount' => 50000.00,
+            'payment_status' => 'pending',
+        ]);
+
+        Invoice::create([
+            'company_id' => $company->id,
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-OUT-02',
+            'generated_date' => '2026-09-10',
+            'total_amount' => 30000.00,
+            'net_amount' => 30000.00,
+            'payment_status' => 'pending',
+        ]);
+
+        $reportService = new FinancialReportService;
+        $outstandings = $reportService->getBillToBillOutstandings($ledger);
+
+        $this->assertNotNull($outstandings);
+        $this->assertEquals('Customer', $outstandings['entity_type']);
+        $this->assertArrayHasKey('unfiltered_count', $outstandings);
+        $this->assertEquals(2, $outstandings['unfiltered_count']);
+        $this->assertEquals(2, $outstandings['total_count']);
+        $this->assertEquals(80000.00, $outstandings['total_billed']);
+        $this->assertEquals(80000.00, $outstandings['total_pending']);
+
+        // Check with filter
+        $filteredPending = $reportService->getBillToBillOutstandings($ledger, 'pending');
+        $this->assertEquals(2, $filteredPending['unfiltered_count']);
+        $this->assertCount(2, $filteredPending['bills']);
+
+        $filteredSettled = $reportService->getBillToBillOutstandings($ledger, 'settled');
+        $this->assertEquals(2, $filteredSettled['unfiltered_count']);
+        $this->assertCount(0, $filteredSettled['bills']);
+    }
+
+    public function test_ledger_statement_view_renders_with_outstandings(): void
+    {
+        $company = Company::create(['name' => 'View Render Transport']);
+        $customer = Consignee::create([
+            'company_id' => $company->id,
+            'name' => 'View Customer',
+        ]);
+
+        $ledger = Ledger::create([
+            'company_id' => $company->id,
+            'name' => 'View Customer Ledger',
+            'entity_type' => Consignee::class,
+            'entity_id' => $customer->id,
+        ]);
+
+        $reportService = new FinancialReportService;
+        $statement = $reportService->getLedgerStatement($ledger, '2026-09-01', '2026-09-21');
+        $outstandings = $reportService->getBillToBillOutstandings($ledger);
+
+        $view = view('accounting.ledger_statement', [
+            'company' => $company,
+            'ledgers' => collect([$ledger]),
+            'selectedLedgerId' => $ledger->id,
+            'statement' => $statement,
+            'outstandings' => $outstandings,
+            'fromDate' => '2026-09-01',
+            'toDate' => '2026-09-21',
+            'searchQuery' => '',
+            'billFilter' => null,
+        ])->render();
+
+        $this->assertStringContainsString('Bill-to-Bill Outstandings', $view);
+        $this->assertStringContainsString('All (0)', $view);
+        $this->assertStringContainsString('d-none d-print-block', $view);
+        $this->assertStringContainsString('Statement of Account', $view);
+        $this->assertStringContainsString('d-print-none', $view);
+        $this->assertStringContainsString('@media print', $view);
+    }
+
+    public function test_balance_sheet_view_renders_with_standard_balance_sheet_print_format(): void
+    {
+        $company = Company::create([
+            'name' => 'Taldar Tech Consultancy Private Limited',
+            'address' => 'Udaipur',
+            'gst_number' => '08AAACA1234A1Z5',
+            'pan_number' => 'AAACA1234A',
+            'contact_number' => '9876543210',
+        ]);
+
+        $reportService = new FinancialReportService;
+        $balanceSheet = $reportService->getBalanceSheet($company, '2026-09-21');
+
+        $view = view('accounting.balance_sheet', [
+            'company' => $company,
+            'balanceSheet' => $balanceSheet,
+            'asOfDate' => '2026-09-21',
+        ])->render();
+
+        // Ensure print view and headers matching reference image are present
+        $this->assertStringContainsString('d-none d-print-block balance-sheet-print', $view);
+        $this->assertStringContainsString('Taldar Tech Consultancy Private Limited', $view);
+        $this->assertStringContainsString('Udaipur', $view);
+        $this->assertStringContainsString('Balance Sheet', $view);
+        $this->assertStringContainsString('Balance Sheet (Detailed Schedule)', $view);
+        $this->assertStringContainsString('bs-summary-sheet', $view);
+        $this->assertStringContainsString('bs-detailed-sheet', $view);
+        $this->assertStringContainsString('tally-row-tr', $view);
+        $this->assertStringContainsString('1-Apr-26 to 21-Sep-26', $view);
+        $this->assertStringContainsString('L i a b i l i t i e s', $view);
+        $this->assertStringContainsString('A s s e t s', $view);
+        $this->assertStringContainsString('as at 21-Sep-26', $view);
+        $this->assertStringContainsString('T o t a l', $view);
+        $this->assertStringContainsString('tally-bs-table', $view);
+        $this->assertStringContainsString('printBoth()', $view);
+        $this->assertStringContainsString('printSummary()', $view);
+        $this->assertStringContainsString('printDetailed()', $view);
+
+        // Ensure screen elements are marked d-print-none
+        $this->assertStringContainsString('card shadow-sm border-0 mb-3 d-print-none', $view);
+        $this->assertStringContainsString('card app-index-list-card shadow-sm d-print-none', $view);
+        $this->assertStringContainsString('@media print', $view);
     }
 }
 

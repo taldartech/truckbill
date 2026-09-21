@@ -273,6 +273,132 @@
             }
         }
 
+        /* Global Print Stylesheet for Browser Printing */
+        @media print {
+            /* Hide non-printable app layout & backdrops/overlays */
+            .sidebar-overlay,
+            .modal-backdrop,
+            .loading-overlay,
+            .overlay,
+            [class*="overlay"],
+            [class*="backdrop"],
+            .app-header,
+            .app-sidebar,
+            .main-sidebar,
+            .app-footer,
+            .app-index-card-toolbar,
+            .sidebar-wrapper,
+            .no-print,
+            .d-print-none,
+            .btn,
+            .btn-group,
+            .app-content-header > .container-fluid > .alert,
+            #subscription-access-banner {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                background: transparent !important;
+                width: 0 !important;
+                height: 0 !important;
+                pointer-events: none !important;
+            }
+
+            html,
+            body,
+            body.layout-fixed,
+            body.bg-body-tertiary,
+            body.sidebar-open {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                background-image: none !important;
+                color: #000000 !important;
+                font-size: 11pt !important;
+                width: 100% !important;
+                height: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
+
+            body.layout-fixed {
+                overflow: visible !important;
+            }
+
+            .app-wrapper {
+                display: block !important;
+                position: static !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: auto !important;
+                height: auto !important;
+                overflow: visible !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .app-main,
+            .sidebar-expand-lg.layout-fixed .app-main,
+            .sidebar-expand.layout-fixed .app-main,
+            .layout-fixed .app-main {
+                display: block !important;
+                position: static !important;
+                overflow: visible !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: auto !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .app-content,
+            .app-content-header,
+            .app-content-header > .container-fluid,
+            .container-fluid {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                overflow: visible !important;
+            }
+
+            .app-index-list-card,
+            .card {
+                border: 1px solid #dee2e6 !important;
+                box-shadow: none !important;
+                overflow: visible !important;
+                margin-bottom: 1rem !important;
+                page-break-inside: auto !important;
+            }
+
+            .table-responsive {
+                overflow: visible !important;
+                display: block !important;
+            }
+
+            table {
+                width: 100% !important;
+                page-break-inside: auto !important;
+            }
+
+            tr {
+                page-break-inside: avoid !important;
+                page-break-after: auto !important;
+            }
+
+            thead {
+                display: table-header-group !important;
+            }
+
+            tfoot {
+                display: table-footer-group !important;
+            }
+        }
         /* Sidebar layout polish lives in sidebar-redesigned.css (OwnFleet-aligned) */
     </style>
     @stack('styles')

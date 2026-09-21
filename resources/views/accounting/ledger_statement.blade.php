@@ -11,13 +11,194 @@
             font-size: 0.875rem !important;
             min-height: 38px;
         }
+
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 8mm 8mm 8mm 8mm;
+            }
+
+            /* Completely hide all overlays, backdrops, sidebars, headers, footers, and interactive buttons */
+            .sidebar-overlay,
+            .modal-backdrop,
+            .loading-overlay,
+            .overlay,
+            [class*="overlay"],
+            [class*="backdrop"],
+            .app-sidebar,
+            .main-sidebar,
+            .sidebar-wrapper,
+            .app-header,
+            .app-footer,
+            .app-index-card-toolbar,
+            .btn,
+            .btn-group,
+            .d-print-none,
+            .no-print,
+            #subscription-access-banner,
+            .alert {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                background: transparent !important;
+                width: 0 !important;
+                height: 0 !important;
+                pointer-events: none !important;
+            }
+
+            /* Force pure crisp white background on all page wrappers and remove all overlays/filters */
+            html,
+            body,
+            body.layout-fixed,
+            body.bg-body-tertiary,
+            body.sidebar-open,
+            .app-wrapper,
+            .app-main,
+            .app-content,
+            .app-content-header,
+            .container-fluid,
+            .app-index-page--standard,
+            .card,
+            .app-index-list-card,
+            .card-body {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                background-image: none !important;
+                color: #0f172a !important;
+                font-size: 9pt !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
+
+            .container-fluid.app-index-page--standard {
+                padding: 0 !important;
+            }
+
+            /* Clean white cards with subtle border */
+            .card,
+            .app-index-list-card {
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 4px !important;
+                box-shadow: none !important;
+                margin-bottom: 10px !important;
+                overflow: visible !important;
+                page-break-inside: auto !important;
+                background: #ffffff !important;
+            }
+
+            /* Clean card header with no dark gradient */
+            .card-header,
+            .app-index-list-card > .card-header {
+                background: #f8fafc !important;
+                background-color: #f8fafc !important;
+                background-image: none !important;
+                border-bottom: 1px solid #cbd5e1 !important;
+                color: #0f172a !important;
+                padding: 6px 10px !important;
+            }
+
+            .card-header .card-title,
+            .card-header h3.card-title,
+            .card-header h6 {
+                color: #0f172a !important;
+                font-size: 10pt !important;
+                font-weight: 700 !important;
+            }
+
+            .card-body {
+                padding: 8px !important;
+                overflow: visible !important;
+                background: #ffffff !important;
+            }
+
+            /* Strip out colored background fills from summary stat boxes for clean white printing */
+            .border.rounded,
+            .bg-light,
+            div[style*="background"] {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                background-image: none !important;
+                border-color: #cbd5e1 !important;
+                box-shadow: none !important;
+            }
+
+            .table-responsive {
+                overflow: visible !important;
+                display: block !important;
+            }
+
+            table.app-index-table,
+            table.table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                font-size: 8.5pt !important;
+                background: #ffffff !important;
+            }
+
+            table.app-index-table th,
+            table.app-index-table td,
+            table.table th,
+            table.table td {
+                padding: 4px 6px !important;
+                border: 1px solid #cbd5e1 !important;
+                vertical-align: middle !important;
+                background: #ffffff !important;
+            }
+
+            table.app-index-table thead th,
+            table.table thead th {
+                background: #f1f5f9 !important;
+                background-color: #f1f5f9 !important;
+                color: #0f172a !important;
+                font-weight: 700 !important;
+                border-bottom: 2px solid #64748b !important;
+            }
+
+            table.app-index-table thead,
+            table.table thead {
+                display: table-header-group !important;
+            }
+
+            table tr {
+                page-break-inside: avoid !important;
+                background: #ffffff !important;
+            }
+
+            tr[style*="background-color"] {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+            }
+
+            .badge {
+                border: 1px solid #94a3b8 !important;
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                color: #334155 !important;
+                font-weight: 600 !important;
+                font-size: 7.5pt !important;
+                padding: 2px 4px !important;
+            }
+
+            a {
+                text-decoration: none !important;
+                color: #0f172a !important;
+            }
+
+            .app-index-card-toolbar,
+            .btn,
+            .btn-group,
+            .d-print-none {
+                display: none !important;
+            }
+        }
     </style>
 @endpush
 
 @section('content')
 <div class="container-fluid py-3 app-index-page--standard">
-    <!-- Filter Card -->
-    <div class="card shadow-sm border-0 mb-3" style="border: 1px solid var(--brand-border) !important; border-radius: 12px;">
+    <!-- Filter Card (Hidden on print) -->
+    <div class="card shadow-sm border-0 mb-3 d-print-none" style="border: 1px solid var(--brand-border) !important; border-radius: 12px;">
         <div class="card-body p-3">
             <form method="GET" action="{{ route('accounting.ledger-statement') }}" class="row g-2 align-items-end">
                 <div class="col-md-4">
@@ -56,6 +237,32 @@
     </div>
 
     @if($statement)
+    <!-- Dedicated Print Header (Visible ONLY on print) -->
+    <div class="d-none d-print-block mb-3 pb-2 border-bottom">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h3 class="fw-bold mb-1 text-dark" style="font-size: 1.4rem;">{{ $company->name }}</h3>
+                @if($company->address)
+                    <div class="text-secondary small mb-1">{{ $company->address }}</div>
+                @endif
+                <div class="text-secondary small">
+                    @if($company->gst_number) <span><strong>GSTIN:</strong> {{ $company->gst_number }}</span> @endif
+                    @if($company->pan_number) <span class="ms-3"><strong>PAN:</strong> {{ $company->pan_number }}</span> @endif
+                    @if($company->contact_number) <span class="ms-3"><strong>Phone:</strong> {{ $company->contact_number }}</span> @endif
+                </div>
+            </div>
+            <div class="text-end">
+                <h4 class="fw-bold text-uppercase text-dark mb-1" style="font-size: 1.15rem; letter-spacing: 0.5px;">Statement of Account</h4>
+                <div class="text-secondary small">
+                    <strong>Period:</strong> {{ \Carbon\Carbon::parse($fromDate)->format('d-m-Y') }} to {{ \Carbon\Carbon::parse($toDate)->format('d-m-Y') }}
+                </div>
+                <div class="text-muted small">
+                    Printed on: {{ now()->format('d-m-Y h:i A') }}
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Summary Header Cards -->
     <div class="card shadow-sm border-0 mb-3" style="border-radius: 12px; border: 1px solid var(--brand-border) !important; background: #fff;">
         <div class="card-body p-3">
@@ -72,7 +279,7 @@
                 </div>
                 <div class="col-md-8">
                     <div class="row text-center g-2">
-                        <div class="col-6 col-sm-3">
+                        <div class="col-3 col-sm-3">
                             <div class="border rounded p-2 bg-light">
                                 <small class="text-muted d-block small">Opening Balance</small>
                                 <span class="fw-bold text-dark">{{ $statement['opening_balance']['formatted'] }}</span>
@@ -83,19 +290,19 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="col-6 col-sm-3">
+                        <div class="col-3 col-sm-3">
                             <div class="border rounded p-2" style="background: var(--brand-soft-success);">
                                 <small class="text-muted d-block small">Period Debits (+)</small>
                                 <span class="fw-bold" style="color: var(--brand-success);">₹{{ number_format($statement['total_debit'], 2) }}</span>
                             </div>
                         </div>
-                        <div class="col-6 col-sm-3">
+                        <div class="col-3 col-sm-3">
                             <div class="border rounded p-2" style="background: var(--brand-soft-danger);">
                                 <small class="text-muted d-block small">Period Credits (-)</small>
                                 <span class="fw-bold" style="color: var(--brand-danger);">₹{{ number_format($statement['total_credit'], 2) }}</span>
                             </div>
                         </div>
-                        <div class="col-6 col-sm-3">
+                        <div class="col-3 col-sm-3">
                             @if(!empty($statement['closing_balance']['is_negative_cash']))
                                 <div class="border rounded p-2" style="background: var(--brand-soft-danger); border-color: var(--brand-danger) !important;">
                                     <small class="text-danger fw-bold d-block small"><i class="bi bi-exclamation-triangle-fill me-1"></i>Closing (Overdrawn)</small>
@@ -119,15 +326,15 @@
     <div class="card shadow-sm border-0 mb-3" style="border-radius: 12px; border: 1px solid var(--brand-border) !important;">
         <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center py-2.5 gap-2">
             <h6 class="mb-0 fw-bold" style="color: var(--brand-text-primary);">
-                <i class="bi bi-card-checklist me-2" style="color: var(--brand-primary);"></i>Bill-to-Bill Outstandings & Matched Payments ({{ $outstandings['entity_type'] }})
+                <i class="bi bi-card-checklist me-2" style="color: var(--brand-primary);"></i>Bill-to-Bill Outstandings & Matched Payments ({{ ucfirst($outstandings['entity_type'] ?? '') }})
             </h6>
             <!-- Filter Pills -->
-            <div class="btn-group btn-group-sm">
+            <div class="btn-group btn-group-sm d-print-none">
                 @php
                     $routeParams = ['ledger_id' => $selectedLedgerId, 'from_date' => $fromDate, 'to_date' => $toDate, 'search' => $searchQuery];
                 @endphp
                 <a href="{{ route('accounting.ledger-statement', array_merge($routeParams, ['bill_filter' => null])) }}" class="btn {{ empty($billFilter) ? 'btn-brand-primary' : 'btn-outline-secondary' }}">
-                    All ({{ $outstandings['unfiltered_count'] }})
+                    All ({{ $outstandings['unfiltered_count'] ?? $outstandings['total_count'] ?? 0 }})
                 </a>
                 <a href="{{ route('accounting.ledger-statement', array_merge($routeParams, ['bill_filter' => 'pending'])) }}" class="btn {{ $billFilter === 'pending' ? 'btn-danger' : 'btn-outline-danger' }}">
                     Pending
@@ -142,19 +349,19 @@
         </div>
         <div class="card-body p-3">
             <div class="row g-2 mb-3 text-center">
-                <div class="col-md-4">
+                <div class="col-4 col-md-4">
                     <div class="p-2 border rounded bg-light">
                         <small class="text-muted d-block small">Total Invoiced / Trip Freight</small>
                         <span class="fw-bold text-dark fs-6">₹{{ number_format($outstandings['total_billed'], 2) }}</span>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-4 col-md-4">
                     <div class="p-2 border rounded" style="background: var(--brand-soft-success);">
                         <small class="text-muted d-block small">Total Settled / Cleared</small>
                         <span class="fw-bold fs-6" style="color: var(--brand-success);">₹{{ number_format($outstandings['total_cleared'], 2) }}</span>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-4 col-md-4">
                     <div class="p-2 border rounded" style="background: var(--brand-soft-danger);">
                         <small class="text-muted d-block small">Total Pending / Outstanding</small>
                         <span class="fw-bold fs-6" style="color: var(--brand-danger);">₹{{ number_format($outstandings['total_pending'], 2) }}</span>
@@ -168,7 +375,7 @@
                         <tr>
                             <th class="ps-2">Bill / Inv / Ref</th>
                             <th>Date</th>
-                            @if($outstandings['entity_type'] !== 'Customer')
+                            @if(strcasecmp($outstandings['entity_type'] ?? '', 'Customer') !== 0)
                                 <th>Truck No / LR No</th>
                             @endif
                             <th class="text-end">Total Amount (₹)</th>
@@ -193,7 +400,7 @@
                                 @endif
                             </td>
                             <td class="small">{{ $bill['bill_date'] }}</td>
-                            @if($outstandings['entity_type'] !== 'Customer')
+                            @if(strcasecmp($outstandings['entity_type'] ?? '', 'Customer') !== 0)
                                 <td>
                                     <span class="badge border bg-light text-dark">{{ $bill['truck_no'] ?? '-' }}</span>
                                     <span class="badge border bg-light text-primary">LR: {{ $bill['lr_no'] ?? '-' }}</span>
@@ -229,7 +436,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="{{ $outstandings['entity_type'] !== 'Customer' ? 8 : 7 }}" class="text-center py-3 text-muted small">
+                            <td colspan="{{ strcasecmp($outstandings['entity_type'] ?? '', 'Customer') !== 0 ? 8 : 7 }}" class="text-center py-3 text-muted small">
                                 No bills found for the selected filter.
                             </td>
                         </tr>
@@ -260,7 +467,7 @@
                     <i class="bi bi-funnel-fill me-1"></i> Filter active: <strong>"{{ $statement['search_query'] }}"</strong>
                     (Showing {{ count($statement['rows']) }} of {{ $statement['unfiltered_count'] }} transactions)
                 </span>
-                <a href="{{ route('accounting.ledger-statement', ['ledger_id' => $selectedLedgerId, 'from_date' => $fromDate, 'to_date' => $toDate, 'bill_filter' => $billFilter]) }}" class="btn btn-outline-primary btn-sm py-0 px-2">
+                <a href="{{ route('accounting.ledger-statement', ['ledger_id' => $selectedLedgerId, 'from_date' => $fromDate, 'to_date' => $toDate, 'bill_filter' => $billFilter]) }}" class="btn btn-outline-primary btn-sm py-0 px-2 d-print-none">
                     Clear Search
                 </a>
             </div>
