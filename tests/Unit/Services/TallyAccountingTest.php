@@ -1521,5 +1521,53 @@ class TallyAccountingTest extends TestCase
         $this->assertStringContainsString('d-print-none', $view);
         $this->assertStringContainsString('@media print', $view);
     }
+
+    public function test_trial_balance_print_format_and_structure(): void
+    {
+        $company = Company::create([
+            'name' => 'Taldar Tech Consultancy Private Limited',
+            'address' => 'Udaipur',
+            'gst_number' => '08AAACA1234A1Z5',
+            'pan_number' => 'AAACA1234A',
+            'contact_number' => '9876543210',
+        ]);
+
+        $reportService = new FinancialReportService;
+        $trialBalance = $reportService->getTrialBalance($company, '2026-09-21');
+
+        $this->assertArrayHasKey('groups', $trialBalance);
+        $this->assertArrayHasKey('total_debit', $trialBalance);
+        $this->assertArrayHasKey('total_credit', $trialBalance);
+
+        $view = view('accounting.trial_balance', [
+            'company' => $company,
+            'trialBalance' => $trialBalance,
+            'asOfDate' => '2026-09-21',
+        ])->render();
+
+        // Dedicated print container
+        $this->assertStringContainsString('d-none d-print-block trial-balance-print', $view);
+
+        // Header elements matching Tally authentic style
+        $this->assertStringContainsString('Taldar Tech Consultancy Private Limited', $view);
+        $this->assertStringContainsString('<u>Udaipur</u>', $view);
+        $this->assertStringContainsString('Trial Balance', $view);
+        $this->assertStringContainsString('1-Apr-26 to 21-Sep-26', $view);
+
+        // Table headers and columns
+        $this->assertStringContainsString('tally-tb-table', $view);
+        $this->assertStringContainsString('P a r t i c u l a r s', $view);
+        $this->assertStringContainsString('D e b i t', $view);
+        $this->assertStringContainsString('C r e d i t', $view);
+
+        // Footer total
+        $this->assertStringContainsString('T o t a l', $view);
+        $this->assertStringContainsString('tally-total-row', $view);
+
+        // Ensure screen interactive elements are hidden from print
+        $this->assertStringContainsString('card shadow-sm border-0 mb-3 d-print-none', $view);
+        $this->assertStringContainsString('card app-index-list-card shadow-sm d-print-none', $view);
+        $this->assertStringContainsString('@media print', $view);
+    }
 }
 
