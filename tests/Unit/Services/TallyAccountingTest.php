@@ -1364,5 +1364,162 @@ class TallyAccountingTest extends TestCase
         $this->assertStringContainsString('card app-index-list-card shadow-sm d-print-none', $view);
         $this->assertStringContainsString('@media print', $view);
     }
+
+    public function test_profit_and_loss_view_renders_with_standard_profit_and_loss_print_format(): void
+    {
+        $company = Company::create([
+            'name' => 'Taldar Tech Consultancy Private Limited',
+            'address' => 'Udaipur',
+            'gst_number' => '08AAACA1234A1Z5',
+            'pan_number' => 'AAACA1234A',
+            'contact_number' => '9876543210',
+        ]);
+
+        $reportService = new FinancialReportService;
+        $pnl = $reportService->getProfitAndLoss($company, '2024-04-01', '2025-03-31');
+
+        $this->assertArrayHasKey('expense_groups', $pnl);
+        $this->assertArrayHasKey('income_groups', $pnl);
+        $this->assertArrayHasKey('grand_total', $pnl);
+
+        $view = view('accounting.profit_and_loss', [
+            'company' => $company,
+            'pnl' => $pnl,
+            'fromDate' => '2024-04-01',
+            'toDate' => '2025-03-31',
+        ])->render();
+
+        // Ensure print view and headers matching reference image are present
+        $this->assertStringContainsString('d-none d-print-block pnl-print', $view);
+        $this->assertStringContainsString('Taldar Tech Consultancy Private Limited', $view);
+        $this->assertStringContainsString('<u>Udaipur</u>', $view);
+        $this->assertStringContainsString('Profit & Loss A/c', $view);
+        $this->assertStringContainsString('pnl-summary-sheet', $view);
+        $this->assertStringContainsString('pnl-detailed-sheet', $view);
+        $this->assertStringContainsString('tally-row-tr', $view);
+        $this->assertStringContainsString('1-Apr-24 to 31-Mar-25', $view);
+        $this->assertStringContainsString('P a r t i c u l a r s', $view);
+        $this->assertStringContainsString('Purchase Accounts', $view);
+        $this->assertStringContainsString('Nett Profit', $view);
+        $this->assertStringContainsString('T o t a l', $view);
+        $this->assertStringContainsString('tally-pnl-table', $view);
+        $this->assertStringContainsString('printBoth()', $view);
+        $this->assertStringContainsString('printSummary()', $view);
+        $this->assertStringContainsString('printDetailed()', $view);
+
+        // Ensure screen elements are marked d-print-none
+        $this->assertStringContainsString('card shadow-sm border-0 mb-3 d-print-none', $view);
+        $this->assertStringContainsString('card app-index-list-card shadow-sm d-print-none', $view);
+        $this->assertStringContainsString('@media print', $view);
+    }
+
+    public function test_debtors_aging_report_print_format_and_structure(): void
+    {
+        $company = Company::create([
+            'name' => 'Taldar Tech Consultancy Private Limited',
+            'address' => 'Udaipur',
+            'gst_number' => '08AAACA1234A1Z5',
+            'pan_number' => 'AAACA1234A',
+            'contact_number' => '9876543210',
+        ]);
+
+        $reportService = new FinancialReportService;
+        $report = $reportService->getDebtorsAgingReport($company, '2026-09-21');
+
+        $this->assertArrayHasKey('customers', $report);
+        $this->assertArrayHasKey('totals', $report);
+
+        $view = view('accounting.debtors_aging', [
+            'company' => $company,
+            'report' => $report,
+            'asOfDate' => '2026-09-21',
+        ])->render();
+
+        // Dedicated print container
+        $this->assertStringContainsString('d-none d-print-block aging-print', $view);
+
+        // Header elements matching Tally authentic style
+        $this->assertStringContainsString('Taldar Tech Consultancy Private Limited', $view);
+        $this->assertStringContainsString('<u>Udaipur</u>', $view);
+        $this->assertStringContainsString('Sundry Debtors Aging Schedule', $view);
+        $this->assertStringContainsString('as at 21-Sep-26', $view);
+
+        // Table headers and columns
+        $this->assertStringContainsString('tally-aging-table', $view);
+        $this->assertStringContainsString('Particulars', $view);
+        $this->assertStringContainsString('GSTIN / Date', $view);
+        $this->assertStringContainsString('Total Due', $view);
+        $this->assertStringContainsString('0 - 30 Days', $view);
+        $this->assertStringContainsString('31 - 60 Days', $view);
+        $this->assertStringContainsString('61 - 90 Days', $view);
+        $this->assertStringContainsString('&gt; 90 Days', $view);
+        $this->assertStringContainsString('MSME', $view);
+
+        // Footer total
+        $this->assertStringContainsString('T o t a l', $view);
+        $this->assertStringContainsString('tally-total-row', $view);
+
+        // Ensure screen interactive elements are hidden from print
+        $this->assertStringContainsString('card shadow-sm border-0 mb-3 d-print-none', $view);
+        $this->assertStringContainsString('row g-3 mb-3 d-print-none', $view);
+        $this->assertStringContainsString('card app-index-list-card shadow-sm d-print-none', $view);
+        $this->assertStringContainsString('@media print', $view);
+    }
+
+    public function test_gstr1_report_print_format_and_structure(): void
+    {
+        $company = Company::create([
+            'name' => 'Taldar Tech Consultancy Private Limited',
+            'address' => 'Udaipur',
+            'gst_number' => '08AAACA1234A1Z5',
+            'pan_number' => 'AAACA1234A',
+            'contact_number' => '9876543210',
+        ]);
+
+        $reportService = new FinancialReportService;
+        $report = $reportService->getGstr1Report($company, '2026-04-01', '2026-09-30');
+
+        $this->assertArrayHasKey('table_4a', $report);
+        $this->assertArrayHasKey('table_4b', $report);
+        $this->assertArrayHasKey('overall_totals', $report);
+
+        $view = view('accounting.gstr1', [
+            'company' => $company,
+            'report' => $report,
+            'fromDate' => '2026-04-01',
+            'toDate' => '2026-09-30',
+        ])->render();
+
+        // Dedicated print container
+        $this->assertStringContainsString('d-none d-print-block gstr1-print', $view);
+
+        // Header elements matching Tally authentic style
+        $this->assertStringContainsString('Taldar Tech Consultancy Private Limited', $view);
+        $this->assertStringContainsString('<u>Udaipur</u>', $view);
+        $this->assertStringContainsString('GSTIN: <strong>08AAACA1234A1Z5</strong>', $view);
+        $this->assertStringContainsString('GSTR-1 Return Statement (Outward Supplies)', $view);
+        $this->assertStringContainsString('1-Apr-26 to 30-Sep-26', $view);
+
+        // Summary and table sections
+        $this->assertStringContainsString('tally-gstr1-table', $view);
+        $this->assertStringContainsString('1. Return Summary of Outward Supplies', $view);
+        $this->assertStringContainsString('Table 4A - Taxable Outward Supplies (Forward Charge / GTA FCM)', $view);
+        $this->assertStringContainsString('Table 4B - Supplies Attracting Reverse Charge (GTA RCM u/s 9(3))', $view);
+        $this->assertStringContainsString('Total Outward Supplies', $view);
+
+        // Detailed schedules
+        $this->assertStringContainsString('2. Table 4A - Taxable Outward Supplies (Forward Charge / GTA FCM)', $view);
+        $this->assertStringContainsString('3. Table 4B - Supplies Attracting Reverse Charge (GTA RCM u/s 9(3))', $view);
+        $this->assertStringContainsString('Table 4A Total', $view);
+        $this->assertStringContainsString('Table 4B Total', $view);
+        $this->assertStringContainsString('Statutory GTA Declaration', $view);
+
+        // Ensure screen interactive elements are hidden from print
+        $this->assertStringContainsString('card shadow-sm border-0 mb-3 d-print-none', $view);
+        $this->assertStringContainsString('row g-3 mb-3 d-print-none', $view);
+        $this->assertStringContainsString('id="gstr1Tabs"', $view);
+        $this->assertStringContainsString('d-print-none', $view);
+        $this->assertStringContainsString('@media print', $view);
+    }
 }
 

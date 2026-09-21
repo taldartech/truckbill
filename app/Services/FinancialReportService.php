@@ -554,6 +554,211 @@ class FinancialReportService
         $pnlCreditTotal = $totalIndirectIncome + ($grossProfit >= 0 ? $grossProfit : 0) + ($netProfit < 0 ? abs($netProfit) : 0);
         $pnlTotal = max($pnlDebitTotal, $pnlCreditTotal);
 
+        // Build Structured Primary Groups for P&L presentation
+        $buildGroupHierarchy = function (string $type) use ($company, $toDate) {
+            $primaryGroups = AccountGroup::where('company_id', $company->id)
+                ->where('primary_type', $type)
+                ->whereNull('parent_id')
+                ->orderBy('id')
+                ->get();
+
+            $result = [];
+            foreach ($primaryGroups as $pGroup) {
+                $subGroups = AccountGroup::where('company_id', $company->id)
+                    ->where('parent_id', $pGroup->id)
+                    ->orderBy('name')
+                    ->get();
+
+                $pGroupSubtotal = 0.0;
+                $subGroupItems = [];
+
+                foreach ($subGroups as $subG) {
+                    $grandChildren = AccountGroup::where('company_id', $company->id)
+                        ->where('parent_id', $subG->id)
+                        ->pluck('id');
+
+                    $allSubGIds = $grandChildren->push($subG->id);
+
+                    $subGLedgers = Ledger::where('company_id', $company->id)
+                        ->whereIn('account_group_id', $allSubGIds)
+                        ->where('is_active', true)
+                        ->orderBy('name')
+                        ->get();
+
+                    $subGSubtotal = 0.0;
+                    $ledgerLines = [];
+                    foreach ($subGLedgers as $l) {
+                        $bal = $l->getCalculatedBalance($toDate);
+                        if ($bal['amount'] <= 0.001) {
+                            continue;
+                        }
+                        $val = $bal['amount'];
+                        $ledgerLines[] = [
+                            'id' => $l->id,
+                            'name' => $l->name,
+                            'amount' => $val,
+                            'formatted' => '₹'.number_format($val, 2),
+                        ];
+                        $subGSubtotal += $val;
+                    }
+
+                    if (! empty($ledgerLines)) {
+                        $subGroupItems[] = [
+                            'id' => $subG->id,
+                            'name' => $subG->name,
+                            'subtotal' => $subGSubtotal,
+                            'ledgers' => $ledgerLines,
+                        ];
+                        $pGroupSubtotal += $subGSubtotal;
+                    }
+                }
+
+                $directLedgers = Ledger::where('company_id', $company->id)
+                    ->where('account_group_id', $pGroup->id)
+                    ->where('is_active', true)
+                    ->orderBy('name')
+                    ->get();
+
+                $directLines = [];
+                foreach ($directLedgers as $l) {
+                    $bal = $l->getCalculatedBalance($toDate);
+                    if ($bal['amount'] <= 0.001) {
+                        continue;
+                    }
+                    $val = $bal['amount'];
+                    $directLines[] = [
+                        'id' => $l->id,
+                        'name' => $l->name,
+                        'amount' => $val,
+                        'formatted' => '₹'.number_format($val, 2),
+                    ];
+                    $pGroupSubtotal += $val;
+                }
+
+                $result[] = [
+                    'id' => $pGroup->id,
+                    'name' => $pGroup->name,
+                    'subtotal' => $pGroupSubtotal,
+                    'sub_groups' => $subGroupItems,
+                    'direct_ledgers' => $directLines,
+                ];
+            }
+
+            return $result;
+        };
+
+        $rawExpenseGroups = $buildGroupHierarchy('expense');
+        $rawIncomeGroups = $buildGroupHierarchy('income');
+
+        // Ensure canonical Tally groups exist (even with 0 balance) for authentic presentation
+        $hasPurchase = collect($rawExpenseGroups)->contains(function ($g) {
+            return str_contains(strtolower($g['name']), 'purchase');
+        });
+        if (! $hasPurchase) {
+            array_unshift($rawExpenseGroups, [
+                'id' => null,
+                'name' => 'Purchase Accounts',
+                'subtotal' => 0.0,
+                'sub_groups' => [],
+                'direct_ledgers' => [],
+            ]);
+        }
+
+        $hasDirectExpenses = collect($rawExpenseGroups)->contains(function ($g) {
+            return str_contains(strtolower($g['name']), 'direct expense');
+        });
+        if (! $hasDirectExpenses) {
+            $rawExpenseGroups[] = [
+                'id' => null,
+                'name' => 'Direct Expenses',
+                'subtotal' => 0.0,
+                'sub_groups' => [],
+                'direct_ledgers' => [],
+            ];
+        }
+
+        $hasIndirectExpenses = collect($rawExpenseGroups)->contains(function ($g) {
+            return str_contains(strtolower($g['name']), 'indirect expense');
+        });
+        if (! $hasIndirectExpenses) {
+            $rawExpenseGroups[] = [
+                'id' => null,
+                'name' => 'Indirect Expenses',
+                'subtotal' => 0.0,
+                'sub_groups' => [],
+                'direct_ledgers' => [],
+            ];
+        }
+
+        $expenseOrder = ['opening stock' => 1, 'purchase' => 2, 'direct expense' => 3, 'indirect expense' => 4];
+        usort($rawExpenseGroups, function ($a, $b) use ($expenseOrder) {
+            $aKey = 99;
+            foreach ($expenseOrder as $k => $pos) {
+                if (str_contains(strtolower($a['name']), $k)) { $aKey = $pos; break; }
+            }
+            $bKey = 99;
+            foreach ($expenseOrder as $k => $pos) {
+                if (str_contains(strtolower($b['name']), $k)) { $bKey = $pos; break; }
+            }
+            return $aKey <=> $bKey;
+        });
+
+        $hasSales = collect($rawIncomeGroups)->contains(function ($g) {
+            return str_contains(strtolower($g['name']), 'sales');
+        });
+        if (! $hasSales) {
+            array_unshift($rawIncomeGroups, [
+                'id' => null,
+                'name' => 'Sales Accounts',
+                'subtotal' => 0.0,
+                'sub_groups' => [],
+                'direct_ledgers' => [],
+            ]);
+        }
+
+        $hasDirectIncomes = collect($rawIncomeGroups)->contains(function ($g) {
+            return str_contains(strtolower($g['name']), 'direct income');
+        });
+        if (! $hasDirectIncomes) {
+            $rawIncomeGroups[] = [
+                'id' => null,
+                'name' => 'Direct Incomes',
+                'subtotal' => 0.0,
+                'sub_groups' => [],
+                'direct_ledgers' => [],
+            ];
+        }
+
+        $hasIndirectIncomes = collect($rawIncomeGroups)->contains(function ($g) {
+            return str_contains(strtolower($g['name']), 'indirect income');
+        });
+        if (! $hasIndirectIncomes) {
+            $rawIncomeGroups[] = [
+                'id' => null,
+                'name' => 'Indirect Incomes',
+                'subtotal' => 0.0,
+                'sub_groups' => [],
+                'direct_ledgers' => [],
+            ];
+        }
+
+        $incomeOrder = ['sales' => 1, 'direct income' => 2, 'closing stock' => 3, 'indirect income' => 4];
+        usort($rawIncomeGroups, function ($a, $b) use ($incomeOrder) {
+            $aKey = 99;
+            foreach ($incomeOrder as $k => $pos) {
+                if (str_contains(strtolower($a['name']), $k)) { $aKey = $pos; break; }
+            }
+            $bKey = 99;
+            foreach ($incomeOrder as $k => $pos) {
+                if (str_contains(strtolower($b['name']), $k)) { $bKey = $pos; break; }
+            }
+            return $aKey <=> $bKey;
+        });
+
+        $totalExpense = (float) collect($rawExpenseGroups)->sum('subtotal');
+        $totalIncome = (float) collect($rawIncomeGroups)->sum('subtotal');
+        $grandTotal = max($totalExpense + max(0, $netProfit), $totalIncome + max(0, -$netProfit));
+
         return [
             'from_date' => $fromDate,
             'to_date' => $toDate,
@@ -569,6 +774,11 @@ class FinancialReportService
             'total_indirect_expense' => $totalIndirectExpense,
             'net_profit' => $netProfit,
             'pnl_total' => $pnlTotal,
+            'expense_groups' => $rawExpenseGroups,
+            'income_groups' => $rawIncomeGroups,
+            'total_expense' => $totalExpense,
+            'total_income' => $totalIncome,
+            'grand_total' => $grandTotal,
         ];
     }
 

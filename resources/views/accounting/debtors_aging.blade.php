@@ -2,10 +2,214 @@
 
 @section('title', 'Trade Receivables (Debtors) Aging - ' . $company->name)
 
+@push('styles')
+<style>
+    @media print {
+        @page {
+            size: A4 portrait;
+            margin: 10mm 10mm 10mm 10mm;
+        }
+
+        /* Hide all web application chrome, overlays, backdrops, banners, and buttons */
+        .sidebar-overlay,
+        .modal-backdrop,
+        .loading-overlay,
+        .overlay,
+        [class*="overlay"],
+        [class*="backdrop"],
+        .app-sidebar,
+        .main-sidebar,
+        .sidebar-wrapper,
+        .app-header,
+        .app-footer,
+        .app-index-card-toolbar,
+        .btn,
+        .btn-group,
+        .dropdown,
+        .d-print-none,
+        .no-print,
+        #subscription-access-banner,
+        .alert {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            background: transparent !important;
+            width: 0 !important;
+            height: 0 !important;
+            pointer-events: none !important;
+        }
+
+        /* Force pure white background on all page wrappers */
+        html,
+        body,
+        body.layout-fixed,
+        body.bg-body-tertiary,
+        body.sidebar-open,
+        .app-wrapper,
+        .app-main,
+        .app-content,
+        .app-content-header,
+        .container-fluid,
+        .app-index-page--standard {
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+            background-image: none !important;
+            color: #000000 !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+
+        /* Dedicated Tally Print Container */
+        .aging-print {
+            display: block !important;
+            width: 100% !important;
+            color: #000000 !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+            font-size: 8.5pt !important;
+            line-height: 1.35 !important;
+        }
+
+        .tally-print-header {
+            text-align: center !important;
+            margin-bottom: 12px !important;
+            color: #000000 !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+
+        .tally-company-name {
+            font-size: 14pt !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            color: #000000 !important;
+            margin-bottom: 2px !important;
+        }
+
+        .tally-company-city {
+            font-size: 11pt !important;
+            font-weight: 400 !important;
+            color: #000000 !important;
+            margin-bottom: 3px !important;
+        }
+
+        .tally-report-title {
+            font-size: 12.5pt !important;
+            font-weight: 700 !important;
+            color: #000000 !important;
+            margin-bottom: 2px !important;
+        }
+
+        .tally-report-period {
+            font-size: 10pt !important;
+            font-weight: 400 !important;
+            color: #000000 !important;
+        }
+
+        .tally-aging-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            table-layout: fixed !important;
+            background: #ffffff !important;
+            page-break-inside: auto !important;
+            break-inside: auto !important;
+        }
+
+        .tally-aging-table thead {
+            display: table-header-group !important;
+        }
+
+        .tally-aging-table tfoot {
+            display: table-footer-group !important;
+        }
+
+        .tally-th-row th {
+            padding: 5px 6px !important;
+            border-top: 1px solid #000000 !important;
+            border-bottom: 1px solid #000000 !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            vertical-align: middle !important;
+            font-size: 8.5pt !important;
+            font-weight: 700 !important;
+        }
+
+        .tally-aging-table th,
+        .tally-aging-table td {
+            border-right: 1px solid #dddddd !important;
+        }
+
+        .tally-aging-table th:last-child,
+        .tally-aging-table td:last-child {
+            border-right: none !important;
+        }
+
+        .tally-row-tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+
+        .tally-debtor-row td {
+            background-color: #fafafa !important;
+            border-top: 1px solid #e2e8f0 !important;
+            font-weight: 700 !important;
+            padding: 4px 6px !important;
+            color: #000000 !important;
+        }
+
+        .tally-inv-row td {
+            background: #ffffff !important;
+            padding: 2px 6px !important;
+            color: #222222 !important;
+            font-size: 8pt !important;
+        }
+
+        .tally-spacer-tr td {
+            height: 4px !important;
+            padding: 0 !important;
+            border: none !important;
+            background: #ffffff !important;
+        }
+
+        .tally-cell {
+            padding: 3px 6px !important;
+            vertical-align: top !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+        }
+
+        .tally-indent {
+            padding-left: 14px !important;
+        }
+
+        .tally-total-row td {
+            border-top: 1px solid #000000 !important;
+            border-bottom: 3px double #000000 !important;
+            padding: 5px 6px !important;
+            font-weight: 700 !important;
+            color: #000000 !important;
+            font-size: 8.5pt !important;
+            background: #ffffff !important;
+        }
+
+        .tally-title-spaced {
+            font-weight: 700 !important;
+            font-size: 8.5pt !important;
+            letter-spacing: 1px !important;
+            color: #000000 !important;
+            text-transform: uppercase !important;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid py-3 app-index-page--standard">
     <!-- Filter Bar -->
-    <div class="card shadow-sm border-0 mb-3" style="border: 1px solid var(--brand-border) !important; border-radius: 12px;">
+    <div class="card shadow-sm border-0 mb-3 d-print-none" style="border: 1px solid var(--brand-border) !important; border-radius: 12px;">
         <div class="card-body p-3">
             <form method="GET" action="{{ route('accounting.debtors-aging') }}" class="row g-2 align-items-end">
                 <div class="col-md-4">
@@ -28,7 +232,7 @@
 
     <!-- MSME Alert Banner if any invoices > 45 days -->
     @if($report['totals']['msme_alert_customers_count'] > 0)
-    <div class="alert alert-danger shadow-sm border-0 d-flex align-items-center mb-3 py-2.5 px-3" style="border-radius: 10px; background-color: #fef2f2; border: 1px solid #fecaca !important;">
+    <div class="alert alert-danger shadow-sm border-0 d-flex align-items-center mb-3 p-3 d-print-none" style="border-radius: 12px; background-color: #fef2f2; border: 1px solid #fecaca !important;">
         <i class="bi bi-exclamation-triangle-fill fs-4 text-danger me-3"></i>
         <div class="flex-grow-1">
             <strong class="text-danger">MSME Section 43B(h) Overdue Alert:</strong>
@@ -40,53 +244,107 @@
     @endif
 
     <!-- KPI Aging Buckets -->
-    <div class="row g-2 mb-3">
-        <div class="col-sm-6 col-md-4 col-xl-2">
-            <div class="card border-0 shadow-sm p-2.5 h-100" style="border-radius: 10px; border: 1px solid var(--brand-border) !important;">
-                <span class="small fw-semibold text-muted text-uppercase" style="font-size: 0.72rem;">Total Receivables</span>
-                <h5 class="fw-bold mb-0 text-dark mt-1">₹{{ number_format($report['totals']['total_receivables'], 2) }}</h5>
-                <span class="small text-muted" style="font-size: 0.75rem;">{{ $report['totals']['total_debtors_count'] }} Customers</span>
+    <div class="row g-3 mb-3 d-print-none">
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; border: 1px solid var(--brand-border) !important; background: #ffffff;">
+                <div class="d-flex flex-column justify-content-between h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="small fw-bold text-muted text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Total Receivables</span>
+                        <i class="bi bi-wallet2 text-muted fs-6"></i>
+                    </div>
+                    <div class="my-1">
+                        <h4 class="fw-bold mb-0 text-dark" style="font-size: 1.25rem;">₹{{ number_format($report['totals']['total_receivables'], 2) }}</h4>
+                    </div>
+                    <div class="mt-2">
+                        <span class="small text-muted" style="font-size: 0.78rem;"><i class="bi bi-people me-1"></i>{{ $report['totals']['total_debtors_count'] }} Customers</span>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-sm-6 col-md-4 col-xl-2">
-            <div class="card border-0 shadow-sm p-2.5 h-100" style="border-radius: 10px; border: 1px solid rgba(34,197,94,0.3) !important; background: #f0fdf4;">
-                <span class="small fw-semibold text-success text-uppercase" style="font-size: 0.72rem;">0 - 30 Days</span>
-                <h5 class="fw-bold mb-0 text-success mt-1">₹{{ number_format($report['totals']['total_0_30'], 2) }}</h5>
-                <span class="small text-muted" style="font-size: 0.75rem;">Current / Normal</span>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; border: 1px solid rgba(34,197,94,0.3) !important; background: #f0fdf4;">
+                <div class="d-flex flex-column justify-content-between h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="small fw-bold text-success text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">0 - 30 Days</span>
+                        <i class="bi bi-check-circle-fill text-success fs-6"></i>
+                    </div>
+                    <div class="my-1">
+                        <h4 class="fw-bold mb-0 text-success" style="font-size: 1.25rem;">₹{{ number_format($report['totals']['total_0_30'], 2) }}</h4>
+                    </div>
+                    <div class="mt-2">
+                        <span class="small text-success fw-medium" style="font-size: 0.78rem;">Current / Normal</span>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-sm-6 col-md-4 col-xl-2">
-            <div class="card border-0 shadow-sm p-2.5 h-100" style="border-radius: 10px; border: 1px solid rgba(59,130,246,0.3) !important; background: #eff6ff;">
-                <span class="small fw-semibold text-primary text-uppercase" style="font-size: 0.72rem;">31 - 60 Days</span>
-                <h5 class="fw-bold mb-0 text-primary mt-1">₹{{ number_format($report['totals']['total_31_60'], 2) }}</h5>
-                <span class="small text-muted" style="font-size: 0.75rem;">Follow-up due</span>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; border: 1px solid rgba(59,130,246,0.3) !important; background: #eff6ff;">
+                <div class="d-flex flex-column justify-content-between h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="small fw-bold text-primary text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">31 - 60 Days</span>
+                        <i class="bi bi-clock-history text-primary fs-6"></i>
+                    </div>
+                    <div class="my-1">
+                        <h4 class="fw-bold mb-0 text-primary" style="font-size: 1.25rem;">₹{{ number_format($report['totals']['total_31_60'], 2) }}</h4>
+                    </div>
+                    <div class="mt-2">
+                        <span class="small text-primary fw-medium" style="font-size: 0.78rem;">Follow-up due</span>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-sm-6 col-md-4 col-xl-2">
-            <div class="card border-0 shadow-sm p-2.5 h-100" style="border-radius: 10px; border: 1px solid rgba(245,158,11,0.3) !important; background: #fffbeb;">
-                <span class="small fw-semibold text-warning text-uppercase" style="font-size: 0.72rem;">61 - 90 Days</span>
-                <h5 class="fw-bold mb-0 text-warning mt-1">₹{{ number_format($report['totals']['total_61_90'], 2) }}</h5>
-                <span class="small text-muted" style="font-size: 0.75rem;">Overdue</span>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; border: 1px solid rgba(245,158,11,0.35) !important; background: #fffbeb;">
+                <div class="d-flex flex-column justify-content-between h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px; color: #b45309 !important;">61 - 90 Days</span>
+                        <i class="bi bi-exclamation-circle fs-6" style="color: #b45309;"></i>
+                    </div>
+                    <div class="my-1">
+                        <h4 class="fw-bold mb-0" style="font-size: 1.25rem; color: #b45309;">₹{{ number_format($report['totals']['total_61_90'], 2) }}</h4>
+                    </div>
+                    <div class="mt-2">
+                        <span class="small fw-medium" style="font-size: 0.78rem; color: #b45309;">Overdue</span>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-sm-6 col-md-4 col-xl-2">
-            <div class="card border-0 shadow-sm p-2.5 h-100" style="border-radius: 10px; border: 1px solid rgba(239,68,68,0.3) !important; background: #fef2f2;">
-                <span class="small fw-semibold text-danger text-uppercase" style="font-size: 0.72rem;">> 90 Days</span>
-                <h5 class="fw-bold mb-0 text-danger mt-1">₹{{ number_format($report['totals']['total_over_90'], 2) }}</h5>
-                <span class="small text-muted" style="font-size: 0.75rem;">Critical Risk</span>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; border: 1px solid rgba(239,68,68,0.3) !important; background: #fef2f2;">
+                <div class="d-flex flex-column justify-content-between h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="small fw-bold text-danger text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">&gt; 90 Days</span>
+                        <i class="bi bi-exclamation-triangle-fill text-danger fs-6"></i>
+                    </div>
+                    <div class="my-1">
+                        <h4 class="fw-bold mb-0 text-danger" style="font-size: 1.25rem;">₹{{ number_format($report['totals']['total_over_90'], 2) }}</h4>
+                    </div>
+                    <div class="mt-2">
+                        <span class="small text-danger fw-medium" style="font-size: 0.78rem;">Critical Risk</span>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-sm-6 col-md-4 col-xl-2">
-            <div class="card border-0 shadow-sm p-2.5 h-100" style="border-radius: 10px; border: 1px solid rgba(185,28,28,0.4) !important; background: #fff1f2;">
-                <span class="small fw-semibold text-danger text-uppercase" style="font-size: 0.72rem;"><i class="bi bi-shield-exclamation me-1"></i>MSME > 45d Alert</span>
-                <h5 class="fw-bold mb-0 text-danger mt-1">₹{{ number_format($report['totals']['total_msme_overdue'], 2) }}</h5>
-                <span class="small text-muted" style="font-size: 0.75rem;">Sec 43B(h) overdue</span>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: 12px; border: 1px solid rgba(220,38,38,0.4) !important; background: #fff1f2;">
+                <div class="d-flex flex-column justify-content-between h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="small fw-bold text-danger text-uppercase text-truncate me-1" style="font-size: 0.72rem; letter-spacing: 0.5px;"><i class="bi bi-shield-exclamation me-1"></i>MSME &gt; 45d Alert</span>
+                        <span class="badge bg-danger rounded-pill" style="font-size: 0.65rem;">43B(h)</span>
+                    </div>
+                    <div class="my-1">
+                        <h4 class="fw-bold mb-0 text-danger" style="font-size: 1.25rem;">₹{{ number_format($report['totals']['total_msme_overdue'], 2) }}</h4>
+                    </div>
+                    <div class="mt-2">
+                        <span class="small text-danger fw-medium" style="font-size: 0.78rem;">Sec 43B(h) overdue</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Aging Schedule Table Card -->
-    <div class="card app-index-list-card shadow-sm">
+    <div class="card app-index-list-card shadow-sm d-print-none">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h3 class="card-title mb-0">
                 <i class="bi bi-hourglass-split me-2 text-primary"></i>Sundry Debtors Aging Schedule (As of {{ \Carbon\Carbon::parse($asOfDate)->format('d M Y') }})
@@ -234,6 +492,190 @@
                 </table>
             </div>
         </div>
+    </div>
+
+    <!-- DEDICATED PRINT STATEMENT (Tally Sundry Debtors Aging Format - Visible ONLY on print) -->
+    @php
+        $asOfCarbon = \Carbon\Carbon::parse($asOfDate);
+        $asAtString = 'as at ' . $asOfCarbon->format('j-M-y');
+        $cityName = $company->city?->name ?? ($company->address ?? '');
+
+        $formatAmount = function($num) {
+            $isNegative = $num < -0.001;
+            $absNum = abs($num);
+            $parts = explode('.', sprintf("%.2f", $absNum));
+            $intPart = $parts[0];
+            $decPart = '.' . $parts[1];
+
+            $len = strlen($intPart);
+            if ($len > 3) {
+                $lastThree = substr($intPart, -3);
+                $remaining = substr($intPart, 0, -3);
+                $reversed = strrev($remaining);
+                $chunks = str_split($reversed, 2);
+                $formattedRemaining = strrev(implode(',', $chunks));
+                $formatted = $formattedRemaining . ',' . $lastThree;
+            } else {
+                $formatted = $intPart;
+            }
+
+            $formatted .= $decPart;
+            return $isNegative ? '(-)' . $formatted : $formatted;
+        };
+    @endphp
+
+    <div class="d-none d-print-block aging-print">
+        <div class="tally-print-header">
+            <div class="tally-company-name">{{ $company->name }}</div>
+            @if($cityName)
+                <div class="tally-company-city"><u>{{ $cityName }}</u></div>
+            @endif
+            <div class="tally-report-title">Sundry Debtors Aging Schedule</div>
+            <div class="tally-report-period">{{ $asAtString }}</div>
+        </div>
+
+        <table class="tally-aging-table">
+            <thead>
+                <tr class="tally-th-row">
+                    <th style="width: 26%;">
+                        <span class="tally-title-spaced">Particulars</span>
+                    </th>
+                    <th style="width: 14%;">
+                        <span class="tally-title-spaced">GSTIN / Date</span>
+                    </th>
+                    <th class="text-end" style="width: 12%;">
+                        <span class="tally-title-spaced">Total Due</span>
+                    </th>
+                    <th class="text-end" style="width: 10%;">
+                        <span class="tally-title-spaced">0 - 30 Days</span>
+                    </th>
+                    <th class="text-end" style="width: 10%;">
+                        <span class="tally-title-spaced">31 - 60 Days</span>
+                    </th>
+                    <th class="text-end" style="width: 10%;">
+                        <span class="tally-title-spaced">61 - 90 Days</span>
+                    </th>
+                    <th class="text-end" style="width: 10%;">
+                        <span class="tally-title-spaced">&gt; 90 Days</span>
+                    </th>
+                    <th class="text-center" style="width: 8%;">
+                        <span class="tally-title-spaced">MSME</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($report['customers'] as $cust)
+                    <!-- Customer Row -->
+                    <tr class="tally-row-tr tally-debtor-row">
+                        <td class="tally-cell fw-bold">
+                            {{ $cust['customer_name'] }}
+                        </td>
+                        <td class="tally-cell">
+                            {{ (!empty($cust['gst_number']) && $cust['gst_number'] !== '-') ? $cust['gst_number'] : ($cust['contact_number'] ?? '-') }}
+                        </td>
+                        <td class="tally-cell text-end fw-bold">
+                            {{ $formatAmount($cust['total_pending']) }}
+                        </td>
+                        <td class="tally-cell text-end fw-bold">
+                            {{ $cust['bucket_0_30'] > 0.001 ? $formatAmount($cust['bucket_0_30']) : '-' }}
+                        </td>
+                        <td class="tally-cell text-end fw-bold">
+                            {{ $cust['bucket_31_60'] > 0.001 ? $formatAmount($cust['bucket_31_60']) : '-' }}
+                        </td>
+                        <td class="tally-cell text-end fw-bold">
+                            {{ $cust['bucket_61_90'] > 0.001 ? $formatAmount($cust['bucket_61_90']) : '-' }}
+                        </td>
+                        <td class="tally-cell text-end fw-bold">
+                            {{ $cust['bucket_over_90'] > 0.001 ? $formatAmount($cust['bucket_over_90']) : '-' }}
+                        </td>
+                        <td class="tally-cell text-center">
+                            @if($cust['has_msme_alert'])
+                                <strong>&gt; 45d Overdue</strong>
+                            @else
+                                Compliant
+                            @endif
+                        </td>
+                    </tr>
+
+                    <!-- Invoices Sub-rows -->
+                    @foreach($cust['invoices'] as $inv)
+                        <tr class="tally-row-tr tally-inv-row">
+                            <td class="tally-cell tally-indent">
+                                <em>Inv #{{ $inv['invoice_number'] }}</em>
+                            </td>
+                            <td class="tally-cell fst-italic">
+                                {{ $inv['date'] }} ({{ $inv['age_days'] }}d)
+                            </td>
+                            <td class="tally-cell text-end fst-italic">
+                                {{ $formatAmount($inv['pending_amount']) }}
+                            </td>
+                            <td class="tally-cell text-end fst-italic">
+                                {{ $inv['age_days'] <= 30 ? $formatAmount($inv['pending_amount']) : '-' }}
+                            </td>
+                            <td class="tally-cell text-end fst-italic">
+                                {{ ($inv['age_days'] > 30 && $inv['age_days'] <= 60) ? $formatAmount($inv['pending_amount']) : '-' }}
+                            </td>
+                            <td class="tally-cell text-end fst-italic">
+                                {{ ($inv['age_days'] > 60 && $inv['age_days'] <= 90) ? $formatAmount($inv['pending_amount']) : '-' }}
+                            </td>
+                            <td class="tally-cell text-end fst-italic">
+                                {{ $inv['age_days'] > 90 ? $formatAmount($inv['pending_amount']) : '-' }}
+                            </td>
+                            <td class="tally-cell text-center fst-italic">
+                                @if($inv['is_msme_overdue'])
+                                    <strong>* &gt; 45d</strong>
+                                @else
+                                    -
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                    <tr class="tally-spacer-tr"><td colspan="8"></td></tr>
+                @empty
+                    <tr class="tally-row-tr">
+                        <td colspan="8" class="tally-cell text-center py-3">
+                            No outstanding sundry debtors receivables as of {{ $asAtString }}.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+            <tfoot>
+                <tr class="tally-total-row">
+                    <td colspan="2" class="tally-cell fw-bold">
+                        <span class="tally-title-spaced">T o t a l</span>
+                        <span style="font-weight: 400; font-size: 8pt; margin-left: 6px;">({{ $report['totals']['total_debtors_count'] }} Debtors)</span>
+                    </td>
+                    <td class="tally-cell text-end fw-bold">
+                        {{ $formatAmount($report['totals']['total_receivables']) }}
+                    </td>
+                    <td class="tally-cell text-end fw-bold">
+                        {{ $formatAmount($report['totals']['total_0_30']) }}
+                    </td>
+                    <td class="tally-cell text-end fw-bold">
+                        {{ $formatAmount($report['totals']['total_31_60']) }}
+                    </td>
+                    <td class="tally-cell text-end fw-bold">
+                        {{ $formatAmount($report['totals']['total_61_90']) }}
+                    </td>
+                    <td class="tally-cell text-end fw-bold">
+                        {{ $formatAmount($report['totals']['total_over_90']) }}
+                    </td>
+                    <td class="tally-cell text-center fw-bold">
+                        @if($report['totals']['msme_alert_customers_count'] > 0)
+                            {{ $report['totals']['msme_alert_customers_count'] }} Alert(s)
+                        @else
+                            Compliant
+                        @endif
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+
+        @if($report['totals']['msme_alert_customers_count'] > 0)
+            <div style="margin-top: 10px; font-size: 7.5pt; color: #333333; line-height: 1.3;">
+                * <strong>MSME Section 43B(h) Notice:</strong> Total overdue receivables beyond 45 days: ₹{{ $formatAmount($report['totals']['total_msme_overdue']) }} across {{ $report['totals']['msme_alert_customers_count'] }} debtor(s). Statutory interest and tax disallowance rules may apply.
+            </div>
+        @endif
     </div>
 </div>
 @endsection
