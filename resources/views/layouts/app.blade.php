@@ -780,7 +780,7 @@
                                     href="#transporterMenu">
                                     <i class="nav-icon fas fa-building"></i>
                                     <p>
-                                        Transporter
+                                        Transporter / Agency
                                         <i class="nav-arrow bi bi-chevron-right"></i>
                                     </p>
                                 </a>
