@@ -371,7 +371,7 @@
 
     <h4 class="modal-title fw-bold mb-0">
         <i class="fas fa-upload me-2 text-success"></i>
-        Bulk Upload {{ $title ?? '' }}
+        {{ \Illuminate\Support\Str::startsWith($title ?? '', 'Bulk Upload') ? ($title ?? '') : 'Bulk Upload ' . ($title ?? '') }}
     </h4>
 
     <div class="d-flex align-items-center ms-auto gap-3">

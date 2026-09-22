@@ -901,12 +901,12 @@ $('#confirmTruckDelete').on('click', function() {
     'recordName' => 'trucks',
 
     'columns' => [
-    ['name' => 'Truck Number', 'format' => 'Valid truck number, e.g. MH12AB1234', 'required' => true],
-    ['name' => 'Truck Type', 'format' => 'Valid truck type', 'required' => true],
-    ['name' => 'Registration Date', 'format' => 'DD-MM-YYYY or YYYY-MM-DD', 'required' => true],
-    ['name' => 'Truck Owner', 'format' => 'Existing owner name', 'required' => false],
-    ['name' => 'Driver', 'format' => 'Existing driver name', 'required' => false],
-],
+        ['name' => 'Truck Number', 'format' => 'Truck Number', 'required' => true],
+        ['name' => 'Truck Type', 'format' => 'Truck Type', 'required' => true],
+        ['name' => 'Registration Date', 'format' => 'DD-MM-YYYY or YYYY-MM-DD', 'required' => true],
+        ['name' => 'Truck Owner', 'format' => 'Text', 'required' => false],
+        ['name' => 'Driver', 'format' => 'Text', 'required' => false],
+    ],
 ])
 
 @endsection

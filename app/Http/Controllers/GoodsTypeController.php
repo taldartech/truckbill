@@ -200,7 +200,7 @@ class GoodsTypeController extends Controller
 public function bulkUploadTemplate()
 {
     $headers = [
-        'Name',
+        'Goods Name',
     ];
 
     $callback = function () use ($headers) {

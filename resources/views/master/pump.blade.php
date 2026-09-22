@@ -135,12 +135,11 @@
     'templateUrl' => route('master.pump.bulk-upload.template'),
     'uploadUrl' => route('master.pump.bulk-upload'),
     'recordName' => 'pumps',
-
     'columns' => [
-        ['name' => 'Pump Name', 'format' => 'Text', 'required' => true],
-        ['name' => 'Contact Name', 'format' => 'Text', 'required' => true],
+        ['name' => 'Pump Name', 'format' => 'Name', 'required' => true],
+        ['name' => 'Contact Name', 'format' => 'Name', 'required' => true],
         ['name' => 'Contact Number', 'format' => '10-digit number', 'required' => true],
-        ['name' => 'Remark', 'format' => 'Text', 'required' => false],
+        ['name' => 'Remark', 'format' => 'Remark', 'required' => false],
     ],
 ])
 

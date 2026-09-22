@@ -22,6 +22,8 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use InvalidArgumentException;
 
 class TruckOwnerController extends Controller
@@ -51,75 +53,110 @@ class TruckOwnerController extends Controller
     }
 
     public function bulkUpload(Request $request)
-{
-    $request->validate([
-        'file' => [
-            'required',
-            'file',
-            'max:10240',
-        ],
-    ]);
-
-    try {
-        $import = new TruckOwnerImport();
-
-        \Maatwebsite\Excel\Facades\Excel::import(
-            $import,
-            $request->file('file')
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => $import->imported . ' truck owner(s) imported successfully.',
-            'imported' => $import->imported,
-            'failed' => count($import->errors),
-            'errors' => $import->errors,
+    {
+        $validator = Validator::make($request->all(), [
+            'file' => [
+                'required',
+                'file',
+                'mimes:xlsx,xls,csv',
+                'max:10240',
+            ],
         ]);
-    } catch (\Throwable $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Bulk upload failed.',
-            'error' => $e->getMessage(),
-        ], 422);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File validation failed.',
+                'errors' => $validator->errors()->all(),
+            ], 422);
+        }
+
+        try {
+            $import = new TruckOwnerImport();
+
+            \Maatwebsite\Excel\Facades\Excel::import(
+                $import,
+                $request->file('file')
+            );
+
+            $total = $import->successCount + count($import->errors);
+
+            if (! empty($import->errors)) {
+                return response()->json([
+                    'success' => $import->successCount > 0,
+                    'partial_success' => $import->successCount > 0,
+                    'message' => $import->successCount > 0
+                        ? $import->successCount . ' truck owner(s) imported successfully. Some rows have errors.'
+                        : 'No truck owner records were imported.',
+                    'imported' => $import->successCount,
+                    'success_count' => $import->successCount,
+                    'total' => $total,
+                    'errors' => $import->errors,
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $import->successCount . ' truck owner(s) imported successfully.',
+                'imported' => $import->successCount,
+                'success_count' => $import->successCount,
+                'total' => $total,
+                'errors' => [],
+            ]);
+
+        } catch (\Throwable $e) {
+            \Log::error('Truck Owner bulk upload failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to process the file. Please check the file and try again.',
+                'errors' => [$e->getMessage()],
+            ], 500);
+        }
     }
-}
 
 
-public function bulkUploadTemplate()
-{
-    $headers = [
-        'Name',
-        'Email',
-        'GST Number',
-        'PAN Active',
-        'Contact Person Name',
-        'Mobile Number',
-        'Country',
-        'State',
-        'City',
-        'Address',
-        'Declaration Given',
-        'Total Trucks',
-        'TDS %',
-        'TDS Adjustment Remark',
-    ];
+    public function bulkUploadTemplate()
+    {
+        $headers = [
+            'Name',
+            'PAN Number',
+            'Mobile Number',
+            'Email',
+            'GST Number',
+            'PAN Active',
+            'Contact Person Name',
+            'Country',
+            'State',
+            'City',
+            'Address',
+            'Declaration Given',
+            'Total Trucks',
+            'TDS %',
+            'TDS Adjustment Remark',
+            'Short Name',
+            'Advance Amount',
+        ];
 
-    $callback = function () use ($headers) {
-        $file = fopen('php://output', 'w');
+        $callback = function () use ($headers) {
+            $file = fopen('php://output', 'w');
 
-        fputcsv($file, $headers);
+            fputcsv($file, $headers);
 
-        fclose($file);
-    };
+            fclose($file);
+        };
 
-    return response()->streamDownload(
-        $callback,
-        'truck_owner_template.csv',
-        [
-            'Content-Type' => 'text/csv',
-        ]
-    );
-}
+        return response()->streamDownload(
+            $callback,
+            'truck_owner_template.csv',
+            [
+                'Content-Type' => 'text/csv',
+            ]
+        );
+    }
 
     private function getTruckOwnersData(Request $request)
     {

@@ -2,6 +2,10 @@
 
 namespace App\Imports;
 
+use App\Models\City;
+use App\Models\Company;
+use App\Models\Country;
+use App\Models\State;
 use App\Models\Transporter;
 use App\Models\TransporterMaster;
 use Illuminate\Support\Collection;
@@ -20,330 +24,436 @@ class TruckOwnerImport implements
     WithChunkReading,
     SkipsEmptyRows
 {
-    public $errors = [];
+    public int $successCount = 0;
 
-    public $imported = 0;
+    public int $imported = 0;
+
+    public array $errors = [];
+
+    private array $uploadedPans = [];
+
+    private array $uploadedMobiles = [];
 
     public function collection(Collection $rows)
     {
-        foreach ($rows as $index => $row) {
+        $companyId = Auth::user()->company_id;
 
+        if (! $companyId) {
+            $this->errors[] = [
+                'row' => 1,
+                'errors' => ['Company could not be identified for the current user.'],
+            ];
+            return;
+        }
+
+        $dummyPan = Company::dummyTransporterTruckOwnerPanNumber((int) $companyId);
+
+        foreach ($rows as $index => $row) {
             $rowNumber = $index + 2;
 
-            try {
+            $data = $this->normalizeRow($row->toArray(), $dummyPan);
 
-                $data = $this->normalizeRow($row->toArray());
+            $validationErrors = $this->validateRow($data, $dummyPan);
 
-                /*
-                |--------------------------------------------------------------------------
-                | VALIDATION
-                |--------------------------------------------------------------------------
-                */
+            if (! empty($validationErrors)) {
+                $this->errors[] = [
+                    'row' => $rowNumber,
+                    'errors' => $validationErrors,
+                ];
+                continue;
+            }
 
-                $validator = Validator::make($data, [
+            $panNumber = $data['pan_number'];
+            $mobileNumber = $data['mobile_number'];
 
-                    'name' => [
-                        'required',
-                        'string',
-                        'max:255',
-                    ],
+            /*
+             * DUPLICATE IN UPLOADED FILE
+             */
+            if ($panNumber !== $dummyPan && in_array($panNumber, $this->uploadedPans, true)) {
+                $this->errors[] = [
+                    'row' => $rowNumber,
+                    'errors' => ["PAN Number '{$panNumber}' is duplicated in the uploaded file."],
+                ];
+                continue;
+            }
 
-                    'pan_active' => [
-                        'required',
-                    ],
+            if (in_array($mobileNumber, $this->uploadedMobiles, true)) {
+                $this->errors[] = [
+                    'row' => $rowNumber,
+                    'errors' => ["Mobile number '{$mobileNumber}' is duplicated in the uploaded file."],
+                ];
+                continue;
+            }
 
-                    'mobile_number' => [
-                        'required',
-                        'string',
-                        'max:20',
-                    ],
+            /*
+             * DUPLICATE IN DATABASE (PER COMPANY)
+             */
+            if ($panNumber !== $dummyPan) {
+                $alreadyExists = Transporter::where('company_id', $companyId)
+                    ->where('is_owner', 1)
+                    ->whereHas('transporterMaster', function ($q) use ($panNumber) {
+                        $q->where('pan_number', $panNumber);
+                    })
+                    ->exists();
 
-                    'country' => [
-                        'required',
-                        'string',
-                        'max:255',
-                    ],
-
-                    'state' => [
-                        'required',
-                        'string',
-                        'max:255',
-                    ],
-
-                    'city' => [
-                        'required',
-                        'string',
-                        'max:255',
-                    ],
-
-                    'declaration_given' => [
-                        'required',
-                    ],
-
-                    'tds_percentage' => [
-                        'required',
-                        'numeric',
-                        'min:0',
-                    ],
-
-                    'email' => [
-                        'nullable',
-                        'email',
-                        'max:255',
-                    ],
-
-                    'gst_number' => [
-                        'nullable',
-                        'string',
-                        'max:20',
-                    ],
-
-                    'contact_person_name' => [
-                        'nullable',
-                        'string',
-                        'max:255',
-                    ],
-
-                    'address' => [
-                        'nullable',
-                        'string',
-                    ],
-
-                    'tds_adjustment_remark' => [
-                        'nullable',
-                        'string',
-                    ],
-
-                ], [
-
-                    'name.required' =>
-                        'The truck owner name field is required.',
-
-                    'pan_active.required' =>
-                        'The PAN active field is required.',
-
-                    'mobile_number.required' =>
-                        'The mobile number field is required.',
-
-                    'country.required' =>
-                        'The country field is required.',
-
-                    'state.required' =>
-                        'The state field is required.',
-
-                    'city.required' =>
-                        'The city field is required.',
-
-                    'declaration_given.required' =>
-                        'The declaration given field is required.',
-
-                    'tds_percentage.required' =>
-                        'The TDS percentage field is required.',
-
-                    'tds_percentage.numeric' =>
-                        'The TDS percentage field must be a number.',
-                ]);
-
-                if ($validator->fails()) {
-
-                    throw new \Exception(
-                        implode(' ', $validator->errors()->all())
-                    );
+                if ($alreadyExists) {
+                    $this->errors[] = [
+                        'row' => $rowNumber,
+                        'errors' => ["Truck owner with PAN '{$panNumber}' already exists for this company."],
+                    ];
+                    continue;
                 }
+            }
 
-                /*
-                |--------------------------------------------------------------------------
-                | CREATE RECORDS
-                |--------------------------------------------------------------------------
-                */
+            $mobileExists = Transporter::where('company_id', $companyId)
+                ->where('is_owner', 1)
+                ->where('mobile_number', $mobileNumber)
+                ->exists();
 
-                DB::transaction(function () use ($data) {
+            if ($mobileExists) {
+                $this->errors[] = [
+                    'row' => $rowNumber,
+                    'errors' => ["Mobile number '{$mobileNumber}' already exists for this company."],
+                ];
+                continue;
+            }
+
+            try {
+                DB::transaction(function () use ($data, $companyId, $panNumber, $dummyPan, $mobileNumber) {
+                    /*
+                     * LOCATION RESOLUTION (NULLABLE / FIRST OR CREATE)
+                     */
+                    $countryId = null;
+                    if (! empty($data['country'])) {
+                        $countryName = trim((string) $data['country']);
+                        $country = Country::whereRaw('LOWER(name) = ?', [strtolower($countryName)])->first();
+                        if (! $country) {
+                            $country = Country::create(['name' => ucwords(strtolower($countryName))]);
+                        }
+                        $countryId = $country->id;
+                    }
+
+                    $stateId = null;
+                    if (! empty($data['state'])) {
+                        $stateName = trim((string) $data['state']);
+                        $stateQuery = State::whereRaw('LOWER(name) = ?', [strtolower($stateName)]);
+                        if ($countryId) {
+                            $state = (clone $stateQuery)->where('country_id', $countryId)->first() ?? $stateQuery->first();
+                        } else {
+                            $state = $stateQuery->first();
+                        }
+
+                        if (! $state) {
+                            $fallbackCountryId = $countryId ?? Country::whereRaw('LOWER(name) = ?', ['india'])->value('id') ?? Country::first()?->id ?? 1;
+                            $state = State::create([
+                                'name' => ucwords(strtolower($stateName)),
+                                'country_id' => $fallbackCountryId,
+                            ]);
+                        }
+                        $stateId = $state->id;
+                        if (! $countryId && $state->country_id) {
+                            $countryId = $state->country_id;
+                        }
+                    }
+
+                    $cityId = null;
+                    if (! empty($data['city'])) {
+                        $cityName = trim((string) $data['city']);
+                        $cityQuery = City::whereRaw('LOWER(name) = ?', [strtolower($cityName)]);
+                        if ($stateId) {
+                            $city = (clone $cityQuery)->where('state_id', $stateId)->first() ?? $cityQuery->first();
+                        } else {
+                            $city = $cityQuery->first();
+                        }
+
+                        if (! $city) {
+                            $cityCountryId = $countryId ?? ($state?->country_id ?? Country::whereRaw('LOWER(name) = ?', ['india'])->value('id') ?? Country::first()?->id ?? 1);
+                            $city = City::create([
+                                'name' => ucwords(strtolower($cityName)),
+                                'state_id' => $stateId,
+                                'country_id' => $cityCountryId,
+                            ]);
+                        }
+                        $cityId = $city->id;
+                        if (! $stateId && $city->state_id) {
+                            $stateId = $city->state_id;
+                        }
+                        if (! $countryId && $city->country_id) {
+                            $countryId = $city->country_id;
+                        }
+                    }
 
                     /*
-                    |--------------------------------------------------------------------------
-                    | Transporter Master
-                    |--------------------------------------------------------------------------
-                    */
+                     * TRANSPORTER MASTER (REUSE OR CREATE)
+                     */
+                    $master = null;
+                    if ($panNumber !== $dummyPan) {
+                        $master = TransporterMaster::where('pan_number', $panNumber)->first();
+                    }
 
-                    $master = TransporterMaster::create([
-
-                        'name' =>
-                            $data['name'],
-
-                        'email' =>
-                            !empty($data['email'])
-                                ? $data['email']
-                                : null,
-
-                        'pan_number' =>
-                            !empty($data['pan_number'])
-                                ? strtoupper($data['pan_number'])
-                                : '',
-
-                        'gst_number' =>
-                            !empty($data['gst_number'])
-                                ? strtoupper($data['gst_number'])
-                                : null,
-
-                        'gst_type' =>
-                            null,
-
-                        'pan_active' =>
-                            $this->booleanValue(
-                                $data['pan_active'] ?? null
-                            ),
-
-                        'address' =>
-                            $data['address'] ?? null,
-
-                        'city_id' =>
-                            $data['city_id'] ?? null,
-
-                        'state_id' =>
-                            $data['state_id'] ?? null,
-
-                        'country_id' =>
-                            $data['country_id'] ?? null,
-                    ]);
+                    if (! $master) {
+                        $master = TransporterMaster::create([
+                            'name' => $data['name'],
+                            'email' => ! empty($data['email']) ? trim($data['email']) : null,
+                            'pan_number' => $panNumber,
+                            'gst_number' => ! empty($data['gst_number']) ? strtoupper(trim($data['gst_number'])) : null,
+                            'gst_type' => null,
+                            'pan_active' => (bool) $data['pan_active'],
+                            'address' => $data['address'] ?: null,
+                            'city_id' => $cityId,
+                            'state_id' => $stateId,
+                            'country_id' => $countryId,
+                        ]);
+                    }
 
                     /*
-                    |--------------------------------------------------------------------------
-                    | Transporter
-                    |--------------------------------------------------------------------------
-                    */
+                     * SHORT NAME RESOLUTION
+                     */
+                    $shortName = $data['short_name'] ?: null;
+                    if ($shortName) {
+                        $existing = Transporter::where('short_name', $shortName)
+                            ->where('company_id', $companyId)
+                            ->where('is_owner', 1)
+                            ->exists();
 
+                        if ($existing) {
+                            $suffix = 1;
+                            do {
+                                $candidate = $shortName . '-' . $suffix;
+                                $existing = Transporter::where('short_name', $candidate)
+                                    ->where('company_id', $companyId)
+                                    ->where('is_owner', 1)
+                                    ->exists();
+                                $suffix++;
+                            } while ($existing);
+                            $shortName = $candidate;
+                        }
+                    }
+
+                    /*
+                     * CREATE TRUCK OWNER TRANSPORTER
+                     */
                     Transporter::create([
-
-                        'transporter_master_id' =>
-                            $master->id,
-
-                        'company_id' =>
-                            Auth::user()->company->id,
-
-                        'is_owner' =>
-                            1,
-
-                        'contact_person_name' =>
-                            $data['contact_person_name'] ?? null,
-
-                        'mobile_number' =>
-                            $data['mobile_number'],
-
-                        'short_name' =>
-                            $data['short_name'] ?? null,
-
-                        'declaration_given' =>
-                            $this->booleanValue(
-                                $data['declaration_given'] ?? null
-                            ),
-
-                        'total_trucks' =>
-                            !empty($data['total_trucks'])
-                                ? (int) $data['total_trucks']
-                                : 0,
-
-                        'advance_amount' =>
-                            !empty($data['advance_amount'])
-                                ? (float) $data['advance_amount']
-                                : 0,
-
-                        'tds_percentage' =>
-                            !empty($data['tds_percentage'])
-                                ? (float) $data['tds_percentage']
-                                : 0,
-
-                        'tds_adjustment_remark' =>
-                            $data['tds_adjustment_remark'] ?? null,
+                        'transporter_master_id' => $master->id,
+                        'company_id' => $companyId,
+                        'is_owner' => 1,
+                        'contact_person_name' => $data['contact_person_name'] ?: null,
+                        'mobile_number' => $mobileNumber,
+                        'short_name' => $shortName,
+                        'declaration_given' => (bool) $data['declaration_given'],
+                        'total_trucks' => (int) ($data['total_trucks'] ?? 0),
+                        'advance_amount' => (float) ($data['advance_amount'] ?? 0),
+                        'tds_percentage' => (float) ($data['tds_percentage'] ?? 0),
+                        'tds_adjustment_remark' => $data['tds_adjustment_remark'] ?: null,
                     ]);
                 });
 
+                if ($panNumber !== $dummyPan) {
+                    $this->uploadedPans[] = $panNumber;
+                }
+                $this->uploadedMobiles[] = $mobileNumber;
+                $this->successCount++;
                 $this->imported++;
 
             } catch (\Throwable $e) {
-
                 $this->errors[] = [
-
                     'row' => $rowNumber,
-
-                    'errors' => [
-                        $e->getMessage()
-                    ],
+                    'errors' => ['Unable to create truck owner: ' . $e->getMessage()],
                 ];
             }
         }
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | NORMALIZE EXCEL HEADERS
-    |--------------------------------------------------------------------------
-    */
-
-    private function normalizeRow(array $row): array
+    private function normalizeRow(array $row, string $dummyPan): array
     {
         $normalized = [];
 
         foreach ($row as $key => $value) {
-
-            $key = Str::snake(trim($key));
+            $cleanKey = strtolower(trim((string) $key));
+            $cleanKey = str_replace([' ', '-', '.'], '_', $cleanKey);
+            $cleanKey = preg_replace('/_+/', '_', $cleanKey);
 
             if (is_string($value)) {
                 $value = trim($value);
             }
 
-            if (
-                $key === 'mobile_number' &&
-                $value !== null &&
-                $value !== ''
-            ) {
-                $value = (string) $value;
-            }
-
-            /*
-             * Excel header:
-             * TDS %
-             *
-             * becomes:
-             * tds
-             *
-             * Convert it to:
-             * tds_percentage
-             */
-
-            if ($key === 'tds') {
-                $key = 'tds_percentage';
-            }
-
-            $normalized[$key] = $value;
+            $normalized[$cleanKey] = $value;
         }
 
-        return $normalized;
+        $panNumber = $normalized['pan_number'] ?? $normalized['pan_no'] ?? $normalized['pan'] ?? null;
+        $name = $normalized['name'] ?? $normalized['truck_owner_name'] ?? $normalized['owner_name'] ?? $normalized['transporter_name'] ?? null;
+        $mobileNumber = $normalized['mobile_number'] ?? $normalized['mobile_no'] ?? $normalized['mobile'] ?? $normalized['contact_number'] ?? $normalized['contact_no'] ?? null;
+        $contactPerson = $normalized['contact_person_name'] ?? $normalized['contact_person'] ?? $normalized['contact_name'] ?? null;
+        $gstNumber = $normalized['gst_number'] ?? $normalized['gst_no'] ?? $normalized['gst'] ?? null;
+        $panActive = $normalized['pan_active'] ?? $normalized['pan_status'] ?? null;
+        $declarationGiven = $normalized['declaration_given'] ?? $normalized['declaration'] ?? null;
+        $tdsPercentage = $normalized['tds_percentage'] ?? $normalized['tds_%'] ?? $normalized['tds'] ?? null;
+        $tdsAdjustmentRemark = $normalized['tds_adjustment_remark'] ?? $normalized['tds_remark'] ?? $normalized['remark'] ?? null;
+        $shortName = $normalized['short_name'] ?? null;
+        $advanceAmount = $normalized['advance_amount'] ?? $normalized['opening_balance'] ?? null;
+        $totalTrucks = $normalized['total_trucks'] ?? null;
+        $email = $normalized['email'] ?? $normalized['email_address'] ?? null;
+        $country = $normalized['country'] ?? null;
+        $state = $normalized['state'] ?? null;
+        $city = $normalized['city'] ?? null;
+        $address = $normalized['address'] ?? null;
+
+        // Fallback to dummy PAN if empty
+        $finalPan = $panNumber ? strtoupper(trim((string) $panNumber)) : $dummyPan;
+
+        return [
+            'pan_number' => $finalPan,
+            'name' => $name ?: '',
+            'email' => $email ?: null,
+            'gst_number' => $gstNumber ? strtoupper(trim((string) $gstNumber)) : null,
+            'pan_active' => $this->parseBoolean($panActive),
+            'contact_person_name' => $contactPerson ?: null,
+            'mobile_number' => $mobileNumber !== null && $mobileNumber !== '' ? (string) $mobileNumber : '',
+            'country' => $country ? trim((string) $country) : null,
+            'state' => $state ? trim((string) $state) : null,
+            'city' => $city ? trim((string) $city) : null,
+            'address' => $address ?: null,
+            'declaration_given' => $this->parseBoolean($declarationGiven),
+            'total_trucks' => $totalTrucks !== null && $totalTrucks !== '' ? (int) $totalTrucks : 0,
+            'tds_percentage' => $tdsPercentage !== null && trim((string) $tdsPercentage) !== '' ? (float) $tdsPercentage : null,
+            'tds_adjustment_remark' => $tdsAdjustmentRemark ?: null,
+            'short_name' => $shortName ?: null,
+            'advance_amount' => $advanceAmount !== null && $advanceAmount !== '' ? (float) $advanceAmount : 0,
+        ];
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | BOOLEAN VALUE
-    |--------------------------------------------------------------------------
-    */
-
-    private function booleanValue($value): bool
+    private function validateRow(array $data, string $dummyPan): array
     {
+        $validator = Validator::make($data, [
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'mobile_number' => [
+                'required',
+                'digits:10',
+            ],
+            'pan_number' => [
+                'required',
+                'string',
+                'max:10',
+                function ($attribute, $value, $fail) use ($dummyPan) {
+                    $pan = strtoupper((string) $value);
+                    if ($pan === $dummyPan) {
+                        return;
+                    }
+                    if (! preg_match('/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/', $pan)) {
+                        $fail('The PAN number format is invalid (e.g. ABCDE1234F).');
+                    }
+                },
+            ],
+            'pan_active' => [
+                'required',
+                'boolean',
+            ],
+            'country' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'state' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'city' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'declaration_given' => [
+                'required',
+                'boolean',
+            ],
+            'tds_percentage' => [
+                'required',
+                'numeric',
+                'min:0',
+                'max:100',
+            ],
+            'email' => [
+                'nullable',
+                'email',
+                'max:255',
+            ],
+            'gst_number' => [
+                'nullable',
+                'string',
+                'max:20',
+            ],
+            'address' => [
+                'nullable',
+                'string',
+            ],
+            'tds_adjustment_remark' => [
+                'nullable',
+                'string',
+                'max:1000',
+            ],
+            'short_name' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'total_trucks' => [
+                'nullable',
+                'integer',
+                'min:0',
+            ],
+            'advance_amount' => [
+                'nullable',
+                'numeric',
+            ],
+        ], [
+            'name.required' => 'Truck Owner Name is required.',
+            'mobile_number.required' => 'Mobile Number is required.',
+            'mobile_number.digits' => 'Mobile Number must be exactly 10 digits.',
+            'pan_active.required' => 'PAN Active status is required (Yes / No).',
+            'pan_active.boolean' => 'PAN Active must be Yes or No.',
+            'country.required' => 'Country is required.',
+            'state.required' => 'State is required.',
+            'city.required' => 'City is required.',
+            'declaration_given.required' => 'Declaration Given status is required (Yes / No).',
+            'declaration_given.boolean' => 'Declaration Given must be Yes or No.',
+            'tds_percentage.required' => 'TDS % is required.',
+            'tds_percentage.numeric' => 'TDS % must be a valid number.',
+            'email.email' => 'Email must be a valid email address.',
+        ]);
+
+        if ($validator->fails()) {
+            return $validator->errors()->all();
+        }
+
+        return [];
+    }
+
+    private function parseBoolean($value): ?bool
+    {
+        if ($value === null || trim((string) $value) === '') {
+            return null;
+        }
+
         if (is_bool($value)) {
             return $value;
         }
 
-        return in_array(
-            strtolower(trim((string) $value)),
-            ['1', 'yes', 'true', 'y'],
-            true
-        );
-    }
+        $str = strtolower(trim((string) $value));
+        if (in_array($str, ['1', 'yes', 'true', 'y', 'active'], true)) {
+            return true;
+        }
 
-    /*
-    |--------------------------------------------------------------------------
-    | CHUNK SIZE
-    |--------------------------------------------------------------------------
-    */
+        if (in_array($str, ['0', 'no', 'false', 'n', 'inactive'], true)) {
+            return false;
+        }
+
+        return null;
+    }
 
     public function chunkSize(): int
     {

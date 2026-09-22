@@ -638,7 +638,7 @@ class TruckController extends Controller
         'file' => [
             'required',
             'file',
-            'extensions:xlsx,xls,csv',
+            'mimes:xlsx,xls,csv',
             'max:10240',
         ],
     ]);

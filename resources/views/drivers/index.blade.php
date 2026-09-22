@@ -257,32 +257,10 @@
     'templateUrl' => route('drivers.bulkUploadTemplate'),
     'title' => 'Bulk Upload Drivers',
     'recordName' => 'drivers',
-
-    'requiredColumns' => [
-        [
-            'name' => 'Name',
-            'format' => 'Text',
-        ],
-        [
-            'name' => 'Mobile',
-            'format' => '10-digit number',
-        ],
-    ],
-
-    'optionalColumns' => [
-        [
-            'name' => 'License Number',
-            'format' => 'Text',
-        ],
-        [
-            'name' => 'Address',
-            'format' => 'Text',
-        ],
-    ],
-     'columns' => [
-        ['name' => 'Name', 'format' => 'Text', 'required' => true],
+    'columns' => [
+        ['name' => 'Name', 'format' => 'Name', 'required' => true],
         ['name' => 'Mobile', 'format' => '10-digit number', 'required' => true],
-        ['name' => 'License Number', 'format' => 'Text', 'required' => false],
+        ['name' => 'License Number', 'format' => 'License Number', 'required' => false],
         ['name' => 'Address', 'format' => 'Text', 'required' => false],
     ],
 ])

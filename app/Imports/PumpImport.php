@@ -71,6 +71,14 @@ class PumpImport implements
         $normalized[$key] = $value;
     }
 
+    if (empty($normalized['contact_number'])) {
+        $normalized['contact_number'] = $normalized['contact_no'] ?? $normalized['mobile_number'] ?? $normalized['mobile'] ?? $normalized['phone'] ?? null;
+    }
+
+    if (empty($normalized['pump_name'])) {
+        $normalized['pump_name'] = $normalized['name'] ?? null;
+    }
+
     return $normalized;
 }
 

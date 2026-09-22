@@ -135,8 +135,8 @@
     'templateUrl' => route('master.goods-types.bulk-upload.template'),
     'uploadUrl' => route('master.goods-types.bulk-upload'),
     'recordName' => 'goods types',
-       'columns' => [
-        ['name' => 'Goods Type Name', 'format' => 'Text', 'required' => true],
+    'columns' => [
+        ['name' => 'Goods Name', 'format' => 'Name', 'required' => true],
     ],
 ])
 

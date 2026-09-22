@@ -46,43 +46,71 @@ class TransporterController extends Controller
     }
 
 
-  public function bulkUpload(Request $request)
-{
-    $request->validate([
-        'file' => [
-            'required',
-            'file',
-            'mimes:xlsx,xls,csv',
-            'max:10240',
-        ],
-    ]);
-
-    try {
-        $import = new \App\Imports\TransporterImport();
-
-        \Maatwebsite\Excel\Facades\Excel::import(
-            $import,
-            $request->file('file')
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => $import->successCount .
-                ' transporter(s) imported successfully.',
-            'imported' => $import->successCount,
-            'failed' => count($import->errors),
-            'errors' => $import->errors,
+    public function bulkUpload(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'file' => [
+                'required',
+                'file',
+                'mimes:xlsx,xls,csv',
+                'max:10240',
+            ],
         ]);
 
-    } catch (\Throwable $e) {
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File validation failed.',
+                'errors' => $validator->errors()->all(),
+            ], 422);
+        }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Bulk upload failed.',
-            'error' => $e->getMessage(),
-        ], 422);
+        try {
+            $import = new \App\Imports\TransporterImport();
+
+            Excel::import(
+                $import,
+                $request->file('file')
+            );
+
+            $total = $import->successCount + count($import->errors);
+
+            if (! empty($import->errors)) {
+                return response()->json([
+                    'success' => $import->successCount > 0,
+                    'partial_success' => $import->successCount > 0,
+                    'message' => $import->successCount > 0
+                        ? $import->successCount . ' transporter(s) imported successfully. Some rows have errors.'
+                        : 'No transporter records were imported.',
+                    'imported' => $import->successCount,
+                    'success_count' => $import->successCount,
+                    'total' => $total,
+                    'errors' => $import->errors,
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $import->successCount . ' transporter(s) imported successfully.',
+                'imported' => $import->successCount,
+                'success_count' => $import->successCount,
+                'total' => $total,
+                'errors' => [],
+            ]);
+
+        } catch (\Throwable $e) {
+            \Log::error('Transporter bulk upload failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to process the file. Please check the file and try again.',
+                'errors' => [$e->getMessage()],
+            ], 500);
+        }
     }
-}
 
 
 public function bulkUploadTemplate()

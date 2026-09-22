@@ -63,6 +63,10 @@ class GoodsTypeImport implements
             $normalized[$key] = $value;
         }
 
+        if (empty($normalized['name'])) {
+            $normalized['name'] = $normalized['goods_name'] ?? $normalized['goods_type_name'] ?? $normalized['goods_type'] ?? null;
+        }
+
         return $normalized;
     }
 

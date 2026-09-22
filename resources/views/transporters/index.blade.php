@@ -249,6 +249,24 @@
     'templateUrl' => route('transporters.bulk-upload-template'),
     'uploadUrl' => route('transporters.bulk-upload'),
     'recordName' => 'transporters',
+    'columns' => [
+        ['name' => 'PAN Number', 'format' => 'PAN number', 'required' => true],
+        ['name' => 'Transport Name', 'format' => 'Name', 'required' => true],
+        ['name' => 'Mobile Number', 'format' => '10-digit number', 'required' => true],
+        ['name' => 'PAN Active', 'format' => 'Yes / No', 'required' => true],
+        ['name' => 'Country', 'format' => 'Country name', 'required' => true],
+        ['name' => 'State', 'format' => 'State name', 'required' => true],
+        ['name' => 'City', 'format' => 'City name', 'required' => true],
+        ['name' => 'Declaration Given', 'format' => 'Yes / No', 'required' => true],
+        ['name' => 'TDS Percentage', 'format' => 'Number', 'required' => true],
+        ['name' => 'Email', 'format' => 'Email address', 'required' => false],
+        ['name' => 'GST Number', 'format' => 'GST number', 'required' => false],
+        ['name' => 'Contact Person Name', 'format' => 'Name', 'required' => false],
+        ['name' => 'Address', 'format' => 'Text', 'required' => false],
+        ['name' => 'TDS Adjustment Remark', 'format' => 'Text', 'required' => false],
+        ['name' => 'Short Name', 'format' => 'Short Name', 'required' => false],
+        ['name' => 'Advance Amount', 'format' => 'Amount', 'required' => false],
+    ],
 ])
 
 @push('scripts')
