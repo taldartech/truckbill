@@ -104,11 +104,36 @@ class InvoiceController extends Controller
                     return '<a href="#" class="text-primary invoice-details-link" data-id="'.$row->id.'">'.$invoiceLabel.'</a>';
                 })
                 ->addColumn('memo_numbers', function ($row) {
-                    if (is_array($row->memo_ids)) {
-                        return implode(', ', $row->memo_ids);
-                    }
+                    // if (is_array($row->memo_ids)) {
+                    //     return implode(', ', $row->memo_ids);
+                    // }
+                    if (empty($row->memo_ids)) {
+                  return '-';
+                     }
+                   $memoIds = is_array($row->memo_ids)
+                    ? $row->memo_ids
+                  : [$row->memo_ids];
 
-                    return (string) ($row->memo_ids ?? '-');
+                 $memos = DB::table('lorry_receipts')
+                   ->whereIn('memo_id', $memoIds)
+                   ->select('memo_id', 'memo_created_at')
+                   ->get()
+                   ->keyBy('memo_id');
+
+                    // return (string) ($row->memo_ids ?? '-');
+                    return collect($memoIds)->map(function ($memoId) use ($memos) {
+                    $memo = $memos->get($memoId);
+
+                      $html = '<div>'.e($memoId).'</div>';
+
+                     if ($memo && $memo->memo_created_at) {
+                     $html .= '<small class="text-muted">'
+                    .date('d-m-Y h:i A', strtotime($memo->memo_created_at))
+                    .'</small>';
+                   }
+
+                   return $html;
+                   })->implode('');
                 })
                 ->addColumn('consignee_name', function ($row) {
                     return $row->consignee ? $row->consignee->name : '-';
@@ -144,15 +169,19 @@ class InvoiceController extends Controller
                 ->addColumn('actions', function ($row) {
                     return $this->getActionButtons($row);
                 })
+                
                 ->filterColumn('consignee_name', function ($query, $keyword) {
                     $query->where('consignees.name', 'like', "%{$keyword}%");
                 })
+         
                 ->filterColumn('invoice_link', function ($query, $keyword) {
                     $query->where(function ($subQuery) use ($keyword) {
                         $subQuery->where('invoices.invoice_number', 'like', "%{$keyword}%")
                             ->orWhere('invoices.manual_invoice_number', 'like', "%{$keyword}%");
                     });
+                    
                 })
+              
                 ->filterColumn('paid_amount_formatted', function ($query, $keyword) {
                     $query->whereRaw('COALESCE(invoice_payment_totals.paid_amount_sum, 0) LIKE ?', ["%{$keyword}%"]);
                 })
@@ -163,7 +192,7 @@ class InvoiceController extends Controller
                 ->orderColumn('invoice_link', 'invoices.invoice_number $1')
                 ->orderColumn('paid_amount_formatted', 'paid_amount_sum $1')
                 ->orderColumn('remaining_amount_formatted', 'remaining_amount_value $1')
-                ->rawColumns(['invoice_link', 'payment_status_badge', 'actions', 'remaining_amount_formatted'])
+               ->rawColumns(['invoice_link', 'payment_status_badge', 'actions', 'remaining_amount_formatted', 'memo_numbers'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error('DataTables error: '.$e->getMessage());
@@ -208,15 +237,22 @@ class InvoiceController extends Controller
             $actions .= '<i class="bi bi-pencil"></i></a>';
         }
 
-        if ($invoice->payment_status === 'pending' && $this->invoiceRowIsLatestForCompany($invoice)) {
-            $actions .= '<form method="POST" action="'.route('invoices.destroy', $invoice->id).'">';
-            $actions .= csrf_field();
-            $actions .= method_field('DELETE');
-            $actions .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete" data-bs-toggle="tooltip" onclick="return confirm(\'Are you sure you want to delete this invoice?\')">';
-            $actions .= '<i class="bi bi-trash"></i>';
-            $actions .= '</button>';
-            $actions .= '</form>';
-        }
+    if ($invoice->payment_status === 'pending' && $this->invoiceRowIsLatestForCompany($invoice)) {
+    $actions .= '<form method="POST" class="invoice-delete-form" action="'.route('invoices.destroy', $invoice->id).'">';
+    $actions .= csrf_field();
+    $actions .= method_field('DELETE');
+
+    $actions .= '<button type="button" class="btn btn-sm btn-icon btn-action-delete invoice-delete-btn"';
+    $actions .= ' data-bs-toggle="modal" data-bs-target="#invoiceDeleteModal"';
+    $actions .= ' data-invoice-id="'.$invoice->id.'"';
+    $actions .= ' data-invoice-number="'.e($invoice->invoice_number).'"';
+    $actions .= '>';
+
+    $actions .= '<i class="bi bi-trash"></i>';
+    $actions .= '</button>';
+
+    $actions .= '</form>';
+}
 
         $actions .= '</div>';
 
@@ -450,7 +486,7 @@ class InvoiceController extends Controller
             $lrIds = $invoice->lr_ids ?? [];
             if (! empty($lrIds)) {
                 $memos = DB::table('lorry_receipts')
-                    ->select('memo_id', 'lr_number', 'source_city as from_location', 'destination_city as to_location', 'fr_rate as rate', 'amount')
+                    ->select('memo_id','memo_created_at', 'lr_number', 'source_city as from_location', 'destination_city as to_location', 'fr_rate as rate', 'amount')
                     ->whereIn('id', $lrIds)
                     ->where('company_id', $invoice->company_id)
                     ->whereNotNull('memo_id')
@@ -606,55 +642,77 @@ class InvoiceController extends Controller
         return redirect()->route('invoices.index')->with('success', 'Invoice updated successfully.');
     }
 
-    public function destroy(Invoice $invoice)
-    {
-        if (Auth::user()->company_id && $invoice->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized access to this invoice.');
-        }
-        $company = Auth::user()->company;
-        $company->loadMissing('subscription');
-        if (! $company->subscriptionCanWrite()) {
-            return redirect()->route('invoices.index')
-                ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
-        }
-        if ($invoice->payment_status !== 'pending') {
-            return redirect()->back()->with('error', 'Cannot delete invoice.');
-        }
-        if (! $this->isLastInvoiceForCompany($invoice)) {
-            return redirect()->back()->with('error', 'Only the latest invoice can be deleted.');
-        }
+    public function destroy(Request $request, Invoice $invoice)
+   {
+    if (Auth::user()->company_id && $invoice->company_id !== Auth::user()->company_id) {
+        abort(403, 'Unauthorized access to this invoice.');
+    }
 
-        try {
-            DB::transaction(function () use ($invoice): void {
-                // Custom invoices do not flip LR invoice_generated on create, so do not reset it on delete.
-                if (! $invoice->custom_invoice) {
-                    $lrIds = $invoice->lr_ids ?? [];
-                    if (! empty($lrIds)) {
-                        $lorryReceipts = LorryReceipt::query()
-                            ->whereIn('id', $lrIds)
-                            ->lockForUpdate()
-                            ->get();
+    $company = Auth::user()->company;
+    $company->loadMissing('subscription');
 
-                        foreach ($lorryReceipts as $lr) {
-                            $lr->invoice_generated = 0;
-                            $lr->save();
-                        }
+    if (! $company->subscriptionCanWrite()) {
+        return redirect()->route('invoices.index')
+            ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+    }
+
+    // Delete remark is required
+    $request->validate([
+        'delete_remark' => ['required', 'string', 'max:1000'],
+    ]);
+
+    $deleteRemark = $request->input('delete_remark');
+
+    if ($invoice->payment_status !== 'pending') {
+        return redirect()->back()->with('error', 'Cannot delete invoice.');
+    }
+
+    if (! $this->isLastInvoiceForCompany($invoice)) {
+        return redirect()->back()->with('error', 'Only the latest invoice can be deleted.');
+    }
+
+    try {
+        DB::transaction(function () use ($invoice, $deleteRemark): void {
+
+            // Custom invoices do not flip LR invoice_generated on create,
+            // so do not reset it on delete.
+            if (! $invoice->custom_invoice) {
+                $lrIds = $invoice->lr_ids ?? [];
+
+                if (! empty($lrIds)) {
+                    $lorryReceipts = LorryReceipt::query()
+                        ->whereIn('id', $lrIds)
+                        ->lockForUpdate()
+                        ->get();
+
+                    foreach ($lorryReceipts as $lr) {
+                        $lr->invoice_generated = 0;
+                        $lr->save();
                     }
                 }
+            }
 
-                $invoice->delete();
-            });
-        } catch (\Throwable $e) {
-            Log::error('Invoice delete failed', [
-                'invoice_id' => $invoice->id,
-                'error' => $e->getMessage(),
-            ]);
+            // Save delete information
+            $invoice->deleted_by = Auth::id();
+            $invoice->deleted_remark = $deleteRemark;
+            $invoice->save();
 
-            return redirect()->back()->with('error', 'Failed to delete invoice. Please try again.');
-        }
+            // Soft delete
+            $invoice->delete();
+        });
+    } catch (\Throwable $e) {
+        Log::error('Invoice delete failed', [
+            'invoice_id' => $invoice->id,
+            'error' => $e->getMessage(),
+        ]);
 
-        return redirect()->route('invoices.index')->with('success', 'Invoice deleted.');
+        return redirect()->back()
+            ->with('error', 'Failed to delete invoice. Please try again.');
     }
+
+    return redirect()->route('invoices.index')
+        ->with('success', 'Invoice deleted.');
+}
 
     private function invoiceRowIsLatestForCompany(Invoice $invoice): bool
     {

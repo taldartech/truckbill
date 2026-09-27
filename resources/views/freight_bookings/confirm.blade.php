@@ -185,12 +185,18 @@
                     <div class="lrf-linked__facts lrf-linked__facts--4">
                         <div class="lrf-linked__fact">
                             <span class="lrf-linked__fact-label">E-Way Bill Number</span>
-                            <span class="lrf-linked__fact-value">{{ $formData['eway_bill_number'] ?: 'Not provided' }}</span>
+                           <span class="lrf-linked_fact-value">
+    {{ collect($formData['eway_bills'] ?? [])->pluck('eway_bill_number')->filter()->implode(', ') ?: 'Not provided' }}
+</span>
                         </div>
                         <div class="lrf-linked__fact">
                             <span class="lrf-linked__fact-label">E-Way Bill Expiry</span>
                             <span class="lrf-linked__fact-value">
-                                {{ ! empty($formData['eway_bill_expiry']) ? date('d-m-Y', strtotime($formData['eway_bill_expiry'])) : 'Not provided' }}
+                               {{ collect($formData['eway_bills'] ?? [])
+    ->pluck('eway_bill_expiry')
+    ->filter()
+    ->map(fn ($date) => date('d-m-Y', strtotime($date)))
+    ->implode(', ') ?: 'Not provided' }}
                             </span>
                         </div>
                         <div class="lrf-linked__fact">
@@ -214,9 +220,43 @@
 
         <form method="POST" action="{{ route('freight_bookings.store') }}">
             @csrf
-            @foreach ($formData as $key => $value)
-                <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-            @endforeach
+           @foreach ($formData as $key => $value)
+    @if ($key === 'eway_bills')
+        @foreach ($value ?? [] as $index => $ewayBill)
+            @if (isset($ewayBill['id']))
+                <input
+                    type="hidden"
+                    name="eway_bills[{{ $index }}][id]"
+                    value="{{ $ewayBill['id'] }}"
+                >
+            @endif
+
+            <input
+                type="hidden"
+                name="eway_bills[{{ $index }}][eway_bill_number]"
+                value="{{ $ewayBill['eway_bill_number'] ?? '' }}"
+            >
+
+            <input
+                type="hidden"
+                name="eway_bills[{{ $index }}][eway_bill_expiry]"
+                value="{{ $ewayBill['eway_bill_expiry'] ?? '' }}"
+            >
+        @endforeach
+    @elseif (is_array($value))
+        <input
+            type="hidden"
+            name="{{ $key }}"
+            value="{{ json_encode($value) }}"
+        >
+    @else
+        <input
+            type="hidden"
+            name="{{ $key }}"
+            value="{{ $value }}"
+        >
+    @endif
+@endforeach
             <input type="hidden" name="confirmed" value="1">
 
             <div class="lrf-actions">

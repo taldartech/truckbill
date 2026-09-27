@@ -23,6 +23,8 @@ class Consignee extends Model
         'gst_number',
         'pan_number',
         'email',
+        'deleted_by',
+        'deleted_remark',
     ];
 
     protected $casts = [

@@ -109,15 +109,16 @@
             <i class="bi bi-pie-chart"></i>
             Visual Analytics &amp; Insights
         </h2>
-        <div class="dashboard-tabs" role="tablist">
-            <button type="button" class="dashboard-tabs__btn is-active" data-dash-tab="operations">Operations</button>
-            <button type="button" class="dashboard-tabs__btn" data-dash-tab="finance">Finance</button>
-        </div>
+       <div class="dashboard-tabs" role="tablist">
+    <button type="button" class="dashboard-tabs__btn is-active" data-dash-tab="operations">Operations</button>
+    <button type="button" class="dashboard-tabs__btn" data-dash-tab="finance">Finance</button>
+    <button type="button" class="dashboard-tabs__btn" data-dash-tab="profitability">Profitability</button>
+</div>
     </div>
     <div class="dashboard-panel__body">
         <div class="dashboard-tab-pane" data-dash-pane="operations">
             <div class="dashboard-analytics-grid">
-                <div class="dashboard-analytics-card">
+            <div class="dashboard-analytics-card">
                     <h3 class="dashboard-analytics-card__title">Hire by Status</h3>
                     <p class="dashboard-analytics-card__hint">Date: {{ $periodLabel }}</p>
                     <div class="trip-status-grid">
@@ -182,7 +183,7 @@
         </div>
 
         <div class="dashboard-tab-pane" data-dash-pane="finance" hidden>
-            <div class="dashboard-analytics-grid">
+    <div class="dashboard-analytics-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%;">
                 <div class="dashboard-analytics-card">
                     <h3 class="dashboard-analytics-card__title">Invoice Payment Status</h3>
                     <p class="dashboard-analytics-card__hint">All open ledgers</p>
@@ -227,6 +228,24 @@
                 </div>
             </div>
         </div>
+
+        <div class="dashboard-tab-pane" data-dash-pane="profitability" hidden>
+    <div class="dashboard-analytics-grid" style="grid-template-columns: 1fr;">
+       <div class="dashboard-analytics-card dashboard-analytics-card--profitability">
+            <h3 class="dashboard-analytics-card__title">Profitability</h3>
+            <p class="dashboard-analytics-card__hint">
+                Revenue vs Cost vs Profit · {{ $periodLabel }}
+            </p>
+
+           <div class="dashboard-analytics-card__chart" style="height: 420px;">
+                <canvas
+                    id="dashProfitabilityTrendChart"
+                    aria-label="Profitability chart">
+                </canvas>
+            </div>
+        </div>
+    </div>
+</div>
     </div>
 </section>
 
@@ -258,21 +277,22 @@
                             @php
                                 $expiryDate = \Carbon\Carbon::parse($ewayBill->eway_bill_expiry)->startOfDay();
                                 $isPastOrToday = $expiryDate->isPast() || $expiryDate->isToday();
+                                $lr = $ewayBill->freightBooking?->lr;
                             @endphp
                             <tr>
-                                <td class="text-nowrap"><strong>#{{ $ewayBill->lr->lr_number ?? '—' }}</strong></td>
+                                <td class="text-nowrap"><strong>#{{ $lr?->lr_number ?? '—' }}</strong></td>
                                 <td>
-                                    <div class="text-nowrap fw-semibold">{{ $ewayBill->lr->truck->truck_number ?? 'N/A' }}</div>
-                                    <small class="text-muted text-truncate d-block" style="max-width: 160px;">{{ $ewayBill->lr->destination_city ?? '—' }}</small>
+                                    <div class="text-nowrap fw-semibold">{{ $lr?->truck?->truck_number ?? 'N/A' }}</div>
+                                    <small class="text-muted text-truncate d-block" style="max-width: 160px;">{{ $lr?->destination_city ?? '—' }}</small>
                                 </td>
-                                <td class="text-nowrap">{{ $ewayBill->lr?->truck?->driver?->mobile ?? '—' }}</td>
+                                <td class="text-nowrap">{{ $lr?->truck?->driver?->mobile ?? '—' }}</td>
                                 <td class="text-nowrap">
                                     <span class="dashboard-stat-card__chip text-nowrap {{ $isPastOrToday ? 'dashboard-stat-card__chip--danger' : 'dashboard-stat-card__chip--warning' }}">
-                                        {{ formatDate(optional($ewayBill)->eway_bill_expiry) }}
+                                        {{ formatDate($ewayBill->eway_bill_expiry) }}
                                     </span>
                                 </td>
                                 <td class="text-end text-nowrap">
-                                    <a href="{{ route('freight_bookings.show', $ewayBill->id) }}"
+                                    <a href="{{ route('freight_bookings.show', $ewayBill->freight_booking_id) }}"
                                         class="btn btn-sm btn-icon btn-action-view" title="View hire">
                                         <i class="bi bi-eye"></i>
                                     </a>

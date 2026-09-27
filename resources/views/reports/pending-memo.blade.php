@@ -63,7 +63,7 @@
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h3 class="card-title mb-0">Pending Memo</h3>
+                    <h3 class="card-title mb-0">Pending Memo / POD</h3>
                 </div>
                 <div class="d-flex">
                     <a class="btn btn-warning btn-sm ms-2" target="_blank"

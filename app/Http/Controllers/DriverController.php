@@ -5,6 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
+use App\Imports\DriverImport;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
+
 class DriverController extends Controller
 {
     public function index(Request $request)
@@ -121,10 +127,20 @@ class DriverController extends Controller
         $buttons .= 'data-driver-address="'.htmlspecialchars($driver->address ?? '').'">';
         $buttons .= '<i class="bi bi-pencil"></i></button>';
 
-        $buttons .= '<form action="'.route('drivers.destroy', $driver->id).'" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this driver?\')">';
-        $buttons .= csrf_field().method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete Driver" data-bs-toggle="tooltip">';
-        $buttons .= '<i class="bi bi-trash"></i></button></form>';
+       $buttons .= '<form action="'.route('drivers.destroy', $driver->id).'" method="POST" class="driver-delete-form">';
+       $buttons .= csrf_field().method_field('DELETE');
+
+       $buttons .= '<button type="button"
+       class="btn btn-sm btn-icon btn-action-delete driver-delete-btn"
+       title="Delete Driver"
+       data-bs-toggle="modal"
+       data-bs-target="#driverDeleteModal"
+       data-driver-name="'.e($driver->name).'"
+       data-driver-mobile="'.e($driver->mobile ?? '-').'"
+       data-driver-license="'.e($driver->license_number ?? '-').'"
+       data-driver-address="'.e($driver->address ?? '-').'">';
+    
+       $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
         $buttons .= '</div>';
 
@@ -216,12 +232,142 @@ class DriverController extends Controller
         return redirect()->route('drivers.index')->with('success', 'Driver updated successfully!');
     }
 
-    public function destroy(\App\Models\Driver $driver)
-    {
-        $driver->delete();
-
-        return redirect()->route('drivers.index')->with('success', 'Driver deleted successfully!');
+    public function destroy(Request $request, \App\Models\Driver $driver)
+{
+    if (
+        Auth::user()->company_id &&
+        $driver->company_id !== Auth::user()->company_id
+    ) {
+        abort(403, 'Unauthorized access to this driver.');
     }
 
+    $request->validate([
+        'delete_remark' => ['required', 'string', 'max:1000'],
+    ]);
+
+    try {
+        $driver->deleted_by = Auth::id();
+        $driver->deleted_remark = $request->input('delete_remark');
+        $driver->save();
+
+        $driver->delete();
+
+        return redirect()
+            ->route('drivers.index')
+            ->with('success', 'Driver deleted successfully!');
+
+    } catch (\Throwable $e) {
+
+        Log::error('Driver delete failed', [
+            'driver_id' => $driver->id,
+            'error' => $e->getMessage(),
+        ]);
+
+        return redirect()
+            ->back()
+            ->with('error', 'Unable to delete driver. Please try again.');
+    }
+}
+
+
+   public function bulkUpload(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'file' => [
+            'required',
+            'file',
+            'mimes:xlsx,xls,csv',
+            'max:10240',
+        ],
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'File validation failed.',
+            'errors' => $validator->errors()->all(),
+        ], 422);
+    }
+
+    try {
+
+        $import = new DriverImport();
+
+        Excel::import(
+            $import,
+            $request->file('file')
+        );
+
+        /*
+         * ERRORS FOUND
+         */
+        if (!empty($import->errors)) {
+
+            return response()->json([
+                'success' => $import->successCount > 0,
+                'partial_success' => $import->successCount > 0,
+
+                'message' => $import->successCount > 0
+                    ? $import->successCount . ' driver(s) imported successfully. Some rows have errors.'
+                    : 'No driver records were imported.',
+
+                'success_count' => $import->successCount,
+                'imported' => $import->successCount,
+
+                'errors' => $import->errors,
+            ]);
+        }
+
+        /*
+         * EVERYTHING SUCCESSFUL
+         */
+       return response()->json([
+    'success' => true,
+
+    'message' => $import->successCount
+        . ' driver(s) imported successfully.',
+
+    'success_count' => $import->successCount,
+    'imported' => $import->successCount,
+
+    'errors' => [],
+]);
+
+    } catch (\Throwable $e) {
+
+        Log::error('Driver bulk upload failed', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Unable to process the file. Please check the file and try again.',
+        ], 500);
+    }
+}
+
+
+public function bulkUploadTemplate()
+{
+    $headers = [
+        'Name',
+        'Mobile',
+        'License Number',
+        'Address',
+    ];
+
+    return response()->streamDownload(function () use ($headers) {
+
+        $handle = fopen('php://output', 'w');
+
+        fputcsv($handle, $headers);
+
+        fclose($handle);
+
+    }, 'driver-bulk-upload-template.csv', [
+        'Content-Type' => 'text/csv',
+    ]);
+}    
     //
 }

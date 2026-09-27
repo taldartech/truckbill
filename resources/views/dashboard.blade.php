@@ -233,9 +233,97 @@
                             },
                         },
                     });
-                }
-            }
 
+                }
+      const profitabilityCanvas = document.getElementById('dashProfitabilityTrendChart');
+
+if (profitabilityCanvas) {
+    const profitability = payload.profitabilityTrend || {};
+
+    new Chart(profitabilityCanvas, {
+        type: 'bar',
+        data: {
+            labels: profitability.labels || [],
+            datasets: [
+                {
+                    label: 'Revenue',
+                    data: profitability.revenue || [],
+                    backgroundColor: brand.green,
+                    borderRadius: 3,
+                    barThickness: 14,
+                },
+                {
+                    label: 'Cost',
+                    data: profitability.cost || [],
+                    backgroundColor: brand.amber,
+                    borderRadius: 3,
+                    barThickness: 14,
+                },
+                {
+                    label: 'Profit',
+                    data: profitability.profit || [],
+                    backgroundColor: brand.blue,
+                    borderRadius: 3,
+                    barThickness: 14,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        boxWidth: 8,
+                        font: {
+                            size: 11,
+                            weight: '600',
+                        },
+                    },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return context.dataset.label + ': ₹' +
+                                Number(context.raw).toLocaleString('en-IN');
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    stacked: false,
+                    grid: {
+                        display: false,
+                    },
+                    ticks: {
+                        font: {
+                            size: 10,
+                            weight: '600',
+                        },
+                    },
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: brand.grid,
+                    },
+                    ticks: {
+                        callback: function (value) {
+                            return '₹' + Number(value).toLocaleString('en-IN', {
+                                notation: 'compact',
+                            });
+                        },
+                    },
+                },
+            },
+        },
+    });
+}
+}
             document.addEventListener('DOMContentLoaded', function () {
                 animateCountUps();
                 initTabs();

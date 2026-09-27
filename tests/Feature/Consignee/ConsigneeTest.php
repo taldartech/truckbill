@@ -163,10 +163,12 @@ class ConsigneeTest extends TestCase
             'city_id' => $city->id,
         ]);
 
-        $response = $this->actingAs($user)->delete("/consignees/{$consignee->id}");
+        $response = $this->actingAs($user)->delete("/consignees/{$consignee->id}", [
+            'delete_remark' => 'Duplicate entry',
+        ]);
 
         $response->assertRedirect(route('consignees.index'));
-        $this->assertSoftDeleted('consignees', ['id' => $consignee->id]);
+        $this->assertSoftDeleted('consignees', ['id' => $consignee->id, 'deleted_remark' => 'Duplicate entry']);
     }
 
     public function test_get_consignee_details_returns_json(): void

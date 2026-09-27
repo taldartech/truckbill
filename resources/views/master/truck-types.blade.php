@@ -43,6 +43,64 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="truckTypeDeleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                    Confirm Delete
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <p>Are you sure you want to delete this truck type?</p>
+
+                <p>
+                    <strong>Truck Type:</strong>
+                    <span id="deleteTruckTypeName"></span>
+                </p>
+
+                <div class="mb-3">
+                    <label for="deleteTruckTypeRemark" class="form-label">
+                        Delete Remark <span class="text-danger">*</span>
+                    </label>
+
+                    <textarea id="deleteTruckTypeRemark"
+                              class="form-control"
+                              rows="3"
+                              placeholder="Enter reason for deletion"></textarea>
+
+                    <div id="deleteTruckTypeRemarkError"
+                         class="text-danger mt-1 d-none"></div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button type="button"
+                        class="btn btn-danger"
+                        id="confirmTruckTypeDelete">
+                    <i class="bi bi-trash"></i>
+                    Confirm Delete
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -118,12 +176,49 @@ $(document).ready(function() {
         searchDelay: 500
     });
 
-    $(document).on('submit', 'form[action*="destroy"]', function(e) {
-        if (!confirm('Are you sure you want to delete this truck type?')) {
-            e.preventDefault();
-            return false;
-        }
-    });
+   $(document).on('click', '.truck-type-delete-btn', function () {
+
+    const button = $(this);
+    const form = button.closest('.truck-type-delete-form');
+
+    $('#deleteTruckTypeName')
+        .text(button.data('truck-type-name') || '-');
+
+    $('#deleteTruckTypeRemark').val('');
+
+    $('#deleteTruckTypeRemarkError')
+        .addClass('d-none')
+        .text('');
+
+    $('#confirmTruckTypeDelete').data('form', form);
+});
+
+
+$(document).on('click', '#confirmTruckTypeDelete', function () {
+
+    const remark = $('#deleteTruckTypeRemark').val().trim();
+    const form = $('#confirmTruckTypeDelete').data('form');
+
+    if (!remark) {
+        $('#deleteTruckTypeRemarkError')
+            .removeClass('d-none')
+            .text('Please enter a remark before deleting.');
+
+        return;
+    }
+
+    $('#deleteTruckTypeRemarkError').addClass('d-none');
+
+    form.find('input[name="delete_remark"]').remove();
+
+    $('<input>', {
+        type: 'hidden',
+        name: 'delete_remark',
+        value: remark
+    }).appendTo(form);
+
+    form[0].submit();
+});
 });
 </script>
 @endpush

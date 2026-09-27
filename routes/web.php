@@ -134,23 +134,48 @@ Route::middleware(['auth.blocked'])->group(function () {
     // Consignee Management
     Route::middleware(['role:admin,moderator,super_admin', 'company.context', 'subscription.active'])->group(function () {
         Route::resource('consignees', ConsigneeController::class)->only(['index', 'create', 'store']);
+        Route::post('/consignees/bulk-upload', [ConsigneeController::class, 'bulkUpload'])
+        ->name('consignees.bulkUpload');
+
+    Route::get('/consignees/bulk-upload-template', [ConsigneeController::class, 'bulkUploadTemplate'])
+        ->name('consignees.bulkUploadTemplate');
     });
     Route::middleware(['role:admin,super_admin', 'company.context', 'subscription.active'])->group(function () {
         Route::resource('consignees', ConsigneeController::class)->only(['edit', 'update', 'destroy']);
     });
 
-    // Transporters CRUD
-    Route::middleware(['role:admin,moderator,super_admin', 'company.context', 'subscription.active'])->group(function () {
-        Route::resource('transporters', TransporterController::class)->only(['index', 'create', 'store', 'show']);
-    });
-    Route::middleware(['role:admin,super_admin', 'company.context', 'subscription.active'])->group(function () {
-        Route::resource('transporters', TransporterController::class)->only(['edit', 'update', 'destroy']);
-        Route::post('/transporters/{transporter}/refresh-tds', [TransporterController::class, 'refreshTds'])->name('transporters.refresh-tds');
-    });
+    //// Transporters CRUD
+
+Route::middleware(['role:admin,moderator,super_admin', 'company.context', 'subscription.active'])->group(function () {
+
+    Route::get('/transporters/bulk-upload-template', [TransporterController::class, 'bulkUploadTemplate'])
+        ->name('transporters.bulk-upload-template');
+
+    Route::resource('transporters', TransporterController::class)
+        ->only(['index', 'create', 'store', 'show']);
+
+    Route::post('/transporters/bulk-upload', [TransporterController::class, 'bulkUpload'])
+        ->name('transporters.bulk-upload');
+});
+
+Route::middleware(['role:admin,super_admin', 'company.context', 'subscription.active'])->group(function () {
+
+    Route::resource('transporters', TransporterController::class)
+        ->only(['edit', 'update', 'destroy']);
+
+    Route::post('/transporters/{transporter}/refresh-tds', [TransporterController::class, 'refreshTds'])
+        ->name('transporters.refresh-tds');
+});
 
     // Truck Owner Management
+   
     Route::middleware(['role:admin,moderator,super_admin', 'company.context', 'subscription.active'])->group(function () {
+
+       Route::get('/truck_owners/bulk-upload-template', [TruckOwnerController::class, 'bulkUploadTemplate'])
+        ->name('truck_owners.bulk-upload-template');
         Route::resource('truck_owners', TruckOwnerController::class)->only(['index', 'create', 'store', 'show']);
+         Route::post('/truck_owners/bulk-upload', [TruckOwnerController::class, 'bulkUpload'])
+        ->name('truck_owners.bulk-upload');
     });
     Route::middleware(['role:admin,super_admin', 'company.context', 'subscription.active'])->group(function () {
         Route::resource('truck_owners', TruckOwnerController::class)->only(['edit', 'update', 'destroy']);
@@ -166,6 +191,11 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/trucks', [TruckController::class, 'index'])->name('trucks.index');
         Route::get('/trucks/create/{transporter_id?}', [TruckController::class, 'create'])->name('trucks.create');
         Route::post('/trucks', [TruckController::class, 'store'])->name('trucks.store');
+        Route::post('/trucks/bulk-upload', [TruckController::class, 'bulkUpload'])
+        ->name('trucks.bulkUpload');
+
+    Route::get('/trucks/bulk-upload/template', [TruckController::class, 'bulkUploadTemplate'])
+        ->name('trucks.bulkUploadTemplate');
         Route::get('/trucks/{truck}', [TruckController::class, 'show'])->name('trucks.show');
     });
     Route::middleware(['role:admin,super_admin', 'company.context', 'subscription.active'])->group(function () {
@@ -254,6 +284,11 @@ Route::middleware(['auth.blocked'])->group(function () {
 
     // Driver CRUD
     Route::get('/drivers/data', [DriverController::class, 'getDriversData'])->name('drivers.data');
+    Route::post('/drivers/bulk-upload', [DriverController::class, 'bulkUpload'])
+    ->name('drivers.bulkUpload');
+
+Route::get('/drivers/bulk-upload-template', [DriverController::class, 'bulkUploadTemplate'])
+    ->name('drivers.bulkUploadTemplate');
     Route::resource('drivers', DriverController::class)->except(['show']);
 
     // Master Routes
@@ -285,7 +320,13 @@ Route::middleware(['auth.blocked'])->group(function () {
         // Goods Types
         Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
             Route::resource('goods-types', GoodsTypeController::class)->only(['index', 'create', 'store']);
+
+             Route::get('/goods-types/bulk-upload/template', [GoodsTypeController::class, 'bulkUploadTemplate'])
+        ->name('goods-types.bulk-upload.template');
+        Route::post('/goods-types/bulk-upload', [GoodsTypeController::class, 'bulkUpload'])
+      ->name('goods-types.bulk-upload');
         });
+       
         Route::middleware(['role:admin,super_admin'])->group(function () {
             Route::resource('goods-types', GoodsTypeController::class)->only(['edit', 'update', 'destroy']);
         });
@@ -301,6 +342,12 @@ Route::middleware(['auth.blocked'])->group(function () {
         // Pumps
         Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
             Route::resource('pumps', PumpController::class)->only(['index', 'create', 'store'])->names(['index' => 'pump.index', 'create' => 'pump.create', 'store' => 'pump.store']);
+              Route::get('/pumps/bulk-upload/template', [PumpController::class, 'bulkUploadTemplate'])
+        ->name('pump.bulk-upload.template');
+
+    Route::post('/pumps/bulk-upload', [PumpController::class, 'bulkUpload'])
+        ->name('pump.bulk-upload');
+
         });
         Route::middleware(['role:admin,super_admin'])->group(function () {
             Route::resource('pumps', PumpController::class)->only(['edit', 'update', 'destroy'])->names(['edit' => 'pump.edit', 'update' => 'pump.update', 'destroy' => 'pump.destroy']);
@@ -344,6 +391,10 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/cash-export', [ReportController::class, 'cash_export'])->name('reports.cash-export');
         Route::get('/transporter-report', [ReportController::class, 'transporter_report'])->name('reports.transporter-report');
         Route::get('/transporter-report-export', [ReportController::class, 'transporter_report_export'])->name('reports.transporter-report-export');
+        Route::get('/profitability', [ReportController::class, 'profitability'])
+           ->name('reports.profitability');
+        Route::get('/profitability-export', [ReportController::class, 'profitability_export'])
+         ->name('reports.profitability-export');
         Route::get('/pending-invoice', [ReportController::class, 'pending_invoice'])->name('reports.pending-invoice');
         Route::get('/pending-invoice-export', [ReportController::class, 'pendingInvoiceExport'])->name('reports.pending-invoice-export');
         Route::get('/party-pending-invoice', [PartyPendingInvoiceReportController::class, 'index'])->name('reports.party-pending-invoice');

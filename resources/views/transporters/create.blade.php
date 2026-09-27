@@ -511,7 +511,32 @@
             </div>
           </div>
 
+          <div class="mb-3">
+    <label for="bulkUploadFile" class="form-label">
+        Upload Transporter Excel / CSV
+    </label>
+
+    <input
+        type="file"
+        id="bulkUploadFile"
+        name="file"
+        class="form-control"
+        accept=".xlsx,.xls,.csv"
+    >
+
+    <small class="text-muted">
+        Supported formats: XLSX, XLS, CSV. Maximum size: 10 MB.
+    </small>
+</div>
+
           <div class="modal-footer">
+              <button
+                     type="button"
+                     id="bulkUploadBtn"
+                     class="btn btn-outline-secondary"
+                    >
+                           Bulk Upload
+            </button>
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <button type="submit" class="btn btn-brand-primary">
               <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
@@ -1450,7 +1475,73 @@
                     convertToUpperCase(this);
                 });
             }
+
+
+            const bulkUploadBtn = document.getElementById('bulkUploadBtn');
+const bulkUploadFile = document.getElementById('bulkUploadFile');
+
+if (bulkUploadBtn && bulkUploadFile) {
+    bulkUploadBtn.addEventListener('click', function () {
+
+        if (!bulkUploadFile.files.length) {
+            alert('Please select an Excel or CSV file.');
+            return;
+        }
+
+        const file = bulkUploadFile.files[0];
+
+        const allowedExtensions = ['xlsx', 'xls', 'csv'];
+        const extension = file.name.split('.').pop().toLowerCase();
+
+        if (!allowedExtensions.includes(extension)) {
+            alert('Please upload a valid XLSX, XLS or CSV file.');
+            return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            alert('File size must not exceed 10 MB.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        bulkUploadBtn.disabled = true;
+        bulkUploadBtn.textContent = 'Uploading...';
+
+        fetch("{{ route('transporters.bulk-upload') }}", {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+            body: formData,
+        })
+        .then(async response => {
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Bulk upload failed.');
+            }
+
+            return data;
+        })
+        .then(data => {
+            alert(data.message || 'Bulk upload completed successfully.');
+            window.location.reload();
+        })
+        .catch(error => {
+            console.error(error);
+            alert(error.message || 'Something went wrong during bulk upload.');
+        })
+        .finally(() => {
+            bulkUploadBtn.disabled = false;
+            bulkUploadBtn.textContent = 'Bulk Upload';
         });
+    });
+}
+        });
+
     </script>
     <script src="/js/dynamic-dropdowns.js?v={{ config('app.ASSET_VERSION') }}"></script>
 

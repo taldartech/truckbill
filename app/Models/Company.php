@@ -35,6 +35,8 @@ class Company extends Model
         'company_logo',
         'digital_signature',
         'gst_slab',
+        'deleted_by',
+        'deleted_remark',
     ];
 
     protected $dates = ['deleted_at'];

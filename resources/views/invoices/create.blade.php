@@ -80,7 +80,7 @@
                     <div class="app-form-section">
                         <div class="app-form-section__header">
                             <h5 class="app-form-section__title">
-                                <i class="bi bi-person-check"></i> Select Customer & Memo
+                                <i class="bi bi-person-check"></i> Select Customer & Memo / POD
                             </h5>
                         </div>
                         <div class="app-form-section__body">
@@ -92,17 +92,17 @@
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Memo ID</label>
+                                    <label class="form-label">Memo ID / POD</label>
                                     <div class="input-group">
                                         {{-- <input type="text" id="preMemoId" class="form-control" placeholder="Optional"> --}}
-                                        <button class="btn btn-secondary btn-sm" type="button" id="showMemoOptions">Show Memos</button>
+                                        <button class="btn btn-secondary btn-sm" type="button" id="showMemoOptions">Show Memos / POD</button>
                                     </div>
                                 </div>
                             </div>
                             <div id="memoOptionsContainer" style="display: none; margin-top: 15px;">
                                 <div class="app-form-section mb-0">
                                     <div class="app-form-section__header app-form-section__header--muted">
-                                        <h5 class="app-form-section__title mb-0">Available Memos</h5>
+                                        <h5 class="app-form-section__title mb-0">Available Memos / POD</h5>
                                     </div>
                                     <div class="app-form-section__body">
                                         <div id="memoCheckboxes"></div>

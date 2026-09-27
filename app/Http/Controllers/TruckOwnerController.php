@@ -9,6 +9,7 @@ use App\Models\City;
 use App\Models\Country;
 use App\Models\Company;
 use App\Models\Driver;
+use App\Imports\TruckOwnerImport;
 use App\Models\State;
 use App\Models\Transporter;
 use App\Models\TransporterMaster;
@@ -21,6 +22,8 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use InvalidArgumentException;
 
 class TruckOwnerController extends Controller
@@ -47,6 +50,112 @@ class TruckOwnerController extends Controller
         $truckTypes = TruckType::orderBy('name')->get();
 
         return view('truck_owner.index', compact('truckTypes'));
+    }
+
+    public function bulkUpload(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'file' => [
+                'required',
+                'file',
+                'mimes:xlsx,xls,csv',
+                'max:10240',
+            ],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File validation failed.',
+                'errors' => $validator->errors()->all(),
+            ], 422);
+        }
+
+        try {
+            $import = new TruckOwnerImport();
+
+            \Maatwebsite\Excel\Facades\Excel::import(
+                $import,
+                $request->file('file')
+            );
+
+            $total = $import->successCount + count($import->errors);
+
+            if (! empty($import->errors)) {
+                return response()->json([
+                    'success' => $import->successCount > 0,
+                    'partial_success' => $import->successCount > 0,
+                    'message' => $import->successCount > 0
+                        ? $import->successCount . ' truck owner(s) imported successfully. Some rows have errors.'
+                        : 'No truck owner records were imported.',
+                    'imported' => $import->successCount,
+                    'success_count' => $import->successCount,
+                    'total' => $total,
+                    'errors' => $import->errors,
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $import->successCount . ' truck owner(s) imported successfully.',
+                'imported' => $import->successCount,
+                'success_count' => $import->successCount,
+                'total' => $total,
+                'errors' => [],
+            ]);
+
+        } catch (\Throwable $e) {
+            \Log::error('Truck Owner bulk upload failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to process the file. Please check the file and try again.',
+                'errors' => [$e->getMessage()],
+            ], 500);
+        }
+    }
+
+
+    public function bulkUploadTemplate()
+    {
+        $headers = [
+            'Name',
+            'PAN Number',
+            'Mobile Number',
+            'Email',
+            'GST Number',
+            'PAN Active',
+            'Contact Person Name',
+            'Country',
+            'State',
+            'City',
+            'Address',
+            'Declaration Given',
+            'Total Trucks',
+            'TDS %',
+            'TDS Adjustment Remark',
+            'Short Name',
+            'Advance Amount',
+        ];
+
+        $callback = function () use ($headers) {
+            $file = fopen('php://output', 'w');
+
+            fputcsv($file, $headers);
+
+            fclose($file);
+        };
+
+        return response()->streamDownload(
+            $callback,
+            'truck_owner_template.csv',
+            [
+                'Content-Type' => 'text/csv',
+            ]
+        );
     }
 
     private function getTruckOwnersData(Request $request)
@@ -160,16 +269,16 @@ class TruckOwnerController extends Controller
             foreach ($truckOwners as $index => $truckOwner) {
                 $truckNumbers = $truckOwner->trucks->pluck('truck_number')->toArray();
                 $truckList = implode(', ', $truckNumbers);
-                $data[] = [
-                    'name' => '<a href="#" class="truck-owner-name-link text-brand-primary fw-bold" data-bs-toggle="tooltip" title="Trucks: '.htmlspecialchars($truckList).'" data-id="'.$truckOwner->id.'" style="text-decoration: none;">'.($truckOwner->name ?? 'N/A').'</a>',
-                    'short_name' => $truckOwner->short_name ?? 'N/A',
-                    'pan_number' => $truckOwner->pan_number ?? 'N/A',
-                    'location' => $truckOwner->city->name ?? 'N/A',
-                    'contact_number' => $truckOwner->mobile_number ?? 'N/A',
-                    'declaration_given' => $truckOwner->declaration_given ? 'Yes' : 'No',
-                    'advance_amount' => ''.number_format($truckOwner->advance_amount, 2),
-                    'actions' => $this->getActionButtons($truckOwner),
-                ];
+               $data[] = [
+    'name' => '<a href="#" class="truck-owner-name-link text-brand-primary fw-bold" data-bs-toggle="tooltip" title="Trucks: '.htmlspecialchars($truckList).'" data-id="'.$truckOwner->id.'" style="text-decoration: none;">'.($truckOwner->transporterMaster?->name ?? 'N/A').'</a>',
+    'short_name' => $truckOwner->short_name ?? 'N/A',
+    'pan_number' => $truckOwner->transporterMaster?->pan_number ?? 'N/A',
+    'location' => $truckOwner->transporterMaster?->city?->name ?? 'N/A',
+    'contact_number' => $truckOwner->mobile_number ?? 'N/A',
+    'declaration_given' => $truckOwner->declaration_given ? 'Yes' : 'No',
+    'advance_amount' => ''.number_format($truckOwner->advance_amount ?? 0, 2),
+    'actions' => $this->getActionButtons($truckOwner),
+];
             }
 
             return response()->json([
@@ -178,17 +287,17 @@ class TruckOwnerController extends Controller
                 'recordsFiltered' => $filteredRecords,
                 'data' => $data,
             ]);
-        } catch (\Exception $e) {
-            \Log::error('TruckOwner DataTables Error: '.$e->getMessage());
+        }  catch (\Exception $e) {
+    \Log::error('TruckOwner DataTables Error: '.$e->getMessage());
 
-            return response()->json([
-                'draw' => intval($request->draw ?? 0),
-                'recordsTotal' => 0,
-                'recordsFiltered' => 0,
-                'data' => [],
-                'error' => 'An error occurred while loading data.',
-            ]);
-        }
+    return response()->json([
+        'draw' => intval($request->draw ?? 0),
+        'recordsTotal' => 0,
+        'recordsFiltered' => 0,
+        'data' => [],
+        'error' => $e->getMessage(),
+    ], 500);
+}
     }
 
     private function getActionButtons($truckOwner)
@@ -210,15 +319,25 @@ class TruckOwnerController extends Controller
             $editUrl = route('truck_owners.edit', $truckOwner->id);
             $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-action-edit" title="Edit Truck Owner" aria-label="Edit Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip">';
             $buttons .= '<i class="bi bi-pencil"></i></a>';
-
-            // Delete Button (AJAX-based)
-            $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-delete delete-truck-owner-btn" aria-label="Delete Truck Owner" title="Delete Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip" data-truck-owner-id="'.$truckOwner->id.'" data-truck-owner-name="'.htmlspecialchars($truckOwner->name).'">';
-            $buttons .= '<i class="bi bi-trash"></i></button>';
-        }
-        $buttons .= '</div>';
+   
+           // Delete Button (AJAX-based)
+       $buttons .= '<button type="button"
+        class="btn btn-sm btn-icon btn-action-delete delete-truck-owner-btn"
+    aria-label="Delete Truck Owner"
+    title="Delete Truck Owner"
+    data-bs-toggle="modal"
+    data-bs-target="#truckOwnerDeleteModal"
+    data-truck-owner-id="'.$truckOwner->id.'"
+    data-truck-owner-name="'.e($truckOwner->name ?? '-').'"
+    data-truck-owner-pan="'.e($truckOwner->pan_number ?? '-').'"
+    data-truck-owner-contact="'.e($truckOwner->mobile_number ?? '-').'">
+    <i class="bi bi-trash"></i>
+           </button>';
+         }
+         $buttons .= '</div>';
 
         return $buttons;
-    }
+     }
 
     public function create()
     {
@@ -552,17 +671,25 @@ class TruckOwnerController extends Controller
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner updated successfully!');
     }
 
-    public function destroy(Transporter $truck_owner)
-    {
-        if (Auth::user()->company_id && $truck_owner->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized access to this truck owner.');
-        }
-        // Soft delete the truck owner
-        $truck_owner->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Truck Owner deleted successfully!',
-        ]);
+   public function destroy(Request $request, Transporter $truck_owner)
+{
+    if (Auth::user()->company_id && $truck_owner->company_id !== Auth::user()->company_id) {
+        abort(403, 'Unauthorized access to this truck owner.');
     }
+
+    $request->validate([
+        'delete_remark' => ['required', 'string', 'max:1000'],
+    ]);
+
+    $truck_owner->deleted_by = Auth::id();
+    $truck_owner->deleted_remark = $request->input('delete_remark');
+    $truck_owner->save();
+
+    $truck_owner->delete();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Truck Owner deleted successfully!',
+    ]);
+}
 }

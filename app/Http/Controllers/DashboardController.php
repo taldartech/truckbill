@@ -17,6 +17,7 @@ use App\Models\VoucherPayment;
 use App\Models\UpcomingSubscription;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Models\EwayBill;
 
 class DashboardController extends Controller
 {
@@ -300,19 +301,70 @@ class DashboardController extends Controller
                 ->where('company_id', $companyId)
                 ->whereNull('deleted_at')
                 ->count(),
-            'eway_bills_expiring_today' => FreightBooking::where('company_id', $companyId)
-                ->where('is_delivered', 0)
-                ->where('is_cancelled', 0)
-                ->whereDate('eway_bill_expiry', $today)
-                ->count(),
-            'expired_eway_bills' => FreightBooking::where('company_id', $companyId)
-                ->where('is_delivered', 0)
-                ->where('is_cancelled', 0)
-                ->where('eway_bill_expiry', '<', $today)
-                ->count(),
+            'eway_bills_expiring_today' => EwayBill::whereHas('freightBooking', function ($query) use ($companyId) {
+            $query->where('company_id', $companyId)
+           ->where('is_delivered', 0)
+           ->where('is_cancelled', 0);
+           })
+           ->whereDate('eway_bill_expiry', $today)
+           ->count(),
+
+          'expired_eway_bills' => EwayBill::whereHas('freightBooking', function ($query) use ($companyId) {
+          $query->where('company_id', $companyId)
+          ->where('is_delivered', 0)
+          ->where('is_cancelled', 0);
+          })
+          ->where('eway_bill_expiry', '<', $today)
+           ->count(),
             'outstanding_amount' => $outstandingAmount,
             'period_revenue' => $this->sumInvoiceTotalRevenue([$companyId], $rangeStart, $rangeEnd),
         ];
+    $profitabilityLrs = LorryReceipt::query()
+    ->with('freightBookings')
+    ->where('company_id', $companyId)
+    ->whereDate('gr_date', '>=', $rangeStart->toDateString())
+    ->whereDate('gr_date', '<=', $rangeEnd->toDateString())
+    ->whereHas('freightBookings')
+    ->get();
+
+$profitabilityByDate = $profitabilityLrs->groupBy(function ($lr) {
+    return Carbon::parse($lr->gr_date)->format('Y-m-d');
+});
+
+$profitabilityTrendLabels = [];
+$profitabilityTrendRevenue = [];
+$profitabilityTrendCost = [];
+$profitabilityTrendProfit = [];
+
+for ($date = $rangeStart->copy()->startOfDay(); $date->lte($rangeEnd); $date->addDay()) {
+    $dateKey = $date->format('Y-m-d');
+    $rows = $profitabilityByDate->get($dateKey, collect());
+
+    $revenue = 0;
+    $cost = 0;
+
+    foreach ($rows as $lr) {
+        $freightBooking = $lr->freightBookings->first();
+
+        $lrRevenue = (float) (
+            $lr->actual_amount
+            ?? $lr->amount
+            ?? 0
+        );
+
+        $lrCost = $freightBooking
+            ? (float) $freightBooking->effectivePayableAmount()
+            : 0;
+
+        $revenue += $lrRevenue;
+        $cost += $lrCost;
+    }
+
+    $profitabilityTrendLabels[] = $date->format('d M');
+    $profitabilityTrendRevenue[] = round($revenue, 2);
+    $profitabilityTrendCost[] = round($cost, 2);
+    $profitabilityTrendProfit[] = round($revenue - $cost, 2);
+}
 
         $bookingStatuses = [
             'in_progress' => Booking::where('is_delivered', false)
@@ -362,15 +414,23 @@ class DashboardController extends Controller
                 'bookings' => $monthlyTrendBookings,
                 'revenue' => $monthlyTrendRevenue,
             ],
+            'profitabilityTrend' => [
+           'labels' => $profitabilityTrendLabels,
+           'revenue' => $profitabilityTrendRevenue,
+           'cost' => $profitabilityTrendCost,
+           'profit' => $profitabilityTrendProfit,
+         ],
         ];
 
-        $expiredEwayBills = FreightBooking::with('lr.truck.driver')
-            ->where('company_id', $companyId)
+        $expiredEwayBills = EwayBill::with('freightBooking.lr.truck.driver')
+       ->whereHas('freightBooking', function ($query) use ($companyId) {
+        $query->where('company_id', $companyId)
             ->where('is_delivered', 0)
-            ->where('is_cancelled', 0)
-            ->where('eway_bill_expiry', '<=', now()->addDays(2)->endOfDay())
-            ->orderBy('eway_bill_expiry', 'asc')
-            ->get();
+            ->where('is_cancelled', 0);
+    })
+    ->where('eway_bill_expiry', '<=', now()->addDays(2)->endOfDay())
+    ->orderBy('eway_bill_expiry', 'asc')
+    ->get();
 
         $dashboardPeriod = $period;
         $showPeriodFilter = true;
@@ -434,16 +494,21 @@ class DashboardController extends Controller
                 ->where('company_id', $companyId)
                 ->whereNull('deleted_at')
                 ->count(),
-            'eway_bills_expiring_today' => FreightBooking::where('company_id', $companyId)
-                ->where('is_delivered', 0)
-                ->where('is_cancelled', 0)
-                ->whereDate('eway_bill_expiry', $today)
-                ->count(),
-            'expired_eway_bills' => FreightBooking::where('company_id', $companyId)
-                ->where('is_delivered', 0)
-                ->where('is_cancelled', 0)
-                ->where('eway_bill_expiry', '<', $today)
-                ->count(),
+            'eway_bills_expiring_today' => EwayBill::whereHas('freightBooking', function ($query) use ($companyId) {
+            $query->where('company_id', $companyId)
+           ->where('is_delivered', 0)
+           ->where('is_cancelled', 0);
+           })
+           ->whereDate('eway_bill_expiry', $today)
+           ->count(),
+
+            'expired_eway_bills' => EwayBill::whereHas('freightBooking', function ($query) use ($companyId) {
+            $query->where('company_id', $companyId)
+            ->where('is_delivered', 0)
+            ->where('is_cancelled', 0);
+            })
+           ->where('eway_bill_expiry', '<', $today)
+           ->count(),
             'outstanding_amount' => $outstandingAmount,
         ];
 
@@ -516,13 +581,15 @@ class DashboardController extends Controller
             ->get();
 
         // Expired Eway bills
-        $expiredEwayBills = FreightBooking::with('lr.truck.driver')
-            ->where('company_id', $companyId)
+        $expiredEwayBills = EwayBill::with('freightBooking.lr.truck.driver')
+        ->whereHas('freightBooking', function ($query) use ($companyId) {
+        $query->where('company_id', $companyId)
             ->where('is_delivered', 0)
-            ->where('is_cancelled', 0)
-            ->where('eway_bill_expiry', '<=', now()->addDays(2)->endOfDay())
-            ->orderBy('eway_bill_expiry', 'asc')
-            ->get();
+            ->where('is_cancelled', 0);
+       })
+       ->where('eway_bill_expiry', '<=', now()->addDays(2)->endOfDay())
+       ->orderBy('eway_bill_expiry', 'asc')
+       ->get();
 
         return view('dashboard', compact(
             'operationalStats',
@@ -676,11 +743,13 @@ class DashboardController extends Controller
                 ->where('payment_status', 'paid')
                 ->sum('amount'),
             'advance_received' => AdvancePayment::whereIn('transporter_id', $transporterIds)->sum('advance_amount'),
-            'expired_eway_bills' => FreightBooking::whereIn('transporter_id', $transporterIds)
-                ->where('is_delivered', 0)
-                ->where('is_cancelled', 0)
-                ->where('eway_bill_expiry', '<', now()->startOfDay())
-                ->count(),
+            'expired_eway_bills' => EwayBill::whereHas('freightBooking', function ($query) use ($transporterIds) {
+            $query->whereIn('transporter_id', $transporterIds)
+            ->where('is_delivered', 0)
+            ->where('is_cancelled', 0);
+          })
+         ->where('eway_bill_expiry', '<', now()->startOfDay())
+         ->count(),
         ];
 
         $recentFreightBookings = FreightBooking::with(['lr.consignor', 'lr.consignee', 'lr.truck'])
@@ -695,13 +764,15 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
 
-        $expiredEwayBills = FreightBooking::with('lr.truck.driver')
-            ->whereIn('transporter_id', $transporterIds)
+       $expiredEwayBills = EwayBill::with('freightBooking.lr.truck.driver')
+      ->whereHas('freightBooking', function ($query) use ($transporterIds) {
+        $query->whereIn('transporter_id', $transporterIds)
             ->where('is_delivered', 0)
-            ->where('is_cancelled', 0)
-            ->where('eway_bill_expiry', '<=', now()->addDays(2)->endOfDay())
-            ->orderBy('eway_bill_expiry', 'asc')
-            ->get();
+            ->where('is_cancelled', 0);
+    })
+    ->where('eway_bill_expiry', '<=', now()->addDays(2)->endOfDay())
+    ->orderBy('eway_bill_expiry', 'asc')
+    ->get();
 
         return view('dashboard', compact(
             'transporterStats',

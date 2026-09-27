@@ -625,7 +625,7 @@ class InvoiceTest extends TestCase
             'generated_date' => now()->toDateString(),
         ])->assertRedirect("/invoices/{$invoice->id}/edit")->assertSessionHas('error');
 
-        $this->actingAs($admin)->from('/invoices')->delete("/invoices/{$invoice->id}")
+        $this->actingAs($admin)->from('/invoices')->delete("/invoices/{$invoice->id}", ['delete_remark' => 'Entered by mistake'])
             ->assertRedirect('/invoices')->assertSessionHas('error');
     }
 
@@ -653,7 +653,7 @@ class InvoiceTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->delete("/invoices/{$invoice->id}")
+            ->delete("/invoices/{$invoice->id}", ['delete_remark' => 'Entered by mistake'])
             ->assertRedirect(route('invoices.index'))
             ->assertSessionHas('success');
 
@@ -688,7 +688,7 @@ class InvoiceTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->delete("/invoices/{$invoice->id}")
+            ->delete("/invoices/{$invoice->id}", ['delete_remark' => 'Entered by mistake'])
             ->assertRedirect(route('invoices.index'))
             ->assertSessionHas('success');
 

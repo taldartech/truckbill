@@ -184,12 +184,12 @@
                                 <p class="text-muted">No line items.</p>
                             @endforelse
                         @else
-                            <h4>Associated Memos</h4>
+                            <h4>Associated Memos / POD</h4>
                             <div class="table-responsive">
                                 <table class="table">
                                     <thead>
                                         <tr>
-                                            <th>Memo #</th>
+                                            <th>Memo / POD #</th>
                                             <th>LR #</th>
                                             <th>From</th>
                                             <th>To</th>
@@ -200,7 +200,16 @@
                                     <tbody>
                                         @forelse($memos as $memo)
                                         <tr>
-                                            <td>{{ $memo->memo_id }}</td>
+                                            <td>
+    {{ $memo->memo_id }}
+
+                                    @if($memo->memo_created_at)
+                                    <br>
+                                    <small class="text-muted">
+                                   {{ \Carbon\Carbon::parse($memo->memo_created_at)->format('d-m-Y h:i A') }}
+                                         </small>
+                                          @endif
+                                          </td>
                                             <td>{{ $memo->lr_number }}</td>
                                             <td>{{ $memo->from_location }}</td>
                                             <td>{{ $memo->to_location }}</td>
