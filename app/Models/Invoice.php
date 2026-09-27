@@ -56,15 +56,16 @@ class Invoice extends Model implements Auditable
     }
 
     /**
-     * Get total paid amount
+     * Get total paid/settled amount (including TDS and customer deductions)
      */
     public function getPaidAmountAttribute()
     {
         // Use loaded relationship if available, otherwise query
         if ($this->relationLoaded('payments')) {
-            return $this->payments->sum('amount');
+            return (float) $this->payments->sum(fn ($p) => (float) $p->amount + (float) ($p->tds_amount ?? 0) + (float) ($p->deduction_amount ?? 0));
         }
-        return $this->payments()->sum('amount');
+
+        return (float) ($this->payments()->selectRaw('SUM(amount + COALESCE(tds_amount, 0) + COALESCE(deduction_amount, 0)) as total')->value('total') ?? 0.0);
     }
 
     /**
@@ -75,6 +76,14 @@ class Invoice extends Model implements Auditable
         $amountToCollect = $this->net_amount ?? $this->total_amount;
 
         return max(0, $amountToCollect - $this->paid_amount);
+    }
+
+    /**
+     * Check if invoice falls under GTA Reverse Charge Mechanism (RCM)
+     */
+    public function getIsRcmAttribute(): bool
+    {
+        return strtolower((string) ($this->invoice_type ?? '')) === 'reverse';
     }
 
     /**

@@ -33,6 +33,7 @@ class UpdateTransporterRequest extends FormRequest
             ],
             'advance_amount' => 'nullable|numeric|min:0',
             'declaration_given' => 'required|boolean',
+            'declaration_194c6_date' => 'nullable|date',
             'total_trucks' => 'nullable|integer|min:0',
         ], $this->tdsOverrideFieldRules());
 

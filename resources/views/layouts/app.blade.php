@@ -273,6 +273,132 @@
             }
         }
 
+        /* Global Print Stylesheet for Browser Printing */
+        @media print {
+            /* Hide non-printable app layout & backdrops/overlays */
+            .sidebar-overlay,
+            .modal-backdrop,
+            .loading-overlay,
+            .overlay,
+            [class*="overlay"],
+            [class*="backdrop"],
+            .app-header,
+            .app-sidebar,
+            .main-sidebar,
+            .app-footer,
+            .app-index-card-toolbar,
+            .sidebar-wrapper,
+            .no-print,
+            .d-print-none,
+            .btn,
+            .btn-group,
+            .app-content-header > .container-fluid > .alert,
+            #subscription-access-banner {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                background: transparent !important;
+                width: 0 !important;
+                height: 0 !important;
+                pointer-events: none !important;
+            }
+
+            html,
+            body,
+            body.layout-fixed,
+            body.bg-body-tertiary,
+            body.sidebar-open {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                background-image: none !important;
+                color: #000000 !important;
+                font-size: 11pt !important;
+                width: 100% !important;
+                height: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
+
+            body.layout-fixed {
+                overflow: visible !important;
+            }
+
+            .app-wrapper {
+                display: block !important;
+                position: static !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: auto !important;
+                height: auto !important;
+                overflow: visible !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .app-main,
+            .sidebar-expand-lg.layout-fixed .app-main,
+            .sidebar-expand.layout-fixed .app-main,
+            .layout-fixed .app-main {
+                display: block !important;
+                position: static !important;
+                overflow: visible !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: auto !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .app-content,
+            .app-content-header,
+            .app-content-header > .container-fluid,
+            .container-fluid {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                overflow: visible !important;
+            }
+
+            .app-index-list-card,
+            .card {
+                border: 1px solid #dee2e6 !important;
+                box-shadow: none !important;
+                overflow: visible !important;
+                margin-bottom: 1rem !important;
+                page-break-inside: auto !important;
+            }
+
+            .table-responsive {
+                overflow: visible !important;
+                display: block !important;
+            }
+
+            table {
+                width: 100% !important;
+                page-break-inside: auto !important;
+            }
+
+            tr {
+                page-break-inside: avoid !important;
+                page-break-after: auto !important;
+            }
+
+            thead {
+                display: table-header-group !important;
+            }
+
+            tfoot {
+                display: table-footer-group !important;
+            }
+        }
         /* Sidebar layout polish lives in sidebar-redesigned.css (OwnFleet-aligned) */
     </style>
     @stack('styles')
@@ -933,6 +1059,87 @@
                                     </ul>
                                 </li>
                             @endif
+                        @endif
+
+                        {{-- Accounting Section --}}
+                        @if (auth()->check() && (in_array(auth()->user()->userRole->name, ['accountant', 'admin']) || (auth()->user()->userRole->name === 'super_admin' && auth()->user()->canAccessCompanyPanel())))
+                            <li class="nav-header">Financials & Accounting</li>
+                            <li class="nav-item">
+                                <a class="nav-link{{ Request::is('accounting*') ? ' active' : '' }}" href="#accountingMenu"
+                                    data-lte-toggle="collapse">
+                                    <i class="nav-icon bi bi-calculator"></i>
+                                    <p>
+                                        Accounting <span class="badge bg-warning text-dark ms-1 fw-bold" style="font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; vertical-align: middle;">(BETA)</span>
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview collapse {{ Request::is('accounting*') ? ' show' : '' }}"
+                                    id="accountingMenu">
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.day-book') }}"
+                                            class="nav-link{{ Request::is('accounting/day-book*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-calendar-day"></i>
+                                            <p>Day Book</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.ledger-statement') }}"
+                                            class="nav-link{{ Request::is('accounting/ledger-statement*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-book-open"></i>
+                                            <p>Ledger Statement</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.trial-balance') }}"
+                                            class="nav-link{{ Request::is('accounting/trial-balance*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-balance-scale"></i>
+                                            <p>Trial Balance</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.profit-and-loss') }}"
+                                            class="nav-link{{ Request::is('accounting/profit-and-loss*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-chart-line"></i>
+                                            <p>Profit & Loss</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.balance-sheet') }}"
+                                            class="nav-link{{ Request::is('accounting/balance-sheet*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-file-invoice-dollar"></i>
+                                            <p>Balance Sheet</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.debtors-aging') }}"
+                                            class="nav-link{{ Request::is('accounting/debtors-aging*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-hourglass-half"></i>
+                                            <p>Debtors Aging (MSME)</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.gstr1') }}"
+                                            class="nav-link{{ Request::is('accounting/gstr1*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-file-invoice"></i>
+                                            <p>GSTR-1 Preparation</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.vouchers.index') }}"
+                                            class="nav-link{{ Request::is('accounting/vouchers*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-receipt"></i>
+                                            <p>Vouchers Entry</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.ledgers.index') }}"
+                                            class="nav-link{{ Request::is('accounting/ledgers*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-sitemap"></i>
+                                            <p>Chart of Accounts</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
                         @endif
 
                         {{-- Reports Section - admin, accountant, moderator, or super_admin in company context --}}

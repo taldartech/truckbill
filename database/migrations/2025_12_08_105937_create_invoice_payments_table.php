@@ -18,6 +18,9 @@ return new class extends Migration
                 $table->date('payment_date')->default(now());
                 $table->string('mode');
                 $table->decimal('amount', 12, 2);
+                $table->decimal('tds_amount', 12, 2)->default(0);
+                $table->decimal('deduction_amount', 12, 2)->default(0);
+                $table->string('deduction_reason')->nullable();
                 $table->text('remark')->nullable();
                 $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
                 $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();

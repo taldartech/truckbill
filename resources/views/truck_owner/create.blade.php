@@ -248,10 +248,10 @@
 
                             <div class="row g-2 mb-2">
                                 <div class="col-md-4">
-                                    <label class="form-label">Declaration Given? *</label><br>
+                                    <label class="form-label">Declaration u/s 194C(6) Received with PAN? *</label><br>
                                     <div class="form-check form-check-inline">
                                         <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given') === '1' ? 'checked' : '' }} required>
-                                        <label class="form-check-label" for="decl_yes">Yes</label>
+                                        <label class="form-check-label fw-semibold" for="decl_yes">Yes (0.00% TDS)</label>
                                     </div>
                                     <div class="form-check form-check-inline">
                                         <input class="form-check-input" type="radio" name="declaration_given" id="decl_no" value="0" {{ old('declaration_given') === '0' ? 'checked' : '' }} required>
@@ -259,12 +259,17 @@
                                     </div>
                                     @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
                                 </div>
-                                <div class="col-md-4">
-                                    <label for="total_trucks" class="form-label">Total Trucks</label>
-                                    <input type="number" class="form-control @error('total_trucks') is-invalid @enderror" id="total_trucks" name="total_trucks" min="0" required value="{{ old('total_trucks', 0) }}" placeholder="Enter total trucks">
+                                <div class="col-md-3" id="declaration_date_col" style="{{ old('declaration_given') === '1' ? '' : 'display:none;' }}">
+                                    <label for="declaration_194c6_date" class="form-label">Declaration Date</label>
+                                    <input type="date" class="form-control @error('declaration_194c6_date') is-invalid @enderror" id="declaration_194c6_date" name="declaration_194c6_date" value="{{ old('declaration_194c6_date', date('Y-m-d')) }}">
+                                    @error('declaration_194c6_date') <div class="text-danger">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="total_trucks" class="form-label">Total Trucks (<= 10)</label>
+                                    <input type="number" class="form-control @error('total_trucks') is-invalid @enderror" id="total_trucks" name="total_trucks" min="0" max="10000" required value="{{ old('total_trucks', 0) }}" placeholder="Total trucks">
                                     @error('total_trucks') <div class="text-danger">{{ $message }}</div> @enderror
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label for="tds_percentage" class="form-label">TDS % *</label>
                                     <input type="hidden" id="tds_calculated_baseline" value="{{ old('tds_percentage', '0') }}">
                                     <input type="number" step="0.01" min="0" max="100" class="form-control @error('tds_percentage') is-invalid @enderror" id="tds_percentage" name="tds_percentage" value="{{ old('tds_percentage', '0') }}" required>
@@ -722,9 +727,26 @@
                 invalidatePanVerification(this.value);
             });
         }
+        function updateOwner194cUi() {
+            const isYes = document.getElementById('decl_yes')?.checked;
+            const dateCol = document.getElementById('declaration_date_col');
+            const tdsInput = document.getElementById('tds_percentage');
+            if (dateCol) {
+                dateCol.style.display = isYes ? '' : 'none';
+            }
+            if (isYes && tdsInput) {
+                tdsInput.value = '0.00';
+                tdsInput.readOnly = true;
+            } else if (tdsInput) {
+                tdsInput.readOnly = false;
+            }
+        }
+        updateOwner194cUi();
+
         document.querySelectorAll('input[name="declaration_given"]').forEach(function (el) {
             el.addEventListener('change', function () {
                 window.__ownerTdsUserEdited = false;
+                updateOwner194cUi();
                 if (typeof refreshOwnerTdsBaseline === 'function') {
                     refreshOwnerTdsBaseline();
                 }

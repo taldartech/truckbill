@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AccountingReportController;
+use App\Http\Controllers\AccountingVoucherController;
 use App\Http\Controllers\AdvancePaymentController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BranchController;
@@ -16,6 +18,7 @@ use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\FreightBookingController;
 use App\Http\Controllers\GoodsTypeController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\LedgerController;
 use App\Http\Controllers\LorryReceiptController;
 use App\Http\Controllers\MasterPanelSummaryController;
 use App\Http\Controllers\PumpController;
@@ -349,6 +352,21 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/transporter-master-export', [ReportController::class, 'transporter_master_export'])->name('reports.transporter-master-export');
         Route::get('/voucher-receipt-export', [ReportController::class, 'voucher_receipt_export'])->name('reports.voucher-receipt-export');
         Route::post('/voucher-receipt-mark-printed', [ReportController::class, 'markVoucherReceiptPrinted'])->name('reports.voucher-receipt-mark-printed');
+    });
+
+    // Accounting & Tally Functionality
+    Route::group(['prefix' => 'accounting', 'as' => 'accounting.', 'middleware' => ['role:admin,accountant,super_admin', 'company.context', 'subscription.active']], function () {
+        Route::get('/day-book', [AccountingReportController::class, 'dayBook'])->name('day-book');
+        Route::get('/ledger-statement/{ledgerId?}', [AccountingReportController::class, 'ledgerStatement'])->name('ledger-statement');
+        Route::get('/trial-balance', [AccountingReportController::class, 'trialBalance'])->name('trial-balance');
+        Route::get('/profit-and-loss', [AccountingReportController::class, 'profitAndLoss'])->name('profit-and-loss');
+        Route::get('/balance-sheet', [AccountingReportController::class, 'balanceSheet'])->name('balance-sheet');
+        Route::get('/export-tally-masters', [AccountingReportController::class, 'exportTallyMasters'])->name('export-tally-masters');
+        Route::get('/export-tally-vouchers', [AccountingReportController::class, 'exportTallyVouchers'])->name('export-tally-vouchers');
+        Route::get('/gstr1', [AccountingReportController::class, 'gstr1'])->name('gstr1');
+        Route::get('/debtors-aging', [AccountingReportController::class, 'debtorsAging'])->name('debtors-aging');
+        Route::resource('vouchers', AccountingVoucherController::class)->only(['index', 'create', 'store', 'show']);
+        Route::resource('ledgers', LedgerController::class)->only(['index', 'store']);
     });
 
     Route::middleware(['role:super_admin'])->group(function () {

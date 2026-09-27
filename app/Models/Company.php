@@ -57,6 +57,22 @@ class Company extends Model
                 ['company_id' => $company->id],
                 CompanySetting::defaultsFor($company)
             );
+
+            if (\Illuminate\Support\Facades\Schema::hasTable('company_subscriptions')) {
+                if (! $company->subscription()->exists()) {
+                    $company->subscription()->create([
+                        'status' => 'trial',
+                        'starts_on' => now()->toDateString(),
+                        'ends_on' => now()->addDays(15)->toDateString(),
+                        'trial_ends_on' => now()->addDays(15)->toDateString(),
+                        'included_branches' => 5,
+                        'users_per_branch' => 5,
+                        'included_lr_credits' => 100,
+                        'included_trucks' => 0,
+                        'lr_credits_remaining' => 100,
+                    ]);
+                }
+            }
         });
     }
 

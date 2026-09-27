@@ -549,7 +549,7 @@
                                 <strong>₹{{ number_format($tdsAmount, 2) }}</strong>
                             </div>
                             <div class="fb-financial-summary__row">
-                                <span>Negative Adjusted</span>
+                                <span>Negative Adjusted Amount</span>
                                 <strong class="{{ $negativeAdjusted > 0 ? '' : 'text-muted' }}">₹{{ number_format($negativeAdjusted, 2) }}</strong>
                             </div>
                             <div class="fb-financial-summary__row">
@@ -1314,8 +1314,8 @@
                                         <thead>
                                             <tr>
                                                 <th>LR Number</th>
-                                                <th>Shortage</th>
-                                                <th>Damage</th>
+                                                <th>Shortage Amount</th>
+                                                <th>Damage Amount</th>
                                                 <th>Balance</th>
                                                 <th>Allocated</th>
                                             </tr>
