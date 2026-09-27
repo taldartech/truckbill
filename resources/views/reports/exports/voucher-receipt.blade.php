@@ -393,8 +393,32 @@
             </tr>
         </table>
 
+        @php
+            $signatureSrc = $company->signatureFilesystemPathForPdf() ?: $company->signaturePublicUrl();
+            $voucherSignName = $company->setting?->template_name ?? $company->name;
+        @endphp
+        <table style="width: 100%; margin-top: 14px; border-collapse: collapse;">
+            <tr>
+                <td style="width: 50%;"></td>
+                <td style="width: 50%; text-align: right; vertical-align: bottom;">
+                    <div style="font-size: 11px; font-weight: bold;">For {{ $voucherSignName }}</div>
+                    @include('reports.exports.partials.pdf-company-signature-slot', [
+                        'signatureSrc' => $signatureSrc,
+                        'companyName' => $voucherSignName,
+                        'slotWidthPx' => 90,
+                        'slotHeightPx' => 32,
+                        'align' => 'right',
+                    ])
+                    @if (empty($signatureSrc))
+                        <div style="height: 36px;"></div>
+                    @endif
+                    <div style="font-size: 10px;">Authorized Signature</div>
+                    <div style="font-size: 7px; margin-top: 2px;">Digitally Managed by TruckBill (www.truckbill.in)</div>
+                </td>
+            </tr>
+        </table>
+
     </div>
-    <div style="margin-top: 6px; font-size: 7px; text-align: right;">Digitally Managed by TruckBill (www.truckbill.in)</div>
 </body>
 
 </html>

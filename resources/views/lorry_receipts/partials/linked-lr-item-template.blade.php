@@ -117,7 +117,7 @@
 
             <div class="linked-lr-subsection">
                 <div class="linked-lr-subsection__label">Freight Details</div>
-                <div class="lrf-grid lrf-grid--6">
+                <div class="lrf-grid lrf-grid--7">
                     <div class="lrf-pf">
                         <label class="lrf-pf__lbl">Goods Type<span class="lrf-pf__req">*</span></label>
                         <div class="input-group flex-nowrap">
@@ -135,6 +135,16 @@
                     <div class="lrf-pf">
                         <label class="lrf-pf__lbl">Units</label>
                         <input type="number" class="form-control units" min="1" max="100000" placeholder="0" title="Maximum 100,000">
+                    </div>
+                    <div class="lrf-pf">
+                        <label class="lrf-pf__lbl">
+                            Wt / Unit (t)
+                        </label>
+                        <input type="number" step="0.001" class="form-control weight-per-unit"
+                            min="0.001" max="100" placeholder="0.000"
+                            title="Helper only — used to calculate total weight. Not saved."
+                            autocomplete="off">
+                        <div class="lrf-pf__hint">Units × Wt/Unit → Weight</div>
                     </div>
                     <div class="lrf-pf">
                         <label class="lrf-pf__lbl">Goods Value</label>

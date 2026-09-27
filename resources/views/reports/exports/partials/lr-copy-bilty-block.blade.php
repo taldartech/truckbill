@@ -134,6 +134,21 @@
         <td colspan="4" style="vertical-align: bottom; text-align: right;">
             For {{ $company->name }}
             <br>
+            @php
+                $signatureSrc = $company->signatureFilesystemPathForPdf() ?: $company->signaturePublicUrl();
+            @endphp
+            @include('reports.exports.partials.pdf-company-signature-slot', [
+                'signatureSrc' => $signatureSrc,
+                'companyName' => $company->name,
+                'slotWidthPx' => 100,
+                'slotHeightPx' => 36,
+                'align' => 'right',
+            ])
+            @if (empty($signatureSrc))
+                <br><br>
+            @endif
+            Authorized Signature
+            <br>
             <span class="fw-bold" style="font-size: 7px;">Digitally Managed by TruckBill (www.truckbill.in)</span>
         </td>
     </tr>

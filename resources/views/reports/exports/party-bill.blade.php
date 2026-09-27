@@ -15,6 +15,9 @@
     $invoiceCompanyLogoSrc = $usePdfLogoPath
         ? $company->logoFilesystemPathForPdf()
         : $company->logoPublicUrl();
+    $invoiceCompanySignatureSrc = $usePdfLogoPath
+        ? $company->signatureFilesystemPathForPdf()
+        : $company->signaturePublicUrl();
     $partyBillHeaderCompact = ($partyBillHeaderCompact ?? false) === true;
     $columns = $invoice->custom_invoice ? ($invoice->custom_invoice === 'rate_difference' ? 10 : 11) : 13;
 @endphp
@@ -266,21 +269,34 @@
     @endif
     <tr>
         <td style="font-weight: bold;" colspan="{{ $columns - 4 }}">{{ ucfirst(getIndianCurrency($grandTotal)) }} Only</td>
-        <td style="font-weight: bold;" colspan="4">FOR {{ $company->name }}</td>
+        <td style="font-weight: bold; text-align: right; vertical-align: bottom;" colspan="4">
+            For {{ $company->name }}
+            @if (! $forExcel)
+                <br>
+                @include('reports.exports.partials.pdf-company-signature-slot', [
+                    'signatureSrc' => $invoiceCompanySignatureSrc,
+                    'companyName' => $company->name,
+                    'slotWidthPx' => 100,
+                    'slotHeightPx' => 36,
+                    'align' => 'right',
+                ])
+                @if (empty($invoiceCompanySignatureSrc))
+                    <br><br>
+                @endif
+            @else
+                <br><br><br>
+            @endif
+            <br>
+            Authorized Signature
+            <br>
+            <span style="font-size: 7px; font-weight: normal;">Digitally Managed by TruckBill (www.truckbill.in)</span>
+        </td>
     </tr>
     <tr>
-        <td colspan="{{ $columns - 4 }}"></td>
-        <td colspan="4" rowspan="2"></td>
-    </tr>
-    <tr>
-        <td colspan="{{ $columns }}"></td>
-    </tr>
-    <tr>
-        <td style="font-weight: bold;" colspan="{{ $columns - 4 }}">
+        <td style="font-weight: bold;" colspan="{{ $columns }}">
             @if ($invoice->invoice_type == 'Reverse')
                 Note :- GST Liability of Debtor:-  {{ $invoice->consignee->name }}  Under Reverse Charge Mechanism of GST Act, 2017
             @endif
         </td>
-        <td style="font-weight: bold;" colspan="4">Authorized Signature</td>
     </tr>
 </table>
