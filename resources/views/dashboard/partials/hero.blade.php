@@ -28,7 +28,7 @@
         @if (! empty($quickActions))
             <div class="dashboard-page__quick-actions">
                 @foreach ($quickActions as $action)
-                    <a href="{{ $action['url'] }}" class="dashboard-page__quick-action">
+                    <a href="{{ $action['url'] }}" class="dashboard-page__quick-action text-nowrap">
                         <i class="{{ $action['icon'] }}"></i>
                         {{ $action['label'] }}
                     </a>
@@ -40,13 +40,13 @@
             <div class="dashboard-page__period" role="group" aria-label="Date period">
                 @foreach ($periods as $key => $label)
                     <a href="{{ route('dashboard', ['period' => $key]) }}"
-                        class="dashboard-page__period-btn {{ $period === $key ? 'is-active' : '' }}">
+                        class="dashboard-page__period-btn text-nowrap {{ $period === $key ? 'is-active' : '' }}">
                         {{ $label }}
                     </a>
                 @endforeach
             </div>
         @else
-            <div class="dashboard-page__today">
+            <div class="dashboard-page__today text-nowrap">
                 <i class="bi bi-calendar3"></i>
                 {{ now()->format('d M, Y') }}
             </div>

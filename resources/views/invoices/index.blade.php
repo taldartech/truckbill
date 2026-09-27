@@ -133,6 +133,64 @@
             .invoice-stats {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
+
+            .invoices-index .app-index-list-card > .card-header {
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-wrap: nowrap !important;
+            }
+
+            .invoices-index .app-index-card-toolbar {
+                width: auto !important;
+                margin-left: auto !important;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .invoices-index .app-index-list-card > .card-header {
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-wrap: nowrap !important;
+                gap: 0.4rem !important;
+                padding: 0.45rem 0.65rem !important;
+            }
+
+            .invoices-index .app-index-list-card > .card-header .card-title {
+                font-size: 0.95rem !important;
+                margin: 0 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                flex-shrink: 1 !important;
+            }
+
+            .invoices-index .app-index-card-toolbar {
+                width: auto !important;
+                margin-left: auto !important;
+                display: inline-flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                align-items: center !important;
+                gap: 0.35rem !important;
+                flex-shrink: 0 !important;
+            }
+
+            .invoices-index .app-index-card-toolbar .app-index-header-btn {
+                width: 32px !important;
+                height: 32px !important;
+                min-width: 32px !important;
+                min-height: 32px !important;
+                padding: 0 !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border-radius: 8px !important;
+                font-size: 1rem !important;
+                flex: 0 0 auto !important;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+            }
         }
 
         @media (max-width: 420px) {
@@ -149,7 +207,7 @@
 @endpush
 
 @section('content')
-    <div class="container mt-4 app-index-page app-index-page--standard">
+    <div class="container mt-4 app-index-page app-index-page--standard invoices-index">
         @if (session('success'))
             <div class="mb-3">
                 <span class="badge text-bg-dark border app-index-flash">
@@ -166,25 +224,25 @@
         @endif
 
         <div class="card app-index-list-card mb-4">
-            <div class="card-header">
+            <div class="card-header d-flex align-items-center justify-content-between">
                 <h3 class="card-title mb-0">Invoice Management</h3>
-                <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
-                    <button type="button" class="btn app-index-header-btn"
+                <div class="app-index-card-toolbar d-flex align-items-center gap-2">
+                    <button type="button" class="btn app-index-header-btn" title="Search filter" aria-label="Search filter"
                         onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
-                        <i class="bi bi-funnel"></i> Search filter
+                        <i class="bi bi-funnel"></i><span class="d-none d-sm-inline ms-1">Search filter</span>
                     </button>
-                    <a href="{{ route('custom-invoices.create') }}" class="btn app-index-header-btn">
-                        <i class="bi bi-file-earmark-plus"></i> Create Custom Invoice
+                    <a href="{{ route('custom-invoices.create') }}" class="btn app-index-header-btn" title="Create Custom Invoice" aria-label="Create custom invoice">
+                        <i class="bi bi-file-earmark-plus"></i><span class="d-none d-sm-inline ms-1">Create Custom Invoice</span>
                     </a>
-                    <a href="{{ route('invoices.create') }}" class="btn app-index-header-btn">
-                        <i class="bi bi-plus"></i> Create
+                    <a href="{{ route('invoices.create') }}" class="btn app-index-header-btn" title="Create Invoice" aria-label="Create invoice">
+                        <i class="bi bi-plus"></i><span class="d-none d-sm-inline ms-1">Create</span>
                     </a>
                 </div>
             </div>
 
-            <div class="app-index-dt-toolbar">
+            <div class="p-2 p-md-3 border-bottom bg-white">
                 {{-- Quick Stats --}}
-                <div class="invoice-stats">
+                <div class="invoice-stats mb-0">
                     <div class="invoice-stat invoice-stat--total">
                         <span class="invoice-stat__icon"><i class="bi bi-receipt"></i></span>
                         <span class="invoice-stat__meta">
@@ -305,7 +363,7 @@
                 </form>
             </div>
 
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="table-responsive">
                     <table id="invoicesTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
                         <thead class="table-light">
@@ -565,9 +623,9 @@
                 order: [
                     [0, 'desc']
                 ],
-                dom: '<"app-index-dt-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2"<"d-flex flex-wrap align-items-center gap-2"l><"d-flex flex-wrap align-items-center gap-2"f>>' +
+                dom: '<"d-flex flex-wrap justify-content-between align-items-center gap-1 gap-sm-2 p-2 p-sm-3 border-bottom"<"d-flex align-items-center gap-1"l><"d-flex align-items-center gap-1"f>>' +
                     't' +
-                    '<"app-index-partload-pagination d-flex flex-wrap align-items-center justify-content-between gap-2"<"app-index-partload-pagination__summary"i><"app-index-partload-pagination__nav"p>>',
+                    '<"app-index-partload-pagination d-flex flex-wrap align-items-center justify-content-between gap-2 p-2 p-sm-3"<"app-index-partload-pagination__summary"i><"app-index-partload-pagination__nav"p>>',
                 drawCallback: function() {
                     initTooltips();
                 }

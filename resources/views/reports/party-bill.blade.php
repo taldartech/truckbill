@@ -10,14 +10,14 @@
 @endpush
 
 @section('content')
-    <div class="card mb-4">
-        <div class="card-body">
+    <div class="card mb-3">
+        <div class="card-body p-2 p-md-3">
             <form method="GET" action="{{ route('reports.party-bill') }}" id="searchForm" onsubmit="return validatePartyBillForm(event)"
                 class="tb-report-customer-select2-form">
-                <div class="row mb-2";>
-                    <div class="col-md-3">
-                        <label class="form-label">Customer <span class="text-muted">(optional)</span></label>
-                        <select name="customer_id" id="party_bill_customer_id" class="form-select">
+                <div class="row g-2 align-items-end">
+                    <div class="col-6 col-md-4">
+                        <label class="form-label small mb-1">Customer <span class="text-muted">(optional)</span></label>
+                        <select name="customer_id" id="party_bill_customer_id" class="form-select form-select-sm">
                             <option value=""></option>
                             @if ($presetCustomer)
                                 <option value="{{ $presetCustomer->id }}" selected>{{ $presetCustomer->name }}</option>
@@ -25,9 +25,9 @@
                         </select>
                     </div>
 
-                    <div class="col-md-3">
-                        <label class="form-label">Invoice Number <span class="text-danger">*</span></label>
-                        <select name="invoice_number" id="party_bill_invoice_number" class="form-select" required>
+                    <div class="col-6 col-md-5">
+                        <label class="form-label small mb-1">Invoice Number <span class="text-danger">*</span></label>
+                        <select name="invoice_number" id="party_bill_invoice_number" class="form-select form-select-sm" required>
                             <option value="">Select Invoice Number</option>
                             @if (! empty($invoices))
                                 @foreach ($invoices as $inv)
@@ -38,12 +38,12 @@
                             @endif
                         </select>
                     </div>
-                    <div class="col-md-3 text-end d-flex align-items-end justify-content-end gap-2">
-                        <button type="submit" class="btn btn-brand-primary">
-                            <i class="bi bi-search"></i> Search
+                    <div class="col-12 col-md-3 d-flex justify-content-end gap-1 gap-sm-2">
+                        <button type="submit" class="btn btn-brand-primary btn-sm" title="Search">
+                            <i class="bi bi-search"></i> <span class="d-none d-sm-inline ms-1">Search</span>
                         </button>
-                        <a href="{{ route('reports.party-bill') }}" class="btn btn-secondary">
-                            <i class="bi bi-arrow-clockwise"></i> Reset
+                        <a href="{{ route('reports.party-bill') }}" class="btn btn-secondary btn-sm" title="Reset">
+                            <i class="bi bi-arrow-clockwise"></i> <span class="d-none d-sm-inline ms-1">Reset</span>
                         </a>
                     </div>
                 </div>
@@ -65,25 +65,27 @@
         </div>
     @else
         <div class="card mb-4">
-            <div class="card-header">
+            <div class="card-header py-2">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h3 class="card-title mb-0">Party Bill</h3>
                     </div>
-                    <div class="d-flex gap-2">
-                        <a class="btn btn-warning"
+                    <div class="d-flex gap-1 gap-sm-2">
+                        <a class="btn btn-warning btn-sm" title="Export"
                             href="{{ route('reports.party-bill-export', ['invoice_number' => $id]) }}">
-                            <i class="bi bi-file-earmark-spreadsheet"></i> Export
+                            <i class="bi bi-file-earmark-spreadsheet"></i> <span class="d-none d-sm-inline ms-1">Export</span>
                         </a>
                         <a href="{{ route('reports.party-bill-export', ['invoice_number' => $invoice->id, 'type' => 'pdf']) }}"
-                            class="btn btn-danger" target="_blank">
-                            <i class="fas fa-file-pdf"></i> PDF
+                            class="btn btn-danger btn-sm" title="PDF" target="_blank">
+                            <i class="bi bi-file-earmark-pdf"></i> <span class="d-none d-sm-inline ms-1">PDF</span>
                         </a>
                     </div>
                 </div>
             </div>
-            <div class="card-body" style="overflow-x: auto;">
-                @include('reports.exports.party-bill')
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    @include('reports.exports.party-bill')
+                </div>
             </div>
         </div>
     @endif

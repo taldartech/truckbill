@@ -14,11 +14,14 @@
     word-wrap: break-word;
 }
 
-/* Ensure consistent column widths */
-.row .col-md-4 {
-    flex: 0 0 33.333333%;
-    max-width: 33.333333%;
+/* Ensure consistent column widths on desktop */
+@media (min-width: 768px) {
+    .row .col-md-4 {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+    }
 }
+
 
 /* Prevent card from expanding */
 .card {
@@ -51,13 +54,13 @@
         @error('registered_truck_id')
             <div class="text-danger">{{ $message }}</div>
         @enderror
-        <div class="card-body">
+        <div class="card-body p-2 p-md-4">
             <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
             <input type="hidden" name="total_trucks" value="{{ old('total_trucks', $transporter->total_trucks ?? 0) }}">
 
             @php $master = $transporter->transporterMaster; @endphp
             <div id="transporterEditMeta" class="d-none" data-transport-name="{{ $master->name ?? '' }}" data-pan="{{ $master->pan_number ?? '' }}" data-pan-active="{{ ($master->pan_active ?? false) ? '1' : '0' }}" data-gst="{{ $master->gst_number ?? '' }}"></div>
-            <div class="card mb-4 p-3 bg-light">
+            <div class="card mb-3 mb-md-4 p-2 p-md-3 bg-light">
                 <div class="row"><div class="col"><h5 class="mb-3 text-muted"><i class="fas fa-lock me-2"></i> Master Data (Read-only)</h5></div></div>
                 <div class="row mb-3">
                     <div class="col-md-4">

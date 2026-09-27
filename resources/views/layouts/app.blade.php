@@ -124,6 +124,11 @@
             background-color: var(--brand-row-hover) !important;
         }
 
+        .form-select-sm,
+        .form-select-sm option {
+            font-size: 0.875rem !important;
+        }
+
         .app-sidebar,
         .main-sidebar {
             width: 250px !important;
@@ -202,75 +207,97 @@
             font-weight: 700;
         }
 
-        /* Credits Display Premium Design */
-        .credits-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(var(--brand-primary-rgb, 0, 51, 102), 0.05);
-            border: 1px solid rgba(var(--brand-primary-rgb, 0, 51, 102), 0.1);
-            padding: 4px 12px;
-            border-radius: 50px;
-            margin-top: 4px;
-            backdrop-filter: blur(8px);
-            transition: all 0.3s ease;
+        /* Navbar Header Responsive */
+        .app-header.navbar {
+            min-height: 48px;
+            height: auto;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
         }
 
-        .credits-container:hover {
-            background: rgba(var(--brand-primary-rgb, 0, 51, 102), 0.08);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        /* Completely remove blue border / focus outline on sidebar menu bar icon */
+        [data-lte-toggle="sidebar"],
+        [data-lte-toggle="sidebar"]:hover,
+        [data-lte-toggle="sidebar"]:focus,
+        [data-lte-toggle="sidebar"]:active,
+        [data-lte-toggle="sidebar"]:focus-visible,
+        .app-header [data-lte-toggle="sidebar"],
+        .app-header [data-lte-toggle="sidebar"]:hover,
+        .app-header [data-lte-toggle="sidebar"]:focus,
+        .app-header [data-lte-toggle="sidebar"]:active,
+        .app-header [data-lte-toggle="sidebar"]:focus-visible {
+            outline: none !important;
+            border: 0 !important;
+            box-shadow: none !important;
+            text-decoration: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        .credits-container {
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+            flex-shrink: 0;
+            background: #fff;
+            border: 1px solid rgba(47, 179, 111, 0.35);
+            border-radius: 50px;
+            padding: 4px 10px;
+            line-height: 1;
         }
 
         .credit-pill {
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 6px;
-            font-size: 11px;
+            gap: 5px;
+            font-size: 0.75rem;
             font-weight: 600;
-            color: #4b5563;
+            color: var(--brand-primary, #2fb36f);
+            white-space: nowrap;
+            line-height: 1;
         }
 
         .credit-pill i {
-            color: var(--brand-primary);
-            font-size: 14px;
-        }
-
-        .credit-pill .label {
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.025em;
+            color: var(--brand-primary, #2fb36f);
+            font-size: 0.85rem;
         }
 
         .credit-pill .value {
-            color: var(--brand-primary);
+            color: var(--brand-primary, #2fb36f);
             font-weight: 700;
+            white-space: nowrap;
         }
 
         .credit-divider {
             width: 1px;
             height: 14px;
-            background: rgba(0,0,0,0.1);
-        }
-
-        @media (max-width: 991.98px) {
-            .credit-pill .label {
-                display: none;
-            }
-            .credits-container {
-                padding: 4px 8px;
-                gap: 8px;
-            }
+            background: rgba(0, 0, 0, 0.15);
+            margin: 0 6px;
+            flex-shrink: 0;
         }
 
         @media (max-width: 575.98px) {
-            .credit-pill {
-                font-size: 10px;
+            .app-header.navbar {
+                min-height: 46px;
             }
             .credits-container {
-                gap: 6px;
-                margin-right: 5px !important;
+                padding: 3px 8px;
             }
+            .credit-pill {
+                font-size: 0.70rem;
+                gap: 4px;
+            }
+            .credit-pill i {
+                font-size: 0.78rem;
+            }
+            .credit-divider {
+                height: 12px;
+                margin: 0 4px;
+            }
+        }
+
+        /* Constrain main content area to prevent wide tables from breaking layout without interfering with sticky sidebar */
+        .app-main {
+            min-width: 0;
+            max-width: 100%;
         }
 
         /* Global Print Stylesheet for Browser Printing */
@@ -407,30 +434,27 @@
 <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
     <!--begin::App Wrapper-->
     <div class="app-wrapper">
-        <nav class="app-header navbar navbar-expand bg-body">
+        <nav class="app-header navbar navbar-expand bg-body px-2 px-md-3 py-1">
             <!--begin::Container-->
-            <div class="container-fluid">
+            <div class="container-fluid d-flex flex-nowrap align-items-center justify-content-between p-0">
                 <!--begin::Start Navbar Links-->
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button">
-                            <i class="fa-solid fa-bars"></i>
+                <ul class="navbar-nav d-flex flex-row align-items-center flex-nowrap gap-1 gap-sm-2 mb-0">
+                    <li class="nav-item flex-shrink-0">
+                        <a class="nav-link p-1 p-sm-2 text-secondary border-0 shadow-none" data-lte-toggle="sidebar" href="#" role="button" aria-label="Toggle sidebar" style="outline: none !important; border: 0 !important; box-shadow: none !important;">
+                            <i class="fa-solid fa-bars fs-5"></i>
                         </a>
                     </li>
-                    <li class="nav-item d-none d-md-block"><a href="#" class="nav-link">
+                    <li class="nav-item d-none d-md-block flex-shrink-0">
+                        <span class="nav-link text-muted small border-start ps-3 py-1 text-nowrap">
                             @auth
-                                <span class="align-middle ms-3 me-2 border-start ps-3 small text-muted"
-                                    style="font-size: 1em;">
-                                    <i
-                                        class="fas fa-building me-1"></i>{{ Auth::user()->company ? Auth::user()->company->name : '' }}
-                                </span>
+                                <i class="fas fa-building me-1"></i>{{ Auth::user()->company ? Auth::user()->company->name : '' }}
                             @endauth
-                        </a>
+                        </span>
                     </li>
                     @auth
                         @if (Auth::user()->userRole->name === 'super_admin' && session('super_admin_company_id'))
-                            <li class="nav-item">
-                                <a href="{{ route('company.exit') }}" class="nav-link text-warning" title="Exit company context">
+                            <li class="nav-item flex-shrink-0">
+                                <a href="{{ route('company.exit') }}" class="nav-link text-warning text-nowrap d-inline-flex align-items-center p-1 p-sm-2" title="Exit company context" style="white-space: nowrap;">
                                     <i class="bi bi-box-arrow-left me-1"></i>Exit Company
                                 </a>
                             </li>
@@ -440,20 +464,18 @@
                 </ul>
                 <!--end::Start Navbar Links-->
                 <!--begin::End Navbar Links-->
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto d-flex flex-row align-items-center flex-nowrap gap-1 gap-sm-2 mb-0">
                     @auth
                         @if (in_array(Auth::user()->user_role_id, [3, 4, 5]) || (Auth::user()->userRole->name === 'super_admin' && Auth::user()->canAccessCompanyPanel()))
-                            <li class="nav-item d-flex align-items-center me-3">
+                            <li class="nav-item flex-shrink-0">
                                 <div class="credits-container">
-                                    <div class="credit-pill" title="Plan Expiry">
+                                    <div class="credit-pill credit-pill--expiry" title="Plan Expiry">
                                         <i class="bi bi-calendar-event"></i>
-                                        <span class="label">Expiry:</span>
                                         <span class="value">{{ Auth::user()->company?->subscription?->ends_on?->format('d M, Y') ?? 'N/A' }}</span>
                                     </div>
                                     <div class="credit-divider"></div>
-                                    <div class="credit-pill" title="LR Credits Remaining">
+                                    <div class="credit-pill credit-pill--credits" title="LR Credits Remaining">
                                         <i class="bi bi-coin"></i>
-                                        <span class="label">Credits:</span>
                                         <span class="value">{{ Auth::user()->company?->lrCreditsRemaining() ?? 'N/A' }}</span>
                                     </div>
                                 </div>
@@ -462,13 +484,11 @@
                     @endauth
 
                     <!--begin::User Menu Dropdown-->
-                    <!--begin::User Menu Dropdown-->
-                    <li class="nav-item dropdown user-menu">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-
-                            <i class="fas fa-user-circle fa-lg"></i>
+                    <li class="nav-item dropdown user-menu flex-shrink-0">
+                        <a href="#" class="nav-link dropdown-toggle p-1 p-sm-2 d-inline-flex align-items-center text-secondary" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle fs-5"></i>
                             @auth
-                                <span class="d-none d-md-inline">{{ Auth::user()->name ?? Auth::user()->email }}</span>
+                                <span class="d-none d-md-inline ms-1 small">{{ Auth::user()->name ?? Auth::user()->email }}</span>
                             @endauth
                         </a>
                         <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end shadow">
@@ -1318,21 +1338,17 @@
             <!--end::App Content-->
         </main>
 
-        <footer class="app-footer">
-            <!--begin::To the end-->
-            <div class="float-end d-none d-sm-inline">
-                <a href="https://www.taldartechconsultancy.com/" target="_blank" rel="noopener">
-                    Developed &amp; Consulted by Taldar Tech Consultancy.
-                </a>
+        <footer class="app-footer py-2 px-3 bg-body border-top">
+            <div class="container-fluid d-flex flex-column flex-sm-row justify-content-between align-items-center gap-1 text-center text-sm-start small text-muted">
+                <div>
+                    <strong>Copyright &copy; {{ date('Y') }} All Rights Reserved.</strong>
+                </div>
+                <div>
+                    <a href="https://www.taldartechconsultancy.com/" target="_blank" rel="noopener" class="text-decoration-none text-muted">
+                        Developed &amp; Consulted by Taldar Tech Consultancy.
+                    </a>
+                </div>
             </div>
-            <!--end::To the end-->
-            <!--begin::Copyright-->
-            <strong>
-                Copyright All Rights Reserved © {{ date('Y') }}
-
-            </strong>
-
-            <!--end::Copyright-->
         </footer>
 
     </div>

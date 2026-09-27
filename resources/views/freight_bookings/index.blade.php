@@ -45,10 +45,16 @@
         }
 
         .table td, .table th {
-            padding: 4px 8px !important;
-            font-size: 12px !important;
+            padding: 8px 10px;
             vertical-align: middle;
             border-color: rgba(0,0,0,0.05) !important;
+        }
+
+        @media (max-width: 767.98px) {
+            .table td, .table th {
+                font-size: 0.8125rem !important;
+                padding: 4px 6px !important;
+            }
         }
 
         /* Action Buttons */
@@ -105,6 +111,203 @@
 
         .table-success { background-color: #d1e7dd !important; border-color: #badbcc !important; }
         .table-danger  { background-color: #f8d7da !important; border-color: #f5c2c7 !important; }
+
+        .freight-bookings-index .table-responsive {
+            max-height: none !important;
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .freight-bookings-index .table-responsive::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .freight-bookings-index .table-responsive::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        .freight-bookings-index .table-responsive::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .freight-bookings-index .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        #freightBookingsTable {
+            width: 100% !important;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        #freightBookingsTable th,
+        #freightBookingsTable td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-left: 5px !important;
+            padding-right: 5px !important;
+        }
+
+        #freightBookingsTable thead th {
+            position: sticky;
+            top: 0;
+            background: var(--brand-table-header-bg) !important;
+            z-index: 20;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            padding-top: 4px !important;
+            padding-bottom: 4px !important;
+            padding-left: 3px !important;
+            padding-right: 3px !important;
+            font-size: 11.5px !important;
+            font-weight: 700;
+            letter-spacing: 0;
+        }
+
+        /* Large desktop view: fit within 100% */
+        @media (min-width: 1200px) {
+            #freightBookingsTable {
+                table-layout: fixed;
+                min-width: 0 !important;
+            }
+
+            #freightBookingsTable th:nth-child(1), #freightBookingsTable td:nth-child(1) { width: 3.5%; text-align: center; } /* Checkbox */
+            #freightBookingsTable th:nth-child(2), #freightBookingsTable td:nth-child(2) { width: 7.5%; } /* GR Date */
+            #freightBookingsTable th:nth-child(3), #freightBookingsTable td:nth-child(3) { width: 8.5%; } /* LR No */
+            #freightBookingsTable th:nth-child(4), #freightBookingsTable td:nth-child(4) { width: 11%; }  /* Customer */
+            #freightBookingsTable th:nth-child(5), #freightBookingsTable td:nth-child(5) { width: 11%; }  /* Transporter */
+            #freightBookingsTable th:nth-child(6), #freightBookingsTable td:nth-child(6) { width: 9%; }   /* Truck */
+            #freightBookingsTable th:nth-child(7), #freightBookingsTable td:nth-child(7) { width: 10%; }  /* Route */
+            #freightBookingsTable th:nth-child(8), #freightBookingsTable td:nth-child(8) { width: 6%; }   /* Weight */
+            #freightBookingsTable th:nth-child(9), #freightBookingsTable td:nth-child(9) { width: 6%; }   /* Rate */
+            #freightBookingsTable th:nth-child(10), #freightBookingsTable td:nth-child(10) { width: 8%; } /* Total */
+            #freightBookingsTable th:nth-child(11), #freightBookingsTable td:nth-child(11) { width: 8%; } /* Balance */
+            #freightBookingsTable th:nth-child(12), #freightBookingsTable td:nth-child(12) { width: 11.5%; min-width: 115px; } /* Actions */
+        }
+
+        #freightBookingsTable td:nth-child(12),
+        #freightBookingsTable th:nth-child(12) {
+            overflow: visible;
+            text-overflow: clip;
+        }
+
+        .freight-bookings-index .app-index-table-actions {
+            display: inline-flex !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            gap: 4px !important;
+            white-space: nowrap !important;
+            max-width: none !important;
+        }
+
+        /* Mobile & Tablet: smooth internal horizontal scroll without page overflow */
+        @media (max-width: 1199.98px) {
+            #freightBookingsTable {
+                table-layout: auto !important;
+                min-width: 1050px !important;
+                width: 100% !important;
+            }
+
+            #freightBookingsTable th:nth-child(n),
+            #freightBookingsTable td:nth-child(n) {
+                width: auto !important;
+                white-space: nowrap !important;
+            }
+
+            #freightBookingsTable th:nth-child(12),
+            #freightBookingsTable td:nth-child(12) {
+                min-width: 120px !important;
+                width: 120px !important;
+                white-space: nowrap !important;
+                overflow: visible !important;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .freight-bookings-index .app-index-list-card > .card-header {
+                padding: 0.5rem 0.75rem !important;
+            }
+
+            .freight-bookings-index .modal-footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.4rem;
+            }
+
+            .freight-bookings-index .modal-footer .btn {
+                width: 100%;
+                margin: 0 !important;
+                text-align: center;
+            }
+
+            /* Pagination size matches Bilty standard: unified block with small font */
+            .freight-bookings-index .app-index-partload-pagination {
+                padding: 0.4rem 0.5rem !important;
+                gap: 0.35rem !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .dataTables_info {
+                font-size: 0.72rem !important;
+                text-align: center !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination {
+                margin: 0 !important;
+                gap: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-link {
+                font-size: 0.72rem !important;
+                padding: 0.22rem 0.5rem !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item:first-child .page-link {
+                border-top-left-radius: 0.375rem !important;
+                border-bottom-left-radius: 0.375rem !important;
+                border-top-right-radius: 0 !important;
+                border-bottom-right-radius: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item:last-child .page-link {
+                border-top-right-radius: 0.375rem !important;
+                border-bottom-right-radius: 0.375rem !important;
+                border-top-left-radius: 0 !important;
+                border-bottom-left-radius: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item:not(:first-child):not(:last-child) .page-link {
+                border-radius: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item:only-child .page-link {
+                border-radius: 0.375rem !important;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .freight-bookings-index .app-index-partload-pagination .dataTables_info {
+                font-size: 0.75rem !important;
+                text-align: center !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination {
+                margin: 0 !important;
+                gap: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-link {
+                font-size: 0.75rem !important;
+                padding: 0.25rem 0.55rem !important;
+            }
+        }
     </style>
 @endpush
 
@@ -135,7 +338,7 @@
 
 
 
-    <div class="container-fluid mt-4 app-index-page app-index-page--standard">
+    <div class="container-fluid mt-2 pt-1 app-index-page app-index-page--standard freight-bookings-index">
         @if (session('success'))
             <div class="mb-3">
                 <span class="badge text-bg-dark border app-index-flash">
@@ -363,10 +566,9 @@
                 <div class="modal-body" id="voucherPaymentBody">
                     <!-- Dynamic content will be loaded here -->
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success" onclick="submitVoucherPayment()"><i class="bi bi-currency-rupee"></i> Process
-                        Payment</button>
+                <div class="modal-footer d-flex flex-nowrap gap-2 p-2">
+                    <button type="button" class="btn btn-secondary btn-sm flex-fill" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success btn-sm flex-fill text-nowrap" onclick="submitVoucherPayment()"><i class="bi bi-currency-rupee"></i> Process Payment</button>
                 </div>
             </div>
         </div>
@@ -1958,7 +2160,9 @@
                 searching: false,
                 ordering: true,
                 theme: 'bootstrap-5',
-                responsive: true,
+                responsive: false,
+                scrollX: false,
+                autoWidth: false,
                 lengthChange: false,
                 order: [
                     [1, 'desc']
@@ -2140,12 +2344,12 @@
 
             // Header: show truck number once at top-right
             modalBody.innerHTML += `
-                  <div class="lr-details-section">
-                      <h5>Selected Good Hires (Lorry Hire)</h5>
+                  <div class="lr-details-section mb-3">
+                      <h5 class="fs-6 fw-bold mb-2">Selected Good Hires (Lorry Hire)</h5>
                       <div class="lr-details-content">
-                          <div class="d-flex justify-content-between align-items-center">
-                              <div class="badge bg-info fs-6">Truck Number: ${firstTruck || 'N/A'}</div>
-                              <div class="badge bg-secondary fs-6">${checkedBoxes.length} booking(s) selected</div>
+                          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                              <span class="badge bg-info small">Truck Number: ${firstTruck || 'N/A'}</span>
+                              <span class="badge bg-secondary small">${checkedBoxes.length} booking(s) selected</span>
                           </div>
                       </div>
                   </div>
@@ -2167,28 +2371,28 @@
             const firstAdvanceAmount = firstData.advance_amount;
 
             modalBody.innerHTML += `
-                  <div class="alert alert-primary mb-3">
-                      <h6 class="mb-2"><i class="fas fa-truck"></i> Transporter Details</h6>
-                      <div class="row">
-                            <div class="col-md-4">
+                  <div class="alert alert-primary mb-3 py-2 px-3">
+                      <h6 class="mb-2 fs-6 fw-bold"><i class="fas fa-truck me-1"></i> Transporter Details</h6>
+                      <div class="row g-2 small">
+                            <div class="col-12 col-sm-6 col-md-4">
                                 <strong>Transporter:</strong> ${firstTransporterName || 'N/A'}
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-sm-6 col-md-4">
                                 <strong>Mobile:</strong> ${firstTransporterMobileNumber || 'N/A'}
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-sm-6 col-md-4">
                                 <strong>Short Name:</strong> ${firstTransporterShortName || 'N/A'}
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-sm-6 col-md-4">
                                 <strong>Beneficiary ID:</strong> ${firstTransporterBeneficiaryId || 'N/A'}
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-sm-6 col-md-4">
                               <strong>TDS Percentage:</strong> ${firstTdsPercentage ? firstTdsPercentage + '%' : 'N/A'}
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-sm-6 col-md-4">
                                 <strong>Truck Number:</strong> ${firstTruck || 'N/A'}
                             </div>
-                            <div class="col-md-4 text-danger">
+                            <div class="col-12 col-sm-6 col-md-4 text-danger">
                                 <strong>Advance Amount:</strong> ${firstAdvanceAmount || 'N/A'}
                             </div>
                       </div>
@@ -2206,29 +2410,29 @@
                             : payment.payment_mode;
                         paymentRows += `
                             <tr>
-                                <td>${new Date(payment.date).toLocaleDateString()}</td>
-                                <td>${payment.freight_booking_id || 'N/A'}</td>
-                                <td>${payment.freight_booking?.lr?.lr_number || 'N/A'}</td>
-                                <td>${payment.payment_type}</td>
-                                <td>${paymentModeDisplay}</td>
-                                <td class="text-end">${parseFloat(payment.amount).toFixed(2)}</td>
+                                <td class="text-nowrap">${new Date(payment.date).toLocaleDateString()}</td>
+                                <td class="text-nowrap">${payment.freight_booking_id || 'N/A'}</td>
+                                <td class="text-nowrap">${payment.freight_booking?.lr?.lr_number || 'N/A'}</td>
+                                <td class="text-nowrap">${payment.payment_type}</td>
+                                <td class="text-nowrap">${paymentModeDisplay}</td>
+                                <td class="text-end text-nowrap">${parseFloat(payment.amount).toFixed(2)}</td>
                             </tr>
                         `;
                     });
 
                     modalBody.innerHTML += `
-                        <div class="alert alert-info mb-3">
-                            <h6 class="mb-2"><i class="fas fa-history"></i> Previous Payments</h6>
+                        <div class="alert alert-info mb-3 py-2 px-3">
+                            <h6 class="mb-2 fs-6 fw-bold"><i class="fas fa-history me-1"></i> Previous Payments</h6>
                             <div class="table-responsive">
-                                <table class="table table-sm table-striped mb-0">
-                                    <thead>
+                                <table class="table table-sm table-striped mb-0 small">
+                                    <thead class="table-light">
                                         <tr>
-                                            <th>Date</th>
-                                            <th>FR No.</th>
-                                            <th>LR Number</th>
-                                            <th>Type</th>
-                                            <th>Mode</th>
-                                            <th class="text-end">Amount</th>
+                                            <th class="text-nowrap">Date</th>
+                                            <th class="text-nowrap">FR No.</th>
+                                            <th class="text-nowrap">LR Number</th>
+                                            <th class="text-nowrap">Type</th>
+                                            <th class="text-nowrap">Mode</th>
+                                            <th class="text-end text-nowrap">Amount</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -2240,7 +2444,7 @@
                     `;
                 }
 
-                // Continue with original layout - show payment form in original SweetAlert style
+                // Show payment form
                 const lrRows = checkedBoxes.map((data, index) => {
                     const voucherNumber = data.voucher_number || '-';
                     const freightBookingId = data.freight_booking_id;
@@ -2248,15 +2452,16 @@
                     const balance = data.balance;
                     return `
                         <tr>
-                            <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${freightBookingId || 'N/A'}</td>
-                            <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${lrNumber || 'N/A'}</td>
-                            <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${firstTruck || 'N/A'}</td>
-                            <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${voucherNumber || 'N/A'}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">${balance.toFixed(2)}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">
+                            <td class="text-start text-nowrap">${freightBookingId || 'N/A'}</td>
+                            <td class="text-start text-nowrap">${lrNumber || 'N/A'}</td>
+                            <td class="text-center text-nowrap">${firstTruck || 'N/A'}</td>
+                            <td class="text-center text-nowrap">${voucherNumber || 'N/A'}</td>
+                            <td class="text-end text-nowrap">${balance.toFixed(2)}</td>
+                            <td class="text-end text-nowrap">
                                 <input type="number" step="0.01" min="0" max="${balance}"
-                                      style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
-                                      class="allocated-input" data-lr="${lrNumber}"
+                                      class="form-control form-control-sm d-inline-block text-end allocated-input"
+                                      style="width: 85px;"
+                                      data-lr="${lrNumber}"
                                       oninput="updateTotalPayment()" onchange="updateTotalPayment()">
                             </td>
                         </tr>
@@ -2264,57 +2469,59 @@
                 }).join('');
 
                 modalBody.innerHTML += `
-                  <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-                      <thead>
-                          <tr style="background-color: #f8f9fa;">
-                              <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">FR NO.</th>
-                              <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">LR NUMBER</th>
-                              <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">TRUCK NUMBER</th>
-                              <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">VOUCHER NUMBER</th>
-                              <th style="text-align: right; padding: 8px; border: 1px solid #ddd;">BALANCE AMOUNT</th>
-                              <th style="text-align: right; padding: 8px; border: 1px solid #ddd;">PAYMENT AMOUNT</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-                          ${lrRows}
-                      </tbody>
-                  </table>
-
-                  <div style="background-color: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 4px;">
-                      <strong>TOTAL PAYMENT: <span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
+                  <div class="table-responsive my-2">
+                      <table class="table table-bordered table-sm table-striped align-middle mb-0 small">
+                          <thead class="table-light">
+                              <tr>
+                                  <th class="text-start text-nowrap">FR NO.</th>
+                                  <th class="text-start text-nowrap">LR NUMBER</th>
+                                  <th class="text-center text-nowrap">TRUCK NUMBER</th>
+                                  <th class="text-center text-nowrap">VOUCHER NUMBER</th>
+                                  <th class="text-end text-nowrap">BALANCE AMOUNT</th>
+                                  <th class="text-end text-nowrap">PAYMENT AMOUNT</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              ${lrRows}
+                          </tbody>
+                      </table>
                   </div>
-                  <div style="margin: 15px 0;">
-                      <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-                          <div style="flex: 1;">
-                              <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Type *</label>
-                              <select id="paymentType" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+
+                  <div class="alert alert-info py-2 px-3 my-2 fw-bold d-flex justify-content-between align-items-center small">
+                      <span>TOTAL PAYMENT:</span>
+                      <span id="totalPaymentAmount" class="fs-6">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span>
+                  </div>
+
+                  <div class="my-3">
+                      <div class="row g-2 mb-2">
+                          <div class="col-12 col-md-6 col-lg-4">
+                              <label class="form-label mb-1 small fw-bold">Payment Type *</label>
+                              <select id="paymentType" class="form-select form-select-sm" required>
                                   <option value="">Select Payment Type</option>
                                   ${paymentTypes.map(type =>
                                       `<option value="${type.id}">${type.name}</option>`
                                   ).join('')}
                               </select>
                           </div>
-                          <div style="flex: 1;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Mode *</label>
-                            <select id="paymentMode" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+                          <div class="col-12 col-md-6 col-lg-4">
+                            <label class="form-label mb-1 small fw-bold">Payment Mode *</label>
+                            <select id="paymentMode" class="form-select form-select-sm" required>
                                 <option value="">Select Payment Mode</option>
                                 ${paymentModes.map(mode =>
                                     `<option value="${mode.id}">${mode.name}</option>`
                                 ).join('')}
                             </select>
                           </div>
-                          <div id="pumpNameContainer" style="display: none ; margin-bottom: 15px; flex: 1;">
-                           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                         <label style="display: block; margin-bottom: 0; font-weight: bold;">
-                          Pump Name *
-                           </label>
-                       <a href="javascript:void(0)"
-                       class="lrf-quick-add js-open-quick-add-pump"
-                       data-pump-select="pumpName">
-                         <i class="bi bi-plus-lg"></i> Add
-                        </a>
-                             </div>
-                            <select id="pumpName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                          <div id="pumpNameContainer" class="col-12 col-md-6 col-lg-4" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                              <label class="form-label mb-0 small fw-bold">Pump Name *</label>
+                              <a href="javascript:void(0)"
+                                 class="lrf-quick-add js-open-quick-add-pump small"
+                                 data-pump-select="pumpName">
+                                 <i class="bi bi-plus-lg"></i> Add
+                              </a>
+                            </div>
+                            <select id="pumpName" class="form-select form-select-sm">
                                 <option value="">Select Pump</option>
                                 @foreach ($pumps as $pump)
                                     <option value="{{ $pump->id }}">{{ $pump->pump_name }} {{ $pump->contact_name ? '('.$pump->contact_name.')' : '' }} </option>
@@ -2322,20 +2529,16 @@
                             </select>
                           </div>
                       </div>
-                      <div style="display: flex; gap: 20px; margin-bottom: 15px;">
-                         <!-- Payment Date -->
-                          <div style="flex: 1;">
-                              <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Date</label>
-                              <input type="date" id="paymentDate" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                      <div class="row g-2 mb-2">
+                          <div class="col-12 col-md-6">
+                              <label class="form-label mb-1 small fw-bold">Payment Date</label>
+                              <input type="date" id="paymentDate" class="form-control form-control-sm">
                           </div>
-                          <!-- Reference Transaction ID -->
-                          <div style="flex: 1;">
-                             <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
-                          <textarea id="paymentRemarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
+                          <div class="col-12 col-md-6">
+                              <label class="form-label mb-1 small fw-bold">Remarks</label>
+                              <textarea id="paymentRemarks" class="form-control form-control-sm" rows="2" placeholder="Enter any remarks..."></textarea>
                           </div>
-
                       </div>
-
                   </div>
                 `;
 
@@ -2344,7 +2547,7 @@
                 updatePaymentTypeFromAmounts();
             }).catch(error => {
                 console.error('Error fetching payment history:', error);
-                // Continue with original layout even if history fetch fails
+                // Continue with layout even if history fetch fails
                 const lrRows = checkedBoxes.map((data, index) => {
                     const voucherNumber = data.voucher_number || '-';
                     const freightBookingId = data.freight_booking_id;
@@ -2352,15 +2555,16 @@
                     const balance = data.balance;
                     return `
                         <tr>
-                            <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${freightBookingId || 'N/A'}</td>
-                            <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${lrNumber || 'N/A'}</td>
-                            <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${firstTruck || 'N/A'}</td>
-                            <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${voucherNumber || 'N/A'}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">${balance.toFixed(2)}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">
+                            <td class="text-start text-nowrap">${freightBookingId || 'N/A'}</td>
+                            <td class="text-start text-nowrap">${lrNumber || 'N/A'}</td>
+                            <td class="text-center text-nowrap">${firstTruck || 'N/A'}</td>
+                            <td class="text-center text-nowrap">${voucherNumber || 'N/A'}</td>
+                            <td class="text-end text-nowrap">${balance.toFixed(2)}</td>
+                            <td class="text-end text-nowrap">
                                 <input type="number" step="0.01" min="0" max="${balance}"
-                                      style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
-                                      class="allocated-input" data-lr="${lrNumber}"
+                                      class="form-control form-control-sm d-inline-block text-end allocated-input"
+                                      style="width: 85px;"
+                                      data-lr="${lrNumber}"
                                       oninput="updateTotalPayment()" onchange="updateTotalPayment()">
                             </td>
                         </tr>
@@ -2368,56 +2572,59 @@
                 }).join('');
 
                 modalBody.innerHTML += `
-                    <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-                        <thead>
-                            <tr style="background-color: #f8f9fa;">
-                                <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">FR NO.</th>
-                                <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">LR NUMBER</th>
-                                <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">TRUCK NUMBER</th>
-                                <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">VOUCHER NUMBER</th>
-                                <th style="text-align: right; padding: 8px; border: 1px solid #ddd;">BALANCE AMOUNT</th>
-                                <th style="text-align: right; padding: 8px; border: 1px solid #ddd;">PAYMENT AMOUNT</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${lrRows}
-                        </tbody>
-                    </table>
-
-                    <div style="background-color: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 4px;">
-                        <strong>TOTAL PAYMENT: <span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
+                    <div class="table-responsive my-2">
+                        <table class="table table-bordered table-sm table-striped align-middle mb-0 small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-start text-nowrap">FR NO.</th>
+                                    <th class="text-start text-nowrap">LR NUMBER</th>
+                                    <th class="text-center text-nowrap">TRUCK NUMBER</th>
+                                    <th class="text-center text-nowrap">VOUCHER NUMBER</th>
+                                    <th class="text-end text-nowrap">BALANCE AMOUNT</th>
+                                    <th class="text-end text-nowrap">PAYMENT AMOUNT</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${lrRows}
+                            </tbody>
+                        </table>
                     </div>
 
-                    <div style="margin: 15px 0;">
-                        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-                            <div style="flex: 1;">
-                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Type *</label>
-                                <select id="paymentType" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+                    <div class="alert alert-info py-2 px-3 my-2 fw-bold d-flex justify-content-between align-items-center small">
+                        <strong>TOTAL PAYMENT:</strong>
+                        <span id="totalPaymentAmount" class="fs-6">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span>
+                    </div>
+
+                    <div class="my-3">
+                        <div class="row g-2 mb-2">
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <label class="form-label mb-1 small fw-bold">Payment Type *</label>
+                                <select id="paymentType" class="form-select form-select-sm" required>
                                     <option value="">Select Payment Type</option>
                                     ${paymentTypes.map(type =>
                                         `<option value="${type.id}">${type.name}</option>`
                                     ).join('')}
                                 </select>
                             </div>
-                            <div style="flex: 1;">
-                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Mode *</label>
-                                <select id="paymentMode" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <label class="form-label mb-1 small fw-bold">Payment Mode *</label>
+                                <select id="paymentMode" class="form-select form-select-sm" required>
                                     <option value="">Select Payment Mode</option>
                                     ${paymentModes.map(mode =>
                                         `<option value="${mode.id}">${mode.name}</option>`
                                     ).join('')}
                                 </select>
                             </div>
-                            <div id="pumpNameContainer" style="display: none; flex: 1;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                                    <label style="display: block; margin-bottom: 0; font-weight: bold;">Pump Name *</label>
+                            <div id="pumpNameContainer" class="col-12 col-md-6 col-lg-4" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label mb-0 small fw-bold">Pump Name *</label>
                                     <a href="javascript:void(0)"
-                                        class="lrf-quick-add js-open-quick-add-pump"
+                                        class="lrf-quick-add js-open-quick-add-pump small"
                                         data-pump-select="pumpName">
                                         <i class="bi bi-plus-lg"></i> Add
                                     </a>
                                 </div>
-                                <select id="pumpName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                                <select id="pumpName" class="form-select form-select-sm">
                                     <option value="">Select Pump</option>
                                     @foreach ($pumps as $pump)
                                         <option value="{{ $pump->id }}">{{ $pump->pump_name }} {{ $pump->contact_name ? '('.$pump->contact_name.')' : '' }}</option>
@@ -2425,13 +2632,13 @@
                                 </select>
                             </div>
                         </div>
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Reference Transaction ID</label>
-                            <input type="text" id="referenceId" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter reference/transaction ID (optional)">
+                        <div class="mb-2">
+                            <label class="form-label mb-1 small fw-bold">Reference Transaction ID</label>
+                            <input type="text" id="referenceId" class="form-control form-control-sm" placeholder="Enter reference/transaction ID (optional)">
                         </div>
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
-                            <textarea id="paymentRemarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
+                        <div class="mb-2">
+                            <label class="form-label mb-1 small fw-bold">Remarks</label>
+                            <textarea id="paymentRemarks" class="form-control form-control-sm" rows="2" placeholder="Enter any remarks..."></textarea>
                         </div>
                     </div>
                 `;

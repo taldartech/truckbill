@@ -46,7 +46,7 @@
         white-space: nowrap;
     }
 </style>
-<div class="container mt-4">
+<div class="container-fluid px-2 px-md-3 mt-3 mt-md-4">
     <div class="row justify-content-center">
         <div class="col-12 col-lg-10 col-xl-8">
             <div class="card card-info card-outline mb-4">
@@ -58,7 +58,7 @@
                     @csrf
                     @method('PUT')
 
-                    <div class="card-body">
+                    <div class="card-body p-2 p-md-4">
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="transporter_id" class="form-label">Truck Owner</label>
@@ -107,7 +107,9 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <a href="{{ route('drivers.create') }}" class="btn btn-secondary" target="_blank">Add New Driver</a>
+                                    <a href="{{ route('drivers.create') }}" class="btn btn-secondary text-nowrap px-2 px-sm-3 d-inline-flex align-items-center" target="_blank" title="Add New Driver">
+                                        <i class="bi bi-person-plus-fill me-1"></i><span class="d-none d-sm-inline">Add New Driver</span><span class="d-inline d-sm-none">New Driver</span>
+                                    </a>
                                 </div>
                                 @error('driver_id') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>

@@ -64,8 +64,8 @@
                                 @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-4">
-                                <label for="pan_number" class="form-label">PAN Number</label>
-                                <input placeholder="Enter PAN Number (e.g., ABCDE1234F)" type="text" class="form-control" id="pan_number" name="pan_number" value="{{ old('pan_number') }}" maxlength="10" style="text-transform: uppercase;">
+                                <label for="pan_number" class="form-label small fw-semibold">PAN Number</label>
+                                <input placeholder="10-digit PAN (e.g., ABCDE1234F)" type="text" class="form-control form-control-sm text-uppercase" id="pan_number" name="pan_number" value="{{ old('pan_number') }}" maxlength="10">
                                 <div class="invalid-feedback" id="pan_number_feedback"></div>
                                 @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>
@@ -148,11 +148,11 @@
         </div>
 
         <div class="app-form-actions card">
-            <div class="card-body">
-                <a href="{{ route('consignees.index') }}" class="btn btn-secondary">
+            <div class="card-body d-flex flex-row flex-nowrap justify-content-end align-items-center gap-2 p-2 p-sm-3">
+                <a href="{{ route('consignees.index') }}" class="btn btn-secondary btn-sm flex-fill flex-sm-grow-0 text-nowrap w-auto">
                     <i class="bi bi-x-lg me-1"></i> Cancel
                 </a>
-                <button class="btn btn-brand-primary" type="submit">
+                <button class="btn btn-brand-primary btn-sm flex-fill flex-sm-grow-0 text-nowrap w-auto" type="submit">
                     <i class="bi bi-floppy-fill me-1"></i> Create Consignee
                 </button>
             </div>

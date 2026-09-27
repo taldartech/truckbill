@@ -50,12 +50,12 @@
                         <p class="app-form-section__hint mb-2">Enter the 10-digit PAN and click Check. The form appears only after a successful PAN check.</p>
                         <div class="mb-2">@include('shared.check-pan-status-link')</div>
                         <div class="row g-2">
-                            <div class="col-md-6">
-                                <label for="pan_lookup" class="form-label">PAN Number *</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="pan_lookup" value="{{ old('pan_number') }}" placeholder="Enter 10-digit PAN" maxlength="10" style="text-transform: uppercase;">
-                                    <button type="button" class="btn btn-brand-primary" id="btnPanLookup">
-                                        <i class="fas fa-check me-1"></i> Check PAN
+                            <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+                                <label for="pan_lookup" class="form-label small fw-semibold">PAN Number *</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" class="form-control form-control-sm text-uppercase" id="pan_lookup" value="{{ old('pan_number') }}" placeholder="10-digit PAN" maxlength="10">
+                                    <button type="button" class="btn btn-brand-primary btn-sm px-2 px-sm-3 text-nowrap" id="btnPanLookup" title="Check PAN">
+                                        <i class="fas fa-check"></i><span class="d-none d-sm-inline ms-1">Check PAN</span><span class="d-inline d-sm-none ms-1">Check</span>
                                     </button>
                                 </div>
                                 <div id="panLookupMessage" class="mt-2 small"></div>
@@ -291,11 +291,11 @@
         </div>
 
         <div id="truckOwnerFormActions" class="app-form-actions card {{ $shouldRestoreAfterValidation ? '' : 'd-none' }}">
-            <div class="card-body">
-                <a href="{{ route('truck_owners.index') }}" class="btn btn-secondary">
+            <div class="card-body d-flex flex-row flex-nowrap justify-content-end align-items-center gap-2 p-2 p-sm-3">
+                <a href="{{ route('truck_owners.index') }}" class="btn btn-secondary btn-sm flex-fill flex-sm-grow-0 text-nowrap w-auto">
                     <i class="bi bi-x-lg me-1"></i> Cancel
                 </a>
-                <button class="btn btn-brand-primary" type="button" onclick="showConfirmationModal()">
+                <button class="btn btn-brand-primary btn-sm flex-fill flex-sm-grow-0 text-nowrap w-auto" type="button" onclick="showConfirmationModal()">
                     <i class="bi bi-floppy-fill me-1"></i> Save
                 </button>
             </div>
