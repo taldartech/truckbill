@@ -7,7 +7,7 @@
 >
     <div class="truck-response-loader__panel">
 
-        @include('components.Loading.TruckLoader')
+        @include('components.loading.TruckLoader')
 
     </div>
 </div>
