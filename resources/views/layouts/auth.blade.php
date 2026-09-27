@@ -212,7 +212,7 @@
 
 <body>
      {{-- Global Truck Loader --}}
-    @include('components.Loading.AppResponseLoader')
+    @include('components.loading.AppResponseLoader')
     <div class="container d-flex justify-content-center">
         <div class="auth-card">
             <div class="logo-section">

@@ -433,7 +433,7 @@
 
 
 <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
-      @include('components.Loading.AppResponseLoader')
+      @include('components.loading.AppResponseLoader')
     <!--begin::App Wrapper-->
     <div class="app-wrapper">
         <nav class="app-header navbar navbar-expand bg-body px-2 px-md-3 py-1">
