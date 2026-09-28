@@ -149,6 +149,7 @@ class ReportExportTest extends TestCase
 
         $this->actingAs($admin)->get('/reports/consignor-consignee?'.http_build_query($params))->assertOk();
         $this->actingAs($admin)->get('/reports/tds?'.http_build_query($params))->assertOk();
+        $this->actingAs($admin)->get('/reports/tds?'.http_build_query($params + ['tab' => 'receivable']))->assertOk();
         $this->actingAs($accountant)->get('/reports/dispatch?'.http_build_query($params))->assertOk();
         $this->actingAs($accountant)->get('/reports/invoice?'.http_build_query($params))->assertOk();
         $this->actingAs($moderator)->get('/reports/consignor-consignee?'.http_build_query($params))->assertOk();
@@ -213,6 +214,7 @@ class ReportExportTest extends TestCase
 
         $this->actingAs($admin)->get('/reports/consignor-consignee-export?'.http_build_query($params))->assertOk();
         $this->actingAs($admin)->get('/reports/tds-export?'.http_build_query($params))->assertOk();
+        $this->actingAs($admin)->get('/reports/tds-export?'.http_build_query($params + ['tab' => 'receivable']))->assertOk();
         $this->actingAs($admin)->get('/reports/dispatch-export?'.http_build_query($params))->assertOk();
         $this->actingAs($admin)->get('/reports/invoice-export?'.http_build_query($params))->assertOk();
         $this->actingAs($admin)->get('/reports/shortage-damage-export?'.http_build_query($params))->assertOk();

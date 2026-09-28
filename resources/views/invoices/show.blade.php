@@ -419,6 +419,11 @@
                         <input type="hidden" id="payment_invoice_id" name="invoice_id" value="{{ $invoice->id }}">
                         <input type="hidden" id="payment_invoice_number" value="{{ $invoice->invoice_number ?: $invoice->manual_invoice_number }}">
                         <input type="hidden" id="payment_total_amount" value="{{ (float) ($invoice->net_amount ?? $invoice->total_amount) }}">
+                        @php
+                            $hasGst = (($invoice->cgst ?? 0) > 0 || ($invoice->sgst ?? 0) > 0 || ($invoice->igst ?? 0) > 0);
+                            $baseAmountForTds = ($hasGst && ($invoice->base_amount ?? 0) > 0) ? (float) $invoice->base_amount : (float) ($invoice->net_amount ?? $invoice->total_amount);
+                        @endphp
+                        <input type="hidden" id="payment_base_amount" value="{{ $baseAmountForTds }}">
                         <input type="hidden" id="payment_paid_amount" value="{{ (float) $invoice->paid_amount }}">
                         <input type="hidden" id="payment_remaining_amount" value="{{ (float) $invoice->remaining_amount }}">
 
@@ -538,7 +543,7 @@
 
             $('.calc-tds-btn').on('click', function() {
                 var pct = parseFloat($(this).data('pct')) || 0;
-                var baseTotal = parseFloat($('#payment_total_amount').val()) || 0;
+                var baseTotal = parseFloat($('#payment_base_amount').val()) || parseFloat($('#payment_total_amount').val()) || 0;
                 if (pct > 0) {
                     var tds = Math.round((baseTotal * (pct / 100)) * 100) / 100;
                     $('#payment_tds_amount').val(tds.toFixed(2)).trigger('input');

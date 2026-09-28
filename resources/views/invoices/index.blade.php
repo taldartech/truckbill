@@ -403,6 +403,7 @@
                         <input type="hidden" id="payment_invoice_id" name="invoice_id">
                         <input type="hidden" id="payment_invoice_number">
                         <input type="hidden" id="payment_total_amount">
+                        <input type="hidden" id="payment_base_amount">
                         <input type="hidden" id="payment_paid_amount">
                         <input type="hidden" id="payment_remaining_amount">
 
@@ -978,7 +979,7 @@
 
             $('.calc-tds-btn').on('click', function() {
                 var pct = parseFloat($(this).data('pct')) || 0;
-                var baseTotal = parseFloat($('#payment_total_amount').val()) || 0;
+                var baseTotal = parseFloat($('#payment_base_amount').val()) || parseFloat($('#payment_total_amount').val()) || 0;
                 if (pct > 0) {
                     var tds = Math.round((baseTotal * (pct / 100)) * 100) / 100;
                     $('#payment_tds_amount').val(tds.toFixed(2)).trigger('input');
@@ -1003,6 +1004,7 @@
                 var invoiceId = $(this).data('invoice-id');
                 var invoiceNumber = $(this).data('invoice-number');
                 var totalAmount = parseFloat($(this).data('total-amount')) || 0;
+                var baseAmount = parseFloat($(this).data('base-amount')) || totalAmount;
                 var paidAmount = parseFloat($(this).data('paid-amount')) || 0;
                 var remainingAmount = parseFloat($(this).data('remaining-amount')) || 0;
 
@@ -1016,6 +1018,7 @@
                 $('#payment_invoice_id').val(invoiceId);
                 $('#payment_invoice_number').val(invoiceNumber || '—');
                 $('#payment_total_amount').val(totalAmount);
+                $('#payment_base_amount').val(baseAmount);
                 $('#payment_paid_amount').val(paidAmount);
                 $('#payment_remaining_amount').val(remainingAmount);
                 $('#max_payment_amount').text(formatPaymentAmount(remainingAmount));
