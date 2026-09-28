@@ -9,6 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('freight_bookings', function (Blueprint $table) {
+            $table->dropIndex('freight_bookings_company_eway_expiry_idx');
             $table->dropColumn([
                 'eway_bill_number',
                 'eway_bill_expiry',
