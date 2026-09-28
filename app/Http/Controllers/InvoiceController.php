@@ -75,7 +75,7 @@ class InvoiceController extends Controller
         try {
             $paymentTotalsSub = DB::table('invoice_payments')
                 ->select('invoice_id')
-                ->selectRaw('COALESCE(SUM(amount), 0) as paid_amount_sum')
+                ->selectRaw('COALESCE(SUM(amount + COALESCE(tds_amount, 0) + COALESCE(deduction_amount, 0)), 0) as paid_amount_sum')
                 ->groupBy('invoice_id');
 
             $latestInvoiceIdByCompanySub = Invoice::query()
@@ -90,7 +90,7 @@ class InvoiceController extends Controller
                 ->leftJoinSub($latestInvoiceIdByCompanySub, 'invoice_latest_by_company', 'invoices.company_id', '=', 'invoice_latest_by_company.company_id')
                 ->select('invoices.*')
                 ->selectRaw('COALESCE(invoice_payment_totals.paid_amount_sum, 0) as paid_amount_sum')
-                ->selectRaw('GREATEST(0, COALESCE(invoices.net_amount, invoices.total_amount) - COALESCE(invoice_payment_totals.paid_amount_sum, 0)) as remaining_amount_value')
+                ->selectRaw('CASE WHEN (COALESCE(invoices.net_amount, invoices.total_amount) - COALESCE(invoice_payment_totals.paid_amount_sum, 0)) > 0 THEN (COALESCE(invoices.net_amount, invoices.total_amount) - COALESCE(invoice_payment_totals.paid_amount_sum, 0)) ELSE 0 END as remaining_amount_value')
                 ->selectRaw('(invoices.id = invoice_latest_by_company.latest_invoice_id) as is_latest_for_company');
 
             $this->applyInvoiceFilters($query, $request, 'invoices');
@@ -157,7 +157,7 @@ class InvoiceController extends Controller
                     $query->whereRaw('COALESCE(invoice_payment_totals.paid_amount_sum, 0) LIKE ?', ["%{$keyword}%"]);
                 })
                 ->filterColumn('remaining_amount_formatted', function ($query, $keyword) {
-                    $query->whereRaw('(GREATEST(0, COALESCE(invoices.net_amount, invoices.total_amount) - COALESCE(invoice_payment_totals.paid_amount_sum, 0))) LIKE ?', ["%{$keyword}%"]);
+                    $query->whereRaw('(CASE WHEN (COALESCE(invoices.net_amount, invoices.total_amount) - COALESCE(invoice_payment_totals.paid_amount_sum, 0)) > 0 THEN (COALESCE(invoices.net_amount, invoices.total_amount) - COALESCE(invoice_payment_totals.paid_amount_sum, 0)) ELSE 0 END) LIKE ?', ["%{$keyword}%"]);
                 })
                 ->orderColumn('consignee_name', 'consignees.name $1')
                 ->orderColumn('invoice_link', 'invoices.invoice_number $1')
@@ -194,10 +194,17 @@ class InvoiceController extends Controller
                 ? $invoice->invoice_number.($invoice->manual_invoice_number ? ' ('.$invoice->manual_invoice_number.')' : '')
                 : $invoice->manual_invoice_number;
 
+            $totalAmountToCollect = (float) ($invoice->net_amount ?? $invoice->total_amount);
+            $hasGst = (($invoice->cgst ?? 0) > 0 || ($invoice->sgst ?? 0) > 0 || ($invoice->igst ?? 0) > 0);
+            $baseAmountForTds = ($hasGst && ($invoice->base_amount ?? 0) > 0)
+                ? (float) $invoice->base_amount
+                : $totalAmountToCollect;
+
             $actions .= '<button type="button" class="btn btn-sm btn-icon btn-action-mark-paid add-payment-btn" title="Add Payment" data-bs-toggle="tooltip"';
             $actions .= ' data-invoice-id="'.$invoice->id.'"';
             $actions .= ' data-invoice-number="'.e($invoiceLabel).'"';
-            $actions .= ' data-total-amount="'.(float) $invoice->total_amount.'"';
+            $actions .= ' data-total-amount="'.$totalAmountToCollect.'"';
+            $actions .= ' data-base-amount="'.$baseAmountForTds.'"';
             $actions .= ' data-paid-amount="'.$paidAmountForRow.'"';
             $actions .= ' data-remaining-amount="'.$remainingAmountForRow.'">';
             $actions .= '<i class="bi bi-currency-rupee"></i></button>';

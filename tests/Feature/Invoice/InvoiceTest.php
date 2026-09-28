@@ -770,4 +770,48 @@ class InvoiceTest extends TestCase
             ->assertJsonPath($memoId.'.0.lr_number', 'LR-SLASH-1')
             ->assertJsonPath($memoId.'.0.amount', 250);
     }
+
+    public function test_get_invoices_data_reflects_full_paid_and_zero_remaining_for_invoice_settled_with_tds(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+
+        $invoice = Invoice::create([
+            'manual_invoice_number' => 'INV-TDS-DT-1',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 10000,
+            'base_amount' => 10000,
+            'net_amount' => 10000,
+            'payment_status' => 'paid',
+            'company_id' => $admin->company_id,
+            'lr_ids' => [$lr1->id],
+        ]);
+
+        $invoice->payments()->create([
+            'mode' => 'Bank Transfer',
+            'amount' => 9500,
+            'tds_amount' => 300,
+            'deduction_amount' => 200,
+            'deduction_reason' => 'Transit shortage',
+            'payment_date' => now()->toDateString(),
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/invoices');
+
+        $response->assertOk();
+        $json = $response->json();
+        $this->assertNotEmpty($json['data']);
+        $matched = collect($json['data'])->firstWhere('id', $invoice->id);
+        $this->assertNotNull($matched);
+        $this->assertEquals(10000, (float) $matched['paid_amount_sum']);
+        $this->assertEquals(0, (float) $matched['remaining_amount_value']);
+        $this->assertStringContainsString('10,000.00', $matched['paid_amount_formatted']);
+        $this->assertStringContainsString('0.00', $matched['remaining_amount_formatted']);
+    }
 }
+

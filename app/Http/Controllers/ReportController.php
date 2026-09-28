@@ -13,6 +13,7 @@ use App\Exports\PartyBillExport;
 use App\Exports\PendingInvoiceExport;
 use App\Exports\PendingMemoExport;
 use App\Exports\PumpExport;
+use App\Exports\CustomerTDSExport;
 use App\Exports\ShortageDamageExport;
 use App\Exports\TDSExport;
 use App\Exports\TransporterMasterExport;
@@ -23,6 +24,7 @@ use App\Models\CompanySetting;
 use App\Models\Consignee;
 use App\Models\FreightBooking;
 use App\Models\Invoice;
+use App\Models\InvoicePayment;
 use App\Models\LorryReceipt;
 use App\Models\PaymentMode;
 use App\Models\Pump;
@@ -199,6 +201,7 @@ if (! $startInput || ! $endInput) {
     public function tds(Request $request)
     {
         [$startDate, $endDate, $generated] = $this->normalizeDateRange($request);
+        $tab = $request->input('tab', 'payable');
 
         $user = Auth::user()->company_id;
         if ($generated) {
@@ -215,23 +218,42 @@ if (! $startInput || ! $endInput) {
                     ->whereColumn('lorry_receipts.id', 'freight_bookings.lr_id')
                     ->limit(1);
             }, 'asc');
-            $lrs = $query->paginate(self::REPORTS_PER_PAGE)->appends($request->query());
+            $lrs = $query->paginate(self::REPORTS_PER_PAGE, ['*'], 'payable_page')->appends($request->query());
+
+            $customerQuery = InvoicePayment::query()
+                ->with(['invoice.consignee', 'invoice.company'])
+                ->where('tds_amount', '>', 0)
+                ->whereBetween('payment_date', [$startDate, $endDate]);
+
+            if ($user) {
+                $customerQuery->whereHas('invoice', function ($q) use ($user) {
+                    $q->where('company_id', $user);
+                });
+            }
+            $customerPayments = $customerQuery->orderBy('payment_date', 'asc')
+                ->paginate(self::REPORTS_PER_PAGE, ['*'], 'receivable_page')
+                ->appends($request->query());
+
             $generated = true;
         } else {
             $lrs = collect();
+            $customerPayments = collect();
         }
 
-        return view('reports.tds', compact('lrs', 'startDate', 'endDate', 'generated'));
+        return view('reports.tds', compact('lrs', 'customerPayments', 'startDate', 'endDate', 'generated', 'tab'));
     }
 
     public function tds_export(Request $request)
     {
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
+        $tab = $request->input('tab', 'payable');
 
-        $export = Excel::download(new TDSExport($startDate, $endDate), 'tds_report.xlsx');
+        if ($tab === 'receivable') {
+            return Excel::download(new CustomerTDSExport($startDate, $endDate), 'customer_tds_receivable_report.xlsx');
+        }
 
-        return $export;
+        return Excel::download(new TDSExport($startDate, $endDate), 'tds_report.xlsx');
     }
 
     public function dispatch(Request $request)

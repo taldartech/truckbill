@@ -41,23 +41,42 @@
                                 <th>Company</th>
                                 <th>Date</th>
                                 <th>Mode</th>
-                                <th>Amount</th>
+                                <th class="text-end">Remitted (₹)</th>
+                                <th class="text-end">TDS 194C (₹)</th>
+                                <th class="text-end">Deductions (₹)</th>
+                                <th class="text-end pe-4">Total Settled (₹)</th>
                                 <th>Remark</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($payments as $payment)
                                 <tr>
-                                    <td class="ps-4">{{ $payment->invoice->invoice_number ?? $payment->invoice->manual_invoice_number ?? '-' }}</td>
+                                    <td class="ps-4 fw-semibold">{{ $payment->invoice->invoice_number ?? $payment->invoice->manual_invoice_number ?? '-' }}</td>
                                     <td>{{ $payment->invoice->company->name ?? '-' }}</td>
                                     <td>{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : '-' }}</td>
-                                    <td>{{ ucfirst($payment->mode ?? '-') }}</td>
-                                    <td>{{ number_format((float) $payment->amount, 2) }}</td>
+                                    <td><span class="badge bg-light text-dark border">{{ ucfirst($payment->mode ?? '-') }}</span></td>
+                                    <td class="text-end fw-semibold text-dark">&#8377;{{ number_format((float) $payment->amount, 2) }}</td>
+                                    <td class="text-end text-primary">
+                                        {{ (float)($payment->tds_amount ?? 0) > 0 ? '₹'.number_format((float)$payment->tds_amount, 2) : '-' }}
+                                    </td>
+                                    <td class="text-end text-danger">
+                                        @if((float)($payment->deduction_amount ?? 0) > 0)
+                                            <span>₹{{ number_format((float)$payment->deduction_amount, 2) }}</span>
+                                            @if($payment->deduction_reason)
+                                                <small class="text-muted d-block text-xs">({{ $payment->deduction_reason }})</small>
+                                            @endif
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td class="text-end pe-4 fw-bold text-success">
+                                        &#8377;{{ number_format((float)$payment->amount + (float)($payment->tds_amount ?? 0) + (float)($payment->deduction_amount ?? 0), 2) }}
+                                    </td>
                                     <td>{{ $payment->remark ?? '-' }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">No invoice payments found.</td>
+                                    <td colspan="9" class="text-center py-4 text-muted">No invoice payments found.</td>
                                 </tr>
                             @endforelse
                         </tbody>
