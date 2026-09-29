@@ -257,6 +257,13 @@
             padding-right: 5px !important;
         }
 
+        #freightBookingsTable tbody td,
+        #freightBookingsTable tbody td a,
+        #freightBookingsTable tbody td span:not(.badge),
+        #freightBookingsTable tbody td div {
+            font-size: 12px !important;
+        }
+
         #freightBookingsTable thead th {
             position: sticky;
             top: 0;

@@ -89,6 +89,13 @@
             letter-spacing: 0;
         }
 
+        #lorryReceiptsTable tbody td,
+        #lorryReceiptsTable tbody td a,
+        #lorryReceiptsTable tbody td span:not(.badge),
+        #lorryReceiptsTable tbody td div {
+            font-size: 12px !important;
+        }
+
         /* Large desktop view: fit within 100% */
         @media (min-width: 1200px) {
             #lorryReceiptsTable {
