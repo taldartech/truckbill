@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AccountGroup;
 use App\Models\AccountingVoucher;
 use App\Models\AccountingVoucherItem;
 use App\Models\Company;
+use App\Models\Consignee;
 use App\Models\CostCentre;
+use App\Models\Invoice;
+use App\Models\InvoicePayment;
 use App\Models\Ledger;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -55,7 +60,8 @@ class AccountingVoucherController extends Controller
     public function create(): View
     {
         $company = $this->getActiveCompany();
-        $ledgers = Ledger::where('company_id', $company->id)
+        $ledgers = Ledger::with('accountGroup')
+            ->where('company_id', $company->id)
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
@@ -64,7 +70,11 @@ class AccountingVoucherController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('accounting.vouchers.create', compact('company', 'ledgers', 'costCentres'));
+        $allGroups = AccountGroup::where('company_id', $company->id)
+            ->orderBy('name')
+            ->get();
+
+        return view('accounting.vouchers.create', compact('company', 'ledgers', 'costCentres', 'allGroups'));
     }
 
     public function store(Request $request): RedirectResponse|JsonResponse
@@ -85,6 +95,7 @@ class AccountingVoucherController extends Controller
             'items.*.type' => 'required|in:debit,credit',
             'items.*.amount' => 'required|numeric|min:0.01',
             'items.*.cost_centre_id' => 'nullable|exists:cost_centres,id',
+            'items.*.invoice_id' => 'nullable|exists:invoices,id',
             'items.*.particulars_note' => 'nullable|string|max:255',
         ]);
 
@@ -130,15 +141,51 @@ class AccountingVoucherController extends Controller
             ]);
 
             foreach ($items as $itemData) {
-                AccountingVoucherItem::create([
+                $voucherItem = AccountingVoucherItem::create([
                     'company_id' => $company->id,
                     'accounting_voucher_id' => $voucher->id,
                     'ledger_id' => $itemData['ledger_id'],
                     'type' => $itemData['type'],
                     'amount' => $itemData['amount'],
                     'cost_centre_id' => $itemData['cost_centre_id'] ?? null,
+                    'invoice_id' => ! empty($itemData['invoice_id']) ? $itemData['invoice_id'] : null,
                     'particulars_note' => $itemData['particulars_note'] ?? null,
                 ]);
+
+                // If this item is adjusted against an invoice:
+                if (! empty($itemData['invoice_id'])) {
+                    $inv = Invoice::find($itemData['invoice_id']);
+                    if ($inv) {
+                        // Check if the debit items in this voucher represent TDS or deductions
+                        $isTds = false;
+                        $isDeduction = false;
+                        foreach ($items as $otherItem) {
+                            if ($otherItem['type'] === 'debit') {
+                                $otherLedger = Ledger::find($otherItem['ledger_id']);
+                                $lName = strtolower($otherLedger?->name ?? '');
+                                if (str_contains($lName, 'tds')) {
+                                    $isTds = true;
+                                } elseif (str_contains($lName, 'discount') || str_contains($lName, 'claim') || str_contains($lName, 'shortage')) {
+                                    $isDeduction = true;
+                                }
+                            }
+                        }
+
+                        InvoicePayment::withoutEvents(function () use ($inv, $itemData, $voucher, $validated, $isTds, $isDeduction): void {
+                            InvoicePayment::create([
+                                'invoice_id' => $inv->id,
+                                'mode' => $isTds ? 'tds' : ($isDeduction ? 'deduction' : ($validated['voucher_type'] === 'receipt' ? 'bank' : 'voucher')),
+                                'bank_ledger_id' => null,
+                                'amount' => (! $isTds && ! $isDeduction) ? (float) $itemData['amount'] : 0.00,
+                                'tds_amount' => $isTds ? (float) $itemData['amount'] : 0.00,
+                                'deduction_amount' => $isDeduction ? (float) $itemData['amount'] : 0.00,
+                                'deduction_reason' => $isDeduction ? ('Shortage/Deduction via Voucher #'.$voucher->voucher_number) : null,
+                                'remark' => ($isTds ? 'TDS' : ($isDeduction ? 'Deduction' : 'Settlement')).' via Voucher #'.$voucher->voucher_number.($validated['narration'] ? ' - '.$validated['narration'] : ''),
+                                'payment_date' => $validated['voucher_date'],
+                            ]);
+                        });
+                    }
+                }
             }
 
             return $voucher;
@@ -153,6 +200,64 @@ class AccountingVoucherController extends Controller
         }
 
         return redirect()->route('accounting.vouchers.index')->with('success', "Voucher #{$voucher->voucher_number} posted successfully.");
+    }
+
+    public function getPendingInvoices(Ledger $ledger): JsonResponse
+    {
+        $company = $this->getActiveCompany();
+        if ($ledger->company_id !== $company->id) {
+            abort(403);
+        }
+
+        $customer = null;
+        if ($ledger->entity_type === Consignee::class && $ledger->entity_id) {
+            $customer = Consignee::find($ledger->entity_id);
+        } else {
+            $cleanName = preg_replace('/\s*\(customer\)$/i', '', trim($ledger->name));
+            $customer = Consignee::where('company_id', $company->id)
+                ->where(function ($q) use ($cleanName) {
+                    $q->where('name', $cleanName)
+                        ->orWhere('name', 'like', "%{$cleanName}%");
+                })->first();
+        }
+
+        if (! $customer) {
+            return response()->json([
+                'is_customer' => false,
+                'invoices' => [],
+            ]);
+        }
+
+        $invoices = Invoice::with('payments')
+            ->where('customer_id', $customer->id)
+            ->where('company_id', $company->id)
+            ->orderBy('generated_date', 'desc')
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $pendingInvoices = $invoices->map(function ($inv) {
+            $billAmount = (float) ($inv->net_amount ?? $inv->total_amount);
+            $paidAmount = (float) $inv->paid_amount;
+            $remaining = (float) $inv->remaining_amount;
+
+            return [
+                'id' => $inv->id,
+                'invoice_number' => $inv->invoice_number ?: ($inv->manual_invoice_number ?: 'INV-'.$inv->id),
+                'date' => $inv->generated_date ? Carbon::parse($inv->generated_date)->format('d-m-Y') : '',
+                'total_amount' => $billAmount,
+                'paid_amount' => $paidAmount,
+                'remaining_amount' => $remaining,
+                'label' => ($inv->invoice_number ?: 'INV-'.$inv->id).' - Bal Due: ₹'.number_format($remaining, 2).' (Total: ₹'.number_format($billAmount, 2).')',
+            ];
+        })
+        ->filter(fn ($inv) => $inv['remaining_amount'] > 0.01)
+        ->values();
+
+        return response()->json([
+            'is_customer' => true,
+            'customer_name' => $customer->name,
+            'invoices' => $pendingInvoices,
+        ]);
     }
 
     public function show(AccountingVoucher $voucher): View

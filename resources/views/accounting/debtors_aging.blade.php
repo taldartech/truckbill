@@ -237,7 +237,10 @@
         <div class="flex-grow-1">
             <strong class="text-danger">MSME Section 43B(h) Overdue Alert:</strong>
             <span class="text-dark">
-                <strong>{{ $report['totals']['msme_alert_customers_count'] }} debtor(s)</strong> have outstanding invoices pending beyond <strong>45 days</strong>, totaling <strong>₹{{ number_format($report['totals']['total_msme_overdue'], 2) }}</strong>. Under Section 43B(h) of the Income Tax Act, delayed payments to registered MSME suppliers attract mandatory tax disallowance.
+                <strong>{{ $report['totals']['msme_alert_customers_count'] }} debtor(s)</strong> have outstanding invoices pending beyond <strong>45 days</strong>, totaling <strong>₹{{ number_format($report['totals']['total_msme_overdue'], 2) }}</strong>.
+                <div class="mt-1 small text-muted">
+                    <i class="bi bi-info-circle me-1"></i><strong>Statutory Note on Sec 43B(h):</strong> Delayed payments beyond 45 days attract mandatory income tax disallowance for <u>our Sundry Debtors / Customers</u> (buyers), not to our company. You can cite Section 43B(h) in follow-up reminders to accelerate payment collections. (Conversely, delayed payments by our company to registered <u>MSME Sundry Creditors / Transporters</u> will attract disallowance to <u>us</u>).
+                </div>
             </span>
         </div>
     </div>
@@ -673,7 +676,7 @@
 
         @if($report['totals']['msme_alert_customers_count'] > 0)
             <div style="margin-top: 10px; font-size: 7.5pt; color: #333333; line-height: 1.3;">
-                * <strong>MSME Section 43B(h) Notice:</strong> Total overdue receivables beyond 45 days: ₹{{ $formatAmount($report['totals']['total_msme_overdue']) }} across {{ $report['totals']['msme_alert_customers_count'] }} debtor(s). Statutory interest and tax disallowance rules may apply.
+                * <strong>MSME Section 43B(h) Notice:</strong> Total overdue receivables beyond 45 days: ₹{{ $formatAmount($report['totals']['total_msme_overdue']) }} across {{ $report['totals']['msme_alert_customers_count'] }} debtor(s). Note: Section 43B(h) statutory tax disallowance applies to the debtor/buyer for delayed payments to MSME suppliers, not to our company.
             </div>
         @endif
     </div>

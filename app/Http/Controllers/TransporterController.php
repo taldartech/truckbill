@@ -601,6 +601,8 @@ public function bulkUploadTemplate()
             $validated['declaration_194c6_date'] = $declarationGiven ? ($validated['declaration_194c6_date'] ?? now()->toDateString()) : null;
             $validated['tds_percentage'] = $isDummyPan ? $submittedTds : ($declarationGiven ? 0.00 : $submittedTds);
             $validated['tds_adjustment_remark'] = $isDummyPan ? $remark : ($declarationGiven ? null : $remark);
+            $validated['is_msme'] = $request->boolean('is_msme');
+            $validated['msme_reg_no'] = $request->input('msme_reg_no');
             Transporter::create($validated);
 
             return redirect()->route('transporters.index')->with('success', 'Transporter created successfully!');
@@ -608,7 +610,7 @@ public function bulkUploadTemplate()
 
         $email = TransporterMaster::normalizeEmail($validated['email'] ?? null);
 
-        $onboardingData = DB::transaction(function () use ($validated, $declarationGiven, $email, $dummyPan) {
+        $onboardingData = DB::transaction(function () use ($validated, $declarationGiven, $email, $dummyPan, $request) {
             $masterData = [
                 'name' => $validated['name'],
                 'email' => $email,
@@ -620,6 +622,8 @@ public function bulkUploadTemplate()
                 'city_id' => $validated['city_id'] ?? null,
                 'state_id' => $validated['state_id'] ?? null,
                 'country_id' => $validated['country_id'] ?? null,
+                'is_msme' => $request->boolean('is_msme'),
+                'msme_reg_no' => $request->input('msme_reg_no'),
             ];
             $master = TransporterMaster::create($masterData);
 
@@ -653,6 +657,8 @@ public function bulkUploadTemplate()
                 'total_trucks' => 0,
                 'tds_percentage' => $isDummyPan ? $submittedTds : ($declarationGiven ? 0.00 : $submittedTds),
                 'tds_adjustment_remark' => $isDummyPan ? $remark : ($declarationGiven ? null : $remark),
+                'is_msme' => $request->boolean('is_msme'),
+                'msme_reg_no' => $request->input('msme_reg_no'),
             ];
             Transporter::create($transporterData);
 
@@ -788,6 +794,8 @@ public function bulkUploadTemplate()
             'total_trucks' => $validated['total_trucks'] ?? 0,
             'tds_percentage' => $isDummyPan ? $submittedTds : ($declGiven ? 0.00 : $submittedTds),
             'tds_adjustment_remark' => $isDummyPan ? $tdsRemark : ($declGiven ? null : $tdsRemark),
+            'is_msme' => $request->boolean('is_msme'),
+            'msme_reg_no' => $request->input('msme_reg_no'),
         ];
 
         if (auth()->user()->userRole->name === 'super_admin') {
@@ -796,6 +804,13 @@ public function bulkUploadTemplate()
         }
 
         $transporter->update($updateData);
+
+        if ($master) {
+            $master->update([
+                'is_msme' => $request->boolean('is_msme'),
+                'msme_reg_no' => $request->input('msme_reg_no'),
+            ]);
+        }
 
         if (abs($previousTds - $submittedTds) > 0.01) {
             $this->freightBookingTdsSync->syncForTransporter($transporter, $submittedTds);

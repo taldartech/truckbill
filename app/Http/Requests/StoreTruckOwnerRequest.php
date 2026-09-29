@@ -49,6 +49,8 @@ class StoreTruckOwnerRequest extends FormRequest
             'declaration_given' => 'required|boolean',
             'declaration_194c6_date' => 'nullable|date',
             'total_trucks' => 'required|integer|min:0|max:10000',
+            'is_msme' => 'nullable|boolean',
+            'msme_reg_no' => 'nullable|string|max:50',
         ], $this->tdsOverrideFieldRules());
 
         if ($isDummyPan) {

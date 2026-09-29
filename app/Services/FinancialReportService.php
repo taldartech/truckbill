@@ -213,36 +213,68 @@ class FinancialReportService
     }
 
     /**
+     * Recursively retrieve all descendant account group IDs for a given group.
+     *
+     * @return array<int>
+     */
+    public function getAllDescendantGroupIds(int $companyId, int $rootGroupId): array
+    {
+        $allIds = [$rootGroupId];
+        $currentParentIds = [$rootGroupId];
+
+        while (! empty($currentParentIds)) {
+            $childIds = AccountGroup::where('company_id', $companyId)
+                ->whereIn('parent_id', $currentParentIds)
+                ->pluck('id')
+                ->all();
+
+            if (empty($childIds)) {
+                break;
+            }
+
+            $allIds = array_merge($allIds, $childIds);
+            $currentParentIds = $childIds;
+        }
+
+        return array_values(array_unique($allIds));
+    }
+
+    /**
      * Generate Trial Balance for a company up to a date.
      *
+     * @param string $mode 'all' (closing balance), 'opening' (opening balance only), 'transactions' (period debits/credits)
      * @return array<string, mixed>
      */
-    public function getTrialBalance(Company $company, ?string $asOfDate = null): array
+    public function getTrialBalance(Company $company, ?string $asOfDate = null, string $mode = 'all'): array
     {
         $asOfDate = $asOfDate ?: now()->toDateString();
+        $mode = in_array($mode, ['all', 'opening', 'transactions'], true) ? $mode : 'all';
 
-        $groups = AccountGroup::with(['ledgers' => function ($q) {
-            $q->where('is_active', true);
-        }])
-            ->where('company_id', $company->id)
+        $groups = AccountGroup::where('company_id', $company->id)
             ->whereNull('parent_id')
+            ->orderBy('id')
             ->get();
 
         $groupRows = [];
         $grandTotalDebit = 0.0;
         $grandTotalCredit = 0.0;
 
+        $openingTotalDebit = 0.0;
+        $openingTotalCredit = 0.0;
+        $periodTotalDebit = 0.0;
+        $periodTotalCredit = 0.0;
+        $closingTotalDebit = 0.0;
+        $closingTotalCredit = 0.0;
+
+        $allProcessedLedgerIds = collect();
+
         foreach ($groups as $group) {
-            $allSubGroupIds = AccountGroup::where('company_id', $company->id)
-                ->where(function ($q) use ($group): void {
-                    $q->where('id', $group->id)
-                        ->orWhere('parent_id', $group->id);
-                })
-                ->pluck('id');
+            $allSubGroupIds = $this->getAllDescendantGroupIds($company->id, $group->id);
 
             $ledgers = Ledger::where('company_id', $company->id)
                 ->whereIn('account_group_id', $allSubGroupIds)
                 ->where('is_active', true)
+                ->orderBy('name')
                 ->get();
 
             $groupDebit = 0.0;
@@ -250,30 +282,69 @@ class FinancialReportService
             $ledgerDetails = [];
 
             foreach ($ledgers as $ledger) {
-                $bal = $ledger->getCalculatedBalance($asOfDate);
-                if ($bal['amount'] <= 0.001) {
+                $allProcessedLedgerIds->push($ledger->id);
+
+                // Opening balances
+                $opDeb = $ledger->opening_balance_type === 'debit' ? (float) $ledger->opening_balance : 0.0;
+                $opCred = $ledger->opening_balance_type === 'credit' ? (float) $ledger->opening_balance : 0.0;
+
+                // Period transactions up to asOfDate
+                $vchQuery = $ledger->voucherItems()
+                    ->whereHas('accountingVoucher', function ($vQuery) use ($asOfDate): void {
+                        $vQuery->where('is_posted', true);
+                        if ($asOfDate !== null) {
+                            $vQuery->whereDate('voucher_date', '<=', $asOfDate);
+                        }
+                    });
+                $periodDeb = (float) (clone $vchQuery)->where('type', 'debit')->sum('amount');
+                $periodCred = (float) (clone $vchQuery)->where('type', 'credit')->sum('amount');
+
+                // Closing net balance
+                $netDebit = $opDeb + $periodDeb;
+                $netCredit = $opCred + $periodCred;
+                $closingDeb = $netDebit >= $netCredit ? round($netDebit - $netCredit, 2) : 0.0;
+                $closingCred = $netCredit > $netDebit ? round($netCredit - $netDebit, 2) : 0.0;
+
+                $openingTotalDebit += $opDeb;
+                $openingTotalCredit += $opCred;
+                $periodTotalDebit += $periodDeb;
+                $periodTotalCredit += $periodCred;
+                $closingTotalDebit += $closingDeb;
+                $closingTotalCredit += $closingCred;
+
+                if ($mode === 'opening') {
+                    $itemDeb = $opDeb;
+                    $itemCred = $opCred;
+                } elseif ($mode === 'transactions') {
+                    $itemDeb = $periodDeb;
+                    $itemCred = $periodCred;
+                } else {
+                    $itemDeb = $closingDeb;
+                    $itemCred = $closingCred;
+                }
+
+                if ($itemDeb <= 0.001 && $itemCred <= 0.001) {
                     continue;
                 }
 
-                if ($bal['type'] === 'debit') {
-                    $groupDebit += $bal['amount'];
-                    $grandTotalDebit += $bal['amount'];
-                    $ledgerDetails[] = [
-                        'id' => $ledger->id,
-                        'name' => $ledger->name,
-                        'debit' => $bal['amount'],
-                        'credit' => 0.0,
-                    ];
-                } else {
-                    $groupCredit += $bal['amount'];
-                    $grandTotalCredit += $bal['amount'];
-                    $ledgerDetails[] = [
-                        'id' => $ledger->id,
-                        'name' => $ledger->name,
-                        'debit' => 0.0,
-                        'credit' => $bal['amount'],
-                    ];
-                }
+                $groupDebit += $itemDeb;
+                $groupCredit += $itemCred;
+                $grandTotalDebit += $itemDeb;
+                $grandTotalCredit += $itemCred;
+
+                $ledgerDetails[] = [
+                    'id' => $ledger->id,
+                    'name' => $ledger->name,
+                    'group_name' => $ledger->accountGroup?->name,
+                    'opening_debit' => $opDeb,
+                    'opening_credit' => $opCred,
+                    'period_debit' => $periodDeb,
+                    'period_credit' => $periodCred,
+                    'closing_debit' => $closingDeb,
+                    'closing_credit' => $closingCred,
+                    'debit' => $itemDeb,
+                    'credit' => $itemCred,
+                ];
             }
 
             if (! empty($ledgerDetails)) {
@@ -288,13 +359,119 @@ class FinancialReportService
             }
         }
 
+        // Also check if any active ledgers were not under root groups (e.g. orphan groups)
+        $remainingLedgers = Ledger::where('company_id', $company->id)
+            ->where('is_active', true)
+            ->whereNotIn('id', $allProcessedLedgerIds)
+            ->with('accountGroup')
+            ->get();
+
+        if ($remainingLedgers->isNotEmpty()) {
+            $orphanDebit = 0.0;
+            $orphanCredit = 0.0;
+            $orphanLedgerDetails = [];
+
+            foreach ($remainingLedgers as $ledger) {
+                $opDeb = $ledger->opening_balance_type === 'debit' ? (float) $ledger->opening_balance : 0.0;
+                $opCred = $ledger->opening_balance_type === 'credit' ? (float) $ledger->opening_balance : 0.0;
+
+                $vchQuery = $ledger->voucherItems()
+                    ->whereHas('accountingVoucher', function ($vQuery) use ($asOfDate): void {
+                        $vQuery->where('is_posted', true);
+                        if ($asOfDate !== null) {
+                            $vQuery->whereDate('voucher_date', '<=', $asOfDate);
+                        }
+                    });
+                $periodDeb = (float) (clone $vchQuery)->where('type', 'debit')->sum('amount');
+                $periodCred = (float) (clone $vchQuery)->where('type', 'credit')->sum('amount');
+
+                $netDebit = $opDeb + $periodDeb;
+                $netCredit = $opCred + $periodCred;
+                $closingDeb = $netDebit >= $netCredit ? round($netDebit - $netCredit, 2) : 0.0;
+                $closingCred = $netCredit > $netDebit ? round($netCredit - $netDebit, 2) : 0.0;
+
+                $openingTotalDebit += $opDeb;
+                $openingTotalCredit += $opCred;
+                $periodTotalDebit += $periodDeb;
+                $periodTotalCredit += $periodCred;
+                $closingTotalDebit += $closingDeb;
+                $closingTotalCredit += $closingCred;
+
+                if ($mode === 'opening') {
+                    $itemDeb = $opDeb;
+                    $itemCred = $opCred;
+                } elseif ($mode === 'transactions') {
+                    $itemDeb = $periodDeb;
+                    $itemCred = $periodCred;
+                } else {
+                    $itemDeb = $closingDeb;
+                    $itemCred = $closingCred;
+                }
+
+                if ($itemDeb <= 0.001 && $itemCred <= 0.001) {
+                    continue;
+                }
+
+                $orphanDebit += $itemDeb;
+                $orphanCredit += $itemCred;
+                $grandTotalDebit += $itemDeb;
+                $grandTotalCredit += $itemCred;
+
+                $orphanLedgerDetails[] = [
+                    'id' => $ledger->id,
+                    'name' => $ledger->name,
+                    'group_name' => $ledger->accountGroup?->name ?? 'Unclassified',
+                    'opening_debit' => $opDeb,
+                    'opening_credit' => $opCred,
+                    'period_debit' => $periodDeb,
+                    'period_credit' => $periodCred,
+                    'closing_debit' => $closingDeb,
+                    'closing_credit' => $closingCred,
+                    'debit' => $itemDeb,
+                    'credit' => $itemCred,
+                ];
+            }
+
+            if (! empty($orphanLedgerDetails)) {
+                $groupRows[] = [
+                    'group_id' => null,
+                    'group_name' => 'Other Accounts',
+                    'primary_type' => 'asset',
+                    'total_debit' => $orphanDebit,
+                    'total_credit' => $orphanCredit,
+                    'ledgers' => $orphanLedgerDetails,
+                ];
+            }
+        }
+
+        $activeDiff = abs($grandTotalDebit - $grandTotalCredit);
+
         return [
             'as_of_date' => $asOfDate,
+            'mode' => $mode,
             'groups' => $groupRows,
-            'total_debit' => $grandTotalDebit,
-            'total_credit' => $grandTotalCredit,
-            'is_balanced' => abs($grandTotalDebit - $grandTotalCredit) < 0.01,
-            'difference' => abs($grandTotalDebit - $grandTotalCredit),
+            'total_debit' => round($grandTotalDebit, 2),
+            'total_credit' => round($grandTotalCredit, 2),
+            'is_balanced' => $activeDiff < 0.01,
+            'difference' => round($activeDiff, 2),
+            'opening_totals' => [
+                'debit' => round($openingTotalDebit, 2),
+                'credit' => round($openingTotalCredit, 2),
+                'difference' => round(abs($openingTotalDebit - $openingTotalCredit), 2),
+                'is_balanced' => abs($openingTotalDebit - $openingTotalCredit) < 0.01,
+            ],
+            'period_totals' => [
+                'debit' => round($periodTotalDebit, 2),
+                'credit' => round($periodTotalCredit, 2),
+                'difference' => round(abs($periodTotalDebit - $periodTotalCredit), 2),
+                'is_balanced' => abs($periodTotalDebit - $periodTotalCredit) < 0.01,
+            ],
+            'closing_totals' => [
+                'debit' => round($closingTotalDebit, 2),
+                'credit' => round($closingTotalCredit, 2),
+                'difference' => round(abs($closingTotalDebit - $closingTotalCredit), 2),
+                'is_balanced' => abs($closingTotalDebit - $closingTotalCredit) < 0.01,
+            ],
         ];
     }
 
@@ -365,10 +542,10 @@ class FinancialReportService
 
         // 2. Transporter / Truck Owner (Sundry Creditors) -> Trip Freight Bookings
         if ($ledger->entity_type === Transporter::class && $ledger->entity_id) {
-            $bookings = FreightBooking::with(['lr', 'truck', 'payments'])
+            $bookings = FreightBooking::with(['lr.truck', 'payments'])
                 ->where(function ($q) use ($ledger) {
                     $q->where('transporter_id', $ledger->entity_id)
-                        ->orWhereHas('truck', fn ($tq) => $tq->where('transporter_id', $ledger->entity_id));
+                        ->orWhereHas('lr.truck', fn ($tq) => $tq->where('transporter_id', $ledger->entity_id));
                 })
                 ->where('company_id', $ledger->company_id)
                 ->orderBy('created_at', 'desc')
@@ -387,7 +564,7 @@ class FinancialReportService
                 }
 
                 $lrNo = $fb->lr?->lr_number ?? ($fb->lr_id ? 'LR-'.$fb->lr_id : 'N/A');
-                $truckNo = $fb->truck?->truck_number ?? 'N/A';
+                $truckNo = $fb->lr?->truck?->truck_number ?? ($fb->truck?->truck_number ?? 'N/A');
 
                 $bills->push([
                     'type' => 'booking',

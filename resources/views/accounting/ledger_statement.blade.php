@@ -207,7 +207,7 @@
                         <option value="">-- Choose Ledger Account --</option>
                         @foreach($ledgers as $l)
                             <option value="{{ $l->id }}" {{ (string)$selectedLedgerId === (string)$l->id ? 'selected' : '' }}>
-                                {{ $l->name }} ({{ $l->accountGroup?->name ?? 'Primary' }})
+                                {{ $l->name }} ({{ $l->getGroupHeadDisplay() }})
                             </option>
                         @endforeach
                     </select>
@@ -250,6 +250,9 @@
                     @if($company->pan_number) <span class="ms-3"><strong>PAN:</strong> {{ $company->pan_number }}</span> @endif
                     @if($company->contact_number) <span class="ms-3"><strong>Phone:</strong> {{ $company->contact_number }}</span> @endif
                 </div>
+                <div class="text-secondary small mt-1">
+                    <strong>Account:</strong> {{ $statement['ledger']->name }} &bull; <strong>Group Head:</strong> {{ $statement['ledger']->getGroupHeadDisplay() }}
+                </div>
             </div>
             <div class="text-end">
                 <h4 class="fw-bold text-uppercase text-dark mb-1" style="font-size: 1.15rem; letter-spacing: 0.5px;">Statement of Account</h4>
@@ -267,17 +270,19 @@
     <div class="card shadow-sm border-0 mb-3" style="border-radius: 12px; border: 1px solid var(--brand-border) !important; background: #fff;">
         <div class="card-body p-3">
             <div class="row align-items-center g-3">
-                <div class="col-md-4">
-                    <span class="badge mb-1" style="background-color: var(--brand-soft-primary); color: var(--brand-primary); font-weight: 600;">
-                        {{ $statement['ledger']->accountGroup?->name ?? 'General Ledger' }}
-                    </span>
+                <div class="col-md-5">
+                    <div class="d-flex align-items-center gap-1 mb-1">
+                        <span class="badge" style="background-color: var(--brand-soft-primary); color: var(--brand-primary); font-weight: 600;">
+                            <i class="bi bi-diagram-3 me-1"></i>Group Head: {{ $statement['ledger']->getGroupHeadDisplay() }}
+                        </span>
+                    </div>
                     <h4 class="fw-bold mb-1" style="color: var(--brand-text-primary);">{{ $statement['ledger']->name }}</h4>
                     <div class="small text-muted">
                         @if($statement['ledger']->gstin) GSTIN: <code>{{ $statement['ledger']->gstin }}</code> @endif
                         @if($statement['ledger']->pan_number) | PAN: <code>{{ $statement['ledger']->pan_number }}</code> @endif
                     </div>
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-7">
                     <div class="row text-center g-2">
                         <div class="col-3 col-sm-3">
                             <div class="border rounded p-2 bg-light">
@@ -394,7 +399,7 @@
                                         {{ $bill['bill_no'] }}
                                     </a>
                                 @else
-                                    <a href="{{ route('freight-bookings.show', $bill['id']) }}" class="text-decoration-none">
+                                    <a href="{{ route('freight_bookings.show', $bill['id']) }}" class="text-decoration-none">
                                         {{ $bill['bill_no'] }}
                                     </a>
                                 @endif

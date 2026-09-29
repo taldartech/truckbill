@@ -46,7 +46,7 @@ class LedgerController extends Controller
         return view('accounting.ledgers.index', compact('company', 'groups', 'allGroups'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $company = $this->getActiveCompany();
 
@@ -61,7 +61,7 @@ class LedgerController extends Controller
             'pan_number' => 'nullable|string|max:15',
         ]);
 
-        Ledger::create([
+        $ledger = Ledger::create([
             'company_id' => $company->id,
             'account_group_id' => $validated['account_group_id'],
             'name' => $validated['name'],
@@ -75,6 +75,21 @@ class LedgerController extends Controller
             'is_builtin' => false,
             'is_active' => true,
         ]);
+
+        if ($request->ajax()) {
+            $ledger->load('accountGroup');
+
+            return response()->json([
+                'success' => true,
+                'message' => "Ledger '{$ledger->name}' created successfully.",
+                'ledger' => [
+                    'id' => $ledger->id,
+                    'name' => $ledger->name,
+                    'group_name' => $ledger->accountGroup?->name,
+                    'text' => $ledger->name.' ('.($ledger->accountGroup?->name ?? 'Ledger').')',
+                ],
+            ]);
+        }
 
         return redirect()->route('accounting.ledgers.index')->with('success', "Ledger '{$validated['name']}' created successfully.");
     }

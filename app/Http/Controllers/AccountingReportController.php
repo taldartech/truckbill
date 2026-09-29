@@ -88,10 +88,11 @@ class AccountingReportController extends Controller
     {
         $company = $this->getActiveCompany();
         $asOfDate = $request->input('as_of_date', now()->toDateString());
+        $mode = $request->input('mode', 'all');
 
-        $trialBalance = $this->reportService->getTrialBalance($company, $asOfDate);
+        $trialBalance = $this->reportService->getTrialBalance($company, $asOfDate, $mode);
 
-        return view('accounting.trial_balance', compact('company', 'trialBalance', 'asOfDate'));
+        return view('accounting.trial_balance', compact('company', 'trialBalance', 'asOfDate', 'mode'));
     }
 
     /**

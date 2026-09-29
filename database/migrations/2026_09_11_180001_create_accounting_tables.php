@@ -122,6 +122,7 @@ return new class extends Migration
                 $table->enum('type', ['debit', 'credit']);
                 $table->decimal('amount', 15, 2);
                 $table->foreignId('cost_centre_id')->nullable()->constrained('cost_centres')->nullOnDelete();
+                $table->foreignId('invoice_id')->nullable()->constrained('invoices')->nullOnDelete();
                 $table->string('particulars_note')->nullable();
                 $table->date('reconciliation_date')->nullable();
                 $table->timestamps();

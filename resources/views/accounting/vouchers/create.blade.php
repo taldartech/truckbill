@@ -47,6 +47,8 @@
         </div>
     </div>
 
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <style>
         .vch-type-btn {
             background-color: #fff;
@@ -66,6 +68,31 @@
             border-color: var(--brand-primary);
             color: var(--brand-primary-dark);
             box-shadow: 0 0 0 1px var(--brand-primary);
+        }
+        .select2-container--bootstrap-5 .select2-selection--single {
+            min-height: 31px !important;
+            height: 31px !important;
+            padding: 0.2rem 0.5rem !important;
+            font-size: 0.85rem !important;
+            border-radius: 6px !important;
+            border: 1px solid var(--brand-border) !important;
+        }
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            line-height: 23px !important;
+            padding-left: 0 !important;
+            color: var(--brand-text-primary) !important;
+        }
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+            height: 29px !important;
+        }
+        .select2-container {
+            width: 100% !important;
+        }
+        .invoice-ref-container {
+            background: #f8fafc;
+            border-radius: 6px;
+            padding: 4px 6px;
+            border: 1px dashed #cbd5e1;
         }
     </style>
 
@@ -140,8 +167,15 @@
                     <table class="table app-index-table table-bordered align-middle mb-0" id="itemsTable">
                         <thead>
                             <tr>
-                                <th style="width: 100px;" class="ps-3">Dr / Cr</th>
-                                <th>Ledger Account</th>
+                                <th style="width: 90px;" class="ps-3">Dr / Cr</th>
+                                <th style="min-width: 320px;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>Ledger Account *</span>
+                                        <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 rounded-pill shadow-none" id="openQuickAddLedgerBtn" title="Create New Ledger (Alt+C)" style="font-size: 0.75rem;">
+                                            <i class="bi bi-plus-circle me-1"></i>New Ledger (Alt+C)
+                                        </button>
+                                    </div>
+                                </th>
                                 <th style="width: 170px;" class="text-end">Amount (₹)</th>
                                 <th style="width: 220px;">Cost Centre (Truck/Branch)</th>
                                 <th>Line Particulars</th>
@@ -159,11 +193,20 @@
                                 </td>
                                 <td>
                                     <select name="items[0][ledger_id]" class="form-select form-select-sm ledger-select" required>
-                                        <option value="">-- Select Ledger --</option>
+                                        <option value="">-- Select Ledger (Type to search) --</option>
                                         @foreach($ledgers as $l)
                                             <option value="{{ $l->id }}">{{ $l->name }} ({{ $l->accountGroup?->name }})</option>
                                         @endforeach
                                     </select>
+                                    <div class="invoice-ref-container mt-1 d-none">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-white text-muted py-0 px-1" style="font-size: 0.72rem;"><i class="bi bi-receipt me-1"></i>Agnst Bill</span>
+                                            <select name="items[0][invoice_id]" class="form-select form-select-sm invoice-ref-select" style="font-size: 0.78rem;">
+                                                <option value="">-- Select Pending Invoice (Optional) --</option>
+                                            </select>
+                                        </div>
+                                        <div class="invoice-balance-hint small text-primary fw-semibold mt-1" style="font-size: 0.75rem;"></div>
+                                    </div>
                                 </td>
                                 <td>
                                     <input type="number" step="0.01" min="0.01" name="items[0][amount]" class="form-control form-control-sm text-end item-amount" placeholder="0.00" required>
@@ -196,11 +239,20 @@
                                 </td>
                                 <td>
                                     <select name="items[1][ledger_id]" class="form-select form-select-sm ledger-select" required>
-                                        <option value="">-- Select Ledger --</option>
+                                        <option value="">-- Select Ledger (Type to search) --</option>
                                         @foreach($ledgers as $l)
                                             <option value="{{ $l->id }}">{{ $l->name }} ({{ $l->accountGroup?->name }})</option>
                                         @endforeach
                                     </select>
+                                    <div class="invoice-ref-container mt-1 d-none">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-white text-muted py-0 px-1" style="font-size: 0.72rem;"><i class="bi bi-receipt me-1"></i>Agnst Bill</span>
+                                            <select name="items[1][invoice_id]" class="form-select form-select-sm invoice-ref-select" style="font-size: 0.78rem;">
+                                                <option value="">-- Select Pending Invoice (Optional) --</option>
+                                            </select>
+                                        </div>
+                                        <div class="invoice-balance-hint small text-primary fw-semibold mt-1" style="font-size: 0.75rem;"></div>
+                                    </div>
                                 </td>
                                 <td>
                                     <input type="number" step="0.01" min="0.01" name="items[1][amount]" class="form-control form-control-sm text-end item-amount" placeholder="0.00" required>
@@ -256,9 +308,198 @@
     </form>
 </div>
 
+<!-- Quick Add Ledger Modal (Alt+C) -->
+<div class="modal fade" id="quickAddLedgerModal" tabindex="-1" aria-labelledby="quickAddLedgerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow border-0" style="border-radius: 12px;">
+            <div class="modal-header bg-gradient-primary text-white py-2 px-3">
+                <h5 class="modal-title fs-6 fw-bold" id="quickAddLedgerModalLabel">
+                    <i class="bi bi-journal-plus me-2"></i>Quick Create Ledger Account (Alt+C)
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="quickAddLedgerForm">
+                @csrf
+                <div class="modal-body p-3">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Ledger Name *</label>
+                        <input type="text" name="name" id="quickLedgerName" class="form-control form-control-sm" placeholder="e.g. ABC Logistics / Office Expenses" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Under Account Group *</label>
+                        <select name="account_group_id" id="quickLedgerGroup" class="form-select form-select-sm" required>
+                            <option value="">-- Select Group Head --</option>
+                            @foreach($allGroups ?? [] as $group)
+                                <option value="{{ $group->id }}">{{ $group->name }} ({{ ucfirst($group->nature) }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-7">
+                            <label class="form-label small fw-semibold">Opening Balance</label>
+                            <input type="number" step="0.01" min="0" name="opening_balance" id="quickLedgerOpeningBal" class="form-control form-control-sm text-end" value="0.00" placeholder="0.00">
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label small fw-semibold">Dr / Cr</label>
+                            <select name="opening_balance_type" id="quickLedgerOpeningType" class="form-select form-select-sm">
+                                <option value="debit">Dr (Debit)</option>
+                                <option value="credit">Cr (Credit)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="quickLedgerErrorAlert" class="alert alert-danger py-1 px-2 small d-none mb-0"></div>
+                </div>
+                <div class="modal-footer py-2 px-3 bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-brand-primary btn-sm" id="btnSaveQuickLedger">
+                        <i class="bi bi-check2-circle me-1"></i>Create Ledger
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let rowIndex = 2;
+    let activeRowForLedger = null;
+
+    // Track active row for Quick Add Ledger
+    $(document).on('focusin click', '.item-row', function() {
+        activeRowForLedger = this;
+    });
+
+    // Initialize Select2 on any element
+    function initSelect2(element) {
+        if (!window.jQuery || !window.jQuery.fn.select2) return;
+        $(element).select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: '-- Select Ledger (Type to search) --',
+            allowClear: false
+        });
+    }
+
+    // Initialize all existing ledger selects
+    $('.ledger-select').each(function() {
+        initSelect2(this);
+    });
+
+    // Check pending invoices when ledger is selected
+    function checkPendingInvoicesForLedger(row, ledgerId) {
+        const $container = $(row).find('.invoice-ref-container');
+        const $select = $(row).find('.invoice-ref-select');
+        const $hint = $(row).find('.invoice-balance-hint');
+
+        if (!ledgerId) {
+            $container.addClass('d-none');
+            $select.html('<option value="">-- Select Pending Invoice (Optional) --</option>');
+            $hint.text('');
+            return;
+        }
+
+        $.ajax({
+            url: `/accounting/ledgers/${ledgerId}/pending-invoices`,
+            method: 'GET',
+            dataType: 'json',
+            success: function(res) {
+                if (res.is_customer && res.invoices && res.invoices.length > 0) {
+                    let options = '<option value="">-- Agnst Invoice # (Optional) --</option>';
+                    res.invoices.forEach(inv => {
+                        options += `<option value="${inv.id}" data-balance="${inv.remaining_amount}">${inv.label}</option>`;
+                    });
+                    $select.html(options);
+                    $container.removeClass('d-none');
+                } else {
+                    $container.addClass('d-none');
+                    $select.html('<option value="">-- Select Pending Invoice (Optional) --</option>');
+                    $hint.text('');
+                }
+            },
+            error: function() {
+                $container.addClass('d-none');
+            }
+        });
+    }
+
+    // When invoice is chosen, show balance hint and optionally prefill
+    $(document).on('change', '.invoice-ref-select', function() {
+        const $row = $(this).closest('.item-row');
+        const $opt = $(this).find(':selected');
+        const bal = parseFloat($opt.data('balance') || 0);
+        const $hint = $row.find('.invoice-balance-hint');
+        if ($opt.val() && bal > 0) {
+            $hint.html(`<i class="bi bi-receipt me-1"></i>Current Pending: <strong>₹${bal.toFixed(2)}</strong>`);
+            const $amt = $row.find('.item-amount');
+            if (!$amt.val() || parseFloat($amt.val()) === 0) {
+                $amt.val(bal.toFixed(2));
+                calculateBalances();
+            }
+        } else {
+            $hint.text('');
+        }
+    });
+
+    // Quick Add Ledger Modal triggers
+    $('#openQuickAddLedgerBtn').on('click', function() {
+        openQuickAddLedger();
+    });
+
+    function openQuickAddLedger() {
+        $('#quickLedgerErrorAlert').addClass('d-none').text('');
+        $('#quickAddLedgerForm')[0].reset();
+        const modal = new bootstrap.Modal(document.getElementById('quickAddLedgerModal'));
+        modal.show();
+        setTimeout(() => document.getElementById('quickLedgerName')?.focus(), 400);
+    }
+
+    // Submit Quick Add Ledger Form via AJAX
+    $('#quickAddLedgerForm').on('submit', function(e) {
+        e.preventDefault();
+        const $btn = $('#btnSaveQuickLedger');
+        const $err = $('#quickLedgerErrorAlert');
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Saving...');
+        $err.addClass('d-none').text('');
+
+        const formData = $(this).serialize();
+
+        $.ajax({
+            url: "{{ route('accounting.ledgers.store') }}",
+            method: 'POST',
+            data: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(res) {
+                $btn.prop('disabled', false).html('<i class="bi bi-check2-circle me-1"></i>Create Ledger');
+                if (res.success && res.ledger) {
+                    const newOpt = new Option(res.ledger.text, res.ledger.id, false, false);
+                    $('.ledger-select').each(function() {
+                        $(this).append($(newOpt).clone());
+                    });
+
+                    // Select on active row if any
+                    if (activeRowForLedger) {
+                        const $activeSel = $(activeRowForLedger).find('.ledger-select');
+                        $activeSel.val(res.ledger.id).trigger('change');
+                        $(activeRowForLedger).find('.item-amount').focus();
+                    }
+
+                    bootstrap.Modal.getInstance(document.getElementById('quickAddLedgerModal'))?.hide();
+                }
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).html('<i class="bi bi-check2-circle me-1"></i>Create Ledger');
+                let errMsg = 'Failed to create ledger. Please check input.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errMsg = xhr.responseJSON.message;
+                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    errMsg = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                }
+                $err.removeClass('d-none').html(errMsg);
+            }
+        });
+    });
 
     // Type buttons
     document.querySelectorAll('.vch-type-btn').forEach(btn => {
@@ -269,7 +510,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Keyboard shortcuts: F4-F7, Ctrl+F8, Ctrl+F9, Ctrl+Enter
+    // Keyboard shortcuts: F4-F7, Ctrl+F8, Ctrl+F9, Ctrl+Enter, Alt+C
     window.addEventListener('keydown', function(e) {
         if (e.key === 'F5') { e.preventDefault(); document.querySelector('[data-type="payment"]')?.click(); }
         if (e.key === 'F6') { e.preventDefault(); document.querySelector('[data-type="receipt"]')?.click(); }
@@ -277,6 +518,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'F4') { e.preventDefault(); document.querySelector('[data-type="contra"]')?.click(); }
         if ((e.ctrlKey || e.metaKey) && e.key === 'F8') { e.preventDefault(); document.querySelector('[data-type="credit_note"]')?.click(); }
         if ((e.ctrlKey || e.metaKey) && e.key === 'F9') { e.preventDefault(); document.querySelector('[data-type="debit_note"]')?.click(); }
+        if (e.altKey && (e.key === 'c' || e.key === 'C')) {
+            e.preventDefault();
+            openQuickAddLedger();
+        }
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             const saveBtn = document.getElementById('saveVoucherBtn');
             if (saveBtn && !saveBtn.disabled) {
@@ -314,7 +559,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (row0Ledger) {
                     for (let i = 0; i < row0Ledger.options.length; i++) {
                         if (row0Ledger.options[i].text.toLowerCase().includes('tds u/s 194c payable')) {
-                            row0Ledger.selectedIndex = i;
+                            $(row0Ledger).val(row0Ledger.options[i].value).trigger('change');
                             break;
                         }
                     }
@@ -323,7 +568,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (row1Ledger) {
                     for (let i = 0; i < row1Ledger.options.length; i++) {
                         if (row1Ledger.options[i].text.toLowerCase().includes('bank') || row1Ledger.options[i].text.toLowerCase().includes('cash')) {
-                            row1Ledger.selectedIndex = i;
+                            $(row1Ledger).val(row1Ledger.options[i].value).trigger('change');
                             break;
                         }
                     }
@@ -346,30 +591,48 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add Row
     document.getElementById('addRowBtn')?.addEventListener('click', function() {
-        const tbody = document.getElementById('itemsBody');
-        const firstRow = tbody.querySelector('.item-row');
-        const newRow = firstRow.cloneNode(true);
+        const $tbody = $('#itemsBody');
+        const $firstRow = $tbody.find('.item-row:first');
 
-        newRow.querySelectorAll('input, select').forEach(el => {
-            el.name = el.name.replace(/\[\d+\]/, `[${rowIndex}]`);
-            if (el.tagName === 'INPUT') {
-                el.value = '';
-            } else if (el.tagName === 'SELECT') {
-                if (el.classList.contains('ledger-select') || el.name.includes('cost_centre_id')) {
-                    el.selectedIndex = 0;
+        // Clone row and clean up select2
+        const $newRow = $firstRow.clone();
+        $newRow.find('.select2-container').remove();
+        $newRow.find('.invoice-ref-container').addClass('d-none');
+        $newRow.find('.invoice-ref-select').html('<option value="">-- Select Pending Invoice (Optional) --</option>');
+        $newRow.find('.invoice-balance-hint').text('');
+
+        const $ledgerSelect = $newRow.find('.ledger-select');
+        $ledgerSelect.removeClass('select2-hidden-accessible').removeAttr('data-select2-id').show();
+
+        $newRow.find('input, select').forEach && $newRow.find('input, select').each(function() {
+            this.name = this.name.replace(/\[\d+\]/, `[${rowIndex}]`);
+            if (this.tagName === 'INPUT') {
+                this.value = '';
+            } else if (this.tagName === 'SELECT') {
+                if ($(this).hasClass('ledger-select') || this.name.includes('cost_centre_id') || $(this).hasClass('invoice-ref-select')) {
+                    this.selectedIndex = 0;
                 }
             }
         });
 
-        tbody.appendChild(newRow);
+        $tbody.append($newRow);
         rowIndex++;
-        attachEvents(newRow);
+
+        initSelect2($newRow.find('.ledger-select'));
+        attachEvents($newRow[0]);
         updateDeleteButtons();
         calculateBalances();
     });
 
     function attachEvents(row) {
-        row.querySelectorAll('.item-amount, .item-type, .ledger-select').forEach(el => {
+        const $sel = $(row).find('.ledger-select');
+
+        $sel.on('change select2:select', function() {
+            checkPendingInvoicesForLedger(row, this.value);
+            calculateBalances();
+        });
+
+        row.querySelectorAll('.item-amount, .item-type').forEach(el => {
             el.addEventListener('input', calculateBalances);
             el.addEventListener('change', calculateBalances);
             el.addEventListener('keyup', calculateBalances);

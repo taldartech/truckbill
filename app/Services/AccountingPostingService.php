@@ -683,7 +683,23 @@ class AccountingPostingService
         // Determine credit ledger based on payment mode / selected bank_ledger_id
         if ($isFuelPump) {
             $pump = $voucherPayment->pump ?? ($voucherPayment->pump_id ? Pump::find($voucherPayment->pump_id) : null);
-            $creditLedger = $pump ? $this->getOrCreatePartyLedger($company, $pump) : $cashLedger;
+            if (! $pump && ! empty($voucherPayment->remark) && $company->user_id) {
+                $pumps = Pump::where('user_id', $company->user_id)->get();
+                foreach ($pumps as $p) {
+                    if (stripos($voucherPayment->remark, (string) $p->pump_name) !== false) {
+                        $pump = $p;
+                        break;
+                    }
+                }
+            }
+            if ($pump) {
+                $creditLedger = $this->getOrCreatePartyLedger($company, $pump);
+            } else {
+                $creditLedger = Ledger::where('company_id', $company->id)
+                    ->where('name', 'Fuel Pump Payable A/c')
+                    ->first()
+                    ?? $this->provisioner->ensureLedger($company, 'Fuel Pump Payable A/c', 'Fuel Pumps', 'FUEL_PUMP_PAYABLE', 'credit');
+            }
         } elseif (! empty($voucherPayment->bank_ledger_id)) {
             $creditLedger = Ledger::where('company_id', $company->id)->find($voucherPayment->bank_ledger_id)
                 ?? ($paymentMode === 'cash' ? $cashLedger : $bankLedger);

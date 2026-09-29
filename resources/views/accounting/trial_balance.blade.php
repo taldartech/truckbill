@@ -207,27 +207,27 @@
     <div class="card shadow-sm border-0 mb-3 d-print-none" style="border: 1px solid var(--brand-border) !important; border-radius: 12px;">
         <div class="card-body p-3">
             <form method="GET" action="{{ route('accounting.trial-balance') }}" class="row g-2 align-items-end">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label small fw-semibold text-muted mb-1">As of Date</label>
                     <input type="date" name="as_of_date" class="form-control form-control-sm" value="{{ $asOfDate }}">
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-brand-primary btn-sm w-100">
-                        <i class="bi bi-filter"></i> Apply Date
-                    </button>
+                <div class="col-md-5">
+                    <label class="form-label small fw-semibold text-muted mb-1">View Mode</label>
+                    <div class="btn-group w-100 btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="mode" id="modeAll" value="all" {{ ($mode ?? 'all') === 'all' ? 'checked' : '' }} onchange="this.form.submit()">
+                        <label class="btn btn-outline-primary" for="modeAll">Closing Balance</label>
+
+                        <input type="radio" class="btn-check" name="mode" id="modeOpening" value="opening" {{ ($mode ?? '') === 'opening' ? 'checked' : '' }} onchange="this.form.submit()">
+                        <label class="btn btn-outline-primary" for="modeOpening" title="Check difference in opening balances only">Opening Balance Only</label>
+
+                        <input type="radio" class="btn-check" name="mode" id="modeTransactions" value="transactions" {{ ($mode ?? '') === 'transactions' ? 'checked' : '' }} onchange="this.form.submit()">
+                        <label class="btn btn-outline-primary" for="modeTransactions">Transactions Only</label>
+                    </div>
                 </div>
-                <div class="col-md-6 d-flex align-items-center justify-content-md-end gap-2 pt-2 pt-md-0">
-                    @if($trialBalance['is_balanced'])
-                        <div class="d-flex align-items-center px-3 py-1 rounded border" style="background: var(--brand-soft-success); border-color: rgba(34,197,94,0.3) !important;">
-                            <i class="bi bi-check-circle-fill me-2" style="color: var(--brand-success);"></i>
-                            <span class="fw-semibold small" style="color: var(--brand-success);">Trial Balance Matched (Debits = Credits)</span>
-                        </div>
-                    @else
-                        <div class="d-flex align-items-center px-3 py-1 rounded border" style="background: var(--brand-soft-danger); border-color: rgba(239,68,68,0.3) !important;">
-                            <i class="bi bi-exclamation-triangle-fill me-2" style="color: var(--brand-danger);"></i>
-                            <span class="fw-semibold small" style="color: var(--brand-danger);">Unbalanced Difference: ₹{{ number_format($trialBalance['difference'], 2) }}</span>
-                        </div>
-                    @endif
+                <div class="col-md-4 d-flex align-items-center justify-content-md-end gap-2 pt-2 pt-md-0">
+                    <button type="submit" class="btn btn-brand-primary btn-sm">
+                        <i class="bi bi-filter"></i> Apply
+                    </button>
                     <button type="button" onclick="window.print()" class="btn btn-outline-secondary btn-sm">
                         <i class="bi bi-printer me-1"></i> Print
                     </button>
@@ -236,11 +236,52 @@
         </div>
     </div>
 
+    <!-- Status Alert Banner -->
+    @if(($mode ?? 'all') === 'opening')
+        <div class="alert {{ $trialBalance['is_balanced'] ? 'alert-success' : 'alert-danger' }} shadow-sm border-0 d-flex align-items-center mb-3 p-3 d-print-none" style="border-radius: 12px;">
+            <i class="bi {{ $trialBalance['is_balanced'] ? 'bi-check-circle-fill text-success' : 'bi-exclamation-triangle-fill text-danger' }} fs-4 me-3"></i>
+            <div>
+                <strong>Opening Balance Verification:</strong>
+                @if($trialBalance['is_balanced'])
+                    <span class="text-dark">All ledger opening balances are balanced! Total Opening Dr: <strong>₹{{ number_format($trialBalance['total_debit'], 2) }}</strong> | Total Opening Cr: <strong>₹{{ number_format($trialBalance['total_credit'], 2) }}</strong> (Difference: <strong>₹0.00</strong>).</span>
+                @else
+                    <span class="text-dark">Opening balance difference detected! Total Opening Dr: <strong>₹{{ number_format($trialBalance['total_debit'], 2) }}</strong> | Total Opening Cr: <strong>₹{{ number_format($trialBalance['total_credit'], 2) }}</strong>. Difference: <strong class="text-danger">₹{{ number_format($trialBalance['difference'], 2) }}</strong>. Adjust opening balances on ledgers to match.</span>
+                @endif
+            </div>
+        </div>
+    @elseif(($mode ?? 'all') === 'transactions')
+        <div class="alert alert-info shadow-sm border-0 d-flex align-items-center mb-3 p-3 d-print-none" style="border-radius: 12px;">
+            <i class="bi bi-info-circle-fill text-info fs-4 me-3"></i>
+            <div>
+                <strong>Period Transactions Verification (Debits = Credits):</strong>
+                <span class="text-dark">Total Posted Debits: <strong>₹{{ number_format($trialBalance['total_debit'], 2) }}</strong> | Total Posted Credits: <strong>₹{{ number_format($trialBalance['total_credit'], 2) }}</strong> | Difference: <strong>₹{{ number_format($trialBalance['difference'], 2) }}</strong>.</span>
+            </div>
+        </div>
+    @else
+        @if($trialBalance['is_balanced'])
+            <div class="alert alert-success shadow-sm border-0 d-flex align-items-center mb-3 p-3 d-print-none" style="border-radius: 12px;">
+                <i class="bi bi-check-circle-fill text-success fs-4 me-3"></i>
+                <div>
+                    <strong class="text-success">Trial Balance Matched:</strong>
+                    <span class="text-dark">Total Debits (₹{{ number_format($trialBalance['total_debit'], 2) }}) equal Total Credits (₹{{ number_format($trialBalance['total_credit'], 2) }}). All account groups and ledgers are fully balanced.</span>
+                </div>
+            </div>
+        @else
+            <div class="alert alert-danger shadow-sm border-0 d-flex align-items-center mb-3 p-3 d-print-none" style="border-radius: 12px;">
+                <i class="bi bi-exclamation-triangle-fill text-danger fs-4 me-3"></i>
+                <div>
+                    <strong class="text-danger">Unbalanced Difference: ₹{{ number_format($trialBalance['difference'], 2) }}</strong>
+                    <span class="text-dark">Total Dr: ₹{{ number_format($trialBalance['total_debit'], 2) }} vs Total Cr: ₹{{ number_format($trialBalance['total_credit'], 2) }}.</span>
+                </div>
+            </div>
+        @endif
+    @endif
+
     <!-- Main Table Card (Screen View) -->
     <div class="card app-index-list-card shadow-sm d-print-none">
         <div class="card-header">
             <h3 class="card-title mb-0">
-                <i class="bi bi-scale me-2"></i>Trial Balance Summary (As of {{ \Carbon\Carbon::parse($asOfDate)->format('d M Y') }})
+                <i class="bi bi-scale me-2"></i>Trial Balance Summary ({{ ($mode ?? 'all') === 'opening' ? 'Opening Balances' : (($mode ?? '') === 'transactions' ? 'Period Transactions' : 'Closing Balances') }} as of {{ \Carbon\Carbon::parse($asOfDate)->format('d M Y') }})
             </h3>
             <div class="app-index-card-toolbar d-flex gap-2">
                 <button onclick="window.print()" class="btn app-index-header-btn">
@@ -254,8 +295,12 @@
                     <thead>
                         <tr>
                             <th class="ps-4">Particulars / Account Group / Ledger</th>
-                            <th class="text-end" style="width: 220px;">Debit Balance (₹)</th>
-                            <th class="text-end pe-4" style="width: 220px;">Credit Balance (₹)</th>
+                            <th class="text-end" style="width: 220px;">
+                                {{ ($mode ?? 'all') === 'opening' ? 'Opening Debit (₹)' : (($mode ?? '') === 'transactions' ? 'Period Debit (₹)' : 'Debit Balance (₹)') }}
+                            </th>
+                            <th class="text-end pe-4" style="width: 220px;">
+                                {{ ($mode ?? 'all') === 'opening' ? 'Opening Credit (₹)' : (($mode ?? '') === 'transactions' ? 'Period Credit (₹)' : 'Credit Balance (₹)') }}
+                            </th>
                         </tr>
                     </thead>
                     <tbody>

@@ -52,4 +52,19 @@ class AccountGroup extends Model
     {
         return $this->hasMany(Ledger::class);
     }
+
+    /**
+     * Get the full breadcrumb path of account groups up to the root primary group.
+     */
+    public function getHierarchyPath(): string
+    {
+        $path = [$this->name];
+        $current = $this;
+        while ($current->parent) {
+            $current = $current->parent;
+            array_unshift($path, $current->name);
+        }
+
+        return implode(' › ', $path);
+    }
 }

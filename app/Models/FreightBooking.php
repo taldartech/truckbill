@@ -69,7 +69,7 @@ class FreightBooking extends Model implements Auditable
 
     public function truck()
     {
-        return $this->belongsTo(Truck::class);
+        return $this->hasOneThrough(Truck::class, LorryReceipt::class, 'id', 'id', 'lr_id', 'truck_id');
     }
 
     public function consignee()

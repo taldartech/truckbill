@@ -194,6 +194,23 @@
                         ])
                     </div>
                 </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-5">
+                        <label class="form-label">MSME Status</label>
+                        <div class="form-check form-switch mt-1">
+                            <input class="form-check-input" type="checkbox" name="is_msme" id="is_msme" value="1" {{ old('is_msme', $truck_owner->is_msme) ? 'checked' : '' }}
+                                   onchange="document.getElementById('truck_owner_msme_reg_col').style.display = this.checked ? 'block' : 'none'">
+                            <label class="form-check-label fw-semibold" for="is_msme">Registered MSME (Micro / Small)</label>
+                        </div>
+                        <small class="text-muted d-block" style="font-size: 0.75rem;">Subject to Sec 43B(h) prompt payment compliance by our company</small>
+                    </div>
+                    <div class="col-md-5" id="truck_owner_msme_reg_col" style="{{ old('is_msme', $truck_owner->is_msme) ? '' : 'display:none;' }}">
+                        <label for="msme_reg_no" class="form-label">Udyam / MSME Registration #</label>
+                        <input type="text" class="form-control @error('msme_reg_no') is-invalid @enderror" id="msme_reg_no" name="msme_reg_no" value="{{ old('msme_reg_no', $truck_owner->msme_reg_no) }}" placeholder="UDYAM-XX-00-0000000">
+                        @error('msme_reg_no') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
             </div>
             <!-- Registered Trucks Section -->
             <!-- Form Actions -->

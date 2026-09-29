@@ -17,6 +17,7 @@ class AccountingVoucherItem extends Model
         'type',
         'amount',
         'cost_centre_id',
+        'invoice_id',
         'particulars_note',
         'reconciliation_date',
     ];
@@ -52,5 +53,10 @@ class AccountingVoucherItem extends Model
     public function costCentre(): BelongsTo
     {
         return $this->belongsTo(CostCentre::class);
+    }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
     }
 }

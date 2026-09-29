@@ -144,6 +144,7 @@ class TallyAccountingTest extends TestCase
                 $table->string('type');
                 $table->decimal('amount', 15, 2);
                 $table->foreignId('cost_centre_id')->nullable();
+                $table->foreignId('invoice_id')->nullable();
                 $table->string('particulars_note')->nullable();
                 $table->timestamps();
             });
@@ -310,6 +311,8 @@ class TallyAccountingTest extends TestCase
                 $table->decimal('igst', 15, 2)->default(0);
                 $table->decimal('net_amount', 15, 2)->nullable();
                 $table->string('payment_status')->default('pending');
+                $table->foreignId('created_by')->nullable();
+                $table->foreignId('updated_by')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
             });
@@ -329,6 +332,36 @@ class TallyAccountingTest extends TestCase
                 $table->foreignId('bank_ledger_id')->nullable();
                 $table->foreignId('created_by')->nullable();
                 $table->foreignId('updated_by')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        if (! Schema::hasTable('audit_logs')) {
+            Schema::create('audit_logs', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('company_id')->nullable();
+                $table->foreignId('user_id')->nullable();
+                $table->string('action', 32);
+                $table->string('subject_type');
+                $table->unsignedBigInteger('subject_id');
+                $table->string('subject_label')->nullable();
+                $table->string('subject_type_name', 80);
+                $table->text('summary');
+                $table->json('changes')->nullable();
+                $table->timestamp('occurred_at');
+                $table->timestamps();
+            });
+        }
+
+        if (! Schema::hasTable('audit_log_changes')) {
+            Schema::create('audit_log_changes', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('audit_log_id');
+                $table->string('attribute_name');
+                $table->string('field_label')->nullable();
+                $table->text('old_value')->nullable();
+                $table->text('new_value')->nullable();
+                $table->integer('sort_order')->default(0);
                 $table->timestamps();
             });
         }
@@ -1749,6 +1782,120 @@ class TallyAccountingTest extends TestCase
         // Ensure screen interactive elements are hidden from print
         $this->assertStringContainsString('d-print-none', $view);
         $this->assertStringContainsString('@media print', $view);
+    }
+
+    public function test_voucher_posting_against_invoice_reduces_balance_due(): void
+    {
+        $company = Company::create(['name' => 'Demo Transport', 'short_name' => 'DT']);
+        $user = \App\Models\User::create([
+            'name' => 'Admin User',
+            'email' => 'admin_vch_adj@truckbill.test',
+            'password' => bcrypt('password'),
+            'company_id' => $company->id,
+        ]);
+        $this->actingAs($user);
+        session(['super_admin_company_id' => $company->id]);
+
+        $provisioner = app(ChartOfAccountsProvisioner::class);
+        $postingService = app(AccountingPostingService::class);
+        $provisioner->provisionForCompany($company);
+
+        $customer = Consignee::create([
+            'company_id' => $company->id,
+            'name' => 'ABC Ltd',
+            'mobile_number' => '9876543210',
+            'is_active' => true,
+        ]);
+
+        $customerLedger = $postingService->getOrCreatePartyLedger($company, $customer);
+        $tdsLedger = Ledger::where('company_id', $company->id)->where('name', 'like', '%TDS Receivable%')->first();
+
+        // Create an open invoice of ₹33,000
+        $invoice = Invoice::create([
+            'company_id' => $company->id,
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-2026-0099',
+            'invoice_type' => 'forward',
+            'total_amount' => 33000.00,
+            'net_amount' => 33000.00,
+            'generated_date' => '2026-09-01',
+        ]);
+
+        $this->assertEquals(33000.00, $invoice->remaining_amount);
+
+        // Post a journal voucher: Dr TDS Receivable ₹500, Cr ABC Ltd ₹500 (against INV-2026-0099)
+        $request = new \Illuminate\Http\Request([
+            'voucher_type' => 'journal',
+            'voucher_date' => '2026-09-15',
+            'narration' => 'TDS deducted by customer on INV-2026-0099',
+            'items' => [
+                [
+                    'ledger_id' => $tdsLedger->id,
+                    'type' => 'debit',
+                    'amount' => 500.00,
+                ],
+                [
+                    'ledger_id' => $customerLedger->id,
+                    'type' => 'credit',
+                    'amount' => 500.00,
+                    'invoice_id' => $invoice->id,
+                ],
+            ],
+        ]);
+
+        $controller = app(\App\Http\Controllers\AccountingVoucherController::class);
+        $controller->store($request);
+
+        $invoice->refresh();
+
+        // Balance due should now be ₹32,500.00
+        $this->assertEquals(500.00, $invoice->paid_amount);
+        $this->assertEquals(32500.00, $invoice->remaining_amount);
+    }
+
+    public function test_customer_pending_invoices_lookup_endpoint(): void
+    {
+        $company = Company::create(['name' => 'Demo Transport', 'short_name' => 'DT']);
+        $user = \App\Models\User::create([
+            'name' => 'Admin User',
+            'email' => 'admin_vch_lookup@truckbill.test',
+            'password' => bcrypt('password'),
+            'company_id' => $company->id,
+        ]);
+        $this->actingAs($user);
+        session(['super_admin_company_id' => $company->id]);
+
+        $provisioner = app(ChartOfAccountsProvisioner::class);
+        $postingService = app(AccountingPostingService::class);
+        $provisioner->provisionForCompany($company);
+
+        $customer = Consignee::create([
+            'company_id' => $company->id,
+            'name' => 'ABC Ltd',
+            'mobile_number' => '9876543210',
+            'is_active' => true,
+        ]);
+
+        $customerLedger = $postingService->getOrCreatePartyLedger($company, $customer);
+
+        Invoice::create([
+            'company_id' => $company->id,
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-2026-0099',
+            'invoice_type' => 'forward',
+            'total_amount' => 33000.00,
+            'net_amount' => 33000.00,
+            'generated_date' => '2026-09-01',
+        ]);
+
+        $controller = app(\App\Http\Controllers\AccountingVoucherController::class);
+        $response = $controller->getPendingInvoices($customerLedger);
+
+        $data = json_decode($response->getContent(), true);
+        $this->assertTrue($data['is_customer']);
+        $this->assertEquals('ABC Ltd', $data['customer_name']);
+        $this->assertCount(1, $data['invoices']);
+        $this->assertEquals(33000.00, $data['invoices'][0]['remaining_amount']);
     }
 }
 

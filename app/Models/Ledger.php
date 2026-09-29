@@ -106,4 +106,18 @@ class Ledger extends Model
             'formatted' => '₹'.number_format($totalCredit - $totalDebit, 2).' Cr',
         ];
     }
+
+    /**
+     * Get human-readable group head display with full hierarchy and primary type.
+     */
+    public function getGroupHeadDisplay(): string
+    {
+        if (! $this->accountGroup) {
+            return 'General Ledger';
+        }
+
+        $type = ucfirst($this->accountGroup->primary_type ?? 'Ledger');
+
+        return $this->accountGroup->getHierarchyPath().' ('.$type.')';
+    }
 }

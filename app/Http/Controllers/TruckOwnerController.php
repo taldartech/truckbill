@@ -418,6 +418,8 @@ class TruckOwnerController extends Controller
                 'advance_amount' => $validated['advance_amount'],
                 'tds_percentage' => $isDummyPan ? $submittedTds : ($validated['declaration_given'] ? 0.00 : $submittedTds),
                 'tds_adjustment_remark' => $isDummyPan ? $remark : ($validated['declaration_given'] ? null : $remark),
+                'is_msme' => $request->boolean('is_msme'),
+                'msme_reg_no' => $request->input('msme_reg_no'),
             ]);
 
             return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
@@ -458,6 +460,8 @@ class TruckOwnerController extends Controller
             'city_id' => $validated['city_id'] ?? null,
             'state_id' => $validated['state_id'] ?? null,
             'country_id' => $validated['country_id'] ?? null,
+            'is_msme' => $request->boolean('is_msme'),
+            'msme_reg_no' => $request->input('msme_reg_no'),
         ];
         $master = TransporterMaster::create($masterData);
 
@@ -474,6 +478,8 @@ class TruckOwnerController extends Controller
             'advance_amount' => $validated['advance_amount'],
             'tds_percentage' => $isDummyPan ? $submittedTds : ($validated['declaration_given'] ? 0.00 : $submittedTds),
             'tds_adjustment_remark' => $isDummyPan ? $tdsRemark : ($validated['declaration_given'] ? null : $tdsRemark),
+            'is_msme' => $request->boolean('is_msme'),
+            'msme_reg_no' => $request->input('msme_reg_no'),
         ]);
 
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
@@ -655,6 +661,8 @@ class TruckOwnerController extends Controller
             'advance_amount' => $validated['advance_amount'] ?? 0,
             'tds_percentage' => $isDummyPan ? $submittedTds : ($declGiven ? 0.00 : $submittedTds),
             'tds_adjustment_remark' => $isDummyPan ? $tdsRemark : ($declGiven ? null : $tdsRemark),
+            'is_msme' => $request->boolean('is_msme'),
+            'msme_reg_no' => $request->input('msme_reg_no'),
         ];
 
         if (auth()->user()->userRole->name === 'super_admin') {
@@ -663,6 +671,13 @@ class TruckOwnerController extends Controller
         }
 
         $truck_owner->update($updateData);
+
+        if ($master) {
+            $master->update([
+                'is_msme' => $request->boolean('is_msme'),
+                'msme_reg_no' => $request->input('msme_reg_no'),
+            ]);
+        }
 
         if (abs($previousTds - $submittedTds) > 0.01) {
             $this->freightBookingTdsSync->syncForTransporter($truck_owner, $submittedTds);

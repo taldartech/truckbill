@@ -417,6 +417,7 @@ Route::get('/drivers/bulk-upload-template', [DriverController::class, 'bulkUploa
         Route::get('/gstr1', [AccountingReportController::class, 'gstr1'])->name('gstr1');
         Route::get('/debtors-aging', [AccountingReportController::class, 'debtorsAging'])->name('debtors-aging');
         Route::resource('vouchers', AccountingVoucherController::class)->only(['index', 'create', 'store', 'show']);
+        Route::get('/ledgers/{ledger}/pending-invoices', [AccountingVoucherController::class, 'getPendingInvoices'])->name('ledgers.pending-invoices');
         Route::resource('ledgers', LedgerController::class)->only(['index', 'store']);
     });
 

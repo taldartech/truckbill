@@ -286,6 +286,25 @@
 
 @section('content')
 <div class="container-fluid py-3 app-index-page--standard">
+    <!-- Header with Back Button -->
+    <div class="d-flex justify-content-between align-items-center mb-3 d-print-none">
+        <div>
+            <h3 class="mb-0 fw-bold"><i class="bi bi-graph-up-arrow me-2 text-primary"></i>Profit &amp; Loss Account</h3>
+            <small class="text-muted">{{ $company->name }} &bull; Period: {{ \Carbon\Carbon::parse($fromDate)->format('d M Y') }} to {{ \Carbon\Carbon::parse($toDate)->format('d M Y') }}</small>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('accounting.trial-balance') }}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Back
+            </a>
+            <a href="{{ route('accounting.trial-balance') }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-scale me-1"></i>Trial Balance
+            </a>
+            <button type="button" onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-printer me-1"></i>Print
+            </button>
+        </div>
+    </div>
+
     <!-- Filter Bar -->
     <div class="card shadow-sm border-0 mb-3 d-print-none" style="border: 1px solid var(--brand-border) !important; border-radius: 12px;">
         <div class="card-body p-3">
