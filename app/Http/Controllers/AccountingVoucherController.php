@@ -116,6 +116,21 @@ class AccountingVoucherController extends Controller
             ]);
         }
 
+        // Circular Entry Check: in a 2-line voucher, Debit and Credit ledgers cannot be identical
+        if ($items->count() === 2 && $items->first()['ledger_id'] == $items->last()['ledger_id']) {
+            $msg = 'Debit and Credit ledgers cannot be identical in a 2-line voucher.';
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $msg,
+                ], 422);
+            }
+
+            return back()->withInput()->withErrors([
+                'items' => $msg,
+            ]);
+        }
+
         $voucher = DB::transaction(function () use ($validated, $company, $items, $totalDebit) {
             $prefix = match ($validated['voucher_type']) {
                 'credit_note' => 'CRN',

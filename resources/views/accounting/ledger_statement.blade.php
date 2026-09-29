@@ -15,10 +15,10 @@
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 8mm 8mm 8mm 8mm;
+                margin: 10mm 10mm 10mm 10mm;
             }
 
-            /* Completely hide all overlays, backdrops, sidebars, headers, footers, and interactive buttons */
+            /* Hide all web application chrome, overlays, backdrops, banners, and buttons */
             .sidebar-overlay,
             .modal-backdrop,
             .loading-overlay,
@@ -33,6 +33,7 @@
             .app-index-card-toolbar,
             .btn,
             .btn-group,
+            .dropdown,
             .d-print-none,
             .no-print,
             #subscription-access-banner,
@@ -46,7 +47,7 @@
                 pointer-events: none !important;
             }
 
-            /* Force pure crisp white background on all page wrappers and remove all overlays/filters */
+            /* Force pure white background on all page wrappers */
             html,
             body,
             body.layout-fixed,
@@ -57,139 +58,199 @@
             .app-content,
             .app-content-header,
             .container-fluid,
-            .app-index-page--standard,
-            .card,
-            .app-index-list-card,
-            .card-body {
+            .app-index-page--standard {
                 background: #ffffff !important;
                 background-color: #ffffff !important;
                 background-image: none !important;
-                color: #0f172a !important;
-                font-size: 9pt !important;
+                color: #000000 !important;
                 box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
                 backdrop-filter: none !important;
                 -webkit-backdrop-filter: none !important;
             }
 
-            .container-fluid.app-index-page--standard {
-                padding: 0 !important;
-            }
-
-            /* Clean white cards with subtle border */
-            .card,
-            .app-index-list-card {
-                border: 1px solid #cbd5e1 !important;
-                border-radius: 4px !important;
-                box-shadow: none !important;
-                margin-bottom: 10px !important;
-                overflow: visible !important;
-                page-break-inside: auto !important;
-                background: #ffffff !important;
-            }
-
-            /* Clean card header with no dark gradient */
-            .card-header,
-            .app-index-list-card > .card-header {
-                background: #f8fafc !important;
-                background-color: #f8fafc !important;
-                background-image: none !important;
-                border-bottom: 1px solid #cbd5e1 !important;
-                color: #0f172a !important;
-                padding: 6px 10px !important;
-            }
-
-            .card-header .card-title,
-            .card-header h3.card-title,
-            .card-header h6 {
-                color: #0f172a !important;
-                font-size: 10pt !important;
-                font-weight: 700 !important;
-            }
-
-            .card-body {
-                padding: 8px !important;
-                overflow: visible !important;
-                background: #ffffff !important;
-            }
-
-            /* Strip out colored background fills from summary stat boxes for clean white printing */
-            .border.rounded,
-            .bg-light,
-            div[style*="background"] {
-                background: #ffffff !important;
-                background-color: #ffffff !important;
-                background-image: none !important;
-                border-color: #cbd5e1 !important;
-                box-shadow: none !important;
-            }
-
-            .table-responsive {
-                overflow: visible !important;
+            /* Dedicated Tally Print Container */
+            .ledger-statement-print {
                 display: block !important;
+                width: 100% !important;
+                color: #000000 !important;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+                font-size: 8.5pt !important;
+                line-height: 1.35 !important;
             }
 
-            table.app-index-table,
-            table.table {
+            .tally-print-header {
+                text-align: center !important;
+                margin-bottom: 12px !important;
+                color: #000000 !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            .tally-company-name {
+                font-size: 14pt !important;
+                font-weight: 700 !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.5px !important;
+                color: #000000 !important;
+                margin-bottom: 2px !important;
+            }
+
+            .tally-company-city {
+                font-size: 11pt !important;
+                font-weight: 400 !important;
+                color: #000000 !important;
+                margin-bottom: 3px !important;
+            }
+
+            .tally-company-tax-info {
+                font-size: 8.5pt !important;
+                color: #333333 !important;
+                margin-bottom: 4px !important;
+            }
+
+            .tally-report-title {
+                font-size: 12.5pt !important;
+                font-weight: 700 !important;
+                color: #000000 !important;
+                margin-bottom: 2px !important;
+            }
+
+            .tally-report-subtitle {
+                font-size: 9.5pt !important;
+                font-weight: 600 !important;
+                color: #222222 !important;
+                margin-bottom: 2px !important;
+            }
+
+            .tally-report-period {
+                font-size: 10pt !important;
+                font-weight: 400 !important;
+                color: #000000 !important;
+            }
+
+            .tally-statement-table {
                 width: 100% !important;
                 border-collapse: collapse !important;
-                font-size: 8.5pt !important;
+                table-layout: fixed !important;
                 background: #ffffff !important;
+                page-break-inside: auto !important;
+                break-inside: auto !important;
             }
 
-            table.app-index-table th,
-            table.app-index-table td,
-            table.table th,
-            table.table td {
-                padding: 4px 6px !important;
-                border: 1px solid #cbd5e1 !important;
-                vertical-align: middle !important;
-                background: #ffffff !important;
-            }
-
-            table.app-index-table thead th,
-            table.table thead th {
-                background: #f1f5f9 !important;
-                background-color: #f1f5f9 !important;
-                color: #0f172a !important;
-                font-weight: 700 !important;
-                border-bottom: 2px solid #64748b !important;
-            }
-
-            table.app-index-table thead,
-            table.table thead {
+            .tally-statement-table thead {
                 display: table-header-group !important;
             }
 
-            table tr {
+            .tally-statement-table tfoot {
+                display: table-footer-group !important;
+            }
+
+            .tally-th-row th {
+                padding: 5px 6px !important;
+                border-top: 1px solid #000000 !important;
+                border-bottom: 1px solid #000000 !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                vertical-align: middle !important;
+                font-size: 8.5pt !important;
+                font-weight: 700 !important;
+            }
+
+            .tally-statement-table th:not(:last-child),
+            .tally-statement-table td:not(:last-child) {
+                border-right: 1px solid #dddddd !important;
+            }
+
+            .tally-row-tr {
                 page-break-inside: avoid !important;
-                background: #ffffff !important;
+                break-inside: avoid !important;
             }
 
-            tr[style*="background-color"] {
+            .tally-cell {
+                padding: 4px 6px !important;
+                vertical-align: top !important;
                 background: #ffffff !important;
-                background-color: #ffffff !important;
+                color: #000000 !important;
+                font-size: 8.5pt !important;
+                line-height: 1.3 !important;
             }
 
-            .badge {
-                border: 1px solid #94a3b8 !important;
-                background: #ffffff !important;
-                background-color: #ffffff !important;
-                color: #334155 !important;
+            .tally-title-spaced {
+                font-weight: 700 !important;
+                font-size: 9pt !important;
+                letter-spacing: 2px !important;
+                color: #000000 !important;
+            }
+
+            .tally-op-row td {
+                background-color: #fafafa !important;
+                border-bottom: 1px solid #e5e5e5 !important;
                 font-weight: 600 !important;
+            }
+
+            .tally-current-total-row td {
+                padding: 4px 6px !important;
+                border-top: 1px solid #000000 !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                font-weight: 700 !important;
+                font-size: 8.5pt !important;
+            }
+
+            .tally-closing-row td {
+                padding: 4px 6px !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                font-weight: 700 !important;
+                font-size: 8.5pt !important;
+            }
+
+            .tally-total-row td {
+                padding: 5px 6px !important;
+                border-top: 1px solid #000000 !important;
+                border-bottom: 3px double #000000 !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                font-weight: 700 !important;
+                font-size: 9pt !important;
+            }
+
+            .tally-signatures-row {
+                margin-top: 30px !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            .tally-sign-box {
+                width: 28% !important;
+                text-align: center !important;
+            }
+
+            .tally-sign-line {
+                border-top: 1px solid #000000 !important;
+                margin-bottom: 4px !important;
+            }
+
+            .tally-sign-title {
+                font-size: 8.5pt !important;
+                font-weight: 600 !important;
+                color: #000000 !important;
+            }
+
+            .tally-print-footer {
+                margin-top: 15px !important;
+                display: flex !important;
+                justify-content: space-between !important;
                 font-size: 7.5pt !important;
-                padding: 2px 4px !important;
-            }
-
-            a {
-                text-decoration: none !important;
-                color: #0f172a !important;
-            }
-
-            .app-index-card-toolbar,
-            .btn,
-            .btn-group,
-            .d-print-none {
-                display: none !important;
+                color: #666666 !important;
+                border-top: 1px dashed #cccccc !important;
+                padding-top: 4px !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
             }
         }
     </style>
@@ -237,37 +298,8 @@
     </div>
 
     @if($statement)
-    <!-- Dedicated Print Header (Visible ONLY on print) -->
-    <div class="d-none d-print-block mb-3 pb-2 border-bottom">
-        <div class="d-flex justify-content-between align-items-start">
-            <div>
-                <h3 class="fw-bold mb-1 text-dark" style="font-size: 1.4rem;">{{ $company->name }}</h3>
-                @if($company->address)
-                    <div class="text-secondary small mb-1">{{ $company->address }}</div>
-                @endif
-                <div class="text-secondary small">
-                    @if($company->gst_number) <span><strong>GSTIN:</strong> {{ $company->gst_number }}</span> @endif
-                    @if($company->pan_number) <span class="ms-3"><strong>PAN:</strong> {{ $company->pan_number }}</span> @endif
-                    @if($company->contact_number) <span class="ms-3"><strong>Phone:</strong> {{ $company->contact_number }}</span> @endif
-                </div>
-                <div class="text-secondary small mt-1">
-                    <strong>Account:</strong> {{ $statement['ledger']->name }} &bull; <strong>Group Head:</strong> {{ $statement['ledger']->getGroupHeadDisplay() }}
-                </div>
-            </div>
-            <div class="text-end">
-                <h4 class="fw-bold text-uppercase text-dark mb-1" style="font-size: 1.15rem; letter-spacing: 0.5px;">Statement of Account</h4>
-                <div class="text-secondary small">
-                    <strong>Period:</strong> {{ \Carbon\Carbon::parse($fromDate)->format('d-m-Y') }} to {{ \Carbon\Carbon::parse($toDate)->format('d-m-Y') }}
-                </div>
-                <div class="text-muted small">
-                    Printed on: {{ now()->format('d-m-Y h:i A') }}
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Summary Header Cards -->
-    <div class="card shadow-sm border-0 mb-3" style="border-radius: 12px; border: 1px solid var(--brand-border) !important; background: #fff;">
+    <div class="card shadow-sm border-0 mb-3 d-print-none" style="border-radius: 12px; border: 1px solid var(--brand-border) !important; background: #fff;">
         <div class="card-body p-3">
             <div class="row align-items-center g-3">
                 <div class="col-md-5">
@@ -328,7 +360,7 @@
 
     <!-- Bill-to-Bill Outstandings Section (Item 6 & 7) -->
     @if($outstandings)
-    <div class="card shadow-sm border-0 mb-3" style="border-radius: 12px; border: 1px solid var(--brand-border) !important;">
+    <div class="card shadow-sm border-0 mb-3 d-print-none" style="border-radius: 12px; border: 1px solid var(--brand-border) !important;">
         <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center py-2.5 gap-2">
             <h6 class="mb-0 fw-bold" style="color: var(--brand-text-primary);">
                 <i class="bi bi-card-checklist me-2" style="color: var(--brand-primary);"></i>Bill-to-Bill Outstandings & Matched Payments ({{ ucfirst($outstandings['entity_type'] ?? '') }})
@@ -454,7 +486,7 @@
     @endif
 
     <!-- Main Table Card -->
-    <div class="card app-index-list-card shadow-sm">
+    <div class="card app-index-list-card shadow-sm d-print-none">
         <div class="card-header">
             <h3 class="card-title mb-0">
                 <i class="bi bi-book-open me-2"></i>Account Statement Transactions
@@ -584,8 +616,330 @@
             </div>
         </div>
     </div>
+
+    @php
+        $cityName = $company->city?->name ?? ($company->address ?? '');
+
+        $formatAmount = function ($val, $showDecimals = true) {
+            if ($val === null || $val === '' || (float)$val == 0.0) {
+                return '-';
+            }
+            $isNegative = (float)$val < -0.001;
+            $val = abs((float) $val);
+            $parts = explode('.', number_format($val, 2, '.', ''));
+            $intPart = $parts[0];
+            $decPart = $showDecimals ? '.' . $parts[1] : '';
+
+            if (strlen($intPart) > 3) {
+                $lastThree = substr($intPart, -3);
+                $remaining = substr($intPart, 0, -3);
+                $reversed = strrev($remaining);
+                $chunks = str_split($reversed, 2);
+                $formattedRemaining = strrev(implode(',', $chunks));
+                $formatted = $formattedRemaining . ',' . $lastThree;
+            } else {
+                $formatted = $intPart;
+            }
+
+            $formatted .= $decPart;
+            return $isNegative ? '(-)' . $formatted : $formatted;
+        };
+
+        $formatAmountZero = function ($val, $showDecimals = true) {
+            if ($val === null || $val === '') {
+                return '0.00';
+            }
+            $isNegative = (float)$val < -0.001;
+            $val = abs((float) $val);
+            $parts = explode('.', number_format($val, 2, '.', ''));
+            $intPart = $parts[0];
+            $decPart = $showDecimals ? '.' . $parts[1] : '';
+
+            if (strlen($intPart) > 3) {
+                $lastThree = substr($intPart, -3);
+                $remaining = substr($intPart, 0, -3);
+                $reversed = strrev($remaining);
+                $chunks = str_split($reversed, 2);
+                $formattedRemaining = strrev(implode(',', $chunks));
+                $formatted = $formattedRemaining . ',' . $lastThree;
+            } else {
+                $formatted = $intPart;
+            }
+
+            $formatted .= $decPart;
+            return $isNegative ? '(-)' . $formatted : $formatted;
+        };
+
+        $opDebit = $statement['opening_balance']['type'] === 'Dr' ? (float)$statement['opening_balance']['amount'] : 0.0;
+        $opCredit = $statement['opening_balance']['type'] === 'Cr' ? (float)$statement['opening_balance']['amount'] : 0.0;
+        $totalDebitsWithOp = $opDebit + (float)$statement['total_debit'];
+        $totalCreditsWithOp = $opCredit + (float)$statement['total_credit'];
+        $tallyGrandTotal = max($totalDebitsWithOp, $totalCreditsWithOp);
+    @endphp
+
+    <!-- Dedicated Tally Print Block -->
+    <div class="d-none d-print-block ledger-statement-print">
+        <div class="tally-print-header">
+            <div class="tally-company-name">{{ $company->name }}</div>
+            @if($cityName)
+                <div class="tally-company-city"><u>{{ $cityName }}</u></div>
+            @elseif($company->address)
+                <div class="tally-company-city">{{ $company->address }}</div>
+            @endif
+            @if($company->gst_number || $company->pan_number || $company->contact_number)
+                <div class="tally-company-tax-info">
+                    @if($company->gst_number) <span><strong>GSTIN:</strong> {{ $company->gst_number }}</span> @endif
+                    @if($company->pan_number) <span style="margin-left: 14px;"><strong>PAN:</strong> {{ $company->pan_number }}</span> @endif
+                    @if($company->contact_number) <span style="margin-left: 14px;"><strong>Phone:</strong> {{ $company->contact_number }}</span> @endif
+                </div>
+            @endif
+            <div class="tally-report-title">{{ $statement['ledger']->name }}</div>
+            <div class="tally-report-subtitle">
+                Ledger Account &bull; {{ $statement['ledger']->getGroupHeadDisplay() }}
+                @if($statement['ledger']->gstin) &bull; GSTIN: {{ $statement['ledger']->gstin }} @endif
+                @if($statement['ledger']->pan_number) &bull; PAN: {{ $statement['ledger']->pan_number }} @endif
+            </div>
+            <div class="tally-report-period">
+                Statement of Account: {{ \Carbon\Carbon::parse($fromDate)->format('d-M-Y') }} to {{ \Carbon\Carbon::parse($toDate)->format('d-M-Y') }}
+            </div>
+            @if(!empty($statement['is_filtered']))
+                <div style="font-size: 8pt; font-style: italic; margin-top: 3px; color: #444444;">
+                    Filtered by keyword: "{{ $statement['search_query'] }}" (Showing {{ count($statement['rows']) }} of {{ $statement['unfiltered_count'] }} transactions)
+                </div>
+            @endif
+        </div>
+
+        <!-- Ledger Transactions Table -->
+        <table class="tally-statement-table">
+            <thead>
+                <tr class="tally-th-row">
+                    <th style="width: 11%; text-align: center;">
+                        <span class="tally-title-spaced">Date</span>
+                    </th>
+                    <th style="width: 35%;">
+                        <span class="tally-title-spaced">Particulars</span>
+                    </th>
+                    <th style="width: 10%; text-align: center;">
+                        <span class="tally-title-spaced">Vch Type</span>
+                    </th>
+                    <th style="width: 12%; text-align: center;">
+                        <span class="tally-title-spaced">Vch No.</span>
+                    </th>
+                    <th class="text-end" style="width: 11%; text-align: right;">
+                        <span class="tally-title-spaced">Debit (₹)</span>
+                    </th>
+                    <th class="text-end" style="width: 11%; text-align: right;">
+                        <span class="tally-title-spaced">Credit (₹)</span>
+                    </th>
+                    <th class="text-end" style="width: 10%; text-align: right;">
+                        <span class="tally-title-spaced">Balance (₹)</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Opening Balance Row -->
+                <tr class="tally-row-tr tally-op-row">
+                    <td class="tally-cell text-center" style="font-weight: 600;">
+                        {{ \Carbon\Carbon::parse($fromDate)->format('d-m-Y') }}
+                    </td>
+                    <td class="tally-cell" colspan="3">
+                        <span style="font-weight: 700;">Opening Balance</span>
+                        @if(!empty($statement['opening_balance']['reference']))
+                            <span style="font-size: 7.5pt; color: #555555; font-weight: normal; margin-left: 6px;">
+                                (Ref: {{ $statement['opening_balance']['reference'] }})
+                            </span>
+                        @endif
+                    </td>
+                    <td class="tally-cell text-end" style="font-weight: 600;">
+                        {{ $statement['opening_balance']['type'] === 'Dr' ? $formatAmount($statement['opening_balance']['amount']) : '-' }}
+                    </td>
+                    <td class="tally-cell text-end" style="font-weight: 600;">
+                        {{ $statement['opening_balance']['type'] === 'Cr' ? $formatAmount($statement['opening_balance']['amount']) : '-' }}
+                    </td>
+                    <td class="tally-cell text-end" style="font-weight: 700;">
+                        {{ $statement['opening_balance']['formatted'] }}
+                    </td>
+                </tr>
+
+                <!-- Period Transactions -->
+                @forelse($statement['rows'] as $row)
+                    <tr class="tally-row-tr">
+                        <td class="tally-cell text-center">
+                            {{ $row['date'] }}
+                        </td>
+                        <td class="tally-cell">
+                            <div style="font-weight: 600; color: #000000;">{{ $row['particulars'] }}</div>
+                            @php
+                                $metaParts = [];
+                                if (!empty($row['truck_number'])) $metaParts[] = 'Truck: ' . $row['truck_number'];
+                                if (!empty($row['lr_number'])) $metaParts[] = 'LR: ' . $row['lr_number'];
+                                if (!empty($row['reference_number'])) $metaParts[] = 'Ref: ' . $row['reference_number'];
+                                if (!empty($row['cost_centre']) && $row['cost_centre'] !== $row['truck_number']) $metaParts[] = 'CC: ' . $row['cost_centre'];
+                            @endphp
+                            @if(count($metaParts) > 0)
+                                <div style="font-size: 7.5pt; color: #333333; margin-top: 1px;">
+                                    {{ implode(' | ', $metaParts) }}
+                                </div>
+                            @endif
+                            @if(!empty($row['narration']))
+                                <div style="font-size: 7.5pt; color: #555555; font-style: italic; margin-top: 1px;">
+                                    {{ $row['narration'] }}
+                                </div>
+                            @endif
+                        </td>
+                        <td class="tally-cell text-center" style="font-size: 8pt;">
+                            {{ ucwords(str_replace('_', ' ', $row['voucher_type'])) }}
+                        </td>
+                        <td class="tally-cell text-center" style="font-size: 8pt; font-weight: 500;">
+                            {{ $row['voucher_number'] }}
+                        </td>
+                        <td class="tally-cell text-end">
+                            {{ $row['debit'] ? $formatAmount($row['debit']) : '-' }}
+                        </td>
+                        <td class="tally-cell text-end">
+                            {{ $row['credit'] ? $formatAmount($row['credit']) : '-' }}
+                        </td>
+                        <td class="tally-cell text-end" style="font-weight: 600;">
+                            {{ $formatAmount($row['running_balance']) }} {{ $row['running_balance_type'] }}
+                        </td>
+                    </tr>
+                @empty
+                    <tr class="tally-row-tr">
+                        <td colspan="7" class="tally-cell text-center py-4 text-muted">
+                            No transactions recorded for this ledger during the selected period.
+                        </td>
+                    </tr>
+                @endforelse
+
+                <!-- Current Period Total -->
+                <tr class="tally-row-tr tally-current-total-row">
+                    <td class="tally-cell"></td>
+                    <td class="tally-cell fw-bold" colspan="3">
+                        Current Period Total:
+                    </td>
+                    <td class="tally-cell text-end fw-bold">
+                        {{ $formatAmount($statement['total_debit']) }}
+                    </td>
+                    <td class="tally-cell text-end fw-bold">
+                        {{ $formatAmount($statement['total_credit']) }}
+                    </td>
+                    <td class="tally-cell text-end"></td>
+                </tr>
+
+                <!-- Closing Balance Row -->
+                <tr class="tally-row-tr tally-closing-row">
+                    <td class="tally-cell text-center small">
+                        {{ \Carbon\Carbon::parse($toDate)->format('d-m-Y') }}
+                    </td>
+                    <td class="tally-cell fw-bold" colspan="3">
+                        Closing Balance {{ !empty($statement['closing_balance']['is_negative_cash']) ? '(Overdrawn)' : '' }}
+                    </td>
+                    <td class="tally-cell text-end fw-bold">
+                        {{ $statement['closing_balance']['type'] === 'Cr' ? $formatAmount($statement['closing_balance']['amount']) : '-' }}
+                    </td>
+                    <td class="tally-cell text-end fw-bold">
+                        {{ $statement['closing_balance']['type'] === 'Dr' ? $formatAmount($statement['closing_balance']['amount']) : '-' }}
+                    </td>
+                    <td class="tally-cell text-end fw-bold {{ !empty($statement['closing_balance']['is_negative_cash']) ? 'text-danger' : '' }}">
+                        {{ $statement['closing_balance']['formatted'] }}
+                    </td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr class="tally-total-row">
+                    <td class="tally-cell"></td>
+                    <td class="tally-cell fw-bold" colspan="3">
+                        <span class="tally-title-spaced">T o t a l</span>
+                    </td>
+                    <td class="tally-cell text-end fw-bold">
+                        {{ $formatAmountZero($tallyGrandTotal) }}
+                    </td>
+                    <td class="tally-cell text-end fw-bold">
+                        {{ $formatAmountZero($tallyGrandTotal) }}
+                    </td>
+                    <td class="tally-cell text-end fw-bold">
+                        {{ $statement['closing_balance']['formatted'] }}
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- Bill-to-Bill Outstandings Schedule in Print (if available) -->
+        @if($outstandings && count($outstandings['bills']) > 0)
+            <div style="margin-top: 25px; page-break-inside: auto; break-inside: auto;">
+                <div style="font-size: 10pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #000000; padding-bottom: 3px; margin-bottom: 8px;">
+                    Bill-to-Bill Outstandings &amp; Matched Payments ({{ ucfirst($outstandings['entity_type'] ?? '') }})
+                </div>
+                <table class="tally-statement-table" style="font-size: 8pt !important;">
+                    <thead>
+                        <tr class="tally-th-row">
+                            <th style="width: 14%;"><span class="tally-title-spaced">Bill / Ref #</span></th>
+                            <th style="width: 11%; text-align: center;"><span class="tally-title-spaced">Date</span></th>
+                            @if(strcasecmp($outstandings['entity_type'] ?? '', 'Customer') !== 0)
+                                <th style="width: 18%;"><span class="tally-title-spaced">Truck / LR No</span></th>
+                            @endif
+                            <th class="text-end" style="width: 14%; text-align: right;"><span class="tally-title-spaced">Billed (₹)</span></th>
+                            <th class="text-end" style="width: 14%; text-align: right;"><span class="tally-title-spaced">Cleared (₹)</span></th>
+                            <th class="text-end" style="width: 14%; text-align: right;"><span class="tally-title-spaced">Pending (₹)</span></th>
+                            <th class="text-center" style="width: 15%; text-align: center;"><span class="tally-title-spaced">Status</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($outstandings['bills'] as $b)
+                            <tr class="tally-row-tr">
+                                <td class="tally-cell fw-bold">{{ $b['bill_no'] }}</td>
+                                <td class="tally-cell text-center">{{ $b['bill_date'] }}</td>
+                                @if(strcasecmp($outstandings['entity_type'] ?? '', 'Customer') !== 0)
+                                    <td class="tally-cell">{{ $b['truck_no'] ?? '-' }} {{ !empty($b['lr_no']) ? '(LR: ' . $b['lr_no'] . ')' : '' }}</td>
+                                @endif
+                                <td class="tally-cell text-end">{{ $formatAmount($b['total_amount']) }}</td>
+                                <td class="tally-cell text-end">{{ $formatAmount($b['cleared_amount']) }}</td>
+                                <td class="tally-cell text-end fw-bold">{{ $formatAmount($b['pending_amount']) }}</td>
+                                <td class="tally-cell text-center" style="font-weight: 600;">
+                                    {{ ucfirst($b['status']) }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr class="tally-total-row">
+                            <td class="tally-cell fw-bold" colspan="{{ strcasecmp($outstandings['entity_type'] ?? '', 'Customer') !== 0 ? 3 : 2 }}">
+                                <span class="tally-title-spaced">T o t a l</span>
+                            </td>
+                            <td class="tally-cell text-end fw-bold">{{ $formatAmountZero($outstandings['total_billed']) }}</td>
+                            <td class="tally-cell text-end fw-bold">{{ $formatAmountZero($outstandings['total_cleared']) }}</td>
+                            <td class="tally-cell text-end fw-bold">{{ $formatAmountZero($outstandings['total_pending']) }}</td>
+                            <td class="tally-cell"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        @endif
+
+        <!-- Signatures Row -->
+        <div class="tally-signatures-row">
+            <div class="tally-sign-box">
+                <div class="tally-sign-line"></div>
+                <div class="tally-sign-title">Prepared by</div>
+            </div>
+            <div class="tally-sign-box">
+                <div class="tally-sign-line"></div>
+                <div class="tally-sign-title">Verified / Checked by</div>
+            </div>
+            <div class="tally-sign-box">
+                <div class="tally-sign-line"></div>
+                <div class="tally-sign-title">Authorised Signatory</div>
+            </div>
+        </div>
+
+        <!-- Print Footer -->
+        <div class="tally-print-footer">
+            <span>This is a computer generated account statement.</span>
+            <span>Printed on: {{ now()->format('d-M-Y h:i A') }}</span>
+        </div>
+    </div>
     @else
-    <div class="card shadow-sm border-0 py-5 text-center text-muted" style="border-radius: 12px; border: 1px solid var(--brand-border) !important;">
+    <div class="card shadow-sm border-0 py-5 text-center text-muted d-print-none" style="border-radius: 12px; border: 1px solid var(--brand-border) !important;">
         <i class="bi bi-search fs-1 mb-2 text-muted"></i>
         <h5 class="fw-semibold text-dark">Select a ledger account above to view its statement.</h5>
         <small class="text-muted">You can inspect Customer ledgers, Transporter accounts, Fuel Pumps, Bank registers, or Expenses.</small>

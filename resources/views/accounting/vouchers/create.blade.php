@@ -589,10 +589,36 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Add Row
+    // Add Row with auto-suggested balancing difference and type
     document.getElementById('addRowBtn')?.addEventListener('click', function() {
         const $tbody = $('#itemsBody');
         const $firstRow = $tbody.find('.item-row:first');
+
+        // Calculate current unallocated difference to auto-suggest in new row
+        let curDebits = 0;
+        let curCredits = 0;
+        document.querySelectorAll('.item-row').forEach(row => {
+            const t = row.querySelector('.item-type')?.value || 'debit';
+            const a = parseFloat(row.querySelector('.item-amount')?.value || 0) || 0;
+            if (t === 'debit') curDebits += a;
+            else curCredits += a;
+        });
+        curDebits = Math.round(curDebits * 100) / 100;
+        curCredits = Math.round(curCredits * 100) / 100;
+        const curDiff = Math.round((curDebits - curCredits) * 100) / 100;
+
+        let suggestedType = 'credit';
+        let suggestedAmount = '';
+        if (curDiff > 0.001) {
+            suggestedType = 'credit';
+            suggestedAmount = curDiff.toFixed(2);
+        } else if (curDiff < -0.001) {
+            suggestedType = 'debit';
+            suggestedAmount = Math.abs(curDiff).toFixed(2);
+        } else {
+            const lastType = document.querySelector('.item-row:last-child .item-type')?.value;
+            suggestedType = lastType === 'debit' ? 'credit' : 'debit';
+        }
 
         // Clone row and clean up select2
         const $newRow = $firstRow.clone();
@@ -604,12 +630,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const $ledgerSelect = $newRow.find('.ledger-select');
         $ledgerSelect.removeClass('select2-hidden-accessible').removeAttr('data-select2-id').show();
 
-        $newRow.find('input, select').forEach && $newRow.find('input, select').each(function() {
+        $newRow.find('input, select').each(function() {
             this.name = this.name.replace(/\[\d+\]/, `[${rowIndex}]`);
             if (this.tagName === 'INPUT') {
-                this.value = '';
+                if ($(this).hasClass('item-amount')) {
+                    this.value = suggestedAmount;
+                    if (suggestedAmount) {
+                        this.dataset.autoFilled = 'true';
+                    } else {
+                        delete this.dataset.autoFilled;
+                    }
+                    delete this.dataset.userEdited;
+                } else {
+                    this.value = '';
+                }
             } else if (this.tagName === 'SELECT') {
-                if ($(this).hasClass('ledger-select') || this.name.includes('cost_centre_id') || $(this).hasClass('invoice-ref-select')) {
+                if ($(this).hasClass('item-type')) {
+                    this.value = suggestedType;
+                } else if ($(this).hasClass('ledger-select') || this.name.includes('cost_centre_id') || $(this).hasClass('invoice-ref-select')) {
                     this.selectedIndex = 0;
                 }
             }
@@ -622,7 +660,71 @@ document.addEventListener('DOMContentLoaded', function() {
         attachEvents($newRow[0]);
         updateDeleteButtons();
         calculateBalances();
+
+        // Focus the ledger select of the new row for fast keyboard workflow
+        setTimeout(() => {
+            $newRow.find('.ledger-select').select2('open');
+        }, 100);
     });
+
+    // Auto-suggest opposite row amount in a 2-line voucher
+    function autoSuggestOppositeRow(changedInput) {
+        changedInput.dataset.userEdited = 'true';
+        const rows = document.querySelectorAll('.item-row');
+        if (rows.length === 2) {
+            const thisRow = changedInput.closest('.item-row');
+            const otherRow = rows[0] === thisRow ? rows[1] : rows[0];
+            const otherInput = otherRow.querySelector('.item-amount');
+
+            if (otherInput && otherInput.dataset.userEdited !== 'true') {
+                const val = parseFloat(changedInput.value) || 0;
+                if (val > 0) {
+                    otherInput.value = val.toFixed(2);
+                    otherInput.dataset.autoFilled = 'true';
+                } else {
+                    otherInput.value = '';
+                    delete otherInput.dataset.autoFilled;
+                }
+
+                // If both rows have the same Dr/Cr type, flip the other row to balance
+                const thisType = thisRow.querySelector('.item-type')?.value;
+                const otherTypeSelect = otherRow.querySelector('.item-type');
+                if (thisType && otherTypeSelect && thisType === otherTypeSelect.value) {
+                    otherTypeSelect.value = (thisType === 'debit') ? 'credit' : 'debit';
+                }
+            }
+        }
+    }
+
+    // Auto-suggest balancing amount on focusing an empty amount field
+    function handleAmountFocus(input) {
+        const val = parseFloat(input.value) || 0;
+        if (val === 0 && input.dataset.userEdited !== 'true') {
+            const row = input.closest('.item-row');
+            const curType = row.querySelector('.item-type')?.value || 'debit';
+
+            let otherDebits = 0;
+            let otherCredits = 0;
+            document.querySelectorAll('.item-row').forEach(r => {
+                if (r !== row) {
+                    const t = r.querySelector('.item-type')?.value || 'debit';
+                    const a = parseFloat(r.querySelector('.item-amount')?.value || 0) || 0;
+                    if (t === 'debit') otherDebits += a;
+                    else otherCredits += a;
+                }
+            });
+
+            let needed = (curType === 'debit') ? (otherCredits - otherDebits) : (otherDebits - otherCredits);
+            needed = Math.round(needed * 100) / 100;
+
+            if (needed > 0.001) {
+                input.value = needed.toFixed(2);
+                input.dataset.autoFilled = 'true';
+                calculateBalances();
+                setTimeout(() => input.select(), 50);
+            }
+        }
+    }
 
     function attachEvents(row) {
         const $sel = $(row).find('.ledger-select');
@@ -632,11 +734,25 @@ document.addEventListener('DOMContentLoaded', function() {
             calculateBalances();
         });
 
-        row.querySelectorAll('.item-amount, .item-type').forEach(el => {
-            el.addEventListener('input', calculateBalances);
-            el.addEventListener('change', calculateBalances);
-            el.addEventListener('keyup', calculateBalances);
-        });
+        const amountInput = row.querySelector('.item-amount');
+        if (amountInput) {
+            amountInput.addEventListener('input', function() {
+                autoSuggestOppositeRow(this);
+                calculateBalances();
+            });
+            amountInput.addEventListener('focus', function() {
+                handleAmountFocus(this);
+            });
+            amountInput.addEventListener('change', calculateBalances);
+            amountInput.addEventListener('keyup', calculateBalances);
+        }
+
+        const typeSelect = row.querySelector('.item-type');
+        if (typeSelect) {
+            typeSelect.addEventListener('change', function() {
+                calculateBalances();
+            });
+        }
 
         const delBtn = row.querySelector('.delete-row-btn');
         if (delBtn) {
@@ -677,6 +793,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const alertBox = document.getElementById('balanceAlert');
         const saveBtn = document.getElementById('saveVoucherBtn');
+
+        // Circular Entry Detection: Check if the same ledger is selected on both Debit and Credit
+        let hasDuplicateLedger = false;
+        let duplicateLedgerName = '';
+        const ledgerSideMap = {};
+
+        document.querySelectorAll('.item-row').forEach(row => {
+            const sel = row.querySelector('.ledger-select');
+            const ledgerId = sel ? sel.value : '';
+            const type = row.querySelector('.item-type')?.value || 'debit';
+            if (ledgerId) {
+                if (!ledgerSideMap[ledgerId]) {
+                    ledgerSideMap[ledgerId] = {
+                        name: sel.options[sel.selectedIndex]?.text || 'Ledger',
+                        debit: false,
+                        credit: false
+                    };
+                }
+                ledgerSideMap[ledgerId][type] = true;
+                if (ledgerSideMap[ledgerId].debit && ledgerSideMap[ledgerId].credit) {
+                    hasDuplicateLedger = true;
+                    duplicateLedgerName = ledgerSideMap[ledgerId].name;
+                }
+            }
+        });
+
+        if (hasDuplicateLedger) {
+            if (alertBox) {
+                alertBox.className = 'alert alert-danger py-1 px-2 mb-0 small';
+                alertBox.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i><strong>Circular Entry Warning:</strong> Same ledger ("' + duplicateLedgerName + '") cannot be selected for both Debit and Credit.';
+            }
+            if (saveBtn) saveBtn.disabled = true;
+            return;
+        }
 
         if (debits === 0 && credits === 0) {
             if (alertBox) {

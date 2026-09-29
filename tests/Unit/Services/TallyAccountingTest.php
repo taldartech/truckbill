@@ -365,6 +365,28 @@ class TallyAccountingTest extends TestCase
                 $table->timestamps();
             });
         }
+
+        if (! Schema::hasTable('company_subscriptions')) {
+            Schema::create('company_subscriptions', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('company_id')->unique();
+                $table->string('status')->default('trial');
+                $table->date('starts_on')->nullable();
+                $table->date('ends_on')->nullable();
+                $table->date('trial_ends_on')->nullable();
+                $table->unsignedSmallInteger('included_branches')->default(5);
+                $table->unsignedSmallInteger('users_per_branch')->default(5);
+                $table->unsignedInteger('included_lr_credits')->default(100);
+                $table->unsignedInteger('included_trucks')->default(0);
+                $table->unsignedSmallInteger('addon_branches')->default(0);
+                $table->unsignedSmallInteger('addon_users')->default(0);
+                $table->unsignedSmallInteger('addon_trucks')->default(0);
+                $table->unsignedInteger('addon_lr_credits')->default(0);
+                $table->unsignedInteger('lr_credits_remaining')->default(100);
+                $table->timestamp('last_renewed_at')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     public function test_tally_xml_exporter_generates_valid_envelope_and_structure(): void
@@ -1359,7 +1381,15 @@ class TallyAccountingTest extends TestCase
 
         $this->assertStringContainsString('Bill-to-Bill Outstandings', $view);
         $this->assertStringContainsString('All (0)', $view);
-        $this->assertStringContainsString('d-none d-print-block', $view);
+        $this->assertStringContainsString('d-none d-print-block ledger-statement-print', $view);
+        $this->assertStringContainsString('tally-print-header', $view);
+        $this->assertStringContainsString('tally-statement-table', $view);
+        $this->assertStringContainsString('tally-op-row', $view);
+        $this->assertStringContainsString('tally-current-total-row', $view);
+        $this->assertStringContainsString('tally-closing-row', $view);
+        $this->assertStringContainsString('tally-total-row', $view);
+        $this->assertStringContainsString('tally-signatures-row', $view);
+        $this->assertStringContainsString('tally-print-footer', $view);
         $this->assertStringContainsString('Statement of Account', $view);
         $this->assertStringContainsString('d-print-none', $view);
         $this->assertStringContainsString('@media print', $view);
@@ -1896,6 +1926,53 @@ class TallyAccountingTest extends TestCase
         $this->assertEquals('ABC Ltd', $data['customer_name']);
         $this->assertCount(1, $data['invoices']);
         $this->assertEquals(33000.00, $data['invoices'][0]['remaining_amount']);
+    }
+
+    public function test_voucher_disallows_identical_ledger_on_debit_and_credit_and_autosuggest_view(): void
+    {
+        $company = Company::create(['name' => 'Auto Suggest Company']);
+        $provisioner = new ChartOfAccountsProvisioner;
+        $provisioner->provisionForCompany($company);
+
+        $cashLedger = Ledger::where('company_id', $company->id)->where('code', 'CASH')->first();
+
+        $user = \App\Models\User::create([
+            'name' => 'Test Accountant',
+            'email' => 'acct_autosuggest@truckbill.test',
+            'password' => bcrypt('secret'),
+            'company_id' => $company->id,
+        ]);
+        $this->actingAs($user);
+
+        // Test creating a voucher where Dr and Cr are the exact same ledger
+        $controller = new \App\Http\Controllers\AccountingVoucherController;
+        $request = new \Illuminate\Http\Request([
+            'voucher_type' => 'contra',
+            'voucher_date' => '2026-09-29',
+            'items' => [
+                ['type' => 'debit', 'ledger_id' => $cashLedger->id, 'amount' => 5000.00],
+                ['type' => 'credit', 'ledger_id' => $cashLedger->id, 'amount' => 5000.00],
+            ],
+        ]);
+
+        $response = $controller->store($request);
+        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
+        $this->assertTrue(session()->has('errors'));
+        $errors = session()->get('errors')->getBag('default');
+        $this->assertTrue($errors->has('items'));
+        $this->assertStringContainsString('Debit and Credit ledgers cannot be identical', $errors->first('items'));
+
+        // Test view contains auto-suggestion and circular detection JavaScript
+        auth()->logout();
+        $view = view('accounting.vouchers.create', [
+            'company' => $company,
+            'ledgers' => collect([$cashLedger]),
+            'costCentres' => collect(),
+        ])->render();
+
+        $this->assertStringContainsString('autoSuggestOppositeRow', $view);
+        $this->assertStringContainsString('handleAmountFocus', $view);
+        $this->assertStringContainsString('Circular Entry Warning', $view);
     }
 }
 
