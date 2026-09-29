@@ -3188,9 +3188,16 @@
                             return data;
                         })
                         .then((data) => {
-                            printButton.classList.add('is-printed');
-                            printButton.setAttribute('title',
-                                `Last printed: ${data.voucher_last_printed_at}`);
+                            (data.updated_booking_ids || [printButton.dataset.freightBookingId]).forEach((id) => {
+                                document.querySelectorAll(`.voucher-print-btn[data-freight-booking-id="${id}"]`).forEach((btn) => {
+                                    btn.classList.add('is-printed');
+                                    btn.title = `Last printed: ${data.voucher_last_printed_at}`;
+                                });
+                            });
+
+                            if (window.$?.fn?.DataTable?.isDataTable('#freightBookingsTable')) {
+                                $('#freightBookingsTable').DataTable().ajax.reload(null, false);
+                            }
                         })
                         .catch((error) => {
                             Swal.fire({
