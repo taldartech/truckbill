@@ -648,7 +648,7 @@
 
     <div class="modal fade fb-pay-modal" id="voucherPaymentModal" tabindex="-1" aria-labelledby="voucherPaymentModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="voucherPaymentModalLabel">
@@ -1240,7 +1240,7 @@
     @if ($freightBooking->linked_lr_id && $linkedFreightBookings->isNotEmpty())
     <!-- Combined Payment Modal -->
     <div class="modal fade fb-pay-modal" id="combinedPaymentModal" tabindex="-1" aria-labelledby="combinedPaymentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="combinedPaymentModalLabel">
@@ -1298,14 +1298,14 @@
                                 <i class="bi bi-currency-rupee"></i> Payment Allocation
                             </div>
                             <div class="fb-pay-panel__body">
-                                <div class="row align-items-center justify-content-between">
+                                <div class="row align-items-center justify-content-between mb-2">
                                     <div class="col-6">
                                         <span class="fb-pay-fact__label">Total Balance</span>
                                         <div class="fb-pay-fact__value fb-pay-fact__value--warn">₹{{ number_format($combinedTotalBalance, 2) }}</div>
                                     </div>
-                                    <div class="col-6 d-flex align-items-center justify-content-end">
-                                        <label class="form-label mb-1" for="combinedAmountInput">Combined Amount *</label>
-                                        <input style="width: 50%" type="number" class="form-control" id="combinedAmountInput" name="combined_amount"
+                                    <div class="col-6 d-flex align-items-center justify-content-end gap-2">
+                                        <label class="form-label mb-0" for="combinedAmountInput" style="font-size: 0.84rem; font-weight: 700; color: #475569;">Combined Amount *</label>
+                                        <input style="max-width: 190px;" type="number" class="form-control" id="combinedAmountInput" name="combined_amount"
                                             step="0.01" min="0.01" max="{{ $combinedTotalBalance }}" required>
                                     </div>
                                 </div>
@@ -1391,8 +1391,8 @@
                                             value="{{ date('Y-m-d') }}">
                                     </div>
                                     <div style="grid-column: span 2;">
-                                        <label for="combinedNotes" class="form-label">Notes</label>
-                                        <input type="text" class="form-control" id="combinedNotes" name="notes" placeholder="Enter notes...">
+                                        <label for="combinedNotes" class="form-label">Remarks</label>
+                                        <input type="text" class="form-control" id="combinedNotes" name="notes" placeholder="Enter remarks">
                                     </div>
                                 </div>
                             </div>

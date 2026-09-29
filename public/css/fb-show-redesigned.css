@@ -534,7 +534,7 @@
     }
 
     .fb-pay-modal .modal-dialog {
-        margin: 0.5rem;
+        margin: 0.5rem auto;
     }
 
     .fb-pay-modal .modal-footer {
@@ -658,6 +658,11 @@
 }
 
 /* Voucher / Combined payment modals */
+.fb-pay-modal .modal-dialog {
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .fb-pay-modal .modal-content {
     border: none;
     border-radius: 14px;

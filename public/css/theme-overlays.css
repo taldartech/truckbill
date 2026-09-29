@@ -1,6 +1,12 @@
 /* Global theme overlays — modals, Swals, glass cards */
 
 /* —— Bootstrap modals (all pages) —— */
+.modal.fade .modal-dialog,
+.fb-pay-modal .modal-dialog {
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .modal.fade .modal-content,
 .fb-pay-modal .modal-content {
     border: none;
