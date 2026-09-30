@@ -148,9 +148,10 @@
                 <br><br>
             @endif
             Authorized Signature
-            <br>
-            <span class="fw-bold" style="font-size: 7px;">Digitally Managed by TruckBill (www.truckbill.in)</span>
         </td>
     </tr>
 </table>
+<div style="text-align: right; margin-top: 1px; line-height: 1;">
+    <span class="fw-bold" style="font-size: 7px;">Digitally Managed by TruckBill (www.truckbill.in)</span>
+</div>
 </div>
