@@ -1135,38 +1135,53 @@ $lrs = $query
             'freight_booking_id' => ['required', 'integer', 'exists:freight_bookings,id'],
         ]);
 
-        $freightBooking = FreightBooking::find($validated['freight_booking_id']);
+        $freightBooking = FreightBooking::with('lr')->find($validated['freight_booking_id']);
         if (! $freightBooking) {
             return response()->json(['message' => 'Freight Booking not found.'], 404);
         }
 
-        if (Auth::user()->company_id && $freightBooking->company_id !== Auth::user()->company_id) {
+        $companyId = Auth::user()->company_id;
+        if ($companyId && (int) $freightBooking->company_id !== (int) $companyId) {
             return response()->json(['message' => 'Unauthorized access to this freight booking.'], 403);
         }
 
         $printTime = now();
-        $query = FreightBooking::query();
+        $linkedLrId = $freightBooking->linked_lr_id ?: $freightBooking->lr?->linked_lr_id;
+        $linkedFbId = $freightBooking->linked_freight_booking_id;
 
-        if (Auth::user()->company_id) {
-            $query->where('company_id', Auth::user()->company_id);
-        }
+        $bookingIds = FreightBooking::query()
+            ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
+            ->where(function ($q) use ($freightBooking, $linkedLrId, $linkedFbId) {
+                $q->where('id', $freightBooking->id);
+                if ($linkedLrId) {
+                    $q->orWhere('linked_lr_id', $linkedLrId)
+                      ->orWhereHas('lr', fn ($lrQ) => $lrQ->where('linked_lr_id', $linkedLrId));
+                }
+                if ($linkedFbId) {
+                    $q->orWhere('id', $linkedFbId)
+                      ->orWhere('linked_freight_booking_id', $linkedFbId);
+                }
+                $q->orWhere('linked_freight_booking_id', $freightBooking->id);
+            })
+            ->pluck('id');
 
-        if ($freightBooking->linked_lr_id) {
-            $query->where('linked_lr_id', $freightBooking->linked_lr_id);
-        } else {
-            $query->where('id', $freightBooking->id);
-        }
-
-        $query->update([
+        $updateData = [
             'voucher_printed' => true,
             'voucher_last_printed_at' => $printTime,
             'updated_at' => $printTime,
-        ]);
+        ];
+        if ($linkedLrId) {
+            $updateData['linked_lr_id'] = $linkedLrId;
+        }
+
+        FreightBooking::whereIn('id', $bookingIds)->update($updateData);
 
         return response()->json([
             'message' => 'Voucher print status updated.',
             'voucher_printed' => true,
             'voucher_last_printed_at' => $printTime->format('d-m-Y h:i A'),
+            'updated_booking_ids' => $bookingIds->all(),
+            'linked_lr_id' => $linkedLrId,
         ]);
     }
 
