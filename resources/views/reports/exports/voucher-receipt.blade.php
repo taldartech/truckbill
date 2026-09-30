@@ -416,10 +416,9 @@
                 </td>
             </tr>
         </table>
-        <div style="text-align: right; margin-top: 2px; line-height: 1;">
-            <span style="font-size: 7px;">Digitally Managed by TruckBill (www.truckbill.in)</span>
-        </div>
-
+    </div>
+    <div style="text-align: right; margin-top: 2px; line-height: 1;">
+        <span style="font-size: 7px;">Digitally Managed by TruckBill (www.truckbill.in)</span>
     </div>
 </body>
 
