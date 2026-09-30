@@ -401,10 +401,12 @@
                             <br><br><br>
                         @endif
                         <div style="text-align: center;">Authorized Signature</div>
-                        <div style="text-align: center; font-size: 7px; font-weight: normal; margin-top: 2px;">Digitally Managed by TruckBill (www.truckbill.in)</div>
                     </td>
                 </tr>
             </table>
+            <div style="text-align: right; margin-top: 2px; line-height: 1;">
+                <span style="font-size: 7px; font-weight: normal;">Digitally Managed by TruckBill (www.truckbill.in)</span>
+            </div>
         </div>
     </div>
 
