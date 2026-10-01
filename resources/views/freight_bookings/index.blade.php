@@ -2306,7 +2306,7 @@
                                 data-lr="${data.lr || ''}"
                                 step="0.01" min="0.01"
                                 max="${balance.toFixed(2)}"
-                                value="${balance.toFixed(2)}"
+                                placeholder="0.00"
                                 oninput="validatePaymentAmount(this); updateTotalPayment();"
                                 onchange="updateTotalPayment()">
                         </td>

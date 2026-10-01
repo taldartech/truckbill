@@ -755,6 +755,7 @@
                                                 <input type="number" class="form-control allocated-input"
                                                     data-fb-id="{{ $freightBooking->id }}" step="0.01" min="0.01"
                                                     max="{{ $freightBooking->balance_amount ?? 0 }}"
+                                                    placeholder="0.00"
                                                     oninput="validatePaymentAmount(this); updateTotalPayment();" onchange="updateTotalPayment()">
                                             </td>
                                         </tr>
