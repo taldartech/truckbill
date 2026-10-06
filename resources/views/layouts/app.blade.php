@@ -1349,18 +1349,121 @@
             <!--end::App Content-->
         </main>
 
-        <footer class="app-footer py-2 px-3 bg-body border-top">
-            <div class="container-fluid d-flex flex-column flex-sm-row justify-content-between align-items-center gap-1 text-center text-sm-start small text-muted">
-                <div>
-                    <strong>Copyright &copy; {{ date('Y') }} All Rights Reserved.</strong>
-                </div>
-                <div>
-                    <a href="https://www.taldartechconsultancy.com/" target="_blank" rel="noopener" class="text-decoration-none text-muted">
-                        Developed &amp; Consulted by Taldar Tech Consultancy.
-                    </a>
+        <footer class="bg-white border-top py-2 px-3">
+            <div class="container-fluid px-1">
+                <div class="d-flex flex-column flex-lg-row align-items-center justify-content-between gap-2 text-nowrap small text-muted">
+                    <!-- Branding: TruckBill — A Product of Taldar Tech Consultancy -->
+                    <div class="d-inline-flex align-items-center">
+                        <span class="fw-bold text-dark">TruckBill</span>
+                        <span class="mx-2 text-secondary opacity-50">&mdash;</span>
+                        <span>A Product of <a href="{{ config('app.company_url', 'https://www.taldartechconsultancy.com/') }}" target="_blank" rel="noopener noreferrer" class="text-success text-decoration-none fw-semibold">Taldar Tech Consultancy</a></span>
+                    </div>
+
+                    <!-- Footer Links: Help & Support, Privacy Policy, Terms & Conditions, Contact Us -->
+                    <nav class="d-inline-flex align-items-center justify-content-center flex-wrap gap-2 gap-md-3" aria-label="Footer Navigation">
+                        <a href="#helpSupportModal" class="text-secondary text-decoration-none fw-medium" data-bs-toggle="modal" data-bs-target="#helpSupportModal" role="button">Help &amp; Support</a>
+                        <span class="text-secondary opacity-50 d-none d-sm-inline" aria-hidden="true">&bull;</span>
+                        <a href="https://www.truckbill.in/policies/privacy-policy.html" target="_blank" rel="noopener noreferrer" class="text-secondary text-decoration-none fw-medium">Privacy Policy</a>
+                        <span class="text-secondary opacity-50 d-none d-sm-inline" aria-hidden="true">&bull;</span>
+                        <a href="https://www.truckbill.in/policies/terms-and-conditions.html" target="_blank" rel="noopener noreferrer" class="text-secondary text-decoration-none fw-medium">Terms &amp; Conditions</a>
+                        <span class="text-secondary opacity-50 d-none d-sm-inline" aria-hidden="true">&bull;</span>
+                        <a href="https://www.truckbill.in/#contact" target="_blank" rel="noopener noreferrer" class="text-secondary text-decoration-none fw-medium">Contact Us</a>
+                    </nav>
+
+                    <!-- Copyright & Dynamic Application Version -->
+                    <div class="d-inline-flex align-items-center gap-2">
+                        <span>&copy; {{ config('app.copyright_year', date('Y')) }} TruckBill. All rights reserved.</span>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 py-1" style="font-size: 0.72rem;" title="Application Version">
+                            v{{ ltrim(config('app.version', '1.0.0'), 'v') }}
+                        </span>
+                    </div>
                 </div>
             </div>
         </footer>
+
+        <!-- Help & Support Modal -->
+        <div class="modal fade" id="helpSupportModal" tabindex="-1" aria-labelledby="helpSupportModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow" style="border-radius: 16px; overflow: hidden;">
+                    <!-- Modal Header -->
+                    <div class="modal-header text-white px-4 py-3" style="background: linear-gradient(135deg, var(--brand-primary, #2FB36F) 0%, var(--brand-primary-dark, #23965C) 100%);">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center bg-white" style="width: 36px; height: 36px; color: var(--brand-primary, #2FB36F);">
+                                <i class="fas fa-headset fa-lg"></i>
+                            </div>
+                            <div>
+                                <h5 class="modal-title fw-bold mb-0 text-white" id="helpSupportModalLabel">Help &amp; Support</h5>
+                                <span class="small opacity-75">TruckBill Technical &amp; Operational Assistance</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="modal-body p-4 text-start">
+                        <p class="text-muted small mb-3">
+                            Need assistance with billing, lorry receipts (LR), GST compliance, or fleet operations? Contact our support team:
+                        </p>
+
+                        <!-- Email Contact Card -->
+                        <div class="d-flex align-items-center p-3 mb-3 rounded-3" style="background-color: rgba(47, 179, 111, 0.08); border: 1px solid rgba(47, 179, 111, 0.25);">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 42px; height: 42px; background-color: var(--brand-primary, #2FB36F); color: #fff;">
+                                <i class="fas fa-envelope fa-lg"></i>
+                            </div>
+                            <div class="flex-grow-1 min-w-0">
+                                <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Email Support</div>
+                                <a href="https://mail.google.com/mail/?view=cm&fs=1&to={{ config('app.support_email', 'support@truckbill.in') }}&su=TruckBill%20Support%20Inquiry" target="_blank" rel="noopener noreferrer" class="fw-bold text-decoration-none text-truncate d-block" style="color: var(--brand-primary, #2FB36F); font-size: 0.95rem;" title="Click to open in Gmail">
+                                    {{ config('app.support_email', 'support@truckbill.in') }}
+                                </a>
+                            </div>
+                            <div class="d-flex gap-1 ms-2 flex-shrink-0">
+                                <a href="mailto:{{ config('app.support_email', 'support@truckbill.in') }}" class="btn btn-sm btn-light border text-secondary px-2 py-1 rounded-pill" title="Open with Default Mail app / Outlook">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-light border text-secondary px-3 py-1 fw-semibold rounded-pill" onclick="navigator.clipboard.writeText('{{ config('app.support_email', 'support@truckbill.in') }}'); const orig=this.innerHTML; this.innerHTML='<i class=\'fas fa-check text-success me-1\'></i> Copied!'; setTimeout(() => this.innerHTML=orig, 2000);" title="Copy email address">
+                                    <i class="far fa-copy me-1"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Phone Contact Card -->
+                        <div class="d-flex align-items-center p-3 mb-3 rounded-3" style="background-color: rgba(45, 140, 255, 0.08); border: 1px solid rgba(45, 140, 255, 0.25);">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 42px; height: 42px; background-color: var(--brand-accent-blue, #2D8CFF); color: #fff;">
+                                <i class="fas fa-phone-alt fa-lg"></i>
+                            </div>
+                            <div class="flex-grow-1 min-w-0">
+                                <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Helpline &amp; Contact</div>
+                                <span role="button" onclick="navigator.clipboard.writeText('{{ config('app.support_phone', '+91 9001010007, +91 9351616004') }}'); const btn=document.getElementById('phoneCopyBtn'); if(btn){ const o=btn.innerHTML; btn.innerHTML='<i class=\'fas fa-check text-success me-1\'></i> Copied!'; setTimeout(()=>btn.innerHTML=o, 2000); } if(window.Swal){ Swal.fire({toast:true, position:'top-end', icon:'success', title:'Phone number copied!', showConfirmButton:false, timer:2000}); }" class="fw-bold text-decoration-none text-truncate d-block" style="color: var(--brand-accent-blue, #2D8CFF); font-size: 0.95rem; cursor: pointer;" title="Click to copy phone numbers">
+                                    {{ config('app.support_phone', '+91 9001010007, +91 9351616004') }}
+                                </span>
+                            </div>
+                            <button id="phoneCopyBtn" type="button" class="btn btn-sm btn-light border text-secondary px-3 py-1 fw-semibold rounded-pill ms-2 flex-shrink-0" onclick="navigator.clipboard.writeText('{{ config('app.support_phone', '+91 9001010007, +91 9351616004') }}'); const o=this.innerHTML; this.innerHTML='<i class=\'fas fa-check text-success me-1\'></i> Copied!'; setTimeout(()=>this.innerHTML=o, 2000); if(window.Swal){ Swal.fire({toast:true, position:'top-end', icon:'success', title:'Phone number copied!', showConfirmButton:false, timer:2000}); }" title="Copy phone numbers">
+                                <i class="far fa-copy me-1"></i> Copy
+                            </button>
+                        </div>
+
+                        <!-- Support Details -->
+                        <div class="p-3 bg-light rounded-3 border">
+                            <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom">
+                                <span class="text-muted small"><i class="fas fa-clock text-warning me-1"></i> Working Hours:</span>
+                                <span class="fw-semibold small text-dark">Mon &ndash; Sat: 10:00 AM &ndash; 7:00 PM IST</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span class="text-muted small"><i class="fas fa-building text-secondary me-1"></i> Product by:</span>
+                                <a href="{{ config('app.company_url', 'https://www.taldartechconsultancy.com/') }}" target="_blank" rel="noopener noreferrer" class="fw-semibold small text-decoration-none" style="color: var(--brand-primary, #2FB36F);">
+                                    {{ config('app.company_name', 'Taldar Tech Consultancy') }} <i class="fas fa-external-link-alt fa-xs ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="modal-footer bg-light px-4 py-2 border-top">
+                        <button type="button" class="btn btn-secondary btn-sm px-4 fw-semibold rounded-pill" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     </div>
 
