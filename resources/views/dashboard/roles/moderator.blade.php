@@ -13,14 +13,17 @@
     'subtitle' => 'Trips to unblock, bilties to bill and hires to fix for '.strtolower($period->label).'.',
     'quickActions' => [
         ['label' => 'New Bilty', 'icon' => 'bi bi-plus-lg', 'url' => route('lorry_receipts.create')],
-        ['label' => 'New Hire', 'icon' => 'bi bi-truck', 'url' => route('freight_bookings.create')],
+        ['label' => 'New Hire', 'icon' => 'bi bi-truck', 'url' => route('lorry_receipts.index', ['delivery_status' => 'Pending'])],
         ['label' => 'Pending Memo / POD', 'icon' => 'bi bi-clipboard-check', 'url' => route('freight_bookings.index', ['pending_memo' => 1])],
     ],
     'showPeriodFilter' => true,
     'dashboardPeriod' => $period,
 ])
 
-@include('dashboard.partials.action-center', ['actions' => $actions, 'title' => 'Today\'s operations to-do'])
+<div class="dashboard-grid dashboard-grid--split">
+    @include('dashboard.partials.action-center', ['actions' => $actions, 'title' => 'Today\'s operations to-do'])
+    @include('dashboard.partials.profitability-panel', ['profitabilityHref' => route('reports.profitability', $reportRange)])
+</div>
 
 <div class="dashboard-kpis">
     @include('dashboard.partials.kpi-card', [
@@ -71,7 +74,7 @@
         'icon' => 'bi bi-link-45deg',
         'tone' => $exceptions['without_hire'] > 0 ? 'warning' : 'success',
         'hint' => 'Last 90 days',
-        'href' => route('freight_bookings.create'),
+        'href' => route('lorry_receipts.index', ['delivery_status' => 'Pending']),
     ])
     @include('dashboard.partials.kpi-card', [
         'title' => 'Loss-making trips',
@@ -132,6 +135,6 @@
     </section>
 </div>
 
-@include('dashboard.partials.profitability-panel', ['profitabilityHref' => route('reports.profitability', $reportRange)])
+@include('dashboard.partials.profit-drivers-panel', ['profitabilityHref' => route('reports.profitability', $reportRange)])
 
 <script type="application/json" id="dashboard-chart-data">@json($chartPayload)</script>

@@ -212,6 +212,46 @@ class DecisionDashboardTest extends TestCase
         $response->assertSee('Collect ₹8.0 K overdue from 2 customers');
     }
 
+    public function test_extra_actions_open_in_a_modal(): void
+    {
+        $company = $this->makeCompany();
+        $this->seedBusiness($company);
+        $admin = $this->makeUser('admin', $company);
+
+        $response = $this->actingAs($admin)->get(route('dashboard'));
+
+        $response->assertOk();
+        $response->assertViewHas('actions', fn (array $actions): bool => count($actions) > 5);
+        $response->assertSee('data-bs-target="#dashboardActionsModal"', false);
+        $response->assertSee('id="dashboardActionsModal"', false);
+        $response->assertDontSee('dashboard-actions__more"', false);
+    }
+
+    public function test_new_hire_opens_pending_bilties(): void
+    {
+        $company = $this->makeCompany();
+        $this->seedBusiness($company);
+        $admin = $this->makeUser('admin', $company);
+        $pendingBiltiesUrl = route('lorry_receipts.index', ['delivery_status' => 'Pending']);
+
+        $this->actingAs($admin)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('href="'.e($pendingBiltiesUrl).'"', false);
+
+        $listNumbers = fn (array $query): array => collect(
+            $this->actingAs($admin)
+                ->withHeader('X-Requested-With', 'XMLHttpRequest')
+                ->get(route('lorry_receipts.index', $query))
+                ->assertOk()
+                ->json('data')
+        )->pluck('lr_number')->sort()->values()->all();
+
+        $this->assertSame(['LR-CANCELLED-HIRE'], $listNumbers(['delivery_status' => 'Pending']));
+        $this->assertSame(['LR-RUNNING'], $listNumbers(['delivery_status' => 'In-Progress']));
+        $this->assertSame(['LR-AUGUST'], $listNumbers(['delivery_status' => 'Invoiced']));
+        $this->assertCount(5, $listNumbers(['delivery_status' => 'unknown']));
+    }
+
     public function test_dashboard_period_can_be_changed(): void
     {
         $company = $this->makeCompany();

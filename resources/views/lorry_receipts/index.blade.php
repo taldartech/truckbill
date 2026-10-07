@@ -472,6 +472,15 @@
                                     @endif
                                 </select>
                             </div>
+                            <div class="app-index-filters__field app-index-filters__field--truck">
+                                <label class="app-index-filters__label" for="filterDeliveryStatus">Status</label>
+                                <select id="filterDeliveryStatus" class="form-select form-select-sm">
+                                    <option value="">All Statuses</option>
+                                    @foreach (\App\Http\Controllers\LorryReceiptController::LISTING_STATUSES as $listingStatus)
+                                        <option value="{{ $listingStatus }}" @selected(request('delivery_status') === $listingStatus)>{{ $listingStatus }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                             <div class="app-index-filters__field app-index-filters__field--date">
                                 <label class="app-index-filters__label" for="fromDate">From</label>
                                 <input type="date" class="form-control form-control-sm" id="fromDate">
@@ -1053,7 +1062,7 @@
                         $('#filterLrNumber').val(params.get('lr_number'));
                     }
 
-                    return params.has('gr_date_from') || params.has('gr_date_to') || params.has('lr_number') || params.has('customer_id') || params.has('transporter_id') || params.has('truck_id');
+                    return params.has('gr_date_from') || params.has('gr_date_to') || params.has('lr_number') || params.has('customer_id') || params.has('transporter_id') || params.has('truck_id') || params.has('delivery_status');
                 }
 
                 function syncListingQueryToUrl() {
@@ -1064,6 +1073,7 @@
                     const customerId = $('#filterCustomerId').val();
                     const transporterId = $('#filterTransporterId').val();
                     const truckId = $('#filterTruckId').val();
+                    const deliveryStatus = $('#filterDeliveryStatus').val();
 
                     if (fromDate) {
                         params.set('gr_date_from', fromDate);
@@ -1082,6 +1092,9 @@
                     }
                     if (truckId) {
                         params.set('truck_id', truckId);
+                    }
+                    if (deliveryStatus) {
+                        params.set('delivery_status', deliveryStatus);
                     }
 
                     const query = params.toString();
@@ -1134,6 +1147,7 @@
                             d.customer_id = $('#filterCustomerId').val();
                             d.transporter_id = $('#filterTransporterId').val();
                             d.truck_id = $('#filterTruckId').val();
+                            d.delivery_status = $('#filterDeliveryStatus').val();
                         },
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
@@ -1291,7 +1305,7 @@
                     }
                 });
 
-                $('#filterCustomerId, #filterTransporterId, #filterTruckId').on('change', function() {
+                $('#filterCustomerId, #filterTransporterId, #filterTruckId, #filterDeliveryStatus').on('change', function() {
                     syncListingQueryToUrl();
                     table.ajax.reload();
                 });
@@ -1301,6 +1315,7 @@
                     $('#filterCustomerId').val('').trigger('change.select2');
                     $('#filterTransporterId').val('').trigger('change.select2');
                     $('#filterTruckId').val('').trigger('change.select2');
+                    $('#filterDeliveryStatus').val('');
                     setDefaultDates();
                     syncListingQueryToUrl();
                     table.ajax.reload();

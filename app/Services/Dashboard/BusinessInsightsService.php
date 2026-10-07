@@ -561,7 +561,7 @@ class BusinessInsightsService
             $items[] = $this->actionItem(65, 'warning', 'bi bi-truck',
                 "{$exceptions['without_hire']} ".str('bilty')->plural($exceptions['without_hire']).' without a lorry hire',
                 'Book the hire so trip cost and transporter payment are tracked.',
-                route('freight_bookings.create'), 'Create hire');
+                route('lorry_receipts.index', ['delivery_status' => 'Pending']), 'Create hire');
         }
 
         $weakCustomer = collect($margin['weak_customers'])->first(fn (array $customer): bool => $customer['margin'] < self::LOW_MARGIN_PERCENT && $customer['trips'] >= 2);

@@ -13,14 +13,17 @@
     'subtitle' => 'Business health for '.strtolower($period->label).', compared '.$period->comparisonLabel.'.',
     'quickActions' => [
         ['label' => 'New Bilty', 'icon' => 'bi bi-plus-lg', 'url' => route('lorry_receipts.create')],
-        ['label' => 'New Hire', 'icon' => 'bi bi-truck', 'url' => route('freight_bookings.create')],
+        ['label' => 'New Hire', 'icon' => 'bi bi-truck', 'url' => route('lorry_receipts.index', ['delivery_status' => 'Pending'])],
         ['label' => 'Create Invoice', 'icon' => 'bi bi-receipt', 'url' => route('invoices.create')],
     ],
     'showPeriodFilter' => true,
     'dashboardPeriod' => $period,
 ])
 
-@include('dashboard.partials.action-center', ['actions' => $actions])
+<div class="dashboard-grid dashboard-grid--split">
+    @include('dashboard.partials.action-center', ['actions' => $actions])
+    @include('dashboard.partials.profitability-panel', ['profitabilityHref' => route('reports.profitability', $reportRange)])
+</div>
 
 <div class="dashboard-kpis">
     @include('dashboard.partials.kpi-card', [
@@ -98,7 +101,7 @@
     @include('dashboard.partials.payables-panel', ['payablesHref' => route('reports.transporter-report')])
 </div>
 
-@include('dashboard.partials.profitability-panel', ['profitabilityHref' => route('reports.profitability', $reportRange)])
+@include('dashboard.partials.profit-drivers-panel', ['profitabilityHref' => route('reports.profitability', $reportRange)])
 
 @include('dashboard.partials.watchlist-panel', ['linkTrips' => true, 'ewayHref' => route('reports.eway-bill')])
 

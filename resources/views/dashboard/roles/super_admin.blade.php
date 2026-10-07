@@ -61,7 +61,10 @@
     </div>
 @endif
 
-@include('dashboard.partials.action-center', ['actions' => $actions, 'title' => 'Across your companies'])
+<div class="dashboard-grid dashboard-grid--split">
+    @include('dashboard.partials.action-center', ['actions' => $actions, 'title' => 'Across your companies'])
+    @include('dashboard.partials.profitability-panel')
+</div>
 
 <div class="dashboard-kpis">
     @include('dashboard.partials.kpi-card', [
@@ -196,7 +199,7 @@
     @include('dashboard.partials.payables-panel')
 </div>
 
-@include('dashboard.partials.profitability-panel')
+@include('dashboard.partials.profit-drivers-panel')
 
 @include('dashboard.partials.growth-panel')
 
