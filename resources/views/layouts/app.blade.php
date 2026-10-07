@@ -1612,7 +1612,7 @@
                                 {{ config('app.support_email', 'support@truckbill.in') }}
                             </a>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-success bg-white px-3 py-1 fw-semibold rounded-pill ms-2 flex-shrink-0" onclick="navigator.clipboard.writeText('{{ config('app.support_email', 'support@truckbill.in') }}'); const orig=this.innerHTML; this.innerHTML='<i class=\'fas fa-check text-success me-1\'></i> Copied!'; setTimeout(() => this.innerHTML=orig, 2000);" title="Copy email address">
+                        <button type="button" class="btn btn-sm bg-white border border-success text-success px-3 py-1 fw-semibold rounded-pill ms-2 flex-shrink-0" onclick="navigator.clipboard.writeText('{{ config('app.support_email', 'support@truckbill.in') }}'); const orig=this.innerHTML; this.innerHTML='<i class=\'fas fa-check me-1\'></i> Copied!'; setTimeout(() => this.innerHTML=orig, 2000);" title="Copy email address">
                             <i class="far fa-copy me-1"></i> Copy
                         </button>
                     </div>
@@ -1634,7 +1634,7 @@
                                 </a>
                             </div>
                         </div>
-                        <button id="phoneCopyBtn" type="button" class="btn btn-sm btn-outline-primary bg-white px-3 py-1 fw-semibold rounded-pill ms-2 flex-shrink-0" onclick="navigator.clipboard.writeText('+91 97844 51256, +91 97849 46004'); const o=this.innerHTML; this.innerHTML='<i class=\'fas fa-check text-success me-1\'></i> Copied!'; setTimeout(()=>this.innerHTML=o, 2000); if(window.Swal){ Swal.fire({toast:true, position:'top-end', icon:'success', title:'Phone numbers copied!', showConfirmButton:false, timer:2000}); }" title="Copy phone numbers">
+                        <button id="phoneCopyBtn" type="button" class="btn btn-sm bg-white border border-primary text-primary px-3 py-1 fw-semibold rounded-pill ms-2 flex-shrink-0" onclick="navigator.clipboard.writeText('+91 97844 51256, +91 97849 46004'); const o=this.innerHTML; this.innerHTML='<i class=\'fas fa-check me-1\'></i> Copied!'; setTimeout(()=>this.innerHTML=o, 2000); if(window.Swal){ Swal.fire({toast:true, position:'top-end', icon:'success', title:'Phone numbers copied!', showConfirmButton:false, timer:2000}); }" title="Copy phone numbers">
                             <i class="far fa-copy me-1"></i> Copy
                         </button>
                     </div>
