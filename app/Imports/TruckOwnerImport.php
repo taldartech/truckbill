@@ -121,67 +121,20 @@ class TruckOwnerImport implements
             try {
                 DB::transaction(function () use ($data, $companyId, $panNumber, $dummyPan, $mobileNumber) {
                     /*
-                     * LOCATION RESOLUTION (NULLABLE / FIRST OR CREATE)
+                     * LOCATION RESOLUTION (EXISTING RECORDS ONLY - NO AUTO-CREATION)
                      */
-                    $countryId = null;
-                    if (! empty($data['country'])) {
-                        $countryName = trim((string) $data['country']);
-                        $country = Country::whereRaw('LOWER(name) = ?', [strtolower($countryName)])->first();
-                        if (! $country) {
-                            $country = Country::create(['name' => ucwords(strtolower($countryName))]);
-                        }
-                        $countryId = $country->id;
-                    }
+                    $country = Country::whereRaw('LOWER(name) = ?', [strtolower(trim((string) $data['country']))])->first();
+                    $countryId = $country?->id;
 
-                    $stateId = null;
-                    if (! empty($data['state'])) {
-                        $stateName = trim((string) $data['state']);
-                        $stateQuery = State::whereRaw('LOWER(name) = ?', [strtolower($stateName)]);
-                        if ($countryId) {
-                            $state = (clone $stateQuery)->where('country_id', $countryId)->first() ?? $stateQuery->first();
-                        } else {
-                            $state = $stateQuery->first();
-                        }
+                    $state = State::whereRaw('LOWER(name) = ?', [strtolower(trim((string) $data['state']))])
+                        ->when($countryId, fn ($q) => $q->where('country_id', $countryId))
+                        ->first();
+                    $stateId = $state?->id;
 
-                        if (! $state) {
-                            $fallbackCountryId = $countryId ?? Country::whereRaw('LOWER(name) = ?', ['india'])->value('id') ?? Country::first()?->id ?? 1;
-                            $state = State::create([
-                                'name' => ucwords(strtolower($stateName)),
-                                'country_id' => $fallbackCountryId,
-                            ]);
-                        }
-                        $stateId = $state->id;
-                        if (! $countryId && $state->country_id) {
-                            $countryId = $state->country_id;
-                        }
-                    }
-
-                    $cityId = null;
-                    if (! empty($data['city'])) {
-                        $cityName = trim((string) $data['city']);
-                        $cityQuery = City::whereRaw('LOWER(name) = ?', [strtolower($cityName)]);
-                        if ($stateId) {
-                            $city = (clone $cityQuery)->where('state_id', $stateId)->first() ?? $cityQuery->first();
-                        } else {
-                            $city = $cityQuery->first();
-                        }
-
-                        if (! $city) {
-                            $cityCountryId = $countryId ?? ($state?->country_id ?? Country::whereRaw('LOWER(name) = ?', ['india'])->value('id') ?? Country::first()?->id ?? 1);
-                            $city = City::create([
-                                'name' => ucwords(strtolower($cityName)),
-                                'state_id' => $stateId,
-                                'country_id' => $cityCountryId,
-                            ]);
-                        }
-                        $cityId = $city->id;
-                        if (! $stateId && $city->state_id) {
-                            $stateId = $city->state_id;
-                        }
-                        if (! $countryId && $city->country_id) {
-                            $countryId = $city->country_id;
-                        }
-                    }
+                    $city = City::whereRaw('LOWER(name) = ?', [strtolower(trim((string) $data['city']))])
+                        ->when($stateId, fn ($q) => $q->where('state_id', $stateId))
+                        ->first();
+                    $cityId = $city?->id;
 
                     /*
                      * TRANSPORTER MASTER (REUSE OR CREATE)
@@ -198,7 +151,7 @@ class TruckOwnerImport implements
                             'pan_number' => $panNumber,
                             'gst_number' => ! empty($data['gst_number']) ? strtoupper(trim($data['gst_number'])) : null,
                             'gst_type' => null,
-                            'pan_active' => (bool) $data['pan_active'],
+                            'pan_active' => strtolower(trim((string) $data['pan_active'])) === 'yes',
                             'address' => $data['address'] ?: null,
                             'city_id' => $cityId,
                             'state_id' => $stateId,
@@ -240,7 +193,7 @@ class TruckOwnerImport implements
                         'contact_person_name' => $data['contact_person_name'] ?: null,
                         'mobile_number' => $mobileNumber,
                         'short_name' => $shortName,
-                        'declaration_given' => (bool) $data['declaration_given'],
+                        'declaration_given' => strtolower(trim((string) $data['declaration_given'])) === 'yes',
                         'total_trucks' => (int) ($data['total_trucks'] ?? 0),
                         'advance_amount' => (float) ($data['advance_amount'] ?? 0),
                         'tds_percentage' => (float) ($data['tds_percentage'] ?? 0),
@@ -306,14 +259,14 @@ class TruckOwnerImport implements
             'name' => $name ?: '',
             'email' => $email ?: null,
             'gst_number' => $gstNumber ? strtoupper(trim((string) $gstNumber)) : null,
-            'pan_active' => $this->parseBoolean($panActive),
+            'pan_active' => $panActive !== null && trim((string) $panActive) !== '' ? trim((string) $panActive) : null,
             'contact_person_name' => $contactPerson ?: null,
             'mobile_number' => $mobileNumber !== null && $mobileNumber !== '' ? (string) $mobileNumber : '',
             'country' => $country ? trim((string) $country) : null,
             'state' => $state ? trim((string) $state) : null,
             'city' => $city ? trim((string) $city) : null,
             'address' => $address ?: null,
-            'declaration_given' => $this->parseBoolean($declarationGiven),
+            'declaration_given' => $declarationGiven !== null && trim((string) $declarationGiven) !== '' ? trim((string) $declarationGiven) : null,
             'total_trucks' => $totalTrucks !== null && $totalTrucks !== '' ? (int) $totalTrucks : 0,
             'tds_percentage' => $tdsPercentage !== null && trim((string) $tdsPercentage) !== '' ? (float) $tdsPercentage : null,
             'tds_adjustment_remark' => $tdsAdjustmentRemark ?: null,
@@ -350,26 +303,85 @@ class TruckOwnerImport implements
             ],
             'pan_active' => [
                 'required',
-                'boolean',
+                function ($attribute, $value, $fail) {
+                    $val = strtolower(trim((string) $value));
+                    if (! in_array($val, ['yes', 'no'], true)) {
+                        $fail('PAN Active must be Yes or No.');
+                    }
+                },
             ],
             'country' => [
                 'required',
                 'string',
                 'max:255',
+                function ($attribute, $value, $fail) {
+                    $country = Country::whereRaw('LOWER(name) = ?', [strtolower(trim((string) $value))])->first();
+                    if (! $country) {
+                        $fail("Country '{$value}' does not exist in master records.");
+                    }
+                },
             ],
             'state' => [
                 'required',
                 'string',
                 'max:255',
+                function ($attribute, $value, $fail) use ($data) {
+                    $countryName = trim((string) ($data['country'] ?? ''));
+                    $country = ! empty($countryName) ? Country::whereRaw('LOWER(name) = ?', [strtolower($countryName)])->first() : null;
+
+                    $stateQuery = State::whereRaw('LOWER(name) = ?', [strtolower(trim((string) $value))]);
+                    if ($country) {
+                        $state = $stateQuery->where('country_id', $country->id)->first();
+                        if (! $state) {
+                            $fail("State '{$value}' does not exist for the selected country.");
+                            return;
+                        }
+                    } else {
+                        $state = $stateQuery->first();
+                        if (! $state) {
+                            $fail("State '{$value}' does not exist in master records.");
+                            return;
+                        }
+                    }
+                },
             ],
             'city' => [
                 'required',
                 'string',
                 'max:255',
+                function ($attribute, $value, $fail) use ($data) {
+                    $countryName = trim((string) ($data['country'] ?? ''));
+                    $country = ! empty($countryName) ? Country::whereRaw('LOWER(name) = ?', [strtolower($countryName)])->first() : null;
+
+                    $stateName = trim((string) ($data['state'] ?? ''));
+                    $state = ! empty($stateName) ? State::whereRaw('LOWER(name) = ?', [strtolower($stateName)])
+                        ->when($country, fn ($q) => $q->where('country_id', $country->id))
+                        ->first() : null;
+
+                    $cityQuery = City::whereRaw('LOWER(name) = ?', [strtolower(trim((string) $value))]);
+                    if ($state) {
+                        $city = $cityQuery->where('state_id', $state->id)->first();
+                        if (! $city) {
+                            $fail("City '{$value}' does not exist for the selected state.");
+                            return;
+                        }
+                    } else {
+                        $city = $cityQuery->first();
+                        if (! $city) {
+                            $fail("City '{$value}' does not exist in master records.");
+                            return;
+                        }
+                    }
+                },
             ],
             'declaration_given' => [
                 'required',
-                'boolean',
+                function ($attribute, $value, $fail) {
+                    $val = strtolower(trim((string) $value));
+                    if (! in_array($val, ['yes', 'no'], true)) {
+                        $fail('Declaration Given must be Yes or No.');
+                    }
+                },
             ],
             'tds_percentage' => [
                 'required',
@@ -415,12 +427,10 @@ class TruckOwnerImport implements
             'mobile_number.required' => 'Mobile Number is required.',
             'mobile_number.digits' => 'Mobile Number must be exactly 10 digits.',
             'pan_active.required' => 'PAN Active status is required (Yes / No).',
-            'pan_active.boolean' => 'PAN Active must be Yes or No.',
             'country.required' => 'Country is required.',
             'state.required' => 'State is required.',
             'city.required' => 'City is required.',
             'declaration_given.required' => 'Declaration Given status is required (Yes / No).',
-            'declaration_given.boolean' => 'Declaration Given must be Yes or No.',
             'tds_percentage.required' => 'TDS % is required.',
             'tds_percentage.numeric' => 'TDS % must be a valid number.',
             'email.email' => 'Email must be a valid email address.',
@@ -439,16 +449,12 @@ class TruckOwnerImport implements
             return null;
         }
 
-        if (is_bool($value)) {
-            return $value;
-        }
-
         $str = strtolower(trim((string) $value));
-        if (in_array($str, ['1', 'yes', 'true', 'y', 'active'], true)) {
+        if ($str === 'yes') {
             return true;
         }
 
-        if (in_array($str, ['0', 'no', 'false', 'n', 'inactive'], true)) {
+        if ($str === 'no') {
             return false;
         }
 

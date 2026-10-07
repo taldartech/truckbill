@@ -737,7 +737,9 @@ public function bulkUploadTemplate()
         'Truck Type',
         'Registration Date',
         'Truck Owner',
+        'Truck Owner PAN',
         'Driver',
+        'Driver License Number',
     ];
 
     return response()->streamDownload(function () use ($headers) {
