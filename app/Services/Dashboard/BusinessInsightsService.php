@@ -440,20 +440,21 @@ class BusinessInsightsService
      * Booked revenue, trip cost and cash collected per month for the last six months.
      *
      * @param  array<int, int>  $companyIds
-     * @return array{labels: list<string>, revenue: list<float>, cost: list<float>, profit: list<float>, collected: list<float>}
+     * @return array{labels: list<string>, revenue: list<float>, cost: list<float>, profit: list<float>, collected: list<float>, trips: list<int>, totals: array{revenue: float, cost: float, profit: float, margin: float, trips: int, profit_per_trip: float, collected: float}}
      */
     public function monthlyTrend(array $companyIds): array
     {
-        $trend = ['labels' => [], 'revenue' => [], 'cost' => [], 'profit' => [], 'collected' => []];
+        $trend = ['labels' => [], 'revenue' => [], 'cost' => [], 'profit' => [], 'collected' => [], 'trips' => []];
         $currentMonth = Carbon::now()->startOfMonth();
 
         for ($offset = self::TREND_MONTHS - 1; $offset >= 0; $offset--) {
             $monthStart = $currentMonth->copy()->subMonthsNoOverflow($offset);
             $monthEnd = $monthStart->copy()->endOfMonth();
 
-            $revenue = (float) $this->activeTripsQuery($companyIds, $monthStart, $monthEnd)
-                ->selectRaw('COALESCE(SUM(COALESCE(actual_amount, amount, 0)), 0) as total')
-                ->value('total');
+            $monthTrips = $this->activeTripsQuery($companyIds, $monthStart, $monthEnd)
+                ->selectRaw('COUNT(*) as trips, COALESCE(SUM(COALESCE(actual_amount, amount, 0)), 0) as total')
+                ->first();
+            $revenue = (float) ($monthTrips->total ?? 0);
 
             $cost = (float) FreightBooking::query()
                 ->join('lorry_receipts', 'lorry_receipts.id', '=', 'freight_bookings.lr_id')
@@ -472,7 +473,21 @@ class BusinessInsightsService
             $trend['cost'][] = round($cost, 2);
             $trend['profit'][] = round($revenue - $cost, 2);
             $trend['collected'][] = $this->collectedBetween($companyIds, $monthStart, $monthEnd);
+            $trend['trips'][] = (int) ($monthTrips->trips ?? 0);
         }
+
+        $totalRevenue = round(array_sum($trend['revenue']), 2);
+        $totalProfit = round(array_sum($trend['profit']), 2);
+        $totalTrips = array_sum($trend['trips']);
+        $trend['totals'] = [
+            'revenue' => $totalRevenue,
+            'cost' => round(array_sum($trend['cost']), 2),
+            'profit' => $totalProfit,
+            'margin' => $totalRevenue > 0 ? round($totalProfit / $totalRevenue * 100, 1) : 0.0,
+            'trips' => $totalTrips,
+            'profit_per_trip' => $totalTrips > 0 ? round($totalProfit / $totalTrips, 2) : 0.0,
+            'collected' => round(array_sum($trend['collected']), 2),
+        ];
 
         return $trend;
     }

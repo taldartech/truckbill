@@ -137,6 +137,16 @@ class DecisionDashboardTest extends TestCase
         $this->assertEquals(19000, end($trend['cost']));
         $this->assertEquals(20000, $trend['revenue'][4]);
         $this->assertEquals(15000, $trend['cost'][4]);
+        $this->assertSame([0, 0, 0, 0, 1, 3], $trend['trips']);
+        $this->assertEquals([
+            'revenue' => 43000,
+            'cost' => 34000,
+            'profit' => 9000,
+            'margin' => 20.9,
+            'trips' => 4,
+            'profit_per_trip' => 2250,
+            'collected' => 5000,
+        ], $trend['totals']);
     }
 
     public function test_unbilled_payables_and_exceptions(): void

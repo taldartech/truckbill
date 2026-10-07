@@ -1,6 +1,8 @@
 @php
     $margin = $insights['margin'];
     $period = $insights['period'];
+    $sixMonths = $insights['trend']['totals'];
+    $sixMonthsFrom = $insights['trend']['labels'][0] ?? '';
     $profitabilityHref = $profitabilityHref ?? null;
 @endphp
 
@@ -14,35 +16,21 @@
     </div>
     <div class="dashboard-panel__body">
         <div class="dashboard-tab-pane" data-dash-pane="period">
-            <div class="profit-summary">
-                <div class="profit-summary__item">
-                    <span>Revenue</span><strong>{{ formatRupeesCompact($margin['revenue']) }}</strong>
-                </div>
-                <div class="profit-summary__item">
-                    <span>Trip cost</span><strong>{{ formatRupeesCompact($margin['cost']) }}</strong>
-                </div>
-                <div class="profit-summary__item">
-                    <span>Gross profit</span><strong class="{{ $margin['profit'] < 0 ? 'text-danger' : 'text-success' }}">{{ formatRupeesCompact($margin['profit']) }}</strong>
-                </div>
-                <div class="profit-summary__item">
-                    <span>Margin</span><strong>{{ $margin['margin'] }}%</strong>
-                </div>
-                <div class="profit-summary__item">
-                    <span>Profit / trip</span><strong>{{ formatRupeesCompact($margin['profit_per_trip']) }}</strong>
-                </div>
-            </div>
+            @include('dashboard.partials.profit-summary', ['totals' => $margin])
             <div class="dashboard-chart">
                 <canvas id="dashProfitTrendChart" aria-label="Revenue, cost and profit for the selected period"></canvas>
             </div>
         </div>
         <div class="dashboard-tab-pane" data-dash-pane="months" hidden>
+            @include('dashboard.partials.profit-summary', ['totals' => $sixMonths])
             <div class="dashboard-chart">
                 <canvas id="dashMonthlyPnlChart" aria-label="Monthly revenue, cost, profit and collections"></canvas>
             </div>
         </div>
 
         <div class="dashboard-panel__footer">
-            <span>{{ $margin['trips'] }} {{ Str::plural('trip', $margin['trips']) }} · {{ $margin['loss_trips'] }} at a loss · {{ $margin['low_margin_trips'] }} below {{ \App\Services\Dashboard\BusinessInsightsService::LOW_MARGIN_PERCENT }}% margin</span>
+            <span data-dash-pane="period">{{ $margin['trips'] }} {{ Str::plural('trip', $margin['trips']) }} · {{ $margin['loss_trips'] }} at a loss · {{ $margin['low_margin_trips'] }} below {{ \App\Services\Dashboard\BusinessInsightsService::LOW_MARGIN_PERCENT }}% margin</span>
+            <span data-dash-pane="months" hidden>{{ $sixMonths['trips'] }} {{ Str::plural('trip', $sixMonths['trips']) }} · {{ formatRupeesCompact($sixMonths['collected']) }} collected since {{ $sixMonthsFrom }}</span>
             @if ($profitabilityHref)
                 <a href="{{ $profitabilityHref }}" class="dashboard-link">Profitability report <i class="bi bi-arrow-right-short"></i></a>
             @endif
