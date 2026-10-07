@@ -203,6 +203,61 @@ class InvoiceTest extends TestCase
         $this->assertDatabaseHas('lorry_receipts', ['id' => $lr2->id, 'invoice_generated' => 1]);
     }
 
+    public function test_admin_can_store_invoice_with_optional_due_date(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+
+        $response = $this->actingAs($admin)->post('/invoices', [
+            'manual_invoice_number' => 'INV-DUE-001',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'due_date' => now()->addDays(15)->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 1000,
+            'memo_ids' => [$lr1->memo_id],
+        ]);
+
+        $response->assertRedirect(route('invoices.index'));
+        $invoice = Invoice::where('manual_invoice_number', 'INV-DUE-001')->firstOrFail();
+        $this->assertSame(now()->addDays(15)->toDateString(), $invoice->effectiveDueDate()->toDateString());
+    }
+
+    public function test_invoice_without_due_date_defaults_to_credit_period(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        $invoice = $this->createInvoice($admin, $customer, 'INV-DUE-DEFAULT');
+
+        $this->assertNull($invoice->due_date);
+        $this->assertSame(
+            now()->addDays(Invoice::DEFAULT_CREDIT_DAYS)->toDateString(),
+            $invoice->effectiveDueDate()->toDateString()
+        );
+    }
+
+    public function test_store_rejects_due_date_before_invoice_date(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+
+        $response = $this->actingAs($admin)->from('/invoices/create')->post('/invoices', [
+            'manual_invoice_number' => 'INV-DUE-002',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'due_date' => now()->subDay()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 1000,
+            'memo_ids' => [$lr1->memo_id],
+        ]);
+
+        $response->assertRedirect('/invoices/create');
+        $response->assertSessionHasErrors('due_date');
+        $this->assertDatabaseMissing('invoices', ['manual_invoice_number' => 'INV-DUE-002']);
+    }
+
     public function test_store_rejects_duplicate_manual_invoice_number_within_company(): void
     {
         $admin = $this->makeUser('admin');

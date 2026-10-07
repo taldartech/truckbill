@@ -27,6 +27,7 @@ class AuditAttributeLabels
                 'payment_status' => 'Payment status',
                 'customer_id' => 'Customer',
                 'generated_date' => 'Generated date',
+                'due_date' => 'Due date',
                 'memo_ids' => 'Memos',
                 'lr_ids' => 'Good Receipts (Bilty)',
                 'sgst' => 'SGST',
