@@ -303,32 +303,63 @@
         .app-footer {
             grid-area: lte-app-footer !important;
             width: 100% !important;
-            padding: 0.35rem 0.85rem !important;
+            display: flex !important;
+            align-items: center !important;
+            min-height: 44px !important;
+            padding: 0.35rem 1rem !important;
             background-color: #ffffff !important;
             border-top: 1px solid #e9ecef !important;
+            box-sizing: border-box !important;
+        }
+
+        .app-footer .container-fluid {
+            width: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            padding-left: 0.25rem !important;
+            padding-right: 0.25rem !important;
         }
 
         .truckbill-footer-content {
-            display: flex;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+            font-size: 0.85rem;
+            line-height: 1.45;
+            color: #475569;
+        }
+
+        .truckbill-footer-content .footer-col-brand,
+        .truckbill-footer-content .footer-col-nav,
+        .truckbill-footer-content .footer-col-meta {
+            display: inline-flex !important;
+            align-items: center !important;
+            line-height: 1.45;
+        }
+
+        .truckbill-footer-content .footer-separator {
+            margin: 0 0.35rem;
+            color: #94a3b8;
+            opacity: 0.75;
+            user-select: none;
+            display: inline-flex;
             align-items: center;
-            justify-content: space-between;
-            font-size: 0.76rem;
-            line-height: 1.35;
-            color: #6c757d;
         }
 
         .truckbill-footer-content .footer-link {
-            color: #64748b;
+            color: #475569;
             text-decoration: none;
             font-weight: 500;
             transition: color 0.15s ease;
             cursor: pointer;
+            line-height: 1.45;
         }
 
         .truckbill-footer-content .footer-link:hover,
         .truckbill-footer-content .footer-link:focus,
         .truckbill-footer-content .footer-link:focus-visible {
-            color: #1e293b !important;
+            color: #0f172a !important;
             text-decoration: none;
             outline: none;
             box-shadow: none;
@@ -338,15 +369,25 @@
             color: #000000 !important;
         }
 
+        .truckbill-footer-content .footer-version-badge {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 0.72rem !important;
+            font-weight: 600 !important;
+            padding: 0.15rem 0.5rem !important;
+            line-height: 1.2 !important;
+            vertical-align: middle;
+        }
 
-        /* Large Screens (>= 1250px): Single line with 0.76rem font & generous spacing */
-        @media (min-width: 1250px) {
+        /* Large Screens (>= 1200px): Clean single line, larger 0.85rem font, generous spacing */
+        @media (min-width: 1200px) {
             .truckbill-footer-content {
                 flex-direction: row;
                 flex-wrap: nowrap;
                 white-space: nowrap;
-                font-size: 0.76rem;
-                gap: 1.5rem;
+                font-size: 0.85rem;
+                gap: 1.25rem;
             }
             .truckbill-footer-content .footer-col-brand,
             .truckbill-footer-content .footer-col-nav,
@@ -355,47 +396,100 @@
             }
         }
 
-        /* Middle Screens (768px to 1249px - Laptop / Tablet with sidebar): Single line with compact 0.70rem font & clear space between the 3 parts */
-        @media (min-width: 768px) and (max-width: 1249.98px) {
+        /* Medium-Large Screens (992px to 1199.98px - Laptops / sidebar open): Single line, 0.78rem font */
+        @media (min-width: 992px) and (max-width: 1199.98px) {
             .truckbill-footer-content {
                 flex-direction: row;
                 flex-wrap: nowrap;
                 white-space: nowrap;
-                font-size: 0.70rem;
-                gap: 0.6rem;
+                font-size: 0.78rem;
+                gap: 0.75rem;
             }
             .truckbill-footer-content .footer-col-brand,
             .truckbill-footer-content .footer-col-nav,
             .truckbill-footer-content .footer-col-meta {
                 flex-shrink: 0;
             }
-            .truckbill-footer-content .badge {
+            .truckbill-footer-content .footer-separator {
+                margin: 0 0.25rem;
+            }
+            .truckbill-footer-content .footer-version-badge {
+                font-size: 0.68rem !important;
+                padding: 0.1rem 0.4rem !important;
+            }
+        }
+
+        /* Middle Screens (768px to 991.98px - Tablets landscape / compact laptops): Single line preserved, 0.72rem font */
+        @media (min-width: 768px) and (max-width: 991.98px) {
+            .truckbill-footer-content {
+                flex-direction: row;
+                flex-wrap: nowrap;
+                white-space: nowrap;
+                font-size: 0.72rem;
+                gap: 0.45rem;
+            }
+            .truckbill-footer-content .footer-col-brand,
+            .truckbill-footer-content .footer-col-nav,
+            .truckbill-footer-content .footer-col-meta {
+                flex-shrink: 0;
+            }
+            .truckbill-footer-content .footer-separator {
+                margin: 0 0.15rem;
+            }
+            .truckbill-footer-content .footer-version-badge {
                 font-size: 0.65rem !important;
-                padding: 1px 5px !important;
+                padding: 1px 4px !important;
             }
         }
 
-        /* Mobile (< 768px): Clean stacked centered rows */
+        /* Small Screens & Mobile (< 768px): Stacked centered rows with comfortable readable font */
         @media (max-width: 767.98px) {
+            .app-footer {
+                min-height: auto !important;
+                padding: 0.5rem 0.75rem !important;
+            }
+            .app-footer .container-fluid {
+                display: block !important;
+            }
             .truckbill-footer-content {
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                text-align: center;
-                gap: 0.35rem;
-                font-size: 0.75rem;
-                padding: 0.2rem 0;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                text-align: center !important;
+                gap: 0.4rem !important;
+                font-size: 0.82rem !important;
             }
             .truckbill-footer-content .footer-col-nav {
                 order: 1;
                 flex-wrap: wrap;
                 justify-content: center;
+                row-gap: 0.2rem;
             }
             .truckbill-footer-content .footer-col-brand {
                 order: 2;
+                justify-content: center;
             }
             .truckbill-footer-content .footer-col-meta {
                 order: 3;
+                justify-content: center;
+            }
+            .truckbill-footer-content .footer-separator {
+                margin: 0 0.35rem;
+            }
+            .truckbill-footer-content .footer-version-badge {
+                font-size: 0.70rem !important;
+                padding: 0.1rem 0.45rem !important;
+            }
+        }
+
+        /* Extra Small Mobile (< 480px) */
+        @media (max-width: 479.98px) {
+            .truckbill-footer-content {
+                font-size: 0.76rem !important;
+                gap: 0.35rem !important;
+            }
+            .truckbill-footer-content .footer-separator {
+                margin: 0 0.2rem;
             }
         }
 
@@ -1448,31 +1542,31 @@
             <!--end::App Content-->
         </main>
 
-        <footer class="app-footer bg-white border-top py-1 px-3">
-            <div class="container-fluid px-1">
+        <footer class="app-footer bg-white border-top">
+            <div class="container-fluid">
                 <div class="truckbill-footer-content">
                     <!-- Branding: TruckBill — A Product of Taldar Tech Consultancy -->
-                    <div class="footer-col-brand text-nowrap">
+                    <div class="footer-col-brand d-inline-flex align-items-center text-nowrap">
                         <span class="fw-bold text-dark">TruckBill</span>
-                        <span class="mx-1 fw-semibold" style="color: #475569;">&mdash;</span>
-                        <span>A Product of <a href="{{ config('app.company_url', 'https://www.taldartechconsultancy.com/') }}" target="_blank" rel="noopener noreferrer" class="text-success text-decoration-none fw-semibold">Taldar Tech Consultancy</a></span>
+                        <span class="footer-separator fw-semibold" style="color: #475569;">&mdash;</span>
+                        <span class="d-inline-flex align-items-center">A Product of&nbsp;<a href="{{ config('app.company_url', 'https://www.taldartechconsultancy.com/') }}" target="_blank" rel="noopener noreferrer" class="text-success text-decoration-none fw-semibold">Taldar Tech Consultancy</a></span>
                     </div>
 
                     <!-- Footer Links: Help & Support, Privacy Policy, Terms & Conditions, Contact Us -->
                     <nav class="footer-col-nav d-inline-flex align-items-center justify-content-center text-nowrap" aria-label="Footer Navigation">
                         <a href="#helpSupportModal" class="footer-link fw-medium" data-bs-toggle="modal" data-bs-target="#helpSupportModal" role="button">Help &amp; Support</a>
-                        <span class="mx-1 text-secondary opacity-50" aria-hidden="true">&bull;</span>
+                        <span class="footer-separator" aria-hidden="true">&bull;</span>
                         <a href="https://www.truckbill.in/policies/privacy-policy.html" target="_blank" rel="noopener noreferrer" class="footer-link fw-medium">Privacy Policy</a>
-                        <span class="mx-1 text-secondary opacity-50" aria-hidden="true">&bull;</span>
+                        <span class="footer-separator" aria-hidden="true">&bull;</span>
                         <a href="https://www.truckbill.in/policies/terms-and-conditions.html" target="_blank" rel="noopener noreferrer" class="footer-link fw-medium">Terms &amp; Conditions</a>
-                        <span class="mx-1 text-secondary opacity-50" aria-hidden="true">&bull;</span>
+                        <span class="footer-separator" aria-hidden="true">&bull;</span>
                         <a href="https://www.truckbill.in/#contact" target="_blank" rel="noopener noreferrer" class="footer-link fw-medium">Contact Us</a>
                     </nav>
 
                     <!-- Copyright & Dynamic Application Version -->
                     <div class="footer-col-meta d-inline-flex align-items-center text-nowrap gap-2">
-                        <span>&copy; {{ config('app.copyright_year', date('Y')) }} TruckBill. All rights reserved.</span>
-                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 py-0" style="font-size: 0.7rem; line-height: 1.3;" title="Application Version">
+                        <span class="d-inline-flex align-items-center">&copy; {{ config('app.copyright_year', date('Y')) }} TruckBill. All rights reserved.</span>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill footer-version-badge" title="Application Version">
                             v{{ ltrim(config('app.version', '1.0.0'), 'v') }}
                         </span>
                     </div>
@@ -1483,18 +1577,19 @@
     <!--end::App Wrapper-->
 
     <!-- Help & Support Modal -->
+    <!-- Help & Support Modal -->
     <div class="modal fade" id="helpSupportModal" tabindex="-1" aria-labelledby="helpSupportModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
                 <!-- Modal Header -->
-                <div class="modal-header text-white px-4 py-3" style="background: linear-gradient(135deg, var(--brand-primary, #2FB36F) 0%, var(--brand-primary-dark, #23965C) 100%);">
+                <div class="modal-header bg-success text-white px-4 py-3 border-0">
                     <div class="d-flex align-items-center gap-2">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center bg-white" style="width: 36px; height: 36px; color: var(--brand-primary, #2FB36F);">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center bg-white text-success flex-shrink-0" style="width: 38px; height: 38px;">
                             <i class="fas fa-headset fa-lg"></i>
                         </div>
                         <div>
                             <h5 class="modal-title fw-bold mb-0 text-white" id="helpSupportModalLabel">Help &amp; Support</h5>
-                            <span class="small opacity-75">TruckBill Technical &amp; Operational Assistance</span>
+                            <span class="small text-white-50">TruckBill Technical &amp; Operational Assistance</span>
                         </div>
                     </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -1507,33 +1602,39 @@
                     </p>
 
                     <!-- Email Contact Card -->
-                    <div class="d-flex align-items-center p-3 mb-3 rounded-3" style="background-color: rgba(47, 179, 111, 0.08); border: 1px solid rgba(47, 179, 111, 0.25);">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 42px; height: 42px; background-color: var(--brand-primary, #2FB36F); color: #fff;">
+                    <div class="d-flex align-items-center p-3 mb-3 rounded-3 bg-success-subtle border border-success-subtle">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0 bg-success text-white" style="width: 42px; height: 42px;">
                             <i class="fas fa-envelope fa-lg"></i>
                         </div>
                         <div class="flex-grow-1 min-w-0">
-                            <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Email Support</div>
-                            <a href="https://mail.google.com/mail/?view=cm&fs=1&to={{ config('app.support_email', 'support@truckbill.in') }}&su=TruckBill%20Support%20Inquiry" target="_blank" rel="noopener noreferrer" class="fw-bold text-decoration-none text-truncate d-block" style="color: var(--brand-primary, #2FB36F); font-size: 0.95rem;" title="Click to open in Gmail">
+                            <div class="text-secondary small fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Email Support</div>
+                            <a href="https://mail.google.com/mail/?view=cm&fs=1&to={{ config('app.support_email', 'support@truckbill.in') }}&su=TruckBill%20Support%20Inquiry" target="_blank" rel="noopener noreferrer" class="fw-bold text-decoration-none text-success text-truncate d-block" style="font-size: 0.95rem;" title="Click to open in Gmail">
                                 {{ config('app.support_email', 'support@truckbill.in') }}
                             </a>
                         </div>
-                        <button type="button" class="btn btn-sm btn-light border text-secondary px-3 py-1 fw-semibold rounded-pill ms-2 flex-shrink-0" onclick="navigator.clipboard.writeText('{{ config('app.support_email', 'support@truckbill.in') }}'); const orig=this.innerHTML; this.innerHTML='<i class=\'fas fa-check text-success me-1\'></i> Copied!'; setTimeout(() => this.innerHTML=orig, 2000);" title="Copy email address">
+                        <button type="button" class="btn btn-sm btn-outline-success bg-white px-3 py-1 fw-semibold rounded-pill ms-2 flex-shrink-0" onclick="navigator.clipboard.writeText('{{ config('app.support_email', 'support@truckbill.in') }}'); const orig=this.innerHTML; this.innerHTML='<i class=\'fas fa-check text-success me-1\'></i> Copied!'; setTimeout(() => this.innerHTML=orig, 2000);" title="Copy email address">
                             <i class="far fa-copy me-1"></i> Copy
                         </button>
                     </div>
 
                     <!-- Phone Contact Card -->
-                    <div class="d-flex align-items-center p-3 mb-3 rounded-3" style="background-color: rgba(45, 140, 255, 0.08); border: 1px solid rgba(45, 140, 255, 0.25);">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 42px; height: 42px; background-color: var(--brand-accent-blue, #2D8CFF); color: #fff;">
+                    <div class="d-flex align-items-center p-3 mb-3 rounded-3 bg-primary-subtle border border-primary-subtle">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0 bg-primary text-white" style="width: 42px; height: 42px;">
                             <i class="fas fa-phone-alt fa-lg"></i>
                         </div>
                         <div class="flex-grow-1 min-w-0">
-                            <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Helpline &amp; Contact</div>
-                            <span role="button" onclick="navigator.clipboard.writeText('{{ config('app.support_phone', '+91 9001010007, +91 9351616004') }}'); const btn=document.getElementById('phoneCopyBtn'); if(btn){ const o=btn.innerHTML; btn.innerHTML='<i class=\'fas fa-check text-success me-1\'></i> Copied!'; setTimeout(()=>btn.innerHTML=o, 2000); } if(window.Swal){ Swal.fire({toast:true, position:'top-end', icon:'success', title:'Phone number copied!', showConfirmButton:false, timer:2000}); }" class="fw-bold text-decoration-none text-truncate d-block" style="color: var(--brand-accent-blue, #2D8CFF); font-size: 0.95rem; cursor: pointer;" title="Click to copy phone numbers">
-                                {{ config('app.support_phone', '+91 9001010007, +91 9351616004') }}
-                            </span>
+                            <div class="text-secondary small fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Helpline &amp; Contact</div>
+                            <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
+                                <a href="tel:+919784451256" class="fw-bold text-decoration-none text-primary" style="font-size: 0.95rem;" title="Call +91 97844 51256">
+                                    +91 97844 51256
+                                </a>
+                                <span class="text-secondary opacity-50">&bull;</span>
+                                <a href="tel:+919784946004" class="fw-bold text-decoration-none text-primary" style="font-size: 0.95rem;" title="Call +91 97849 46004">
+                                    +91 97849 46004
+                                </a>
+                            </div>
                         </div>
-                        <button id="phoneCopyBtn" type="button" class="btn btn-sm btn-light border text-secondary px-3 py-1 fw-semibold rounded-pill ms-2 flex-shrink-0" onclick="navigator.clipboard.writeText('{{ config('app.support_phone', '+91 9001010007, +91 9351616004') }}'); const o=this.innerHTML; this.innerHTML='<i class=\'fas fa-check text-success me-1\'></i> Copied!'; setTimeout(()=>this.innerHTML=o, 2000); if(window.Swal){ Swal.fire({toast:true, position:'top-end', icon:'success', title:'Phone number copied!', showConfirmButton:false, timer:2000}); }" title="Copy phone numbers">
+                        <button id="phoneCopyBtn" type="button" class="btn btn-sm btn-outline-primary bg-white px-3 py-1 fw-semibold rounded-pill ms-2 flex-shrink-0" onclick="navigator.clipboard.writeText('+91 97844 51256, +91 97849 46004'); const o=this.innerHTML; this.innerHTML='<i class=\'fas fa-check text-success me-1\'></i> Copied!'; setTimeout(()=>this.innerHTML=o, 2000); if(window.Swal){ Swal.fire({toast:true, position:'top-end', icon:'success', title:'Phone numbers copied!', showConfirmButton:false, timer:2000}); }" title="Copy phone numbers">
                             <i class="far fa-copy me-1"></i> Copy
                         </button>
                     </div>
@@ -1546,7 +1647,7 @@
                         </div>
                         <div class="d-flex align-items-center justify-content-between">
                             <span class="text-muted small"><i class="fas fa-building text-secondary me-1"></i> Product by:</span>
-                            <a href="{{ config('app.company_url', 'https://www.taldartechconsultancy.com/') }}" target="_blank" rel="noopener noreferrer" class="fw-semibold small text-decoration-none" style="color: var(--brand-primary, #2FB36F);">
+                            <a href="{{ config('app.company_url', 'https://www.taldartechconsultancy.com/') }}" target="_blank" rel="noopener noreferrer" class="fw-semibold small text-decoration-none text-success">
                                 {{ config('app.company_name', 'Taldar Tech Consultancy') }} <i class="fas fa-external-link-alt fa-xs ms-1"></i>
                             </a>
                         </div>

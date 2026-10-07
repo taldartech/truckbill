@@ -60,7 +60,7 @@ return [
   'version' => env('APP_VERSION', '1.0.0'),
   'copyright_year' => env('APP_COPYRIGHT_YEAR', null),
   'support_email' => env('SUPPORT_EMAIL', 'support@truckbill.in'),
-  'support_phone' => env('SUPPORT_PHONE', '+91 9001010007, +91 9351616004'),
+  'support_phone' => env('SUPPORT_PHONE', '+91 97844 51256, +91 97849 46004'),
   'company_name' => env('APP_COMPANY_NAME', 'Taldar Tech Consultancy'),
   'company_url' => env('APP_COMPANY_URL', 'https://www.taldartechconsultancy.com/'),
 
