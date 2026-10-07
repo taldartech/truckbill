@@ -877,6 +877,12 @@
                                             required placeholder="Enter memo ID / POD" pattern="[A-Za-z0-9\-\/]+">
                                         <div class="lrf-pf__hint mt-1">Saved to the good receipt (bilty) record.</div>
                                     </div>
+                                    <div>
+                                        <label for="deliveryMemoCreatedAt" class="form-label">Memo Date &amp; Time</label>
+                                        <input type="datetime-local" class="form-control" id="deliveryMemoCreatedAt"
+                                            name="memo_created_at" max="{{ now()->format('Y-m-d\TH:i') }}">
+                                        <div class="lrf-pf__hint mt-1">Optional. Leave blank to use the current date &amp; time.</div>
+                                    </div>
                                 </div>
                             </form>
                         </div>
@@ -1029,6 +1035,7 @@
         // Function to save memo ID for delivery
         window.saveMemoId = function() {
             const memoId = document.getElementById('deliveryMemoId').value.trim();
+            const memoCreatedAt = document.getElementById('deliveryMemoCreatedAt').value;
             const saveBtn = document.getElementById('saveMemoBtn');
             const spinner = saveBtn.querySelector('.spinner-border');
             const errorDiv = document.getElementById('memoModalError');
@@ -1048,6 +1055,9 @@
             // Create form data
             const formData = new FormData();
             formData.append('memo_id', memoId);
+            if (memoCreatedAt) {
+                formData.append('memo_created_at', memoCreatedAt);
+            }
             formData.append('lr_ids[]', {{ $freightBooking->lr_id }});
 
             // Send AJAX request to update memo ID

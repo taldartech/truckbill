@@ -1445,10 +1445,15 @@
                     <form id="bulkMemoIdForm" method="POST" action="{{ route('freight_bookings.bulk_memo_id') }}">
                         @csrf
                         <div class="row mb-3">
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <label class="form-label">Memo ID / POD *</label>
                                 <input type="text" name="memo_id" class="form-control" required placeholder="Enter Memo / POD ID">
                                 <div class="form-text">This memo / POD ID will be assigned to all selected good receipts (bilty)</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Memo Date &amp; Time</label>
+                                <input type="datetime-local" name="memo_created_at" class="form-control" max="${new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}">
+                                <div class="form-text">Optional. Leave blank to use the current date &amp; time.</div>
                             </div>
                         </div>
 

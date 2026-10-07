@@ -527,8 +527,11 @@ return $buttons;
         try {
             $validated = $request->validate([
                 'memo_id' => 'required|string',
+                'memo_created_at' => 'nullable|date|before_or_equal:now',
                 'lr_ids' => 'required|array',
                 'lr_ids.*' => 'integer|exists:lorry_receipts,id',
+            ], [
+                'memo_created_at.before_or_equal' => 'The memo date & time cannot be in the future.',
             ]);
 
             $companyId = Auth::user()->company_id;
@@ -605,9 +608,11 @@ return $buttons;
                 foreach ($lorryReceipts as $lr) {
                     $oldDeliveryStatus = $lr->delivery_status;
                     $lr->memo_id = $validated['memo_id'];
-                    if (empty($lr->memo_created_at)) {
-                      $lr->memo_created_at = now();
-                   }
+                    if (! empty($validated['memo_created_at'])) {
+                        $lr->memo_created_at = Carbon::parse($validated['memo_created_at']);
+                    } elseif (empty($lr->memo_created_at)) {
+                        $lr->memo_created_at = now();
+                    }
                     $lr->delivery_status = 'Delivered';
                     $lr->save();
 

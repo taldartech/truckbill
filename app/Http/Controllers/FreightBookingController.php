@@ -1881,10 +1881,13 @@ class FreightBookingController extends Controller
         try {
             $validated = $request->validate([
                 'memo_id' => 'required|string|max:255',
+                'memo_created_at' => 'nullable|date|before_or_equal:now',
                 'lr_ids' => 'required|array',
                 'lr_ids.*' => 'required|integer|exists:lorry_receipts,id',
                 'freight_booking_ids' => 'required|array',
                 'freight_booking_ids.*' => 'required|integer|exists:freight_bookings,id',
+            ], [
+                'memo_created_at.before_or_equal' => 'The memo date & time cannot be in the future.',
             ]);
 
             $customers = LorryReceipt::whereIn('id', $validated['lr_ids'])
@@ -1931,6 +1934,11 @@ class FreightBookingController extends Controller
                 foreach ($lorryReceipts as $lr) {
                     $oldDeliveryStatus = $lr->delivery_status;
                     $lr->memo_id = $validated['memo_id'];
+                    if (! empty($validated['memo_created_at'])) {
+                        $lr->memo_created_at = Carbon::parse($validated['memo_created_at']);
+                    } elseif (empty($lr->memo_created_at)) {
+                        $lr->memo_created_at = now();
+                    }
                     $lr->delivery_status = 'Delivered';
                     $lr->save();
 
