@@ -81,11 +81,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($frs as $index => $freightBooking)
+                        @foreach ($frs as $index => $item)
                             @php
-                                // Get the first freight booking (or null if none exists)
-                                // $freightBooking = $lr->freightBookings->first();
-                                $lr = $freightBooking->lr;
+                                $freightBooking = $item instanceof \App\Models\EwayBill ? $item->freightBooking : $item;
+                                $ewayBill = $item instanceof \App\Models\EwayBill ? $item : $item->ewayBills?->first();
+                                $lr = $freightBooking?->lr;
+                                $transporter = $freightBooking?->transporter ?? $lr?->transporter;
 
                                 // Initialize payments array with all payment types
                                 $payments = [
@@ -121,20 +122,19 @@
                             @endphp
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td>{{ $lr->lr_number }}</td>
-                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}
-                                </td>
+                                <td>{{ $lr->lr_number ?? 'N/A' }}</td>
+                                <td style="white-space: nowrap;">{{ $lr && $lr->gr_date ? \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') : '—' }}</td>
                                 <td>{{ $lr->truck->truck_number ?? 'N/A' }}</td>
-                                <td>{{ $lr->weight }}</td>
-                                <td>{{ $lr->fr_rate }}</td>
-                                <td>{{ $lr->amount }}</td>
+                                <td>{{ $lr->weight ?? '—' }}</td>
+                                <td>{{ $lr->fr_rate ?? '—' }}</td>
+                                <td>{{ $lr->amount ?? '—' }}</td>
                                 <td>{{ $lr->consignor->name ?? 'N/A' }}</td>
                                 <td>{{ $lr->consignee->name ?? 'N/A' }}</td>
-                                <td>{{ $lr->destination_city }}</td>
-                                <td>{{ $freightBooking->eway_bill_number ?? '0' }}</td>
-                                <td>{{ $freightBooking->eway_bill_expiry ?? '0' }}</td>
-                                <td>{{ $lr->transporter->name ?? 'N/A' }}</td>
-                                <td>{{ $lr->transporter->mobile_number ?? 'N/A' }}</td>
+                                <td>{{ $lr->destination_city ?? '—' }}</td>
+                                <td>{{ $ewayBill?->eway_bill_number ?? ($freightBooking?->eway_bill_number ?? '0') }}</td>
+                                <td>{{ $ewayBill?->eway_bill_expiry ? \Carbon\Carbon::parse($ewayBill->eway_bill_expiry)->format('d-m-Y') : ($freightBooking?->eway_bill_expiry ?? '0') }}</td>
+                                <td>{{ $transporter->name ?? 'N/A' }}</td>
+                                <td>{{ $transporter->mobile_number ?? 'N/A' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
