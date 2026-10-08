@@ -23,7 +23,7 @@
         </div>
 
         <form method="POST" action="{{ route('lorry_receipts.store') }}" id="lorryReceiptForm" class="needs-validation lrf linked-lr-form"
-            novalidate="">
+            novalidate="" data-draft-key="lorry_receipts_create_linked">
             @csrf
             <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
 
@@ -116,7 +116,7 @@
                                         @endif
                                     </select>
                                     @error('truck_id')
-                                        <div class="text-danger">{{ $message }}</div>
+                                                     <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                     <div class="invalid-feedback">Please select a truck.</div>
                                 </div>
@@ -250,6 +250,9 @@
                 <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-x-lg me-1"></i> Cancel
                 </a>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="lrClearFormBtn">
+                    <i class="bi bi-eraser me-1"></i> Clear
+                </button>
                 <button class="btn btn-success btn-sm" type="submit" id="linked-lr-submit" disabled
                     title="Add at least 2 lorry receipts to create a linked group">
                     <i class="bi bi-floppy-fill me-1"></i> Create Linked Good Receipts
@@ -343,9 +346,98 @@
             }
             const node = tpl.content.cloneNode(true);
             lrItemsContainer.appendChild(node);
+            const item = lrItemsContainer.lastElementChild;
+
+            if (item && prefill && Object.keys(prefill).length > 0) {
+                const setValue = (selector, value) => {
+                    const el = item.querySelector(selector);
+                    if (el && value !== undefined && value !== null) {
+                        el.value = value;
+                    }
+                };
+
+                setValue('.lr-id-input', prefill.id ?? '');
+                setValue('.lr-number-input', prefill.lr_number ?? '');
+                setValue('.invoice-number-input', prefill.invoice_number ?? '');
+                setValue('.gr-number-input', prefill.gr_number ?? '');
+                setValue('.consignor-contact', prefill.consignor_contact_number ?? prefill.consignor_contact ?? '');
+                setValue('.consignee-contact', prefill.consignee_contact_number ?? prefill.consignee_contact ?? '');
+                setValue('.source-city', prefill.source_city ?? '');
+                setValue('.source-state', prefill.source_state ?? '');
+                setValue('.destination-city', prefill.destination_city ?? '');
+                setValue('.destination-state', prefill.destination_state ?? '');
+                setValue('.loading-station-input', prefill.loading_station ?? '');
+                setValue('.unloading-station-input', prefill.unloading_station ?? '');
+                setValue('.units', prefill.no_of_units ?? prefill.units ?? '');
+                setValue('.goods-value', prefill.goods_value ?? '');
+                setValue('.weight', prefill.weight ?? '');
+                setValue('.fr-rate', prefill.fr_rate ?? '');
+                setValue('.amount', prefill.amount ?? '');
+
+                const unitsVal = parseFloat(item.querySelector('.units')?.value);
+                const weightVal = parseFloat(item.querySelector('.weight')?.value);
+                const perUnitInput = item.querySelector('.weight-per-unit');
+                if (perUnitInput && unitsVal > 0 && weightVal > 0) {
+                    perUnitInput.value = Number((weightVal / unitsVal).toFixed(3)).toString();
+                }
+
+                const fixedCheckbox = item.querySelector('.is-fixed-amount');
+                if (fixedCheckbox) {
+                    fixedCheckbox.checked = Boolean(Number(prefill.is_fixed_amount ?? 0));
+                }
+
+                const appendSelectOption = (selector, id, text) => {
+                    if (!id) {
+                        return;
+                    }
+                    const select = item.querySelector(selector);
+                    if (!select) {
+                        return;
+                    }
+                    const option = new Option(text || ('#' + id), id, true, true);
+                    select.appendChild(option);
+                };
+
+                appendSelectOption('.customer-select', prefill.customer_id, prefill.customer_text || prefill.customer_name);
+                appendSelectOption('.consignor-select', prefill.consignor_id, prefill.consignor_text || prefill.consignor_name);
+                appendSelectOption('.consignee-select', prefill.consignee_id, prefill.consignee_text || prefill.consignee_name);
+
+                const goodsSelect = item.querySelector('.goods-type');
+                if (goodsSelect && (prefill.goods_type || prefill.good_type)) {
+                    const gt = prefill.goods_type || prefill.good_type;
+                    const existing = Array.from(goodsSelect.options).some((opt) => opt.value === gt);
+                    if (!existing) {
+                        goodsSelect.add(new Option(gt, gt, true, true));
+                    } else {
+                        goodsSelect.value = gt;
+                    }
+                }
+
+                const consignorContact = prefill.consignor_contact_number ?? prefill.consignor_contact ?? '';
+                const consignorCity = prefill.source_city ?? '';
+                const consignorState = prefill.source_state ?? '';
+                if (consignorContact && item.querySelector('.consignor-contact-text')) item.querySelector('.consignor-contact-text').textContent = 'Contact Number: ' + consignorContact;
+                if (consignorCity && item.querySelector('.consignor-city-text')) item.querySelector('.consignor-city-text').textContent = 'Source City: ' + consignorCity;
+                if (consignorState && item.querySelector('.consignor-state-text')) item.querySelector('.consignor-state-text').textContent = 'Source State: ' + consignorState;
+
+                const consigneeContact = prefill.consignee_contact_number ?? prefill.consignee_contact ?? '';
+                const consigneeCity = prefill.destination_city ?? '';
+                const consigneeState = prefill.destination_state ?? '';
+                if (consigneeContact && item.querySelector('.consignee-contact-text')) item.querySelector('.consignee-contact-text').textContent = 'Contact Number: ' + consigneeContact;
+                if (consigneeCity && item.querySelector('.consignee-city-text')) item.querySelector('.consignee-city-text').textContent = 'Destination City: ' + consigneeCity;
+                if (consigneeState && item.querySelector('.consignee-state-text')) item.querySelector('.consignee-state-text').textContent = 'Destination State: ' + consigneeState;
+
+                if (window.LinkedLrFormUI) {
+                    window.LinkedLrFormUI.updateRoutePreview(item);
+                    window.LinkedLrFormUI.updateItemMeta(item);
+                    window.LinkedLrFormUI.updateSummary();
+                }
+            }
+
             refreshIndices();
             initSelect2In(lrItemsContainer.lastElementChild);
         }
+        window.addLrItem = addLrItem;
 
         function refreshIndices() {
             if (window.LinkedLrFormUI) {
@@ -692,8 +784,10 @@
                     });
                 }
 
-                // Add first LR item by default
-                addLrItem();
+                // Add first LR item by default (only if no draft restored items exist)
+                if (!document.querySelectorAll('#lr-items-container .lr-item').length) {
+                    addLrItem();
+                }
 
                 setTimeout(function() {
                     $('#truck_id, #transporter_id, #reference_by').trigger('change.select2');
@@ -733,6 +827,8 @@
             if (addBtn) {
                 addBtn.addEventListener('click', () => addLrItem());
             }
+
+
 
             // Remove LR item
             lrItemsContainer.addEventListener('click', function(e) {
