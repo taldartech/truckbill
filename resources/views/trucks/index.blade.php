@@ -904,8 +904,10 @@ $('#confirmTruckDelete').on('click', function() {
         ['name' => 'Truck Number', 'format' => 'Truck Number', 'required' => true],
         ['name' => 'Truck Type', 'format' => 'Truck Type', 'required' => true],
         ['name' => 'Registration Date', 'format' => 'DD-MM-YYYY or YYYY-MM-DD', 'required' => true],
-        ['name' => 'Truck Owner', 'format' => 'Text', 'required' => false],
-        ['name' => 'Driver', 'format' => 'Text', 'required' => false],
+        ['name' => 'Truck Owner', 'format' => 'Truck Owner Name', 'required' => false],
+        ['name' => 'Truck Owner PAN', 'format' => 'PAN number (Required if duplicate owner name exists)', 'required' => false],
+        ['name' => 'Driver', 'format' => 'Driver Name', 'required' => false],
+        ['name' => 'Driver License Number', 'format' => 'License number (Required if duplicate driver name exists)', 'required' => false],
     ],
 ])
 

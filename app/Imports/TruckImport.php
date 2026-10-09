@@ -121,38 +121,60 @@ class TruckImport implements
              * ---------------------------------------------------------
              */
             $transporterId = null;
+            $ownerName = ! empty($data['truck_owner']) ? trim((string) $data['truck_owner']) : null;
+            $ownerPan = ! empty($data['truck_owner_pan']) ? strtoupper(trim((string) $data['truck_owner_pan'])) : null;
 
-            if (! empty($data['truck_owner'])) {
-                $ownerName = trim((string) $data['truck_owner']);
-
-                $owners = Transporter::query()
+            if ($ownerName || $ownerPan) {
+                $ownerQuery = Transporter::query()
                     ->where('company_id', $this->companyId)
-                    ->where('is_owner', 1)
-                    ->where(function ($q) use ($ownerName) {
+                    ->where('is_owner', 1);
+
+                if ($ownerPan) {
+                    $cleanPan = strtoupper(str_replace(' ', '', (string) $ownerPan));
+                    $ownerQuery->whereHas('transporterMaster', function ($sub) use ($cleanPan) {
+                        $sub->whereRaw("UPPER(REPLACE(pan_number, ' ', '')) = ?", [$cleanPan]);
+                    });
+                }
+
+                if ($ownerName) {
+                    $ownerQuery->where(function ($q) use ($ownerName) {
                         $q->where('short_name', $ownerName)
                             ->orWhereHas('transporterMaster', function ($sub) use ($ownerName) {
                                 $sub->where('name', $ownerName)
                                     ->orWhere('pan_number', strtoupper($ownerName))
                                     ->orWhereRaw('LOWER(name) = ?', [strtolower($ownerName)]);
                             });
-                    })
-                    ->get();
+                    });
+                }
+
+                $owners = $ownerQuery->get();
 
                 if ($owners->isEmpty()) {
+                    $msg = 'Truck owner does not exist';
+                    if ($ownerName) {
+                        $msg .= ": {$ownerName}";
+                    }
+                    if ($ownerPan) {
+                        $msg .= " (PAN: {$ownerPan})";
+                    }
                     $this->errors[] = [
                         'row' => $rowNumber,
                         'errors' => [
-                            'Truck owner not found: ' . $ownerName,
+                            $msg . '.',
                         ],
                     ];
                     continue;
                 }
 
                 if ($owners->count() > 1) {
+                    $errorMsg = empty($ownerPan)
+                        ? "Multiple truck owners found with name '{$ownerName}'. 'Truck Owner PAN' is required to identify the truck owner."
+                        : "Multiple truck owners found with name '{$ownerName}' and PAN '{$ownerPan}'. Please ensure master records are unique.";
+
                     $this->errors[] = [
                         'row' => $rowNumber,
                         'errors' => [
-                            'Multiple truck owners found with name: ' . $ownerName . '. Please use a unique identifier (e.g. PAN or Short Name).',
+                            $errorMsg,
                         ],
                     ];
                     continue;
@@ -167,34 +189,57 @@ class TruckImport implements
              * ---------------------------------------------------------
              */
             $driverId = null;
+            $driverName = ! empty($data['driver']) ? trim((string) $data['driver']) : null;
+            $driverLicense = ! empty($data['driver_license']) ? trim((string) $data['driver_license']) : null;
 
-            if (! empty($data['driver'])) {
-                $driverName = trim((string) $data['driver']);
+            if ($driverName || $driverLicense) {
+                $driverQuery = Driver::query()
+                    ->where('company_id', $this->companyId);
 
-                $drivers = Driver::query()
-                    ->where('company_id', $this->companyId)
-                    ->where(function ($q) use ($driverName) {
+                if ($driverLicense) {
+                    $cleanLicense = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $driverLicense));
+                    $driverQuery->where(function ($sub) use ($driverLicense, $cleanLicense) {
+                        $sub->whereRaw('LOWER(license_number) = ?', [strtolower($driverLicense)])
+                            ->orWhereRaw("UPPER(REPLACE(REPLACE(REPLACE(license_number, ' ', ''), '-', ''), '.', '')) = ?", [$cleanLicense]);
+                    });
+                }
+
+                if ($driverName) {
+                    $driverQuery->where(function ($q) use ($driverName) {
                         $q->where('name', $driverName)
                             ->orWhere('mobile', $driverName)
                             ->orWhereRaw('LOWER(name) = ?', [strtolower($driverName)]);
-                    })
-                    ->get();
+                    });
+                }
+
+                $drivers = $driverQuery->get();
 
                 if ($drivers->isEmpty()) {
+                    $msg = 'Driver does not exist';
+                    if ($driverName) {
+                        $msg .= ": {$driverName}";
+                    }
+                    if ($driverLicense) {
+                        $msg .= " (License: {$driverLicense})";
+                    }
                     $this->errors[] = [
                         'row' => $rowNumber,
                         'errors' => [
-                            'Driver not found: ' . $driverName,
+                            $msg . '.',
                         ],
                     ];
                     continue;
                 }
 
                 if ($drivers->count() > 1) {
+                    $errorMsg = empty($driverLicense)
+                        ? "Multiple drivers found with name '{$driverName}'. 'Driver License Number' is required to identify the driver."
+                        : "Multiple drivers found with name '{$driverName}' and License '{$driverLicense}'. Please ensure driver records are unique.";
+
                     $this->errors[] = [
                         'row' => $rowNumber,
                         'errors' => [
-                            'Multiple drivers found with name: ' . $driverName . '. Please use unique driver mobile or name.',
+                            $errorMsg,
                         ],
                     ];
                     continue;
@@ -254,14 +299,18 @@ class TruckImport implements
         $truckType = $normalized['truck_type'] ?? $normalized['type'] ?? null;
         $registrationDate = $normalized['registration_date'] ?? $normalized['reg_date'] ?? $normalized['date'] ?? null;
         $truckOwner = $normalized['truck_owner'] ?? $normalized['owner'] ?? $normalized['owner_name'] ?? $normalized['transporter'] ?? null;
+        $truckOwnerPan = $normalized['truck_owner_pan'] ?? $normalized['owner_pan'] ?? $normalized['pan_number'] ?? $normalized['pan_no'] ?? $normalized['pan'] ?? null;
         $driver = $normalized['driver'] ?? $normalized['driver_name'] ?? null;
+        $driverLicense = $normalized['driver_license_number'] ?? $normalized['driver_license'] ?? $normalized['license_number'] ?? $normalized['license_no'] ?? $normalized['license'] ?? null;
 
         return [
             'truck_number' => $cleanTruckNumber,
             'truck_type' => $truckType ? trim((string) $truckType) : '',
             'registration_date' => $registrationDate,
             'truck_owner' => $truckOwner ? trim((string) $truckOwner) : null,
+            'truck_owner_pan' => $truckOwnerPan ? strtoupper(trim((string) $truckOwnerPan)) : null,
             'driver' => $driver ? trim((string) $driver) : null,
+            'driver_license' => $driverLicense ? trim((string) $driverLicense) : null,
         ];
     }
 
@@ -287,9 +336,19 @@ class TruckImport implements
                     'nullable',
                     'string',
                 ],
+                'truck_owner_pan' => [
+                    'nullable',
+                    'string',
+                    'max:10',
+                ],
                 'driver' => [
                     'nullable',
                     'string',
+                ],
+                'driver_license' => [
+                    'nullable',
+                    'string',
+                    'max:50',
                 ],
             ],
             [

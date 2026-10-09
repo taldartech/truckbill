@@ -189,13 +189,13 @@
     'columns' => [
         ['name' => 'Name', 'format' => 'Name', 'required' => true],
         ['name' => 'Contact Number', 'format' => '10-digit number', 'required' => true],
-        ['name' => 'Country', 'format' => 'Country name', 'required' => true],
-        ['name' => 'State', 'format' => 'State name', 'required' => true],
-        ['name' => 'City', 'format' => 'City name', 'required' => true],
+        ['name' => 'Country', 'format' => 'Existing country', 'required' => true],
+        ['name' => 'State', 'format' => 'Existing state', 'required' => true],
+        ['name' => 'City', 'format' => 'Existing city', 'required' => true],
         ['name' => 'Email', 'format' => 'Email address', 'required' => false],
         ['name' => 'GST Number', 'format' => 'GST number', 'required' => false],
         ['name' => 'PAN Number', 'format' => 'PAN number', 'required' => false],
-        ['name' => 'Address', 'format' => 'Text', 'required' => false],
+        ['name' => 'Address', 'format' => 'Existing address / Text', 'required' => false],
     ],
 ])
 @endsection

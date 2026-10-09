@@ -23,6 +23,7 @@ use App\Models\Branch;
 use App\Models\Company;
 use App\Models\CompanySetting;
 use App\Models\Consignee;
+use App\Models\EwayBill;
 use App\Models\FreightBooking;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
@@ -479,12 +480,23 @@ $lrs = $query
         $invoices = [];
 
         if ($generated) {
-            // First, get the LorryReceipts with their freight bookings and voucher payments
-            $query = FreightBooking::whereBetween('eway_bill_expiry', [$startDate, $endDate]);
-            if ($user) {
-                $query->where('company_id', $user);
-            }
-            $query->orderBy('eway_bill_expiry', 'asc');
+            $query = EwayBill::with([
+                'freightBooking.lr.truck',
+                'freightBooking.lr.consignor',
+                'freightBooking.lr.consignee',
+                'freightBooking.lr.transporter',
+                'freightBooking.transporter',
+                'freightBooking.voucherPayments',
+            ])
+            ->whereHas('freightBooking', function ($q) use ($user) {
+                if ($user) {
+                    $q->where('company_id', $user);
+                }
+                $q->where('is_cancelled', 0);
+            })
+            ->whereBetween('eway_bill_expiry', [$startDate, $endDate])
+            ->orderBy('eway_bill_expiry', 'asc');
+
             $frs = $query->paginate(self::REPORTS_PER_PAGE)->appends($request->query());
         } else {
             $frs = collect();
