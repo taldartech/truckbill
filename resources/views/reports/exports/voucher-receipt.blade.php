@@ -401,18 +401,31 @@
             <tr>
                 <td style="width: 50%;"></td>
                 <td style="width: 50%; text-align: right; vertical-align: bottom;">
-                    <div style="font-size: 11px; font-weight: bold;">For {{ $voucherSignName }}</div>
-                    @include('reports.exports.partials.pdf-company-signature-slot', [
-                        'signatureSrc' => $signatureSrc,
-                        'companyName' => $voucherSignName,
-                        'slotWidthPx' => 90,
-                        'slotHeightPx' => 32,
-                        'align' => 'right',
-                    ])
-                    @if (empty($signatureSrc))
-                        <div style="height: 36px;"></div>
-                    @endif
-                    <div style="font-size: 10px;">Authorized Signature</div>
+                    <table style="width: 100%; border-collapse: collapse;" align="right">
+                        <tr>
+                            <td style="text-align: right; font-size: 11px; font-weight: bold; padding: 0 0 2px 0; border: none !important;">
+                                For {{ $voucherSignName }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td height="40" style="height: 40px; text-align: right; vertical-align: middle; padding: 0; border: none !important;">
+                                @if (! empty($signatureSrc))
+                                    @include('reports.exports.partials.pdf-company-signature-slot', [
+                                        'signatureSrc' => $signatureSrc,
+                                        'companyName' => $voucherSignName,
+                                        'slotWidthPx' => 90,
+                                        'slotHeightPx' => 35,
+                                        'align' => 'right',
+                                    ])
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: right; font-size: 10px; padding: 2px 0 0 0; border: none !important;">
+                                Authorized Signature
+                            </td>
+                        </tr>
+                    </table>
                 </td>
             </tr>
         </table>

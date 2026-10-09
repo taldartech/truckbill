@@ -306,20 +306,26 @@
                     @endphp
                     <table class="sig-table" align="right">
                         <tr>
-                            <td>
-                                <div style="font-weight: bold; font-size: 8px; margin-bottom: 3px;">For {{ $challanSignName }}</div>
+                            <td style="font-weight: bold; font-size: 8px; padding: 6px 8px 0; border: none !important;">
+                                For {{ $challanSignName }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td height="40" style="height: 40px; vertical-align: middle; padding: 0 8px; border: none !important;">
                                 @if (! empty($signatureSrc))
                                     @include('reports.exports.partials.pdf-company-signature-slot', [
                                         'signatureSrc' => $signatureSrc,
                                         'companyName' => $challanSignName,
                                         'slotWidthPx' => 90,
-                                        'slotHeightPx' => 32,
+                                        'slotHeightPx' => 35,
                                         'align' => 'center',
                                     ])
-                                @else
-                                    <div style="height: 32px; line-height: 32px;">&nbsp;</div>
                                 @endif
-                                <div style="font-size: 7px; margin-top: 3px;">Authorized Signature</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="font-size: 7px; padding: 0 8px 6px; border: none !important;">
+                                Authorized Signature
                             </td>
                         </tr>
                     </table>
