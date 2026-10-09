@@ -4,47 +4,56 @@
 
 @push('styles')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <style>
-        .select2-container--bootstrap-5 .select2-selection {
-            min-height: 38px;
+        .select2-container--bootstrap-5 .select2-selection--single {
+            height: 38px !important;
+            min-height: 38px !important;
+            border: 1px solid var(--brand-border, #dee2e6) !important;
+            border-radius: 0.375rem !important;
+            background-color: var(--brand-card-bg, #fff) !important;
+            display: flex;
+            align-items: center;
         }
 
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-            padding-left: 12px;
-            padding-right: 20px;
-            color: var(--brand-text-primary);
-            line-height: 36px;
-            background: var(--brand-card-bg);
-            border: 1px solid var(--brand-border);
-            border-radius: 0.375rem;
+            color: var(--brand-text-primary, #111827) !important;
+            line-height: 36px !important;
+            padding-left: 0.75rem !important;
+            padding-right: 2.25rem !important;
+            border: none !important;
+            background: transparent !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
         }
 
-        .select2-container--bootstrap-5 .select2-selection--single:focus-visible {
-            border-color: var(--brand-primary);
-            box-shadow: 0 0 0 0.25rem var(--brand-primary-light);
-            outline: 0;
-            border-radius: 0.375rem;
+        .select2-container--bootstrap-5 .select2-selection--single:focus,
+        .select2-container--bootstrap-5.select2-container--focus .select2-selection--single,
+        .select2-container--bootstrap-5.select2-container--open .select2-selection--single {
+            border-color: var(--brand-primary, #2fb36f) !important;
+            box-shadow: 0 0 0 0.25rem var(--brand-input-focus-shadow, rgba(47, 179, 111, 0.15)) !important;
+            outline: 0 !important;
         }
 
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
             height: 36px;
-            right: 12px;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            position: absolute;
         }
 
         .select2-dropdown {
-            border: 1px solid var(--brand-border);
-            border-radius: 0.375rem;
+            border: 1px solid var(--brand-border, #dee2e6) !important;
+            border-radius: 0.375rem !important;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
         }
 
         .select2-results__option--highlighted {
-            background-color: var(--brand-primary);
-            color: white;
-        }
-
-        .table th,
-        .table td {
-            white-space: nowrap;
-            vertical-align: middle;
+            background-color: var(--brand-primary, #2fb36f) !important;
+            color: white !important;
         }
     </style>
 @endpush
@@ -55,21 +64,21 @@
             {{ session('error') }}
         </div>
     @endif
-    <div class="card mb-4">
-        <div class="card-body">
+    <div class="card mb-3">
+        <div class="card-body p-2 p-md-3">
             <form method="GET" action="{{ route('reports.pump') }}" id="searchForm" onsubmit="validateForm(event)">
-                <div class="row mb-2" style="align-items: end;">
-                    <div class="col-md-2">
-                        <label class="form-label">Start Date <span class="text-danger">*</span></label>
-                        <input type="date" name="start_date" class="form-control" value="{{ $startDate }}" required>
+                <div class="row g-2 align-items-end">
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-1">Start Date <span class="text-danger">*</span></label>
+                        <input type="date" name="start_date" class="form-control form-control-sm" value="{{ $startDate }}" required>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">End Date <span class="text-danger">*</span></label>
-                        <input type="date" name="end_date" class="form-control" value="{{ $endDate }}" required>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-1">End Date <span class="text-danger">*</span></label>
+                        <input type="date" name="end_date" class="form-control form-control-sm" value="{{ $endDate }}" required>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Pump <span class="text-danger">*</span></label>
-                        <select name="pump_id" class="form-select select2" required>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label small mb-1">Pump <span class="text-danger">*</span></label>
+                        <select name="pump_id" class="form-select form-select-sm select2" required>
                             <option value="">Select Pump</option>
                             @foreach ($pumps as $pump)
                                 <option value="{{ $pump->id }}" {{ $pumpId == $pump->id ? 'selected' : '' }}>
@@ -78,29 +87,24 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Payment Status</label>
-                        <select name="payment_status" class="form-select">
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-1">Payment Status</label>
+                        <select name="payment_status" class="form-select form-select-sm">
                             <option value="">All Statuses</option>
-                            <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Pending
-                            </option>
-                            <option value="in-progress" {{ request('payment_status') == 'in-progress' ? 'selected' : '' }}>
-                                In Progress</option>
+                            <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="in-progress" {{ request('payment_status') == 'in-progress' ? 'selected' : '' }}>In Progress</option>
                             <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
                         </select>
                     </div>
-               
-
-                
-             <div class="col-md-3 d-flex align-items-end justify-content-end gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-search"></i> Search
+                    <div class="col-12 col-md-3 d-flex align-items-end justify-content-end gap-1 gap-sm-2">
+                        <button type="submit" class="btn btn-brand-primary btn-sm" title="Search">
+                            <i class="bi bi-search"></i> <span class="d-none d-sm-inline ms-1">Search</span>
                         </button>
-                        <a href="{{ route('reports.pump') }}" class="btn btn-secondary">
-                            <i class="bi bi-arrow-clockwise"></i> Reset
+                        <a href="{{ route('reports.pump') }}" class="btn btn-secondary btn-sm" title="Reset">
+                            <i class="bi bi-arrow-clockwise"></i> <span class="d-none d-sm-inline ms-1">Reset</span>
                         </a>
+                    </div>
                 </div>
-                 </div>
             </form>
         </div>
     </div>
@@ -115,76 +119,75 @@
         </div>
     @else
         <div class="card mb-4">
-            <div class="card-header">
+            <div class="card-header py-2">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h3 class="card-title mb-0">Pump Transaction Report</h3>
                     </div>
                     <div class="d-flex">
-                        <a class="btn btn-warning ms-2"
+                        <a class="btn btn-warning btn-sm" title="Export"
                             href="{{ route('reports.pump-export', [
                                 'start_date' => $startDate,
                                 'end_date' => $endDate,
                                 'pump_id' => $pumpId,
                                 'payment_status' => request('payment_status'),
                             ]) }}">
-                            <i class="bi bi-file-earmark-spreadsheet"></i> Export
+                            <i class="bi bi-file-earmark-spreadsheet"></i> <span class="d-none d-sm-inline ms-1">Export</span>
                         </a>
                     </div>
                 </div>
             </div>
-            <div class="card-body" style="overflow-x: auto;">
-                <table class="table table-bordered table-striped" style="font-size: 12px !important;">
-                    <thead>
-                        <tr>
-                            <th>Sr.no</th>
-                            <th>LR Number</th>
-                            <th>Date</th>
-                            <th>Truck No.</th>
-                            <th>Destination</th>
-                            <th>Diesel Amount</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($pumpData as $index => $item)
-                            @foreach ($item['lrs'] as $lr)
-                                <tr>
-                                    <td>{{ $loop->parent->iteration }}</td>
-
-                                    <td>{{ $lr->lr_number ?? 'N/A' }}</td>
-                                    <td>{{ $item['date'] ?? 'N/A' }}</td>
-                                    <td>{{ $lr->truck->truck_number ?? 'N/A' }}</td>
-
-                                    <td>{{ $lr->destination_city }}, {{ $lr->destination_state ?? 'N/A' }}</td>
-
-                                    <td class="text-end">{{ number_format($item['amount'], 2) }}</td>
-                                    <td>
-                                        @if ($item['payment_status'] === 'paid')
-                                            <span class="badge bg-success">Paid</span>
-                                        @elseif($item['payment_status'] === 'pending')
-                                            <span class="badge bg-warning">Pending</span>
-                                        @elseif($item['payment_status'] === 'in-progress')
-                                            <span class="badge bg-info">In Progress</span>
-                                        @else
-                                            <span
-                                                class="badge bg-secondary">{{ ucfirst($item['payment_status'] ?? 'N/A') }}</span>
-                                        @endif
-                                    </td>
-                                </tr>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover align-middle mb-0 text-nowrap small">
+                        <thead>
+                            <tr>
+                                <th>Sr.no</th>
+                                <th>LR Number</th>
+                                <th>Date</th>
+                                <th>Truck No.</th>
+                                <th>Destination</th>
+                                <th>Diesel Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($pumpData as $index => $item)
+                                @foreach ($item['lrs'] as $lr)
+                                    <tr>
+                                        <td>{{ $loop->parent->iteration }}</td>
+                                        <td>{{ $lr->lr_number ?? 'N/A' }}</td>
+                                        <td>{{ $item['date'] ?? 'N/A' }}</td>
+                                        <td>{{ $lr->truck->truck_number ?? 'N/A' }}</td>
+                                        <td>{{ $lr->destination_city }}, {{ $lr->destination_state ?? 'N/A' }}</td>
+                                        <td class="text-end">{{ number_format($item['amount'], 2) }}</td>
+                                        <td>
+                                            @if ($item['payment_status'] === 'paid')
+                                                <span class="badge bg-success">Paid</span>
+                                            @elseif($item['payment_status'] === 'pending')
+                                                <span class="badge bg-warning text-dark">Pending</span>
+                                            @elseif($item['payment_status'] === 'in-progress')
+                                                <span class="badge bg-info text-dark">In Progress</span>
+                                            @else
+                                                <span
+                                                    class="badge bg-secondary">{{ ucfirst($item['payment_status'] ?? 'N/A') }}</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
                             @endforeach
-                        @endforeach
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <th colspan="5" class="text-end">Grand Total:</th>
-                            <th class="text-end">{{ number_format($grandTotalAmount ?? 0, 2) }}</th>
-                            <th></th>
-                        </tr>
-                    </tfoot>
-                </table>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="5" class="text-end">Grand Total:</th>
+                                <th class="text-end">{{ number_format($grandTotalAmount ?? 0, 2) }}</th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
-            <div class="mt-3 d-flex justify-content-end">
+            <div class="p-2 p-md-3 d-flex justify-content-end">
                 {{ $pumpData->links() }}
             </div>
         </div>

@@ -23,7 +23,7 @@
         margin: 0;
     }
 </style>
-<table class="table table-bordered" style="font-size: 13px!important;">
+<table class="table table-bordered align-middle mb-0 text-nowrap small">
     <tr>
         <td style="text-align: center; font-weight: bold; font-size: 18px!important;" colspan="14">{{ $company->name }}
         </td>

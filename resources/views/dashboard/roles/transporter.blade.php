@@ -117,7 +117,7 @@
             <div class="card-header bg-soft-danger text-danger border-0 py-3">
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 fw-bold"><i class="fas fa-exclamation-triangle me-2"></i> Expired Eway Bills (Urgent)</h5>
-                    <a href="{{ route('transporter.freight_bookings.index') }}" class="btn btn-sm btn-danger">View All</a>
+                    <a href="{{ route('transporter.freight_bookings.index') }}" class="btn btn-sm btn-danger text-nowrap">View All</a>
                 </div>
             </div>
             <div class="card-body p-0">
@@ -125,25 +125,25 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="bg-soft-secondary">
                             <tr>
-                                <th class="ps-4">LR Number</th>
-                                <th>Truck & Destination</th>
-                                <th>Expiry Date</th>
-                                <th class="text-end pe-4">Action</th>
+                                <th class="ps-4 text-nowrap">LR Number</th>
+                                <th class="text-nowrap">Truck & Destination</th>
+                                <th class="text-nowrap">Expiry Date</th>
+                                <th class="text-end pe-4 text-nowrap">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($expiredEwayBills->take(10) as $ewayBill)
                                 <tr>
-                                    <td class="ps-4"><span class="fw-bold text-dark">#{{ $ewayBill->lr->lr_number ?? 'N/A' }}</span></td>
+                                    <td class="ps-4 text-nowrap"><span class="fw-bold text-dark">#{{ $ewayBill->freightBooking?->lr?->lr_number ?? 'N/A' }}</span></td>
                                     <td>
                                         <div class="d-flex flex-column">
-                                            <span class="fw-medium">{{ $ewayBill->lr->truck->truck_number ?? 'N/A' }}</span>
-                                            <small class="text-muted">{{ $ewayBill->lr->destination_city ?? '-' }}</small>
+                                            <span class="fw-medium text-nowrap">{{ $ewayBill->freightBooking?->lr?->truck?->truck_number ?? 'N/A' }}</span>
+                                            <small class="text-muted text-truncate" style="max-width: 160px;">{{ $ewayBill->freightBooking?->lr?->destination_city ?? '-' }}</small>
                                         </div>
                                     </td>
-                                    <td><span class="badge bg-danger text-white px-3 py-2 rounded-pill"> {{ formatDate(optional($ewayBill)->eway_bill_expiry) }}</span></td>
-                                    <td class="text-end pe-4">
-                                        <a href="{{ route('transporter.freight_bookings.show', $ewayBill->id) }}" class="btn btn-sm btn-view"><i class="fas fa-eye"></i></a>
+                                    <td class="text-nowrap"><span class="badge bg-danger text-white px-3 py-2 rounded-pill text-nowrap"> {{ formatDate(optional($ewayBill)->eway_bill_expiry) }}</span></td>
+                                    <td class="text-end pe-4 text-nowrap">
+                                        <a href="{{ route('transporter.freight_bookings.show', $ewayBill->freight_booking_id) }}" class="btn btn-sm btn-view" title="View"><i class="fas fa-eye"></i></a>
                                     </td>
                                 </tr>
                             @endforeach
@@ -163,42 +163,42 @@
         <div class="card glass-card">
             <div class="card-header bg-transparent border-0 py-3 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-bold"><i class="fas fa-truck text-brand-primary me-2"></i> Recent Good Hires (Lorry Hire)</h5>
-                <a href="{{ route('transporter.freight_bookings.index') }}" class="btn btn-sm btn-brand-primary">View All</a>
+                <a href="{{ route('transporter.freight_bookings.index') }}" class="btn btn-sm btn-brand-primary text-nowrap">View All</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="bg-soft-secondary">
                             <tr>
-                                <th class="ps-4">LR Number</th>
-                                <th>Consignor / Consignee</th>
-                                <th>Truck</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                                <th class="text-end pe-4">Action</th>
+                                <th class="ps-4 text-nowrap">LR Number</th>
+                                <th class="text-nowrap">Consignor / Consignee</th>
+                                <th class="text-nowrap">Truck</th>
+                                <th class="text-end text-nowrap">Amount</th>
+                                <th class="text-nowrap">Status</th>
+                                <th class="text-end pe-4 text-nowrap">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($recentFreightBookings as $booking)
                                 <tr>
-                                    <td class="ps-4">#{{ $booking->lr->lr_number ?? '-' }}</td>
+                                    <td class="ps-4 text-nowrap">#{{ $booking->lr->lr_number ?? '-' }}</td>
                                     <td>
-                                        <small>{{ $booking->lr->consignor->name ?? '-' }}</small><br>
-                                        <small class="text-muted">{{ $booking->lr->consignee->name ?? '-' }}</small>
+                                        <small class="d-block text-truncate" style="max-width: 160px;">{{ $booking->lr->consignor->name ?? '-' }}</small>
+                                        <small class="text-muted d-block text-truncate" style="max-width: 160px;">{{ $booking->lr->consignee->name ?? '-' }}</small>
                                     </td>
-                                    <td>{{ $booking->lr->truck->truck_number ?? '-' }}</td>
-                                    <td>{{ number_format($booking->tr_amount ?? 0, 2) }}</td>
-                                    <td>
+                                    <td class="text-nowrap">{{ $booking->lr->truck->truck_number ?? '-' }}</td>
+                                    <td class="text-end text-nowrap fw-bold text-success">₹{{ number_format($booking->tr_amount ?? 0, 2) }}</td>
+                                    <td class="text-nowrap">
                                         @if($booking->is_delivered)
-                                            <span class="badge bg-success">Delivered</span>
+                                            <span class="badge bg-success text-nowrap">Delivered</span>
                                         @elseif($booking->is_cancelled)
-                                            <span class="badge bg-danger">Cancelled</span>
+                                            <span class="badge bg-danger text-nowrap">Cancelled</span>
                                         @else
-                                            <span class="badge bg-info">In Progress</span>
+                                            <span class="badge bg-info text-nowrap">In Progress</span>
                                         @endif
                                     </td>
-                                    <td class="text-end pe-4">
-                                        <a href="{{ route('transporter.freight_bookings.show', $booking->id) }}" class="btn btn-sm btn-view"><i class="fas fa-eye"></i></a>
+                                    <td class="text-end pe-4 text-nowrap">
+                                        <a href="{{ route('transporter.freight_bookings.show', $booking->id) }}" class="btn btn-sm btn-view" title="View"><i class="fas fa-eye"></i></a>
                                     </td>
                                 </tr>
                             @endforeach
@@ -218,28 +218,28 @@
         <div class="card glass-card">
             <div class="card-header bg-transparent border-0 py-3 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-bold"><i class="fas fa-indian-rupee-sign text-brand-primary me-2"></i> Recent Payments</h5>
-                <a href="{{ route('transporter.payments.index') }}" class="btn btn-sm btn-brand-primary">View All</a>
+                <a href="{{ route('transporter.payments.index') }}" class="btn btn-sm btn-brand-primary text-nowrap">View All</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="bg-soft-secondary">
                             <tr>
-                                <th class="ps-4">Voucher #</th>
-                                <th>LR Number</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                                <th>Date</th>
+                                <th class="ps-4 text-nowrap">Voucher #</th>
+                                <th class="text-nowrap">LR Number</th>
+                                <th class="text-end text-nowrap">Amount</th>
+                                <th class="text-nowrap">Status</th>
+                                <th class="pe-4 text-nowrap">Date</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($recentPayments as $payment)
                                 <tr>
-                                    <td class="ps-4">{{ $payment->voucher_number ?? '-' }}</td>
-                                    <td>#{{ $payment->freight_booking->lr->lr_number ?? '-' }}</td>
-                                    <td>{{ number_format($payment->amount ?? 0, 2) }}</td>
-                                    <td><span class="badge bg-{{ $payment->payment_status === 'paid' ? 'success' : 'warning' }}">{{ ucfirst($payment->payment_status ?? '-') }}</span></td>
-                                    <td>{{ $payment->date ? \Carbon\Carbon::parse($payment->date)->format('d-m-Y') : '-' }}</td>
+                                    <td class="ps-4 text-nowrap">{{ $payment->voucher_number ?? '-' }}</td>
+                                    <td class="text-nowrap">#{{ $payment->freight_booking->lr->lr_number ?? '-' }}</td>
+                                    <td class="text-end text-nowrap fw-bold text-success">₹{{ number_format($payment->amount ?? 0, 2) }}</td>
+                                    <td class="text-nowrap"><span class="badge bg-{{ $payment->payment_status === 'paid' ? 'success' : 'warning' }} text-nowrap">{{ ucfirst($payment->payment_status ?? '-') }}</span></td>
+                                    <td class="pe-4 text-nowrap">{{ $payment->date ? \Carbon\Carbon::parse($payment->date)->format('d-m-Y') : '-' }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

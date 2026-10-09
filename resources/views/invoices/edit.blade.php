@@ -354,6 +354,16 @@
                                         </div>
                                     @endif
                                 </div>
+                                <div class="col-md-6">
+                                    <label for="due_date" class="form-label fw-semibold">Due date</label>
+                                    <input type="date" id="due_date" name="due_date"
+                                        class="form-control @error('due_date') is-invalid @enderror"
+                                        value="{{ old('due_date', $invoice->due_date ? \Illuminate\Support\Carbon::parse($invoice->due_date)->format('Y-m-d') : '') }}">
+                                    <div class="small mt-1 text-muted">Optional. Leave blank to use {{ \App\Models\Invoice::DEFAULT_CREDIT_DAYS }} days from the bill date.</div>
+                                    @error('due_date')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
                     </div>

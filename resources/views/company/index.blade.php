@@ -92,6 +92,86 @@
         </div>
     </div>
 </div>
+
+<!-- Company Delete Modal -->
+<div class="modal fade" id="companyDeleteModal" tabindex="-1"
+    aria-labelledby="companyDeleteModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="companyDeleteModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                    Confirm Delete
+                </h5>
+
+                <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <p>Are you sure you want to delete this company?</p>
+
+                <p>
+                    <strong>Company Name:</strong>
+                    <span id="deleteCompanyName"></span>
+                </p>
+                <p>
+                   <strong>PAN Number:</strong>
+                   <span id="deleteCompanyPan"></span>
+                </p>
+
+                <p>
+                   <strong>Address:</strong>
+                    <span id="deleteCompanyAddress"></span>
+                </p>
+                <div class="mb-3 mt-3">
+                    <label for="deleteCompanyRemark" class="form-label">
+                        <strong>
+                            Remark <span class="text-danger">*</span>
+                        </strong>
+                    </label>
+
+                    <textarea
+                        id="deleteCompanyRemark"
+                        class="form-control"
+                        rows="4"
+                        placeholder="Enter reason for deletion"></textarea>
+                </div>
+
+                <div id="deleteCompanyRemarkError"
+                    class="text-danger small d-none">
+                    Delete remark is required.
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i>
+                    Cancel
+                </button>
+
+                <button type="button"
+                    class="btn btn-danger"
+                    id="confirmCompanyDelete">
+                    <i class="bi bi-trash"></i>
+                    Confirm Delete
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -325,12 +405,53 @@ $(document).ready(function() {
         });
     });
 
-    $(document).on('submit', 'form[action*="destroy"]', function(e) {
-        if (!confirm('Are you sure you want to delete this company?')) {
-            e.preventDefault();
-            return false;
-        }
-    });
+    // Open Company Delete Modal
+   $(document).on('click', '.company-delete-btn', function() {
+
+    const button = $(this);
+    const form = button.closest('.company-delete-form');
+
+    const companyName = button.data('company-name') || '-';
+    const companyPan = button.data('company-pan') || '-';
+    const companyAddress = button.data('company-address') || '-';
+
+    $('#deleteCompanyName').text(companyName);
+    $('#deleteCompanyPan').text(companyPan);
+    $('#deleteCompanyAddress').text(companyAddress);
+
+    $('#deleteCompanyRemark').val('');
+    $('#deleteCompanyRemarkError').addClass('d-none');
+
+    $('#confirmCompanyDelete').data('form', form);
 });
+
+
+// Confirm Company Delete
+$(document).on('click', '#confirmCompanyDelete', function() {
+
+    const remark = $('#deleteCompanyRemark').val().trim();
+    const form = $('#confirmCompanyDelete').data('form');
+
+    if (!remark) {
+        $('#deleteCompanyRemarkError')
+            .removeClass('d-none')
+            .text('Please enter a remark before deleting.');
+
+        return;
+    }
+
+    $('#deleteCompanyRemarkError').addClass('d-none');
+
+    form.find('input[name="delete_remark"]').remove();
+
+    $('<input>', {
+        type: 'hidden',
+        name: 'delete_remark',
+        value: remark
+    }).appendTo(form);
+
+    form[0].submit();
+   });
+ });
 </script>
 @endpush

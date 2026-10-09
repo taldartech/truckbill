@@ -173,7 +173,7 @@
 
     @if ($lorry_receipt->delivery_status === 'Delivered')
         <div class="lrf-pf">
-            <label for="memo_id" class="lrf-pf__lbl">Memo ID</label>
+            <label for="memo_id" class="lrf-pf__lbl">Memo ID / POD</label>
 
             <input type="text"
                 class="form-control @error('memo_id') is-invalid @enderror"

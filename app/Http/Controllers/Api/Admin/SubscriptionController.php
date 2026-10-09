@@ -85,6 +85,7 @@ class SubscriptionController extends Controller
         $company = Company::with('subscription')->findOrFail($id);
 
         $validated = $this->validatePurchaseInput($request);
+        $validated['promo_validated'] = filled($validated['promo_code'] ?? null);
 
         return response()->json(
             $this->pricingService->quote($company, $validated),
@@ -230,6 +231,7 @@ class SubscriptionController extends Controller
             'addon_users' => ['nullable', 'integer', 'min:0'],
             'addon_trucks' => ['nullable', 'integer', 'min:0'],
             'addon_lr_credits' => ['nullable', 'integer', 'min:0'],
+            'promo_code' => ['nullable', 'string', 'max:50'],
         ];
     }
 }

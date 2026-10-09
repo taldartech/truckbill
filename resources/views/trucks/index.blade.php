@@ -21,11 +21,22 @@
     <div class="card app-index-list-card mb-4">
         <div class="card-header">
             <h3 class="card-title mb-0">Truck Management</h3>
-            <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+            <div class="app-index-card-toolbar d-flex flex-nowrap gap-1 gap-sm-2 align-items-center">
                 @if(auth()->check() && in_array(auth()->user()->userRole->name, ['admin', 'moderator', 'super_admin']))
                     <a href="{{ route('trucks.create') }}" class="btn app-index-header-btn" aria-label="Add truck">
-                        <i class="fas fa-plus"></i> Add Truck
+                        <i class="bi bi-plus"></i><span class="d-none d-sm-inline"> Add Truck</span>
                     </a>
+
+
+                     <button
+                     type="button"
+                      class="btn app-index-header-btn"
+                     data-bs-toggle="modal"
+                     data-bs-target="#truckBulkUploadModal"
+                          >
+                    <i class="fas fa-upload"></i>
+                    Bulk Upload
+                </button>
                 @endif
             </div>
         </div>
@@ -34,12 +45,12 @@
                 <table id="trucksTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
                     <thead class="table-light">
                         <tr>
-                            <th style="width: 80px;">Sr. No</th>
-                            <th>Truck Number</th>
-                            <th>Truck Type</th>
-                            <th>Registration Date</th>
-                            <th>Truck Owner</th>
-                            <th>Driver</th>
+                            <th style="width: 80px;" class="text-nowrap">Sr. No</th>
+                            <th class="text-nowrap">Truck Number</th>
+                            <th class="text-nowrap">Truck Type</th>
+                            <th class="text-nowrap">Registration Date</th>
+                            <th class="text-nowrap">Truck Owner</th>
+                            <th class="text-nowrap">Driver</th>
                             @if(auth()->check() && auth()->user()->canActAsAdmin())
                             <th class="app-index-actions-cell" style="width: 120px;">Actions</th>
                             @endif
@@ -226,6 +237,93 @@
     </div>
 </div>
 
+<!-- Truck Delete Modal -->
+<div class="modal fade" id="truckDeleteModal" tabindex="-1"
+    aria-labelledby="truckDeleteModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="truckDeleteModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                    Confirm Delete
+                </h5>
+
+                <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <p>Are you sure you want to delete this truck?</p>
+                <p>
+                    <strong>Truck Number:</strong>
+                    <span id="deleteTruckNumber"></span>
+                </p>
+
+                <p>
+                    <strong>Truck Type:</strong>
+                    <span id="deleteTruckType"></span>
+                </p>
+
+                <p>
+                    <strong>Registration Date:</strong>
+                    <span id="deleteTruckRegistrationDate"></span>
+                </p>
+
+                <p>
+                    <strong>Truck Owner:</strong>
+                    <span id="deleteTruckTransporterName"></span>
+                </p>
+
+                <p>
+                    <strong>Driver:</strong>
+                    <span id="deleteTruckDriverName"></span>
+                </p>
+
+                <div class="mb-3 mt-3">
+
+                    <label for="deleteTruckRemark" class="form-label">
+                        <strong>
+                            Remark <span class="text-danger">*</span>
+                        </strong>
+                    </label>
+
+                    <textarea
+                        id="deleteTruckRemark"
+                        class="form-control"
+                        rows="4"
+                        placeholder="Enter reason for deletion"></textarea>
+                </div>
+
+                <div id="deleteTruckRemarkError"
+                    class="text-danger small d-none">
+                    Delete remark is required.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i>
+                    Cancel
+                </button>
+
+                <button type="button"
+                    class="btn btn-danger"
+                    id="confirmTruckDelete">
+                    <i class="bi bi-trash"></i>
+                    Confirm Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('styles')
 <!-- Select2 CSS -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -341,14 +439,6 @@ $(document).ready(function() {
         autoWidth: false,
         stateSave: true,
         searchDelay: 500
-    });
-
-    // Handle delete confirmation
-    $(document).on('submit', 'form[action*="destroy"]', function(e) {
-        if (!confirm('Are you sure you want to delete this truck?')) {
-            e.preventDefault();
-            return false;
-        }
     });
 
     // Handle truck number click to show details
@@ -468,6 +558,7 @@ $(document).ready(function() {
             }
         });
     });
+
 
     // Handle assign driver button click
     $(document).on('click', '.assign-driver-btn', function(e) {
@@ -718,13 +809,104 @@ $(document).ready(function() {
             }
         });
     });
+    // Open truck delete modal
+$(document).on('click', '.truck-delete-btn', function() {
+
+    const button = $(this);
+
+    const form = button.closest('.truck-delete-form');
+
+    const truckNumber =
+        button.data('truck-number') || '-';
+
+    const truckType =
+        button.data('truck-type') || '-';
+
+    const registrationDate =
+        button.data('registration-date') || '-';
+
+    const transporterName =
+        button.data('transporter-name') || '-';
+
+    const driverName =
+        button.data('driver-name') || '-';
+
+
+    $('#deleteTruckNumber').text(truckNumber);
+    $('#deleteTruckType').text(truckType);
+    $('#deleteTruckRegistrationDate').text(registrationDate);
+    $('#deleteTruckTransporterName').text(transporterName);
+    $('#deleteTruckDriverName').text(driverName);
+
+    $('#deleteTruckRemark').val('');
+
+    $('#deleteTruckRemarkError')
+        .addClass('d-none');
+
+    $('#confirmTruckDelete').data('form', form);
+});
+
+
+// Confirm truck delete
+$('#confirmTruckDelete').on('click', function() {
+
+    const remark =
+        $('#deleteTruckRemark').val().trim();
+
+    const form =
+        $('#confirmTruckDelete').data('form');
+
+
+    if (!remark) {
+
+        $('#deleteTruckRemarkError')
+            .removeClass('d-none')
+            .text('Please enter a remark before deleting.');
+
+        return;
+    }
+
+
+    $('#deleteTruckRemarkError')
+        .addClass('d-none');
+
+
+    form.find('input[name="delete_remark"]').remove();
+
+
+    $('<input>', {
+        type: 'hidden',
+        name: 'delete_remark',
+        value: remark
+    }).appendTo(form);
+
+
+    form[0].submit();
+});
 });
 </script>
 @endpush
+
 
 @push('scripts')
 <!-- Select2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 @endpush
+
+@include('shared.bulk-upload-modal', [
+    'modalId' => 'truckBulkUploadModal',
+    'title' => 'Bulk Upload Trucks',
+    'uploadUrl' => route('trucks.bulkUpload'),
+    'templateUrl' => route('trucks.bulkUploadTemplate'),
+    'recordName' => 'trucks',
+
+    'columns' => [
+        ['name' => 'Truck Number', 'format' => 'Truck Number', 'required' => true],
+        ['name' => 'Truck Type', 'format' => 'Truck Type', 'required' => true],
+        ['name' => 'Registration Date', 'format' => 'DD-MM-YYYY or YYYY-MM-DD', 'required' => true],
+        ['name' => 'Truck Owner', 'format' => 'Text', 'required' => false],
+        ['name' => 'Driver', 'format' => 'Text', 'required' => false],
+    ],
+])
 
 @endsection

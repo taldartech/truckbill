@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../truckbill_partload"
+		},
+		{
+			"path": "../truckbill_ownfleet"
+		},
+		{
+			"path": "../truckbill_website"
+		}
+	]
+}
