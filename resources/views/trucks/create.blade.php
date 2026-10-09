@@ -112,7 +112,9 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <a href="{{ route('drivers.create') }}" class="btn btn-secondary" target="_blank">Add New Driver</a>
+                                    <a href="{{ route('drivers.create') }}" class="btn btn-secondary text-nowrap px-2 px-sm-3 d-inline-flex align-items-center" target="_blank" title="Add New Driver">
+                                        <i class="bi bi-person-plus-fill me-1"></i><span class="d-none d-sm-inline">Add New Driver</span><span class="d-inline d-sm-none">New Driver</span>
+                                    </a>
                                 </div>
                                 @error('driver_id') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>
@@ -131,11 +133,11 @@
         </div>
 
         <div class="app-form-actions card">
-            <div class="card-body">
-                <a href="{{ route('trucks.index') }}" class="btn btn-secondary">
+            <div class="card-body d-flex flex-row flex-nowrap justify-content-end align-items-center gap-2 p-2 p-sm-3">
+                <a href="{{ route('trucks.index') }}" class="btn btn-secondary btn-sm flex-fill flex-sm-grow-0 text-nowrap w-auto">
                     <i class="bi bi-x-lg me-1"></i> Cancel
                 </a>
-                <button class="btn btn-brand-primary" type="submit">
+                <button class="btn btn-brand-primary btn-sm flex-fill flex-sm-grow-0 text-nowrap w-auto" type="submit">
                     <i class="bi bi-floppy-fill me-1"></i> Create Truck
                 </button>
             </div>

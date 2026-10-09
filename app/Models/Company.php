@@ -33,7 +33,10 @@ class Company extends Model
         'user_id',
         'is_blocked',
         'company_logo',
+        'digital_signature',
         'gst_slab',
+        'deleted_by',
+        'deleted_remark',
     ];
 
     protected $dates = ['deleted_at'];
@@ -56,6 +59,22 @@ class Company extends Model
                 ['company_id' => $company->id],
                 CompanySetting::defaultsFor($company)
             );
+
+            if (\Illuminate\Support\Facades\Schema::hasTable('company_subscriptions')) {
+                if (! $company->subscription()->exists()) {
+                    $company->subscription()->create([
+                        'status' => 'trial',
+                        'starts_on' => now()->toDateString(),
+                        'ends_on' => now()->addDays(15)->toDateString(),
+                        'trial_ends_on' => now()->addDays(15)->toDateString(),
+                        'included_branches' => 5,
+                        'users_per_branch' => 5,
+                        'included_lr_credits' => 100,
+                        'included_trucks' => 0,
+                        'lr_credits_remaining' => 100,
+                    ]);
+                }
+            }
         });
     }
 
@@ -244,6 +263,38 @@ class Company extends Model
         }
 
         return Storage::disk('public')->path($this->company_logo);
+    }
+
+    /**
+     * Public URL for the uploaded digital signature image.
+     */
+    public function signaturePublicUrl(): ?string
+    {
+        if (empty($this->digital_signature)) {
+            return null;
+        }
+
+        if (! Storage::disk('public')->exists($this->digital_signature)) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->digital_signature);
+    }
+
+    /**
+     * Absolute path for DomPDF / mPDF embedding of the digital signature.
+     */
+    public function signatureFilesystemPathForPdf(): ?string
+    {
+        if (empty($this->digital_signature)) {
+            return null;
+        }
+
+        if (! Storage::disk('public')->exists($this->digital_signature)) {
+            return null;
+        }
+
+        return Storage::disk('public')->path($this->digital_signature);
     }
 
     /**

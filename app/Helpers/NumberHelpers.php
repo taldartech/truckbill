@@ -36,6 +36,27 @@ if (! function_exists('formatIndianNumber')) {
     }
 }
 
+if (! function_exists('formatRupeesCompact')) {
+    /**
+     * Short rupee amount for dashboards using crore / lakh / thousand units.
+     * Example: 1250000 => "₹12.50 L", 950 => "₹950".
+     */
+    function formatRupeesCompact(float $amount): string
+    {
+        $sign = $amount < 0 ? '-' : '';
+        $absolute = abs($amount);
+
+        $formatted = match (true) {
+            $absolute >= 10000000 => number_format($absolute / 10000000, 2).' Cr',
+            $absolute >= 100000 => number_format($absolute / 100000, 2).' L',
+            $absolute >= 1000 => number_format($absolute / 1000, 1).' K',
+            default => number_format($absolute, 0),
+        };
+
+        return $sign.'₹'.$formatted;
+    }
+}
+
 if (!function_exists('getIndianCurrency')) {
   function getIndianCurrency(float $number)
   {

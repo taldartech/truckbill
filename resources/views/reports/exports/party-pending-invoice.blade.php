@@ -5,7 +5,7 @@
         : collect($partyRows);
 @endphp
 
-<table class="table table-bordered table-striped" style="font-size: 12px !important;">
+<table class="table table-bordered table-striped table-hover align-middle mb-0 text-nowrap small">
     <thead>
         <tr>
             <th>Sr No</th>

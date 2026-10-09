@@ -7,7 +7,7 @@
     <div class="container-fluid">
         <div class="row mb-3">
             <div class="col-12">
-                <h2 class="fw-bold mb-1"><i class="fas fa-building text-brand-primary"></i> Associated Companies</h2>
+                <h2 class="fw-bold mb-1"><i class="bi bi-building text-brand-primary"></i> Associated Companies</h2>
                 <p class="text-muted mb-0">Company-wise LR summary across all linked customer accounts.</p>
             </div>
         </div>
@@ -18,23 +18,23 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="bg-soft-secondary">
                             <tr>
-                                <th class="ps-4">Company</th>
-                                <th>Total LRs</th>
-                                <th>Delivered</th>
-                                <th>Pending</th>
-                                <th>Cancelled</th>
-                                <th>Total Amount</th>
+                                <th class="ps-4 text-nowrap">Company</th>
+                                <th class="text-nowrap">Total LRs</th>
+                                <th class="text-nowrap">Delivered</th>
+                                <th class="text-nowrap">Pending</th>
+                                <th class="text-nowrap">Cancelled</th>
+                                <th class="text-nowrap">Total Amount</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($summaryRows as $row)
                                 <tr>
-                                    <td class="ps-4">{{ $row->company_name ?? '-' }}</td>
-                                    <td>{{ number_format((int) $row->total_lrs) }}</td>
-                                    <td>{{ number_format((int) $row->delivered_lrs) }}</td>
-                                    <td>{{ number_format((int) $row->pending_lrs) }}</td>
-                                    <td>{{ number_format((int) $row->cancelled_lrs) }}</td>
-                                    <td>{{ number_format((float) $row->total_amount, 2) }}</td>
+                                    <td class="ps-4 text-nowrap fw-semibold">{{ $row->company_name ?? '-' }}</td>
+                                    <td class="text-nowrap">{{ number_format((int) $row->total_lrs) }}</td>
+                                    <td class="text-nowrap">{{ number_format((int) $row->delivered_lrs) }}</td>
+                                    <td class="text-nowrap">{{ number_format((int) $row->pending_lrs) }}</td>
+                                    <td class="text-nowrap">{{ number_format((int) $row->cancelled_lrs) }}</td>
+                                    <td class="text-nowrap">{{ number_format((float) $row->total_amount, 2) }}</td>
                                 </tr>
                             @empty
                                 <tr>
@@ -49,3 +49,4 @@
     </div>
 </div>
 @endsection
+

@@ -21,10 +21,14 @@
     <div class="card app-index-list-card mb-4">
         <div class="card-header">
             <h3 class="card-title mb-0">Consignees / Consignors / Customers</h3>
-            <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
-                <a href="{{ route('consignees.create') }}" class="btn app-index-header-btn" aria-label="Create consignee">
-                    <i class="fas fa-plus"></i> Create
-                </a>
+            <div class="app-index-card-toolbar d-flex flex-nowrap gap-1 gap-sm-2 align-items-center">
+                    <a href="{{ route('consignees.create') }}" class="btn app-index-header-btn" aria-label="Create consignee">
+                        <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Create</span>
+                    </a>
+                    <button type="button" class="btn app-index-header-btn" data-bs-toggle="modal"
+                        data-bs-target="#consigneeBulkUploadModal" aria-label="Bulk upload consignees">
+                        <i class="bi bi-upload"></i> <span class="d-none d-sm-inline">Bulk Upload</span>
+                    </button>
             </div>
         </div>
         <div class="card-body">
@@ -32,12 +36,12 @@
                 <table id="consigneesTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
                     <thead class="table-light">
                         <tr>
-                            <th style="width: 80px;">Sr. No</th>
-                            <th>Name</th>
-                            <th>City</th>
-                            <th>State</th>
-                            <th>Country</th>
-                            <th>Contact Number</th>
+                            <th style="width: 80px;" class="text-nowrap">Sr. No</th>
+                            <th class="text-nowrap">Name</th>
+                            <th class="text-nowrap">City</th>
+                            <th class="text-nowrap">State</th>
+                            <th class="text-nowrap">Country</th>
+                            <th class="text-nowrap">Contact Number</th>
                             @if(auth()->check() && auth()->user()->canActAsAdmin())
                             <th class="app-index-actions-cell" style="width: 120px;">Actions</th>
                             @endif
@@ -77,6 +81,123 @@
         </div>
     </div>
 </div>
+
+<!-- Consignee Delete Modal -->
+<div class="modal fade" id="consigneeDeleteModal" tabindex="-1"
+    aria-labelledby="consigneeDeleteModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="consigneeDeleteModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                    Confirm Delete
+                </h5>
+
+                <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <p>Are you sure you want to delete this consignee?</p>
+
+                <p>
+                    <strong>Name:</strong>
+                    <span id="deleteConsigneeName">-</span>
+                </p>
+
+                <p>
+                    <strong>Contact Number:</strong>
+                    <span id="deleteConsigneeContact">-</span>
+                </p>
+
+                <p>
+                    <strong>City:</strong>
+                    <span id="deleteConsigneeCity">-</span>
+                </p>
+
+                <p>
+                    <strong>State:</strong>
+                    <span id="deleteConsigneeState">-</span>
+                </p>
+
+                <p>
+                    <strong>Country:</strong>
+                    <span id="deleteConsigneeCountry">-</span>
+                </p>
+
+                <p>
+                    <strong>Address:</strong>
+                    <span id="deleteConsigneeAddress">-</span>
+                </p>
+
+                <div class="mb-3 mt-3">
+
+                    <label for="deleteConsigneeRemark" class="form-label">
+                        <strong>
+                            Remark <span class="text-danger">*</span>
+                        </strong>
+                    </label>
+
+                    <textarea
+                        id="deleteConsigneeRemark"
+                        class="form-control"
+                        rows="4"
+                        placeholder="Enter reason for deletion"></textarea>
+
+                </div>
+
+                <div id="deleteConsigneeRemarkError"
+                    class="text-danger small d-none">
+                    Delete remark is required.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i>
+                    Cancel
+                </button>
+
+                <button type="button"
+                    class="btn btn-danger"
+                    id="confirmConsigneeDelete">
+                    <i class="bi bi-trash"></i>
+                    Confirm Delete
+                </button>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@include('shared.bulk-upload-modal', [
+    'modalId' => 'consigneeBulkUploadModal',
+    'title' => 'Bulk Upload Customers',
+    'uploadUrl' => route('consignees.bulkUpload'),
+    'templateUrl' => route('consignees.bulkUploadTemplate'),
+    'recordName' => 'customers',
+    'columns' => [
+        ['name' => 'Name', 'format' => 'Name', 'required' => true],
+        ['name' => 'Contact Number', 'format' => '10-digit number', 'required' => true],
+        ['name' => 'Country', 'format' => 'Country name', 'required' => true],
+        ['name' => 'State', 'format' => 'State name', 'required' => true],
+        ['name' => 'City', 'format' => 'City name', 'required' => true],
+        ['name' => 'Email', 'format' => 'Email address', 'required' => false],
+        ['name' => 'GST Number', 'format' => 'GST number', 'required' => false],
+        ['name' => 'PAN Number', 'format' => 'PAN number', 'required' => false],
+        ['name' => 'Address', 'format' => 'Text', 'required' => false],
+    ],
+])
 @endsection
 
 @push('scripts')
@@ -306,14 +427,62 @@ $(document).ready(function() {
             }
         });
     });
+    // Handle Consignee Delete Button
+$(document).on('click', '.consignee-delete-btn', function() {
 
-    // Handle delete confirmation
-    $(document).on('submit', 'form[action*="destroy"]', function(e) {
-        if (!confirm('Are you sure you want to delete this consignee?')) {
-            e.preventDefault();
-            return false;
-        }
-    });
+    const button = $(this);
+    const form = button.closest('.consignee-delete-form');
+
+    const consigneeName = button.data('consignee-name') || '-';
+    const contactNumber = button.data('consignee-contact') || '-';
+    const city = button.data('consignee-city') || '-';
+    const state = button.data('consignee-state') || '-';
+    const country = button.data('consignee-country') || '-';
+    const address = button.data('consignee-address') || '-';
+
+    $('#deleteConsigneeName').text(consigneeName);
+    $('#deleteConsigneeContact').text(contactNumber);
+    $('#deleteConsigneeCity').text(city);
+    $('#deleteConsigneeState').text(state);
+    $('#deleteConsigneeCountry').text(country);
+    $('#deleteConsigneeAddress').text(address);
+
+    $('#deleteConsigneeRemark').val('');
+    $('#deleteConsigneeRemarkError').addClass('d-none');
+
+    $('#confirmConsigneeDelete').data('form', form);
+});
+
+
+// Confirm Consignee Delete
+$(document).on('click', '#confirmConsigneeDelete', function() {
+
+    const remark = $('#deleteConsigneeRemark').val().trim();
+    const form = $('#confirmConsigneeDelete').data('form');
+
+    if (!remark) {
+
+        $('#deleteConsigneeRemarkError')
+            .removeClass('d-none')
+            .text('Please enter a remark before deleting.');
+
+        return;
+    }
+
+    $('#deleteConsigneeRemarkError').addClass('d-none');
+
+    form.find('input[name="delete_remark"]').remove();
+
+    $('<input>', {
+        type: 'hidden',
+        name: 'delete_remark',
+        value: remark
+    }).appendTo(form);
+
+    form[0].submit();
+});
+
+    
 });
 </script>
 @endpush

@@ -52,6 +52,20 @@ class CompanySubscription extends Model
         return $this->hasMany(UpcomingSubscription::class, 'company_id', 'company_id');
     }
 
+    public static function create(array $attributes = [])
+    {
+        if (isset($attributes['company_id'])) {
+            $existing = static::where('company_id', $attributes['company_id'])->first();
+            if ($existing) {
+                $existing->update($attributes);
+
+                return $existing->fresh();
+            }
+        }
+
+        return static::query()->create($attributes);
+    }
+
     public function isActive(): bool
     {
         return in_array($this->status, ['trial', 'active'], true)

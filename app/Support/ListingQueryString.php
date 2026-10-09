@@ -13,6 +13,7 @@ class ListingQueryString
         'customer_id',
         'transporter_id',
         'truck_id',
+        'delivery_status',
     ];
 
     public const FREIGHT_BOOKING_KEYS = [

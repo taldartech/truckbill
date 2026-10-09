@@ -83,7 +83,7 @@
                                 </select>
                                 @error('gst_type') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label d-block">PAN is Active *</label>
                                 <div class="form-check form-check-inline">
                                     <input class="form-check-input" type="radio" name="pan_active" id="pan_active_yes" value="1"
@@ -96,6 +96,21 @@
                                     <label class="form-check-label" for="pan_active_no">No</label>
                                 </div>
                                 @error('pan_active') <div class="text-danger">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label d-block">MSME Status</label>
+                                <div class="form-check form-switch mt-1">
+                                    <input class="form-check-input" type="checkbox" name="is_msme" id="is_msme" value="1"
+                                           {{ old('is_msme', $transporterMaster?->is_msme) ? 'checked' : '' }}
+                                           onchange="document.getElementById('msme_reg_container').style.display = this.checked ? 'block' : 'none'">
+                                    <label class="form-check-label small" for="is_msme">MSME Registered</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3" id="msme_reg_container" style="{{ old('is_msme', $transporterMaster?->is_msme) ? '' : 'display:none;' }}">
+                                <label for="msme_reg_no" class="form-label">Udyam / MSME Reg #</label>
+                                <input type="text" class="form-control" id="msme_reg_no" name="msme_reg_no"
+                                       value="{{ old('msme_reg_no', $transporterMaster?->msme_reg_no) }}" placeholder="UDYAM-XX-00-0000000">
+                                @error('msme_reg_no') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>
                         </div>
 

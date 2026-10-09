@@ -45,10 +45,16 @@
         }
 
         .table td, .table th {
-            padding: 4px 8px !important;
-            font-size: 12px !important;
+            padding: 8px 10px;
             vertical-align: middle;
             border-color: rgba(0,0,0,0.05) !important;
+        }
+
+        @media (max-width: 767.98px) {
+            .table td, .table th {
+                font-size: 0.8125rem !important;
+                padding: 4px 6px !important;
+            }
         }
 
         /* Action Buttons */
@@ -105,6 +111,203 @@
 
         .table-success { background-color: #d1e7dd !important; border-color: #badbcc !important; }
         .table-danger  { background-color: #f8d7da !important; border-color: #f5c2c7 !important; }
+
+        .freight-bookings-index .table-responsive {
+            max-height: none !important;
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .freight-bookings-index .table-responsive::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .freight-bookings-index .table-responsive::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        .freight-bookings-index .table-responsive::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .freight-bookings-index .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        #freightBookingsTable {
+            width: 100% !important;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        #freightBookingsTable th,
+        #freightBookingsTable td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-left: 5px !important;
+            padding-right: 5px !important;
+        }
+
+        #freightBookingsTable thead th {
+            position: sticky;
+            top: 0;
+            background: var(--brand-table-header-bg) !important;
+            z-index: 20;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            padding-top: 4px !important;
+            padding-bottom: 4px !important;
+            padding-left: 3px !important;
+            padding-right: 3px !important;
+            font-size: 11.5px !important;
+            font-weight: 700;
+            letter-spacing: 0;
+        }
+
+        /* Large desktop view: fit within 100% */
+        @media (min-width: 1200px) {
+            #freightBookingsTable {
+                table-layout: fixed;
+                min-width: 0 !important;
+            }
+
+            #freightBookingsTable th:nth-child(1), #freightBookingsTable td:nth-child(1) { width: 3.5%; text-align: center; } /* Checkbox */
+            #freightBookingsTable th:nth-child(2), #freightBookingsTable td:nth-child(2) { width: 7.5%; } /* GR Date */
+            #freightBookingsTable th:nth-child(3), #freightBookingsTable td:nth-child(3) { width: 8.5%; } /* LR No */
+            #freightBookingsTable th:nth-child(4), #freightBookingsTable td:nth-child(4) { width: 11%; }  /* Customer */
+            #freightBookingsTable th:nth-child(5), #freightBookingsTable td:nth-child(5) { width: 11%; }  /* Transporter */
+            #freightBookingsTable th:nth-child(6), #freightBookingsTable td:nth-child(6) { width: 9%; }   /* Truck */
+            #freightBookingsTable th:nth-child(7), #freightBookingsTable td:nth-child(7) { width: 10%; }  /* Route */
+            #freightBookingsTable th:nth-child(8), #freightBookingsTable td:nth-child(8) { width: 6%; }   /* Weight */
+            #freightBookingsTable th:nth-child(9), #freightBookingsTable td:nth-child(9) { width: 6%; }   /* Rate */
+            #freightBookingsTable th:nth-child(10), #freightBookingsTable td:nth-child(10) { width: 8%; } /* Total */
+            #freightBookingsTable th:nth-child(11), #freightBookingsTable td:nth-child(11) { width: 8%; } /* Balance */
+            #freightBookingsTable th:nth-child(12), #freightBookingsTable td:nth-child(12) { width: 11.5%; min-width: 115px; } /* Actions */
+        }
+
+        #freightBookingsTable td:nth-child(12),
+        #freightBookingsTable th:nth-child(12) {
+            overflow: visible;
+            text-overflow: clip;
+        }
+
+        .freight-bookings-index .app-index-table-actions {
+            display: inline-flex !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            gap: 4px !important;
+            white-space: nowrap !important;
+            max-width: none !important;
+        }
+
+        /* Mobile & Tablet: smooth internal horizontal scroll without page overflow */
+        @media (max-width: 1199.98px) {
+            #freightBookingsTable {
+                table-layout: auto !important;
+                min-width: 1050px !important;
+                width: 100% !important;
+            }
+
+            #freightBookingsTable th:nth-child(n),
+            #freightBookingsTable td:nth-child(n) {
+                width: auto !important;
+                white-space: nowrap !important;
+            }
+
+            #freightBookingsTable th:nth-child(12),
+            #freightBookingsTable td:nth-child(12) {
+                min-width: 120px !important;
+                width: 120px !important;
+                white-space: nowrap !important;
+                overflow: visible !important;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .freight-bookings-index .app-index-list-card > .card-header {
+                padding: 0.5rem 0.75rem !important;
+            }
+
+            .freight-bookings-index .modal-footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.4rem;
+            }
+
+            .freight-bookings-index .modal-footer .btn {
+                width: 100%;
+                margin: 0 !important;
+                text-align: center;
+            }
+
+            /* Pagination size matches Bilty standard: unified block with small font */
+            .freight-bookings-index .app-index-partload-pagination {
+                padding: 0.4rem 0.5rem !important;
+                gap: 0.35rem !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .dataTables_info {
+                font-size: 0.72rem !important;
+                text-align: center !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination {
+                margin: 0 !important;
+                gap: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-link {
+                font-size: 0.72rem !important;
+                padding: 0.22rem 0.5rem !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item:first-child .page-link {
+                border-top-left-radius: 0.375rem !important;
+                border-bottom-left-radius: 0.375rem !important;
+                border-top-right-radius: 0 !important;
+                border-bottom-right-radius: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item:last-child .page-link {
+                border-top-right-radius: 0.375rem !important;
+                border-bottom-right-radius: 0.375rem !important;
+                border-top-left-radius: 0 !important;
+                border-bottom-left-radius: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item:not(:first-child):not(:last-child) .page-link {
+                border-radius: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item:only-child .page-link {
+                border-radius: 0.375rem !important;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .freight-bookings-index .app-index-partload-pagination .dataTables_info {
+                font-size: 0.75rem !important;
+                text-align: center !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination {
+                margin: 0 !important;
+                gap: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-link {
+                font-size: 0.75rem !important;
+                padding: 0.25rem 0.55rem !important;
+            }
+        }
     </style>
 @endpush
 
@@ -135,7 +338,7 @@
 
 
 
-    <div class="container-fluid mt-4 app-index-page app-index-page--standard">
+    <div class="container-fluid mt-2 pt-1 app-index-page app-index-page--standard freight-bookings-index">
         @if (session('success'))
             <div class="mb-3">
                 <span class="badge text-bg-dark border app-index-flash">
@@ -179,7 +382,7 @@
                         <div class="app-index-filters__top-actions">
                             <div class="app-index-filters__bulk">
                                 <button id="bulk-memo-id-btn" class="header-pill-btn btn btn-primary border-0" style="display: none;" data-bs-toggle="modal" data-bs-target="#bulkMemoIdModal">
-                                    <i class="bi bi-clipboard-check"></i> Bulk Memo
+                                    <i class="bi bi-clipboard-check"></i> Bulk Memo / POD
                                 </button>
                                 <button id="voucher-payment-btn" class="header-pill-btn btn btn-brand-primary border-0" style="display: none;">
                                     <i class="bi bi-receipt"></i> Voucher
@@ -253,7 +456,7 @@
                                 <label class="app-index-filters__chip{{ request('pending_memo') ? ' is-active' : '' }}" for="pendingMemoFilter">
                                     <input class="form-check-input" type="checkbox" name="pending_memo" value="1"
                                         id="pendingMemoFilter" {{ request('pending_memo') ? 'checked' : '' }}>
-                                    <span class="app-index-filters__chip-label">Pending Memo</span>
+                                    <span class="app-index-filters__chip-label">Pending Memo / POD</span>
                                 </label>
                                 <div class="app-index-filters__actions">
                                     <button type="submit" class="app-index-filters__btn app-index-filters__btn--apply" id="filterFbBtn" data-tooltip="Filter" aria-label="Filter">
@@ -537,7 +740,7 @@
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-clipboard-check"></i> Bulk Memo ID Assignment</h5>
+                    <h5 class="modal-title"><i class="bi bi-clipboard-check"></i> Bulk Memo / POD ID Assignment</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="bulkMemoIdBody">
@@ -545,7 +748,7 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" form="bulkMemoIdForm" class="btn btn-primary">Assign Memo ID</button>
+                    <button type="submit" form="bulkMemoIdForm" class="btn btn-primary">Assign Memo / POD ID</button>
                 </div>
             </div>
         </div>
@@ -1259,10 +1462,15 @@
                     <form id="bulkMemoIdForm" method="POST" action="{{ route('freight_bookings.bulk_memo_id') }}">
                         @csrf
                         <div class="row mb-3">
-                            <div class="col-md-12">
-                                <label class="form-label">Memo ID *</label>
-                                <input type="text" name="memo_id" class="form-control" required placeholder="Enter Memo ID">
-                                <div class="form-text">This memo ID will be assigned to all selected good receipts (bilty)</div>
+                            <div class="col-md-6">
+                                <label class="form-label">Memo ID / POD *</label>
+                                <input type="text" name="memo_id" class="form-control" required placeholder="Enter Memo / POD ID">
+                                <div class="form-text">This memo / POD ID will be assigned to all selected good receipts (bilty)</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Memo Date &amp; Time</label>
+                                <input type="datetime-local" name="memo_created_at" class="form-control" max="${new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}">
+                                <div class="form-text">Optional. Leave blank to use the current date &amp; time.</div>
                             </div>
                         </div>
 
@@ -1292,7 +1500,7 @@
 
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i>
-                            <strong>Note:</strong> Assigning memo ID will:
+                            <strong>Note:</strong> Assigning memo / POD ID will:
                             <ul class="mb-0 mt-0">
                                 <li>Set good receipt (bilty) status to "Delivered"</li>
                                 <li>Mark associated good hires (lorry hire) as delivered</li>
@@ -1903,7 +2111,9 @@
                 searching: false,
                 ordering: true,
                 theme: 'bootstrap-5',
-                responsive: true,
+                responsive: false,
+                scrollX: false,
+                autoWidth: false,
                 lengthChange: false,
                 order: [
                     [1, 'desc']
@@ -3000,9 +3210,16 @@
                             return data;
                         })
                         .then((data) => {
-                            printButton.classList.add('is-printed');
-                            printButton.setAttribute('title',
-                                `Last printed: ${data.voucher_last_printed_at}`);
+                            (data.updated_booking_ids || [printButton.dataset.freightBookingId]).forEach((id) => {
+                                document.querySelectorAll(`.voucher-print-btn[data-freight-booking-id="${id}"]`).forEach((btn) => {
+                                    btn.classList.add('is-printed');
+                                    btn.title = `Last printed: ${data.voucher_last_printed_at}`;
+                                });
+                            });
+
+                            if (window.$?.fn?.DataTable?.isDataTable('#freightBookingsTable')) {
+                                $('#freightBookingsTable').DataTable().ajax.reload(null, false);
+                            }
                         })
                         .catch((error) => {
                             Swal.fire({

@@ -13,6 +13,17 @@
     background: var(--brand-card-bg, #fff);
 }
 
+@media (min-width: 992px) {
+    .app-sidebar,
+    .main-sidebar {
+        position: -webkit-sticky !important;
+        position: sticky !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        z-index: 1038 !important;
+    }
+}
+
 .app-sidebar .sidebar-container {
     display: flex;
     flex-direction: column;

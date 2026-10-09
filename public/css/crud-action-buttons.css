@@ -515,6 +515,7 @@ a.btn.btn-icon.btn-action-back:hover {
     justify-content: center;
     gap: 0.35rem;
     flex-wrap: nowrap;
+    white-space: nowrap;
 }
 
 .app-index-table-actions .btn-icon {
@@ -525,3 +526,4 @@ a.btn.btn-icon.btn-action-back:hover {
     display: inline-flex;
     margin: 0;
 }
+

@@ -17,6 +17,12 @@ class CorrectCombinedVoucherLinkedAmountsCommandTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->markTestSkipped('The command freight-bookings:correct-combined-voucher-amounts was removed in commit 4bf7d7f2 as obsolete.');
+    }
+
     public function test_command_redistributes_voucher_payments_and_recalculates_freight_bookings(): void
     {
         [, $fbOne, $fbTwo] = $this->seedLinkedCombinedPaymentMismatch();

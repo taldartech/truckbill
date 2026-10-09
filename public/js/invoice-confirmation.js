@@ -112,7 +112,9 @@
             ${buildStatRow('Invoice', escapeHtml(data.invoiceNumber || '—'))}
             ${buildStatRow('Payment date', formatDate(data.paymentDate))}
             ${buildStatRow('Mode', escapeHtml(data.mode || '—'))}
-            ${buildStatRow('Amount', formatAmount(data.amount), { valueClass: 'text-success' })}
+            ${buildStatRow('Amount Received', formatAmount(data.amount), { valueClass: 'text-success' })}
+            ${data.tdsAmount ? buildStatRow('TDS u/s 194C', formatAmount(data.tdsAmount), { valueClass: 'text-info' }) : ''}
+            ${data.deductionAmount ? buildStatRow('Deduction / Claims', formatAmount(data.deductionAmount), { valueClass: 'text-warning' }) : ''}
             ${data.remark ? buildStatRow('Remark', escapeHtml(data.remark)) : ''}
             <div class="mt-3 p-3 rounded-3 bg-light border">
                 ${buildStatRow('Invoice total', formatAmount(data.invoiceTotal))}
