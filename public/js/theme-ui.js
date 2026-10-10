@@ -275,7 +275,13 @@
       'advance_amount',
       'transporter_master_id',
       'good_type_field',
-      'registered_truck_id'
+      'registered_truck_id',
+      'consignor_contact_number',
+      'source_city',
+      'source_state',
+      'consignee_contact_number',
+      'destination_city',
+      'destination_state'
     ].includes(lower)) {
       return true;
     }
@@ -704,14 +710,44 @@
       elements.forEach(function (el) {
         if (!el.name) return;
         if (el.name === '_token' || el.name === '_method') return;
-        if (el.name === 'company_id' && el.type === 'hidden') return;
         if (el.type === 'file' || el.type === 'password' || el.type === 'submit' || el.type === 'button') return;
         if (el.readOnly || el.disabled) return;
 
+        // Skip fixed hidden inputs and server boilerplate that are never manually filled by the user
+        if (el.type === 'hidden') {
+          const hName = el.name.toLowerCase();
+          if (
+            form.id === 'freightBookingForm' ||
+            [
+              'company_id',
+              'branch_id',
+              'user_id',
+              'lane',
+              'advance_amount',
+              'is_delivered',
+              'is_cancelled',
+              'redirect_to_payment',
+              'transporter_tds_percentage',
+              'pan_verified',
+              'is_dummy_pan',
+              'consignor_contact_number',
+              'source_city',
+              'source_state',
+              'consignee_contact_number',
+              'destination_city',
+              'destination_state'
+            ].includes(hName)
+          ) {
+            return;
+          }
+        }
+
         if (el.type === 'checkbox') {
-          if (!data[el.name]) data[el.name] = [];
           if (el.checked) {
+            if (!data[el.name]) data[el.name] = [];
             data[el.name].push(el.value || '1');
+          } else if (initialSnapshot && initialSnapshot[el.name + '::' + el.value] === '1') {
+            if (!data[el.name]) data[el.name] = [];
           }
         } else if (el.type === 'radio') {
           if (el.checked) {
@@ -720,48 +756,76 @@
         } else if (el.tagName === 'SELECT') {
           if (el.multiple) {
             const selected = Array.from(el.selectedOptions).map(function (o) {
-              return { value: o.value, text: o.text || o.innerText || '' };
+              return { value: o.value, text: (o.text || o.innerText || '').trim() };
             });
             if (selected.length) {
               data[el.name] = selected;
             }
           } else {
-            let opt = el.selectedOptions && el.selectedOptions[0];
-            let val = el.value;
-            let text = opt ? (opt.text || opt.innerText || '') : '';
-            let attrs = {};
+            const opt = el.selectedOptions && el.selectedOptions[0];
+            const val = el.value;
+            if (val === undefined || val === null || String(val).trim().length === 0) {
+              return;
+            }
+
+            let text = opt ? (opt.text || opt.innerText || '').trim() : '';
+            const attrs = {};
 
             if (window.jQuery && window.jQuery(el).hasClass('select2-hidden-accessible')) {
               try {
                 const s2Data = window.jQuery(el).select2('data');
                 if (s2Data && s2Data[0] && s2Data[0].id) {
                   val = String(s2Data[0].id);
-                  text = s2Data[0].text || text;
-                  attrs.transporterId = s2Data[0].transporter_id || '';
-                  attrs.transporterName = s2Data[0].transporter_name || '';
-                  attrs.driverName = s2Data[0].driver_name || '';
+                  if (s2Data[0].text) {
+                    text = String(s2Data[0].text).trim();
+                  }
+                  if (s2Data[0].transporter_id) attrs.transporterId = s2Data[0].transporter_id;
+                  if (s2Data[0].transporter_name) attrs.transporterName = s2Data[0].transporter_name;
+                  if (s2Data[0].driver_name) attrs.driverName = s2Data[0].driver_name;
                 }
               } catch (e) {}
             }
 
             if (opt) {
-              attrs.transporterId = attrs.transporterId || opt.getAttribute('data-transporter-id') || '';
-              attrs.transporterName = attrs.transporterName || opt.getAttribute('data-transporter-name') || '';
-              attrs.driverName = attrs.driverName || opt.getAttribute('data-driver-name') || '';
+              const dtId = opt.getAttribute('data-transporter-id');
+              const dtName = opt.getAttribute('data-transporter-name');
+              const dName = opt.getAttribute('data-driver-name');
+              if (dtId && !attrs.transporterId) attrs.transporterId = dtId;
+              if (dtName && !attrs.transporterName) attrs.transporterName = dtName;
+              if (dName && !attrs.driverName) attrs.driverName = dName;
             }
 
-            if (val) {
+            const hasAttrs = Object.keys(attrs).length > 0;
+            const isSelect2 = window.jQuery && window.jQuery(el).hasClass('select2-hidden-accessible');
+            const isAjaxSelect2 = Boolean(
+              isSelect2 && (
+                window.jQuery(el).data('select2')?.options?.options?.ajax ||
+                el.getAttribute('data-ajax-url') ||
+                el.classList.contains('select2-ajax') ||
+                el.classList.contains('ajax-select')
+              )
+            );
+            const needsTextObject = isAjaxSelect2 || (isSelect2 && text && text !== val && !el.querySelector('option[value="' + CSS.escape(val) + '"]'));
+
+            if (hasAttrs) {
               data[el.name] = {
                 value: val,
-                text: text,
+                text: text || val,
                 attrs: attrs
               };
+            } else if (needsTextObject) {
+              data[el.name] = {
+                value: val,
+                text: text
+              };
+            } else {
+              data[el.name] = val;
             }
           }
         } else {
           const val = el.value;
           if (val && val.trim().length > 0) {
-            data[el.name] = val;
+            data[el.name] = val.trim();
           }
         }
       });
@@ -937,6 +1001,10 @@
                   if (attrs.transporterName) opt.setAttribute('data-transporter-name', attrs.transporterName);
                   if (attrs.driverName) opt.setAttribute('data-driver-name', attrs.driverName);
                   field.add(opt);
+                } else if (attrs) {
+                  if (attrs.transporterId && !opt.getAttribute('data-transporter-id')) opt.setAttribute('data-transporter-id', attrs.transporterId);
+                  if (attrs.transporterName && !opt.getAttribute('data-transporter-name')) opt.setAttribute('data-transporter-name', attrs.transporterName);
+                  if (attrs.driverName && !opt.getAttribute('data-driver-name')) opt.setAttribute('data-driver-name', attrs.driverName);
                 }
                 const oldVal = (initialSnapshot && initialSnapshot[name] !== undefined) ? initialSnapshot[name] : (field.value || '');
                 const newVal = String(val).trim();
