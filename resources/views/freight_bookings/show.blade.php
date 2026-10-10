@@ -648,7 +648,7 @@
 
     <div class="modal fade fb-pay-modal" id="voucherPaymentModal" tabindex="-1" aria-labelledby="voucherPaymentModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="voucherPaymentModalLabel">
@@ -755,6 +755,7 @@
                                                 <input type="number" class="form-control allocated-input"
                                                     data-fb-id="{{ $freightBooking->id }}" step="0.01" min="0.01"
                                                     max="{{ $freightBooking->balance_amount ?? 0 }}"
+                                                    placeholder="0.00"
                                                     oninput="validatePaymentAmount(this); updateTotalPayment();" onchange="updateTotalPayment()">
                                             </td>
                                         </tr>
@@ -773,8 +774,8 @@
                             <i class="bi bi-pencil-square"></i> Payment Details
                         </div>
                         <div class="fb-pay-panel__body">
-                            <div class="fb-pay-fields fb-pay-fields--4">
-                                <div>
+                            <div class="row g-2" id="voucherPaymentFields">
+                                <div class="col-12 col-md-3" id="paymentTypeCol">
                                     <label for="paymentType" class="form-label">Payment Type *</label>
                                     <select class="form-select" id="paymentType" required>
                                         <option value="">Select Payment Type</option>
@@ -785,7 +786,7 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div>
+                                <div class="col-12 col-md-3" id="paymentModeCol">
                                     <label for="paymentMode" class="form-label">Payment Mode *</label>
                                     <select class="form-select" id="paymentMode" required>
                                         <option value="">Select Payment Mode</option>
@@ -796,16 +797,7 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div>
-                                    <label for="paymentDate" class="form-label">Payment Date</label>
-                                    <input type="date" class="form-control" name="date" id="paymentDate"
-                                        value="{{ date('Y-m-d') }}">
-                                </div>
-                                <div>
-                                    <label for="paymentRemarks" class="form-label">Remarks</label>
-                                    <input type="text" class="form-control" id="paymentRemarks" placeholder="Enter remarks">
-                                </div>
-                                <div id="pumpNameContainer" style="display: none;">
+                                <div class="col-12 col-md-4" id="pumpNameContainer" style="display: none;">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <label for="pumpName" class="form-label mb-0">Pump Name *</label>
                                         <a href="javascript:void(0)"
@@ -822,6 +814,15 @@
                                             </option>
                                         @endforeach
                                     </select>
+                                </div>
+                                <div class="col-12 col-md-3" id="paymentDateCol">
+                                    <label for="paymentDate" class="form-label">Payment Date</label>
+                                    <input type="date" class="form-control" name="date" id="paymentDate"
+                                        value="{{ date('Y-m-d') }}">
+                                </div>
+                                <div class="col-12 col-md-3" id="paymentRemarksCol">
+                                    <label for="paymentRemarks" class="form-label">Remarks</label>
+                                    <input type="text" class="form-control" id="paymentRemarks" placeholder="Enter remarks">
                                 </div>
                             </div>
                         </div>
@@ -1206,12 +1207,36 @@
 
             const selectedText = paymentModeDropdown.options[paymentModeDropdown.selectedIndex]?.text.toLowerCase() || "";
             const pumpNameContainer = document.getElementById("pumpNameContainer");
+            const pumpName = document.getElementById("pumpName");
+            const typeCol = document.getElementById("paymentTypeCol");
+            const modeCol = document.getElementById("paymentModeCol");
+            const dateCol = document.getElementById("paymentDateCol");
+            const remarksCol = document.getElementById("paymentRemarksCol");
 
-            if (selectedText.includes("fuel")) {
-                pumpNameContainer.style.display = "block";
+            const isFuel = selectedText.includes("fuel");
+
+            if (isFuel) {
+                if (pumpNameContainer) {
+                    pumpNameContainer.style.display = "block";
+                    pumpNameContainer.className = "col-12 col-md-4";
+                }
+                if (pumpName) pumpName.required = true;
+                if (typeCol) typeCol.className = "col-12 col-md-4";
+                if (modeCol) modeCol.className = "col-12 col-md-4";
+                if (dateCol) dateCol.className = "col-12 col-md-6";
+                if (remarksCol) remarksCol.className = "col-12 col-md-6";
             } else {
-                pumpNameContainer.style.display = "none";
-                document.getElementById("pumpName").value = ""; // reset
+                if (pumpNameContainer) {
+                    pumpNameContainer.style.display = "none";
+                }
+                if (pumpName) {
+                    pumpName.required = false;
+                    pumpName.value = ""; // reset
+                }
+                if (typeCol) typeCol.className = "col-12 col-md-3";
+                if (modeCol) modeCol.className = "col-12 col-md-3";
+                if (dateCol) dateCol.className = "col-12 col-md-3";
+                if (remarksCol) remarksCol.className = "col-12 col-md-3";
             }
         }
 
@@ -1240,7 +1265,7 @@
     @if ($freightBooking->linked_lr_id && $linkedFreightBookings->isNotEmpty())
     <!-- Combined Payment Modal -->
     <div class="modal fade fb-pay-modal" id="combinedPaymentModal" tabindex="-1" aria-labelledby="combinedPaymentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="combinedPaymentModalLabel">
@@ -1298,14 +1323,14 @@
                                 <i class="bi bi-currency-rupee"></i> Payment Allocation
                             </div>
                             <div class="fb-pay-panel__body">
-                                <div class="row align-items-center justify-content-between">
+                                <div class="row align-items-center justify-content-between mb-2">
                                     <div class="col-6">
                                         <span class="fb-pay-fact__label">Total Balance</span>
                                         <div class="fb-pay-fact__value fb-pay-fact__value--warn">₹{{ number_format($combinedTotalBalance, 2) }}</div>
                                     </div>
-                                    <div class="col-6 d-flex align-items-center justify-content-end">
-                                        <label class="form-label mb-1" for="combinedAmountInput">Combined Amount *</label>
-                                        <input style="width: 50%" type="number" class="form-control" id="combinedAmountInput" name="combined_amount"
+                                    <div class="col-6 d-flex align-items-center justify-content-end gap-2">
+                                        <label class="form-label mb-0" for="combinedAmountInput" style="font-size: 0.84rem; font-weight: 700; color: #475569;">Combined Amount *</label>
+                                        <input style="max-width: 190px;" type="number" class="form-control" id="combinedAmountInput" name="combined_amount"
                                             step="0.01" min="0.01" max="{{ $combinedTotalBalance }}" required>
                                     </div>
                                 </div>
@@ -1350,8 +1375,8 @@
                                 <i class="bi bi-pencil-square"></i> Payment Details
                             </div>
                             <div class="fb-pay-panel__body">
-                                <div class="fb-pay-fields">
-                                    <div>
+                                <div class="row g-2" id="combinedPaymentFields">
+                                    <div class="col-12 col-md-3" id="combinedPaymentTypeCol">
                                         <label for="combinedPaymentType" class="form-label">Payment Type *</label>
                                         <select class="form-select" id="combinedPaymentType" name="payment_type" required>
                                             <option value="">Select Payment Type</option>
@@ -1360,7 +1385,7 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div>
+                                    <div class="col-12 col-md-3" id="combinedPaymentModeCol">
                                         <label for="combinedPaymentMode" class="form-label">Payment Mode *</label>
                                         <select class="form-select" id="combinedPaymentMode" name="payment_mode" required>
                                             <option value="">Select Payment Mode</option>
@@ -1369,7 +1394,7 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div id="combinedPumpContainer" style="display: none;">
+                                    <div class="col-12 col-md-4" id="combinedPumpContainer" style="display: none;">
                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                             <label for="combinedPumpName" class="form-label mb-0">Pump Name *</label>
                                             <a href="javascript:void(0)"
@@ -1385,14 +1410,14 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div>
+                                    <div class="col-12 col-md-3" id="combinedPaymentDateCol">
                                         <label for="combinedPaymentDate" class="form-label">Payment Date</label>
                                         <input type="date" class="form-control" id="combinedPaymentDate" name="payment_date"
                                             value="{{ date('Y-m-d') }}">
                                     </div>
-                                    <div style="grid-column: span 2;">
-                                        <label for="combinedNotes" class="form-label">Notes</label>
-                                        <input type="text" class="form-control" id="combinedNotes" name="notes" placeholder="Enter notes...">
+                                    <div class="col-12 col-md-3" id="combinedNotesCol">
+                                        <label for="combinedNotes" class="form-label">Remarks</label>
+                                        <input type="text" class="form-control" id="combinedNotes" name="notes" placeholder="Enter remarks">
                                     </div>
                                 </div>
                             </div>
@@ -1468,10 +1493,35 @@
             function toggleCombinedPump() {
                 const sel = document.getElementById('combinedPaymentMode');
                 const pump = document.getElementById('combinedPumpContainer');
+                const pumpName = document.getElementById('combinedPumpName');
+                const typeCol = document.getElementById('combinedPaymentTypeCol');
+                const modeCol = document.getElementById('combinedPaymentModeCol');
+                const dateCol = document.getElementById('combinedPaymentDateCol');
+                const notesCol = document.getElementById('combinedNotesCol');
+
                 if (!sel || !pump) return;
                 const txt = sel.options[sel.selectedIndex]?.text?.toLowerCase() || '';
-                pump.style.display = txt.includes('fuel') ? 'block' : 'none';
-                if (!txt.includes('fuel')) document.getElementById('combinedPumpName').value = '';
+                const isFuel = txt.includes('fuel');
+
+                if (isFuel) {
+                    pump.style.display = 'block';
+                    pump.className = 'col-12 col-md-4';
+                    if (pumpName) pumpName.required = true;
+                    if (typeCol) typeCol.className = 'col-12 col-md-4';
+                    if (modeCol) modeCol.className = 'col-12 col-md-4';
+                    if (dateCol) dateCol.className = 'col-12 col-md-6';
+                    if (notesCol) notesCol.className = 'col-12 col-md-6';
+                } else {
+                    pump.style.display = 'none';
+                    if (pumpName) {
+                        pumpName.required = false;
+                        pumpName.value = '';
+                    }
+                    if (typeCol) typeCol.className = 'col-12 col-md-3';
+                    if (modeCol) modeCol.className = 'col-12 col-md-3';
+                    if (dateCol) dateCol.className = 'col-12 col-md-3';
+                    if (notesCol) notesCol.className = 'col-12 col-md-3';
+                }
             }
             document.getElementById('combinedPaymentMode')?.addEventListener('change', toggleCombinedPump);
             document.getElementById('combinedPaymentModal')?.addEventListener('shown.bs.modal', toggleCombinedPump);

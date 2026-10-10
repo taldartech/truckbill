@@ -511,11 +511,11 @@
     <!-- Combined Payment Modal -->
     <div class="modal fade fb-pay-modal" id="combinedPaymentModal" tabindex="-1" aria-labelledby="combinedPaymentModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-xl">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="combinedPaymentModalLabel">
-                        <i class="bi bi-wallet2"></i> Combined Payment - Linked Bookings
+                        <i class="bi bi-wallet2"></i> Combined Payment — Linked Bookings
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -523,9 +523,9 @@
                     <!-- Dynamic content will be loaded here -->
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-success" id="combinedPaymentSubmitBtn">
-                        <i class="fas fa-save"></i> Submit Combined Payment
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success btn-sm" id="combinedPaymentSubmitBtn">
+                        <i class="bi bi-check-lg me-1"></i> Submit Combined Payment
                     </button>
                 </div>
             </div>
@@ -535,7 +535,7 @@
     <!-- LR Details Modal -->
     <div class="modal fade fb-pay-modal" id="lrDetailsModal" tabindex="-1" aria-labelledby="lrDetailsModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="lrDetailsModalLabel">LR Details</h5>
@@ -557,7 +557,7 @@
     <!-- Voucher Payment Modal -->
     <div class="modal fade fb-pay-modal" id="voucherPaymentModal" tabindex="-1" aria-labelledby="voucherPaymentModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="voucherPaymentModalLabel">
@@ -649,8 +649,8 @@
                             <i class="bi bi-pencil-square"></i> Payment Details
                         </div>
                         <div class="fb-pay-panel__body">
-                            <div class="fb-pay-fields fb-pay-fields--4">
-                                <div>
+                            <div class="row g-2" id="voucherPaymentFields">
+                                <div class="col-12 col-md-3" id="paymentTypeCol">
                                     <label for="paymentType" class="form-label">Payment Type *</label>
                                     <select class="form-select" id="paymentType" required>
                                         <option value="">Select Payment Type</option>
@@ -661,7 +661,7 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div>
+                                <div class="col-12 col-md-3" id="paymentModeCol">
                                     <label for="paymentMode" class="form-label">Payment Mode *</label>
                                     <select class="form-select" id="paymentMode" required>
                                         <option value="">Select Payment Mode</option>
@@ -672,16 +672,7 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div>
-                                    <label for="paymentDate" class="form-label">Payment Date</label>
-                                    <input type="date" class="form-control" name="date" id="paymentDate"
-                                        value="{{ date('Y-m-d') }}">
-                                </div>
-                                <div>
-                                    <label for="paymentRemarks" class="form-label">Remarks</label>
-                                    <input type="text" class="form-control" id="paymentRemarks" placeholder="Enter remarks">
-                                </div>
-                                <div id="pumpNameContainer" style="display: none;">
+                                <div class="col-12 col-md-4" id="pumpNameContainer" style="display: none;">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <label for="pumpName" class="form-label mb-0">Pump Name *</label>
                                         <a href="javascript:void(0)"
@@ -698,6 +689,15 @@
                                             </option>
                                         @endforeach
                                     </select>
+                                </div>
+                                <div class="col-12 col-md-3" id="paymentDateCol">
+                                    <label for="paymentDate" class="form-label">Payment Date</label>
+                                    <input type="date" class="form-control" name="date" id="paymentDate"
+                                        value="{{ date('Y-m-d') }}">
+                                </div>
+                                <div class="col-12 col-md-3" id="paymentRemarksCol">
+                                    <label for="paymentRemarks" class="form-label">Remarks</label>
+                                    <input type="text" class="form-control" id="paymentRemarks" placeholder="Enter remarks">
                                 </div>
                             </div>
                         </div>
@@ -716,7 +716,7 @@
     <!-- Individual Voucher Payment Modal -->
     <div class="modal fade fb-pay-modal" id="individualPaymentModal" tabindex="-1" aria-labelledby="individualPaymentModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="individualPaymentModalLabel">💳 Individual Voucher Payment</h5>
@@ -737,7 +737,7 @@
     <!-- Bulk Memo ID Modal -->
     <div class="modal fade fb-pay-modal" id="bulkMemoIdModal" tabindex="-1" aria-labelledby="bulkMemoIdModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-clipboard-check"></i> Bulk Memo / POD ID Assignment</h5>
@@ -1059,10 +1059,10 @@
                     rowsHtml += `
                         <tr>
                             <td>${lrNo}</td>
-                            <td>${formatCombinedAmount(shortage)}</td>
-                            <td>${formatCombinedAmount(damage)}</td>
-                            <td>${formatCombinedAmount(balance)}</td>
-                            <td>
+                            <td>₹${formatCombinedAmount(shortage)}</td>
+                            <td>₹${formatCombinedAmount(damage)}</td>
+                            <td>₹${formatCombinedAmount(balance)}</td>
+                            <td style="max-width: 8.5rem;">
                                 <input type="number" class="form-control form-control-sm allocated-input"
                                     name="payment_amounts[]" data-fb-id="${fbId}"
                                     data-balance="${balance}"
@@ -1075,110 +1075,127 @@
                 const modalContent = `
                     <form id="combinedPaymentForm" method="POST" action="{{ route('freight_bookings.store_combined_payment') }}" data-total-balance="${totalBalance}">
                         @csrf
-                        <div class="alert alert-secondary mb-3">
-                            <h6><i class="fas fa-truck"></i> Transporter Details</h6>
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <strong>Transporter:</strong><br>
-                                    <span>${firstLr.transporter_name || 'N/A'}</span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>Mobile:</strong><br>
-                                    <span>${firstLr.transporter_mobile || 'N/A'}</span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>Short Name:</strong><br>
-                                    <span>${firstLr.transporter_short_name || 'N/A'}</span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>Beneficiary ID:</strong><br>
-                                    <span>${firstLr.transporter_beneficiary_id || 'N/A'}</span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>TDS %:</strong><br>
-                                    <span>${firstLr.transporter_tds_percentage || 'N/A'}%</span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>Truck:</strong><br>
-                                    <span>${firstLr.truck_number || 'N/A'}</span>
-                                </div>
-                                <div class="col-md-3 text-danger">
-                                    <strong>Advance:</strong><br>
-                                    <span>${firstLr.transporter_advance_amount ?? 'N/A'}</span>
+                        <div class="fb-pay-panel">
+                            <div class="fb-pay-panel__head">
+                                <i class="bi bi-truck"></i> Transporter Details
+                            </div>
+                            <div class="fb-pay-panel__body">
+                                <div class="fb-pay-facts fb-pay-facts--7">
+                                    <div class="fb-pay-fact">
+                                        <span class="fb-pay-fact__label">Transporter</span>
+                                        <div class="fb-pay-fact__value">${firstLr.transporter_name || 'N/A'}</div>
+                                    </div>
+                                    <div class="fb-pay-fact">
+                                        <span class="fb-pay-fact__label">Mobile</span>
+                                        <div class="fb-pay-fact__value">${firstLr.transporter_mobile || 'N/A'}</div>
+                                    </div>
+                                    <div class="fb-pay-fact">
+                                        <span class="fb-pay-fact__label">Short Name</span>
+                                        <div class="fb-pay-fact__value">${firstLr.transporter_short_name || 'N/A'}</div>
+                                    </div>
+                                    <div class="fb-pay-fact">
+                                        <span class="fb-pay-fact__label">Beneficiary ID</span>
+                                        <div class="fb-pay-fact__value">${firstLr.transporter_beneficiary_id || 'N/A'}</div>
+                                    </div>
+                                    <div class="fb-pay-fact">
+                                        <span class="fb-pay-fact__label">TDS Percentage</span>
+                                        <div class="fb-pay-fact__value">${firstLr.transporter_tds_percentage ? firstLr.transporter_tds_percentage + '%' : 'N/A'}</div>
+                                    </div>
+                                    <div class="fb-pay-fact">
+                                        <span class="fb-pay-fact__label">Truck Number</span>
+                                        <div class="fb-pay-fact__value fb-pay-fact__value--accent">${firstLr.truck_number || 'N/A'}</div>
+                                    </div>
+                                    <div class="fb-pay-fact">
+                                        <span class="fb-pay-fact__label">Advance</span>
+                                        <div class="fb-pay-fact__value fb-pay-fact__value--warn">${firstLr.transporter_advance_amount !== undefined && firstLr.transporter_advance_amount !== null ? '₹' + formatCombinedAmount(firstLr.transporter_advance_amount) : 'N/A'}</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="col-md-4">
-                                    <strong>Total Balance:</strong>
-                                    <span class="fw-bold text-danger">${formatCombinedAmount(totalBalance)}</span>
+
+                        <div class="fb-pay-panel fb-pay-panel--alloc">
+                            <div class="fb-pay-panel__head">
+                                <i class="bi bi-currency-rupee"></i> Payment Allocation
+                            </div>
+                            <div class="fb-pay-panel__body">
+                                <div class="row align-items-center justify-content-between mb-2">
+                                    <div class="col-6">
+                                        <span class="fb-pay-fact__label">Total Balance</span>
+                                        <div class="fb-pay-fact__value fb-pay-fact__value--warn">₹${formatCombinedAmount(totalBalance)}</div>
+                                    </div>
+                                    <div class="col-6 d-flex align-items-center justify-content-end gap-2">
+                                        <label class="form-label mb-0" for="combinedAmountInput" style="font-size: 0.84rem; font-weight: 700; color: #475569;">Combined Amount *</label>
+                                        <input style="max-width: 190px;" type="number" class="form-control" id="combinedAmountInput" name="combined_amount"
+                                            step="0.01" min="0.01" max="${totalBalance}" required>
+                                    </div>
                                 </div>
-                                <div class="col-md-4 d-flex justify-content-end align-items-center gap-2">
-                                    <label class="form-label mb-0 ms-2">Combined Amount *</label>
-                                    <input type="number" class="form-control" id="combinedAmountInput" name="combined_amount"
-                                        step="0.01" min="0.01" max="${totalBalance}" required style="max-width: 200px;">
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle mb-0 fb-pay-table">
+                                        <thead>
+                                            <tr>
+                                                <th>LR Number</th>
+                                                <th>Shortage</th>
+                                                <th>Damage</th>
+                                                <th>Balance</th>
+                                                <th>Allocated</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${rowsHtml}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
-                        <div class="table-responsive mb-3">
-                            <table class="table table-sm table-bordered">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>LR Number</th>
-                                        <th>Shortage Amount</th>
-                                        <th>Damage Amount</th>
-                                        <th>Balance</th>
-                                        <th>Allocated</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${rowsHtml}
-                                </tbody>
-                            </table>
-                        </div>
+
                         ${bookingIds.map(id => `<input type="hidden" name="booking_ids[]" value="${id}">`).join('')}
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label for="combinedPaymentType" class="form-label">Payment Type *</label>
-                                <select class="form-select" id="combinedPaymentType" name="payment_type" required>
-                                    <option value="">Select Payment Type</option>
-                                    ${paymentTypes.map(type => `<option value="${type.id}">${type.name}</option>`).join('')}
-                                </select>
+
+                        <div class="fb-pay-panel">
+                            <div class="fb-pay-panel__head">
+                                <i class="bi bi-pencil-square"></i> Payment Details
                             </div>
-                            <div class="col-md-4">
-                                <label for="combinedPaymentMode" class="form-label">Payment Mode *</label>
-                                <select class="form-select" id="combinedPaymentMode" name="payment_mode" required>
-                                    <option value="">Select Payment Mode</option>
-                                    ${paymentModes.map(mode => `<option value="${mode.id}">${mode.name}</option>`).join('')}
-                                </select>
-                            </div>
-                            <div class="col-md-4" id="combinedPumpContainer" style="display: none;">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <label for="combinedPumpName" class="form-label mb-0">Pump Name *</label>
-                                    <a href="javascript:void(0)"
-                                        class="lrf-quick-add js-open-quick-add-pump"
-                                        data-pump-select="combinedPumpName">
-                                        <i class="bi bi-plus-lg"></i> Add
-                                    </a>
+                            <div class="fb-pay-panel__body">
+                                <div class="row g-2" id="combinedPaymentFields">
+                                    <div class="col-12 col-md-3" id="combinedPaymentTypeCol">
+                                        <label for="combinedPaymentType" class="form-label">Payment Type *</label>
+                                        <select class="form-select" id="combinedPaymentType" name="payment_type" required>
+                                            <option value="">Select Payment Type</option>
+                                            ${paymentTypes.map(type => `<option value="${type.id}">${type.name}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-3" id="combinedPaymentModeCol">
+                                        <label for="combinedPaymentMode" class="form-label">Payment Mode *</label>
+                                        <select class="form-select" id="combinedPaymentMode" name="payment_mode" required>
+                                            <option value="">Select Payment Mode</option>
+                                            ${paymentModes.map(mode => `<option value="${mode.id}">${mode.name}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-4" id="combinedPumpContainer" style="display: none;">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label for="combinedPumpName" class="form-label mb-0">Pump Name *</label>
+                                            <a href="javascript:void(0)"
+                                                class="lrf-quick-add js-open-quick-add-pump"
+                                                data-pump-select="combinedPumpName">
+                                                <i class="bi bi-plus-lg"></i> Add
+                                            </a>
+                                        </div>
+                                        <select class="form-select" id="combinedPumpName" name="pump_id">
+                                            <option value="">Select Pump</option>
+                                            @foreach ($pumps as $pump)
+                                                <option value="{{ $pump->id }}">{{ $pump->pump_name }} {{ $pump->contact_name ? '('.$pump->contact_name.')' : '' }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-3" id="combinedPaymentDateCol">
+                                        <label for="combinedPaymentDate" class="form-label">Payment Date</label>
+                                        <input type="date" class="form-control" id="combinedPaymentDate" name="payment_date"
+                                            value="{{ date('Y-m-d') }}">
+                                    </div>
+                                    <div class="col-12 col-md-3" id="combinedNotesCol">
+                                        <label for="combinedNotes" class="form-label">Remarks</label>
+                                        <input type="text" class="form-control" id="combinedNotes" name="notes" placeholder="Enter remarks">
+                                    </div>
                                 </div>
-                                <select class="form-select" id="combinedPumpName" name="pump_id">
-                                    <option value="">Select Pump</option>
-                                    @foreach ($pumps as $pump)
-                                        <option value="{{ $pump->id }}">{{ $pump->pump_name }} {{ $pump->contact_name ? '('.$pump->contact_name.')' : '' }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label for="combinedPaymentDate" class="form-label">Payment Date</label>
-                                <input type="date" class="form-control" id="combinedPaymentDate" name="payment_date"
-                                    value="{{ date('Y-m-d') }}">
-                            </div>
-                            <div class="col-md-4">
-                                <label for="combinedNotes" class="form-label">Notes</label>
-                                <input type="text" class="form-control" id="combinedNotes" name="notes" placeholder="Enter notes...">
                             </div>
                         </div>
                     </form>
@@ -1257,16 +1274,36 @@
                 function toggleCombinedPump() {
                     const sel = document.getElementById('combinedPaymentMode');
                     const pump = document.getElementById('combinedPumpContainer');
+                    const pumpSelect = document.getElementById('combinedPumpName');
+                    const typeCol = document.getElementById('combinedPaymentTypeCol');
+                    const modeCol = document.getElementById('combinedPaymentModeCol');
+                    const dateCol = document.getElementById('combinedPaymentDateCol');
+                    const remarksCol = document.getElementById('combinedNotesCol');
+
                     if (!sel || !pump) {
                         return;
                     }
                     const txt = sel.options[sel.selectedIndex]?.text?.toLowerCase() || '';
-                    pump.style.display = txt.includes('fuel') ? 'block' : 'none';
-                    if (!txt.includes('fuel')) {
-                        const pumpSelect = document.getElementById('combinedPumpName');
+                    const isFuel = txt.includes('fuel');
+
+                    if (isFuel) {
+                        pump.style.display = 'block';
+                        pump.className = 'col-12 col-md-4';
+                        if (pumpSelect) pumpSelect.required = true;
+                        if (typeCol) typeCol.className = 'col-12 col-md-4';
+                        if (modeCol) modeCol.className = 'col-12 col-md-4';
+                        if (dateCol) dateCol.className = 'col-12 col-md-6';
+                        if (remarksCol) remarksCol.className = 'col-12 col-md-6';
+                    } else {
+                        pump.style.display = 'none';
                         if (pumpSelect) {
+                            pumpSelect.required = false;
                             pumpSelect.value = '';
                         }
+                        if (typeCol) typeCol.className = 'col-12 col-md-3';
+                        if (modeCol) modeCol.className = 'col-12 col-md-3';
+                        if (dateCol) dateCol.className = 'col-12 col-md-3';
+                        if (remarksCol) remarksCol.className = 'col-12 col-md-3';
                     }
                 }
 
@@ -2263,17 +2300,36 @@
 
         function togglePumpName() {
             const paymentMode = document.getElementById('paymentMode');
-            const pumpNameContainer = document.getElementById('pumpNameContainer');
+            const pumpContainer = document.getElementById('pumpNameContainer');
             const pumpName = document.getElementById('pumpName');
+            const typeCol = document.getElementById('paymentTypeCol');
+            const modeCol = document.getElementById('paymentModeCol');
+            const dateCol = document.getElementById('paymentDateCol');
+            const remarksCol = document.getElementById('paymentRemarksCol');
 
-            if (paymentMode && pumpNameContainer) {
-                const modeText = (paymentMode.options[paymentMode.selectedIndex]?.text || paymentMode.value || '').toLowerCase();
-                const isFuel = modeText.includes('fuel');
-                pumpNameContainer.style.display = isFuel ? 'block' : 'none';
+            if (!paymentMode || !pumpContainer) return;
+
+            const modeText = (paymentMode.options[paymentMode.selectedIndex]?.text || paymentMode.value || '').toLowerCase();
+            const isFuel = modeText.includes('fuel');
+
+            if (isFuel) {
+                pumpContainer.style.display = 'block';
+                pumpContainer.className = 'col-12 col-md-4';
+                if (pumpName) pumpName.required = true;
+                if (typeCol) typeCol.className = 'col-12 col-md-4';
+                if (modeCol) modeCol.className = 'col-12 col-md-4';
+                if (dateCol) dateCol.className = 'col-12 col-md-6';
+                if (remarksCol) remarksCol.className = 'col-12 col-md-6';
+            } else {
+                pumpContainer.style.display = 'none';
                 if (pumpName) {
-                    pumpName.required = isFuel;
-                    if (!isFuel) pumpName.value = '';
+                    pumpName.required = false;
+                    pumpName.value = '';
                 }
+                if (typeCol) typeCol.className = 'col-12 col-md-3';
+                if (modeCol) modeCol.className = 'col-12 col-md-3';
+                if (dateCol) dateCol.className = 'col-12 col-md-3';
+                if (remarksCol) remarksCol.className = 'col-12 col-md-3';
             }
         }
 
@@ -2499,7 +2555,7 @@
                                 data-lr="${data.lr || ''}"
                                 step="0.01" min="0.01"
                                 max="${balance.toFixed(2)}"
-                                value="${balance.toFixed(2)}"
+                                placeholder="0.00"
                                 oninput="validatePaymentAmount(this); updateTotalPayment();"
                                 onchange="updateTotalPayment()">
                         </td>
@@ -3090,23 +3146,7 @@
             updateTotalPayment();
         });
     </script>
-    <script>
-        document.addEventListener("change", function(e) {
-            if (e.target && e.target.id === "paymentMode") {
-                const paymentModeDropdown = e.target;
-                const selectedText = paymentModeDropdown.options[paymentModeDropdown.selectedIndex].text
-                    .toLowerCase();
-                const pumpNameContainer = document.getElementById("pumpNameContainer");
 
-                if (selectedText.includes("fuel")) {
-                    pumpNameContainer.style.display = "block";
-                } else {
-                    pumpNameContainer.style.display = "none";
-                    document.getElementById("pumpName").value = ""; // reset
-                }
-            }
-        });
-    </script>
     <script>
         (function() {
             let pendingPrintButton = null;
