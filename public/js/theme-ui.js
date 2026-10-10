@@ -234,6 +234,37 @@
   /* ==========================================================================
      TruckBill Form Draft Autosave & Restore (Pure Bootstrap UI)
      ========================================================================== */
+  // Cache human-readable labels into sessionStorage so on draft restore we never flash raw IDs
+  document.addEventListener('change', function (e) {
+    if (e.target && e.target.tagName === 'SELECT') {
+      const opt = e.target.selectedOptions ? e.target.selectedOptions[0] : null;
+      if (opt && opt.value && opt.text) {
+        const sVal = String(opt.value).trim();
+        const sText = String(opt.text).trim();
+        if (sVal && sText && sText !== sVal && !sText.startsWith('#') && !sText.toLowerCase().startsWith('select ') && sText !== 'Loading...') {
+          try { sessionStorage.setItem('tb_label_' + sVal, sText); } catch (err) {}
+        }
+        const dataId = opt.getAttribute('data-id');
+        if (dataId) {
+          try { sessionStorage.setItem('tb_label_' + String(dataId).trim(), sText); } catch (err) {}
+        }
+      }
+    }
+  }, true);
+
+  if (window.jQuery) {
+    window.jQuery(document).on('select2:select', function (e) {
+      const d = e.params ? e.params.data : null;
+      if (d && d.id && d.text) {
+        const sVal = String(d.id).trim();
+        const sText = String(d.text).trim();
+        if (sVal && sText && sText !== sVal && !sText.startsWith('#') && !sText.toLowerCase().startsWith('select ') && sText !== 'Loading...') {
+          try { sessionStorage.setItem('tb_label_' + sVal, sText); } catch (err) {}
+        }
+      }
+    });
+  }
+
   function getFormSnapshot(form) {
     const snap = {};
     if (!form) return snap;
@@ -245,6 +276,10 @@
         if (el.type === 'radio' && el.checked) {
           snap[el.name] = el.value;
         }
+      } else if (el.tagName === 'SELECT' && (el.name === 'good_type' || el.id === 'good_type' || el.name === 'truck_type' || el.id === 'truck_type')) {
+        const opt = el.options[el.selectedIndex];
+        const gId = opt ? opt.getAttribute('data-id') : null;
+        snap[el.name] = (gId || el.value || '').trim();
       } else {
         snap[el.name] = (el.value || '').trim();
       }
@@ -345,7 +380,7 @@
     const keys = Object.keys(data);
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
-      if (key === '_linked_lrs') continue;
+      if (key === '_linked_lrs' || key === '_s2_meta') continue;
       if (isBoilerplateField(key)) continue;
 
       const item = data[key];
@@ -756,70 +791,31 @@
         } else if (el.tagName === 'SELECT') {
           if (el.multiple) {
             const selected = Array.from(el.selectedOptions).map(function (o) {
-              return { value: o.value, text: (o.text || o.innerText || '').trim() };
-            });
+              return o.value;
+            }).filter(Boolean);
             if (selected.length) {
               data[el.name] = selected;
             }
           } else {
-            const opt = el.selectedOptions && el.selectedOptions[0];
             const val = el.value;
-            if (val === undefined || val === null || String(val).trim().length === 0) {
-              return;
-            }
-
-            let text = opt ? (opt.text || opt.innerText || '').trim() : '';
-            const attrs = {};
-
-            if (window.jQuery && window.jQuery(el).hasClass('select2-hidden-accessible')) {
-              try {
-                const s2Data = window.jQuery(el).select2('data');
-                if (s2Data && s2Data[0] && s2Data[0].id) {
-                  val = String(s2Data[0].id);
-                  if (s2Data[0].text) {
-                    text = String(s2Data[0].text).trim();
-                  }
-                  if (s2Data[0].transporter_id) attrs.transporterId = s2Data[0].transporter_id;
-                  if (s2Data[0].transporter_name) attrs.transporterName = s2Data[0].transporter_name;
-                  if (s2Data[0].driver_name) attrs.driverName = s2Data[0].driver_name;
+            if (val !== undefined && val !== null && String(val).trim().length > 0) {
+              const opt = el.options[el.selectedIndex];
+              if (opt && opt.text) {
+                const sText = opt.text.trim();
+                const sVal = String(val).trim();
+                if (sText && sText !== sVal && !sText.startsWith('#') && !sText.toLowerCase().startsWith('select ') && sText !== 'Loading...') {
+                  try { sessionStorage.setItem('tb_label_' + sVal, sText); } catch (e) {}
                 }
-              } catch (e) {}
-            }
-
-            if (opt) {
-              const dtId = opt.getAttribute('data-transporter-id');
-              const dtName = opt.getAttribute('data-transporter-name');
-              const dName = opt.getAttribute('data-driver-name');
-              if (dtId && !attrs.transporterId) attrs.transporterId = dtId;
-              if (dtName && !attrs.transporterName) attrs.transporterName = dtName;
-              if (dName && !attrs.driverName) attrs.driverName = dName;
-            }
-
-            const hasAttrs = Object.keys(attrs).length > 0;
-            const isSelect2 = window.jQuery && window.jQuery(el).hasClass('select2-hidden-accessible');
-            const isAjaxSelect2 = Boolean(
-              isSelect2 && (
-                window.jQuery(el).data('select2')?.options?.options?.ajax ||
-                el.getAttribute('data-ajax-url') ||
-                el.classList.contains('select2-ajax') ||
-                el.classList.contains('ajax-select')
-              )
-            );
-            const needsTextObject = isAjaxSelect2 || (isSelect2 && text && text !== val && !el.querySelector('option[value="' + CSS.escape(val) + '"]'));
-
-            if (hasAttrs) {
-              data[el.name] = {
-                value: val,
-                text: text || val,
-                attrs: attrs
-              };
-            } else if (needsTextObject) {
-              data[el.name] = {
-                value: val,
-                text: text
-              };
-            } else {
-              data[el.name] = val;
+              }
+              if (el.name === 'good_type' || el.id === 'good_type' || el.name === 'truck_type' || el.id === 'truck_type') {
+                const gId = opt ? opt.getAttribute('data-id') : null;
+                data[el.name] = (gId || String(val)).trim();
+              } else {
+                data[el.name] = String(val).trim();
+              }
+              if (el.name === 'transporter_id' || el.id === 'transporter_id') {
+                data['owner_id'] = String(val).trim();
+              }
             }
           }
         } else {
@@ -838,49 +834,47 @@
           const getVal = function (cls) {
             return (card.querySelector('.' + cls)?.value || '').trim();
           };
-          const getText = function (cls) {
+          const item = {};
+          const addIfNotEmpty = function (key, val) {
+            if (val !== undefined && val !== null && String(val).trim().length > 0) {
+              item[key] = String(val).trim();
+            }
+          };
+
+          ['customer-select', 'consignor-select', 'consignee-select', 'goods-type'].forEach(function (cls) {
             const sel = card.querySelector('.' + cls);
-            if (!sel) return '';
-            if (window.jQuery && window.jQuery(sel).hasClass('select2-hidden-accessible')) {
-              try {
-                const s2 = window.jQuery(sel).select2('data');
-                if (s2 && s2[0] && s2[0].id && s2[0].text) return (s2[0].text || '').trim();
-              } catch (e) {}
+            if (sel && sel.selectedIndex >= 0) {
+              const o = sel.options[sel.selectedIndex];
+              if (o && o.value && o.text) {
+                const sText = o.text.trim();
+                const sVal = String(o.value).trim();
+                if (sText && sText !== sVal && !sText.startsWith('#') && !sText.toLowerCase().startsWith('select ') && sText !== 'Loading...') {
+                  try { sessionStorage.setItem('tb_label_' + sVal, sText); } catch (e) {}
+                }
+              }
             }
-            const opt = sel.selectedOptions && sel.selectedOptions[0];
-            if (opt && opt.value && String(opt.value).trim().length > 0) {
-              return (opt.text || opt.innerText || '').trim();
-            }
-            return '';
-          };
-          const item = {
-            lr_number: getVal('lr-number-input'),
-            invoice_number: getVal('invoice-number-input'),
-            customer_id: getVal('customer-select'),
-            customer_text: getText('customer-select'),
-            gr_number: getVal('gr-number-input'),
-            consignor_id: getVal('consignor-select'),
-            consignor_text: getText('consignor-select'),
-            consignee_id: getVal('consignee-select'),
-            consignee_text: getText('consignee-select'),
-            loading_station: getVal('loading-station-input'),
-            unloading_station: getVal('unloading-station-input'),
-            lane: getVal('lane'),
-            goods_type: getVal('goods-type'),
-            goods_type_text: getText('goods-type'),
-            units: getVal('units'),
-            goods_value: getVal('goods-value'),
-            weight: getVal('weight'),
-            fr_rate: getVal('fr-rate'),
-            is_fixed_amount: card.querySelector('.is-fixed-amount')?.checked ? '1' : '0',
-            amount: getVal('amount'),
-            source_city: getVal('source-city'),
-            source_state: getVal('source-state'),
-            destination_city: getVal('destination-city'),
-            destination_state: getVal('destination-state'),
-            consignor_contact: getVal('consignor-contact'),
-            consignee_contact: getVal('consignee-contact'),
-          };
+          });
+
+          addIfNotEmpty('lr_number', getVal('lr-number-input'));
+          addIfNotEmpty('invoice_number', getVal('invoice-number-input'));
+          addIfNotEmpty('customer_id', getVal('customer-select'));
+          addIfNotEmpty('gr_number', getVal('gr-number-input'));
+          addIfNotEmpty('consignor_id', getVal('consignor-select'));
+          addIfNotEmpty('consignee_id', getVal('consignee-select'));
+          addIfNotEmpty('loading_station', getVal('loading-station-input'));
+          addIfNotEmpty('unloading_station', getVal('unloading-station-input'));
+          const goodsSel = card.querySelector('.goods-type');
+          const goodsOpt = goodsSel && goodsSel.selectedIndex >= 0 ? goodsSel.options[goodsSel.selectedIndex] : null;
+          const goodsId = goodsOpt ? (goodsOpt.getAttribute('data-id') || goodsSel.value) : getVal('goods-type');
+          addIfNotEmpty('goods_type', goodsId);
+          addIfNotEmpty('units', getVal('units'));
+          addIfNotEmpty('goods_value', getVal('goods-value'));
+          addIfNotEmpty('weight', getVal('weight'));
+          addIfNotEmpty('fr_rate', getVal('fr-rate'));
+          if (card.querySelector('.is-fixed-amount')?.checked) {
+            item.is_fixed_amount = '1';
+          }
+          addIfNotEmpty('amount', getVal('amount'));
 
           if (isRealLinkedLrItem(item)) {
             savedLrs.push(item);
@@ -926,11 +920,41 @@
         return;
       }
 
+      function updateSelect2Option(targetField, optVal, optLabel, optAttrs) {
+        if (!targetField || !optLabel) return;
+        const sVal = String(optVal).trim();
+        try { sessionStorage.setItem('tb_label_' + sVal, optLabel); } catch (e) {}
+        if (window.jQuery && window.jQuery(targetField).hasClass('select2-hidden-accessible')) {
+          const $tf = window.jQuery(targetField);
+          $tf.find('option[value="' + CSS.escape(sVal) + '"]').remove();
+          const newOption = new Option(optLabel, sVal, true, true);
+          if (optAttrs) {
+            if (optAttrs.transporterId) newOption.setAttribute('data-transporter-id', optAttrs.transporterId);
+            if (optAttrs.transporterName) newOption.setAttribute('data-transporter-name', optAttrs.transporterName);
+            if (optAttrs.driverName) newOption.setAttribute('data-driver-name', optAttrs.driverName);
+          }
+          $tf.append(newOption).trigger('change');
+        } else {
+          let o = targetField.querySelector('option[value="' + CSS.escape(sVal) + '"]');
+          if (o) {
+            o.text = optLabel;
+            if (optAttrs) {
+              if (optAttrs.transporterId) o.setAttribute('data-transporter-id', optAttrs.transporterId);
+              if (optAttrs.transporterName) o.setAttribute('data-transporter-name', optAttrs.transporterName);
+              if (optAttrs.driverName) o.setAttribute('data-driver-name', optAttrs.driverName);
+            }
+          } else {
+            const newOption = new Option(optLabel, sVal, true, true);
+            targetField.add(newOption);
+          }
+        }
+      }
+
       let appliedCount = 0;
       let actuallyChangedCount = 0;
 
       Object.keys(data).forEach(function (name) {
-        if (name === '_linked_lrs') return;
+        if (name === '_linked_lrs' || name === '_s2_meta') return;
         const fieldData = data[name];
         const val = typeof fieldData === 'object' && fieldData !== null && !Array.isArray(fieldData)
           ? fieldData.value
@@ -977,7 +1001,7 @@
             }
           }
         } else {
-          const field = form.querySelector(`[name="${name}"]`);
+          const field = form.querySelector(`[name="${name}"]`) || (name === 'owner_id' ? form.querySelector('[name="transporter_id"]') : null);
           if (field) {
             if (field.type === 'radio') {
               const radio = form.querySelector(`input[type="radio"][name="${name}"][value="${val}"]`);
@@ -991,25 +1015,176 @@
               }
             } else if (field.tagName === 'SELECT') {
               if (val !== undefined && val !== null && val !== '') {
-                const text = typeof fieldData === 'object' && fieldData !== null ? fieldData.text : '';
-                const attrs = typeof fieldData === 'object' && fieldData !== null && fieldData.attrs ? fieldData.attrs : {};
+                let text = typeof fieldData === 'object' && fieldData !== null ? (fieldData.text || '') : '';
+                let attrs = typeof fieldData === 'object' && fieldData !== null && fieldData.attrs ? Object.assign({}, fieldData.attrs) : {};
+
+                if (data._s2_meta && data._s2_meta[name]) {
+                  if (data._s2_meta[name].text) text = data._s2_meta[name].text;
+                  if (data._s2_meta[name].attrs) Object.assign(attrs, data._s2_meta[name].attrs);
+                }
+
+                if (!text && (field.id === 'transporter_id' || name === 'owner_id' || name === 'transporter_id')) {
+                  const truckOpt = form.querySelector('#truck_id option:checked');
+                  if (truckOpt) {
+                    const tName = (truckOpt.getAttribute('data-transporter-name') || '').trim();
+                    if (tName) {
+                      text = tName;
+                    } else {
+                      const m = (truckOpt.text || '').match(/\(([^)]+)\)$/);
+                      if (m && m[1] && m[1].toLowerCase() !== 'no truck owner') text = m[1].trim();
+                    }
+                  }
+                }
 
                 let opt = field.querySelector('option[value="' + CSS.escape(val) + '"]');
+                if (!opt && (field.id === 'good_type' || name === 'good_type' || field.id === 'truck_type' || name === 'truck_type')) {
+                  opt = Array.from(field.options).find(function (o) {
+                    return (o.getAttribute('data-id') && String(o.getAttribute('data-id')).trim() === String(val).trim()) || o.value === String(val).trim();
+                  });
+                  if (!opt && (field.id === 'good_type' || name === 'good_type')) {
+                    const allGoodsSelects = document.querySelectorAll('#good_type, .goods-type');
+                    for (let gi = 0; gi < allGoodsSelects.length; gi++) {
+                      const gf = Array.from(allGoodsSelects[gi].options).find(function (o) {
+                        return (o.getAttribute('data-id') && String(o.getAttribute('data-id')).trim() === String(val).trim()) || o.value === String(val).trim();
+                      });
+                      if (gf) {
+                        opt = new Option(gf.text || gf.value, gf.value, true, true);
+                        opt.setAttribute('data-id', String(val).trim());
+                        field.add(opt);
+                        break;
+                      }
+                    }
+                  } else if (!opt && (field.id === 'truck_type' || name === 'truck_type')) {
+                    const allTruckTypeSelects = document.querySelectorAll('#truck_type');
+                    for (let ti = 0; ti < allTruckTypeSelects.length; ti++) {
+                      const tf = Array.from(allTruckTypeSelects[ti].options).find(function (o) {
+                        return (o.getAttribute('data-id') && String(o.getAttribute('data-id')).trim() === String(val).trim()) || o.value === String(val).trim();
+                      });
+                      if (tf) {
+                        opt = new Option(tf.text || tf.value, tf.value, true, true);
+                        opt.setAttribute('data-id', String(val).trim());
+                        field.add(opt);
+                        break;
+                      }
+                    }
+                  }
+                }
                 if (!opt) {
-                  opt = new Option(text || val, val, true, true);
+                  let label = text;
+                  if (!label || label === val || label === ('#' + val)) {
+                    try { label = sessionStorage.getItem('tb_label_' + val) || ''; } catch (e) {}
+                  }
+                  opt = new Option(label, val, true, true);
                   if (attrs.transporterId) opt.setAttribute('data-transporter-id', attrs.transporterId);
                   if (attrs.transporterName) opt.setAttribute('data-transporter-name', attrs.transporterName);
                   if (attrs.driverName) opt.setAttribute('data-driver-name', attrs.driverName);
                   field.add(opt);
-                } else if (attrs) {
-                  if (attrs.transporterId && !opt.getAttribute('data-transporter-id')) opt.setAttribute('data-transporter-id', attrs.transporterId);
-                  if (attrs.transporterName && !opt.getAttribute('data-transporter-name')) opt.setAttribute('data-transporter-name', attrs.transporterName);
-                  if (attrs.driverName && !opt.getAttribute('data-driver-name')) opt.setAttribute('data-driver-name', attrs.driverName);
+
+                  if (true) {
+                    if (field.id === 'customer_id' || field.id === 'consignor_id' || field.id === 'consignee_id') {
+                      fetch('/api/consignees/' + encodeURIComponent(val))
+                        .then(function (r) { return r.json(); })
+                        .then(function (d) {
+                          if (d && d.name) {
+                            const label = d.city && d.city !== 'Not provided' ? `${d.name} (${d.city})` : d.name;
+                            updateSelect2Option(field, val, label, attrs);
+                          }
+                        })
+                        .catch(function () {});
+                    } else if (field.id === 'truck_id') {
+                      fetch('/api/trucks/' + encodeURIComponent(val))
+                        .then(function (r) { return r.json(); })
+                        .then(function (d) {
+                          if (d && (d.truck_number || d.name)) {
+                            const num = d.truck_number || d.name;
+                            const driver = d.driver?.name || d.driver_name;
+                            const owner = d.transporter?.name || d.transporter_name;
+                            let label = num;
+                            if (driver) label += ' - Driver: ' + driver;
+                            if (owner) label += ' (' + owner + ')';
+                            const optAttrs = Object.assign({}, attrs);
+                            if (d.transporter_id) optAttrs.transporterId = d.transporter_id;
+                            if (owner) optAttrs.transporterName = owner;
+                            if (driver) optAttrs.driverName = driver;
+                            updateSelect2Option(field, val, label, optAttrs);
+                          }
+                        })
+                        .catch(function () {});
+                    } else if (field.id === 'transporter_id' || field.id === 'reference_by') {
+                      fetch('/api/transporters/' + encodeURIComponent(val))
+                        .then(function (r) { return r.json(); })
+                        .then(function (d) {
+                          if (d) {
+                            const name = String(d.name ?? d.transporterMaster?.name ?? d.transporter_master?.name ?? '').trim();
+                            const shortName = String(d.short_name ?? '').trim();
+                            const fullLabel = shortName ? `${name} (${shortName})` : name;
+                            if (fullLabel) {
+                              updateSelect2Option(field, val, fullLabel, attrs);
+                            }
+                          }
+                        })
+                        .catch(function () {});
+                    }
+                  }
+                } else {
+                  let label = text;
+                  if (!label || label === val || label === ('#' + val)) {
+                    try { label = sessionStorage.getItem('tb_label_' + val) || ''; } catch (e) {}
+                  }
+                  if (label && (!opt.text || opt.text === val || opt.text === ('#' + val))) {
+                    opt.text = label;
+                    updateSelect2Option(field, val, label, attrs);
+                  } else if (!label && (!opt.text || opt.text === val || opt.text === ('#' + val))) {
+                    if (field.id === 'transporter_id') {
+                      const truckOpt = form.querySelector('#truck_id option:checked');
+                      let resolvedText = '';
+                      if (truckOpt) {
+                        const tName = (truckOpt.getAttribute('data-transporter-name') || '').trim();
+                        if (tName) resolvedText = tName;
+                        else {
+                          const m = (truckOpt.text || '').match(/\(([^)]+)\)$/);
+                          if (m && m[1] && m[1].toLowerCase() !== 'no truck owner') resolvedText = m[1].trim();
+                        }
+                      }
+                      if (resolvedText) {
+                        opt.text = resolvedText;
+                        updateSelect2Option(field, val, resolvedText, attrs);
+                      } else {
+                        fetch('/api/transporters/' + encodeURIComponent(val))
+                          .then(function (r) { return r.json(); })
+                          .then(function (d) {
+                            if (d) {
+                              const name = String(d.name ?? d.transporterMaster?.name ?? d.transporter_master?.name ?? '').trim();
+                              const shortName = String(d.short_name ?? '').trim();
+                              const fullLabel = shortName ? `${name} (${shortName})` : name;
+                              if (fullLabel) updateSelect2Option(field, val, fullLabel, attrs);
+                            }
+                          })
+                          .catch(function () {});
+                      }
+                    } else if (field.id === 'reference_by') {
+                      fetch('/api/transporters/' + encodeURIComponent(val))
+                        .then(function (r) { return r.json(); })
+                        .then(function (d) {
+                          if (d) {
+                            const name = String(d.name ?? d.transporterMaster?.name ?? d.transporter_master?.name ?? '').trim();
+                            const shortName = String(d.short_name ?? '').trim();
+                            const fullLabel = shortName ? `${name} (${shortName})` : name;
+                            if (fullLabel) updateSelect2Option(field, val, fullLabel, attrs);
+                          }
+                        })
+                        .catch(function () {});
+                    }
+                  }
+                  if (attrs.transporterId) opt.setAttribute('data-transporter-id', attrs.transporterId);
+                  if (attrs.transporterName) opt.setAttribute('data-transporter-name', attrs.transporterName);
+                  if (attrs.driverName) opt.setAttribute('data-driver-name', attrs.driverName);
                 }
                 const oldVal = (initialSnapshot && initialSnapshot[name] !== undefined) ? initialSnapshot[name] : (field.value || '');
-                const newVal = String(val).trim();
+                const targetVal = opt ? opt.value : val;
+                const newVal = String(targetVal).trim();
                 opt.selected = true;
-                field.value = val;
+                field.value = targetVal;
                 appliedCount++;
                 if (!isBoilerplateField(name) && newVal !== oldVal && newVal.length > 0 && newVal !== '0' && newVal !== '0.00') {
                   actuallyChangedCount++;
@@ -1074,9 +1249,124 @@
 
             container.innerHTML = '';
 
-            validLrs.forEach(function (prefill) {
+            validLrs.forEach(function (prefill, idx) {
               if (typeof window.addLrItem === 'function') {
                 window.addLrItem(prefill);
+                const cards = container.querySelectorAll('.lr-item');
+                const card = cards[idx];
+                if (card) {
+                  const fetchAndSetSelect = function (selectCls, id, isConsignor, isConsignee) {
+                    if (!id) return;
+                    fetch('/api/consignees/' + encodeURIComponent(id))
+                      .then(function (r) { return r.json(); })
+                      .then(function (d) {
+                        if (d && d.name) {
+                          const label = d.city && d.city !== 'Not provided' ? `${d.name} (${d.city})` : d.name;
+                          const sel = card.querySelector('.' + selectCls);
+                          if (sel) {
+                            if (window.jQuery && window.jQuery(sel).hasClass('select2-hidden-accessible')) {
+                              const $s = window.jQuery(sel);
+                              $s.find('option[value="' + CSS.escape(id) + '"]').remove();
+                              $s.append(new Option(label, id, true, true)).trigger('change.select2');
+                            } else {
+                              let opt = sel.querySelector('option[value="' + CSS.escape(id) + '"]');
+                              if (opt) opt.text = label;
+                            }
+                          }
+                          const cityVal = d.city?.name || d.city || '';
+                          const stateVal = d.state?.name || d.state || '';
+                          if (isConsignor) {
+                            if (d.contact_number) {
+                              const cInput = card.querySelector('.consignor-contact');
+                              if (cInput) cInput.value = d.contact_number;
+                              const cText = card.querySelector('.consignor-contact-text');
+                              if (cText) cText.textContent = 'Contact Number: ' + d.contact_number;
+                            }
+                            if (cityVal) {
+                              const scInput = card.querySelector('.source-city');
+                              if (scInput) scInput.value = cityVal;
+                              const scText = card.querySelector('.consignor-city-text');
+                              if (scText) scText.textContent = 'Source City: ' + cityVal;
+                            }
+                            if (stateVal) {
+                              const ssInput = card.querySelector('.source-state');
+                              if (ssInput) ssInput.value = stateVal;
+                              const ssText = card.querySelector('.consignor-state-text');
+                              if (ssText) ssText.textContent = 'Source State: ' + stateVal;
+                            }
+                          }
+                          if (isConsignee) {
+                            if (d.contact_number) {
+                              const cInput = card.querySelector('.consignee-contact');
+                              if (cInput) cInput.value = d.contact_number;
+                              const cText = card.querySelector('.consignee-contact-text');
+                              if (cText) cText.textContent = 'Contact Number: ' + d.contact_number;
+                            }
+                            if (cityVal) {
+                              const dcInput = card.querySelector('.destination-city');
+                              if (dcInput) dcInput.value = cityVal;
+                              const dcText = card.querySelector('.consignee-city-text');
+                              if (dcText) dcText.textContent = 'Destination City: ' + cityVal;
+                            }
+                            if (stateVal) {
+                              const dsInput = card.querySelector('.destination-state');
+                              if (dsInput) dsInput.value = stateVal;
+                              const dsText = card.querySelector('.consignee-state-text');
+                              if (dsText) dsText.textContent = 'Destination State: ' + stateVal;
+                            }
+                          }
+                          if (window.LinkedLrFormUI) {
+                            window.LinkedLrFormUI.updateRoutePreview(card);
+                            window.LinkedLrFormUI.updateItemMeta(card);
+                          }
+                        }
+                      })
+                      .catch(function () {});
+                  };
+
+                  const applyCachedLabel = function (selectCls, id) {
+                    if (!id) return;
+                    let cached = '';
+                    try { cached = sessionStorage.getItem('tb_label_' + id); } catch (e) {}
+                    if (cached) {
+                      const sel = card.querySelector('.' + selectCls);
+                      if (sel) {
+                        if (window.jQuery && window.jQuery(sel).hasClass('select2-hidden-accessible')) {
+                          const $s = window.jQuery(sel);
+                          $s.find('option[value="' + CSS.escape(id) + '"]').remove();
+                          $s.append(new Option(cached, id, true, true)).trigger('change.select2');
+                        } else {
+                          let opt = sel.querySelector('option[value="' + CSS.escape(id) + '"]');
+                          if (opt) opt.text = cached;
+                          else sel.add(new Option(cached, id, true, true));
+                        }
+                      }
+                    }
+                  };
+                  if (prefill.customer_id) applyCachedLabel('customer-select', prefill.customer_id);
+                  if (prefill.consignor_id) applyCachedLabel('consignor-select', prefill.consignor_id);
+                  if (prefill.consignee_id) applyCachedLabel('consignee-select', prefill.consignee_id);
+
+                  if (prefill.customer_id) fetchAndSetSelect('customer-select', prefill.customer_id, false, false);
+                  if (prefill.consignor_id) fetchAndSetSelect('consignor-select', prefill.consignor_id, true, false);
+                  if (prefill.consignee_id) fetchAndSetSelect('consignee-select', prefill.consignee_id, false, true);
+
+                  if (prefill.goods_type || prefill.good_type) {
+                    const gt = String(prefill.goods_type || prefill.good_type).trim();
+                    const gSel = card.querySelector('.goods-type');
+                    if (gSel) {
+                      const matchedOpt = Array.from(gSel.options).find(function (o) {
+                        return (o.getAttribute('data-id') && String(o.getAttribute('data-id')).trim() === gt) || o.value === gt;
+                      });
+                      if (matchedOpt) {
+                        gSel.value = matchedOpt.value;
+                        if (window.jQuery && window.jQuery(gSel).hasClass('select2-hidden-accessible')) {
+                          window.jQuery(gSel).val(matchedOpt.value).trigger('change');
+                        }
+                      }
+                    }
+                  }
+                }
               }
             });
 
@@ -1106,8 +1396,76 @@
       setTimeout(function () {
         if (window.jQuery) {
           Object.keys(data).forEach(function (name) {
+            if (name === '_linked_lrs') return;
             const field = form.querySelector('select[name="' + name + '"]');
             if (field) {
+              const val = String(data[name] && typeof data[name] === 'object' ? data[name].value : data[name]).trim();
+              if (val) {
+                if (field.id === 'truck_id') {
+                  fetch('/api/trucks/' + encodeURIComponent(val))
+                    .then(function (r) { return r.json(); })
+                    .then(function (d) {
+                      if (d && (d.truck_number || d.name)) {
+                        const num = d.truck_number || d.name;
+                        const driver = d.driver?.name || d.driver_name;
+                        const owner = d.transporter?.name || d.transporter_name;
+                        let label = num;
+                        if (driver) label += ' - Driver: ' + driver;
+                        if (owner) label += ' (' + owner + ')';
+                        const optAttrs = {};
+                        if (d.transporter_id) optAttrs.transporterId = d.transporter_id;
+                        if (owner) optAttrs.transporterName = owner;
+                        if (driver) optAttrs.driverName = driver;
+                        updateSelect2Option(field, val, label, optAttrs);
+                      }
+                    })
+                    .catch(function () {});
+                } else if (field.id === 'transporter_id') {
+                  const truckOpt = form.querySelector('#truck_id option:checked');
+                  let tName = truckOpt ? (truckOpt.getAttribute('data-transporter-name') || '').trim() : '';
+                  if (!tName && truckOpt) {
+                    const m = (truckOpt.text || '').match(/\(([^)]+)\)$/);
+                    if (m && m[1] && m[1].toLowerCase() !== 'no truck owner') tName = m[1].trim();
+                  }
+                  if (tName) {
+                    updateSelect2Option(field, val, tName);
+                  } else {
+                    fetch('/api/transporters/' + encodeURIComponent(val))
+                      .then(function (r) { return r.json(); })
+                      .then(function (d) {
+                        if (d) {
+                          const name = String(d.name ?? d.transporterMaster?.name ?? d.transporter_master?.name ?? '').trim();
+                          const shortName = String(d.short_name ?? '').trim();
+                          const fullLabel = shortName ? `${name} (${shortName})` : name;
+                          if (fullLabel) updateSelect2Option(field, val, fullLabel);
+                        }
+                      })
+                      .catch(function () {});
+                  }
+                } else if (field.id === 'reference_by') {
+                  fetch('/api/transporters/' + encodeURIComponent(val))
+                    .then(function (r) { return r.json(); })
+                    .then(function (d) {
+                      if (d) {
+                        const name = String(d.name ?? d.transporterMaster?.name ?? d.transporter_master?.name ?? '').trim();
+                        const shortName = String(d.short_name ?? '').trim();
+                        const fullLabel = shortName ? `${name} (${shortName})` : name;
+                        if (fullLabel) updateSelect2Option(field, val, fullLabel);
+                      }
+                    })
+                    .catch(function () {});
+                } else if (field.id === 'customer_id' || field.id === 'consignor_id' || field.id === 'consignee_id') {
+                  fetch('/api/consignees/' + encodeURIComponent(val))
+                    .then(function (r) { return r.json(); })
+                    .then(function (d) {
+                      if (d && d.name) {
+                        const label = d.city && d.city !== 'Not provided' ? `${d.name} (${d.city})` : d.name;
+                        updateSelect2Option(field, val, label);
+                      }
+                    })
+                    .catch(function () {});
+                }
+              }
               window.jQuery(field).trigger('change.select2').trigger('change');
             }
           });

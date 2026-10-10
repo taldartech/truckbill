@@ -394,7 +394,11 @@
                     if (!select) {
                         return;
                     }
-                    const option = new Option(text || ('#' + id), id, true, true);
+                    let label = text;
+                    if (!label || label === id || label === ('#' + id)) {
+                        try { label = sessionStorage.getItem('tb_label_' + id) || ''; } catch (e) {}
+                    }
+                    const option = new Option(label, id, true, true);
                     select.appendChild(option);
                 };
 
@@ -404,12 +408,17 @@
 
                 const goodsSelect = item.querySelector('.goods-type');
                 if (goodsSelect && (prefill.goods_type || prefill.good_type)) {
-                    const gt = prefill.goods_type || prefill.good_type;
-                    const existing = Array.from(goodsSelect.options).some((opt) => opt.value === gt);
-                    if (!existing) {
-                        goodsSelect.add(new Option(gt, gt, true, true));
+                    const gt = String(prefill.goods_type || prefill.good_type).trim();
+                    const matchedOpt = Array.from(goodsSelect.options).find((opt) => (opt.getAttribute('data-id') && String(opt.getAttribute('data-id')).trim() === gt) || opt.value === gt);
+                    if (matchedOpt) {
+                        goodsSelect.value = matchedOpt.value;
+                        if (window.jQuery && window.jQuery(goodsSelect).hasClass('select2-hidden-accessible')) {
+                            window.jQuery(goodsSelect).val(matchedOpt.value).trigger('change');
+                        }
                     } else {
-                        goodsSelect.value = gt;
+                        const newOpt = new Option(gt, gt, true, true);
+                        newOpt.setAttribute('data-id', gt);
+                        goodsSelect.add(newOpt);
                     }
                 }
 
@@ -1658,14 +1667,18 @@ lrItemsContainer.addEventListener('blur', function(e) {
                         let newOption = new Option(data.goodsType.name, data.goodsType.name);
 
                         selects.forEach(select => {
-                            select.add(new Option(data.goodsType.name, data.goodsType.name));
+                            const opt = new Option(data.goodsType.name, data.goodsType.name);
+                            opt.setAttribute('data-id', data.goodsType.id);
+                            select.add(opt);
                         });
 
                         // Add in template as well for future items
                         const templateSelect = document.getElementById('lr-item-template').content
                             .querySelector('.goods-type');
                         if (templateSelect) {
-                            templateSelect.add(new Option(data.goodsType.name, data.goodsType.name));
+                            const opt = new Option(data.goodsType.name, data.goodsType.name);
+                            opt.setAttribute('data-id', data.goodsType.id);
+                            templateSelect.add(opt);
                         }
 
                         // Select the newly added option in the relevant dropdown

@@ -458,7 +458,7 @@
                                 <select class="form-select" id="good_type" name="good_type" required>
                                     <option value="">Select Goods Type</option>
                                     @foreach ($goodsTypes as $goodsType)
-                                        <option value="{{ $goodsType->name }}"
+                                        <option value="{{ $goodsType->name }}" data-id="{{ $goodsType->id }}"
                                             {{ old('good_type', $lorry_receipt->good_type) == $goodsType->name ? 'selected' : '' }}>
                                             {{ $goodsType->name }}
                                         </option>
@@ -2143,6 +2143,7 @@ if (grNumberInput) {
                     // Add new option to Goods Type dropdown
                     let select = document.getElementById('good_type');
                     let newOption = new Option(data.goodsType.name, data.goodsType.name, true, true);
+                    newOption.setAttribute('data-id', data.goodsType.id);
                     select.add(newOption);
                     select.value = data.goodsType.name;
 
