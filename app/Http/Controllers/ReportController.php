@@ -280,6 +280,8 @@ $lrs = $query
         [$startDate, $endDate, $generated] = $this->normalizeDateRange($request);
        
         $balanceAsOnDate = $request->input('balance_as_on_date');
+        $customerId = $request->filled('customer_id') ? $request->input('customer_id') : null;
+        $transporterId = $request->filled('transporter_id') ? $request->input('transporter_id') : null;
 
         $user = Auth::user()->company_id;
 
@@ -293,11 +295,26 @@ $lrs = $query
                 'consignee',
                 'customer',
                 'truck',
+                'transporter',
             ])->whereBetween('gr_date', [$startDate, $endDate]);
 
             if ($user) {
                 $query->where('company_id', $user);
             }
+
+            if ($customerId) {
+                $query->where('customer_id', $customerId);
+            }
+
+            if ($transporterId) {
+                $query->where(function ($q) use ($transporterId) {
+                    $q->where('transporter_id', $transporterId)
+                        ->orWhereHas('freightBookings', function ($fb) use ($transporterId) {
+                            $fb->where('transporter_id', $transporterId);
+                        });
+                });
+            }
+
             $query->orderBy('gr_date', 'asc');
             $lrs = $query->paginate(self::REPORTS_PER_PAGE)->appends($request->query());
 
@@ -305,21 +322,43 @@ $lrs = $query
             $lrs = collect();
         }
 
-        return view('reports.dispatch', compact('lrs', 'startDate', 'endDate', 'generated', 'balanceAsOnDate'));
+        $customers = $user
+            ? Consignee::where('company_id', $user)->orderBy('name')->get(['id', 'name'])
+            : collect();
+
+        $transporters = $user
+            ? Transporter::with('transporterMaster')
+                ->where('company_id', $user)
+                ->get()
+                ->sortBy(fn ($t) => strtolower($t->name ?? ''))
+                ->values()
+            : collect();
+
+        return view('reports.dispatch', compact(
+            'lrs',
+            'startDate',
+            'endDate',
+            'generated',
+            'balanceAsOnDate',
+            'customers',
+            'transporters',
+            'customerId',
+            'transporterId'
+        ));
     }
 
     public function dispatch_export(Request $request)
     {
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
-        
         $balanceAsOnDate = $request->input('balance_as_on_date');
+        $customerId = $request->filled('customer_id') ? $request->input('customer_id') : null;
+        $transporterId = $request->filled('transporter_id') ? $request->input('transporter_id') : null;
 
-      
         $export = Excel::download(
-         new DispatchExport($startDate, $endDate, $balanceAsOnDate),
-         'dispatch_report.xlsx'
-);
+            new DispatchExport($startDate, $endDate, $balanceAsOnDate, $customerId, $transporterId),
+            'dispatch_report.xlsx'
+        );
 
         return $export;
     }
