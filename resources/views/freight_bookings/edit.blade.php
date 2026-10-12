@@ -994,6 +994,59 @@
         </div>
     </div>
 
+    <!-- Cancel Good Hire Confirmation Modal -->
+    <div class="modal fade fb-pay-modal" id="cancelGoodHireModal" tabindex="-1"
+        aria-labelledby="cancelGoodHireModalLabel" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelGoodHireModalLabel">
+                        <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                        Confirm Cancellation
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Are you sure you want to cancel this good hire (lorry hire)?</p>
+
+                    <div class="alert alert-warning py-2 px-3 small mb-3">
+                        <div class="fw-bold mb-1">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            WARNING: This action will:
+                        </div>
+                        <ul class="mb-0 ps-3">
+                            <li>Mark the good hire (lorry hire) as cancelled</li>
+                            <li>Move the related Good Receipt (Bilty) status back to "Pending"</li>
+                            <li>This change cannot be undone easily</li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-3">
+                        <label for="cancelGoodHireRemark" class="form-label">
+                            <strong>Remark <span class="text-danger">*</span></strong>
+                        </label>
+                        <textarea
+                            class="form-control"
+                            id="cancelGoodHireRemark"
+                            rows="3"
+                            placeholder="Enter reason for cancellation"></textarea>
+                        <div id="cancelGoodHireRemarkError" class="text-danger small mt-1 d-none">
+                            Cancellation remark is required.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="cancelGoodHireDismissBtn">
+                        <i class="bi bi-x-lg me-1"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmCancelGoodHireBtn">
+                        <i class="bi bi-x-circle me-1"></i> Confirm Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             let deliveredSwitch = document.getElementById("is_delivered");
@@ -1812,39 +1865,63 @@ if (addEwayBillBtn && ewayBillsContainer) {
                 });
             }
 
-            // Handle is_cancelled toggle with confirmation
+            // Handle is_cancelled toggle with modal confirmation
             const isCancelledToggle = document.getElementById('is_cancelled');
-            if (isCancelledToggle) {
+            const cancelModalEl = document.getElementById('cancelGoodHireModal');
+            const cancelModal = cancelModalEl ? new bootstrap.Modal(cancelModalEl) : null;
+            const confirmCancelBtn = document.getElementById('confirmCancelGoodHireBtn');
+            const cancelRemarkInput = document.getElementById('cancelGoodHireRemark');
+            const cancelRemarkError = document.getElementById('cancelGoodHireRemarkError');
+            let isCancellationConfirmed = false;
+
+            if (isCancelledToggle && cancelModal) {
                 isCancelledToggle.addEventListener('change', function() {
                     if (this.checked) {
-                        // Show confirmation dialog
-                        const confirmed = confirm(
-                            'Are you sure you want to cancel this good hire (lorry hire)?\n\n' +
-                            '⚠️ WARNING: This action will:\n' +
-                            '• Mark the good hire (lorry hire) as cancelled\n' +
-                            '• Move the related Good Receipt (Bilty) status back to "Pending"\n' +
-                            '• This change cannot be undone easily\n\n' +
-                            'Click OK to proceed or Cancel to abort.'
-                        );
-
-                        if (!confirmed) {
-                            // User cancelled, uncheck the toggle
-                            this.checked = false;
-                            return;
+                        isCancellationConfirmed = false;
+                        if (cancelRemarkInput) {
+                            const formRemark = document.getElementById('remark');
+                            cancelRemarkInput.value = (formRemark && formRemark.value) ? formRemark.value : '';
                         }
-                    } else {
-                        // Unchecking cancelled - show confirmation
-                        const confirmed = confirm(
-                            'Are you sure you want to uncancel this good hire (lorry hire)?\n\n' +
-                            'This will restore the good hire (lorry hire) to its previous state.'
-                        );
-
-                        if (!confirmed) {
-                            // User cancelled, keep it checked
-                            this.checked = true;
-                            return;
+                        if (cancelRemarkError) {
+                            cancelRemarkError.classList.add('d-none');
                         }
+                        cancelModal.show();
                     }
+                });
+
+                if (confirmCancelBtn) {
+                    confirmCancelBtn.addEventListener('click', function() {
+                        const remarkVal = cancelRemarkInput ? cancelRemarkInput.value.trim() : '';
+                        if (!remarkVal) {
+                            if (cancelRemarkError) {
+                                cancelRemarkError.classList.remove('d-none');
+                                cancelRemarkError.textContent = 'Cancellation remark is required.';
+                            }
+                            if (cancelRemarkInput) cancelRemarkInput.focus();
+                            return;
+                        }
+
+                        if (cancelRemarkError) {
+                            cancelRemarkError.classList.add('d-none');
+                        }
+
+                        // Set the remark value in the form
+                        const formRemark = document.getElementById('remark');
+                        if (formRemark) {
+                            formRemark.value = remarkVal;
+                        }
+
+                        isCancellationConfirmed = true;
+                        isCancelledToggle.checked = true;
+                        cancelModal.hide();
+                    });
+                }
+
+                cancelModalEl.addEventListener('hidden.bs.modal', function() {
+                    if (!isCancellationConfirmed) {
+                        isCancelledToggle.checked = false;
+                    }
+                    isCancellationConfirmed = false;
                 });
             }
         });
