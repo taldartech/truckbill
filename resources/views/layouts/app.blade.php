@@ -624,9 +624,7 @@
     @stack('styles')
 </head>
 
-
 <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
-      @include('components.loading.AppResponseLoader')
     <!--begin::App Wrapper-->
     <div class="app-wrapper">
         <nav class="app-header navbar navbar-expand bg-body px-2 px-md-3 py-1">
@@ -1996,53 +1994,6 @@
                 });
         });
     </script>
-    <script>
-document.addEventListener('DOMContentLoaded', function () {
-
-    // Show loader when navigating to another page
-    document.addEventListener('click', function (event) {
-
-        const link = event.target.closest('a');
-
-        if (!link) return;
-
-        const href = link.getAttribute('href');
-
-        // Ignore links that should not trigger the loader
-        if (
-            !href ||
-            href.startsWith('#') ||
-            href.startsWith('javascript:') ||
-            href.startsWith('mailto:') ||
-            href.startsWith('tel:') ||
-            link.target === '_blank' ||
-            link.hasAttribute('data-bs-toggle')
-        ) {
-            return;
-        }
-
-        showTruckLoader();
-    });
-
-
-    // Show loader when submitting any form
-    document.addEventListener('submit', function () {
-        showTruckLoader();
-    });
-
-});
-
-
-/*
-|--------------------------------------------------------------------------
-| Browser Back / Forward Fix
-|--------------------------------------------------------------------------
-| When browser restores a page from cache (bfcache), hide the loader.
-*/
-window.addEventListener('pageshow', function () {
-    hideTruckLoader();
-});
-</script>
     <!--end::Script-->
     @yield('scripts')
     @stack('scripts')
