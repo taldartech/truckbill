@@ -345,7 +345,7 @@ class LorryReceiptController extends Controller
             $buttons .= '<i class="bi bi-pencil"></i></a>';
         }
 if ($lorryReceipt->delivery_status === 'Pending' && $canActAsAdmin) {
-    $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
+    $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id).$listingQuerySuffix;
 
     $buttons .= '<form action="'.$deleteUrl.'" method="POST" class="delete-lr-form">';
     $buttons .= csrf_field().method_field('DELETE');
@@ -800,7 +800,8 @@ return $buttons;
 
                 DB::commit();
 
-                return $this->redirectToLorryReceiptsIndex($request, 'success', 'Created '.count($created).' linked Good Receipts (Bilty) (Linked ID: '.$nextLinkedId.').');
+                return redirect()->route('lorry_receipts.index')
+                    ->with('success', 'Created '.count($created).' linked Good Receipts (Bilty) (Linked ID: '.$nextLinkedId.').');
             } catch (\Throwable $e) {
                 DB::rollBack();
                 throw $e;
@@ -910,7 +911,8 @@ return $buttons;
                 ->with('success', 'Good Receipt (Bilty) saved! Now create Good Hire (Lorry Hire).');
         }
 
-        return $this->redirectToLorryReceiptsIndex($request, 'success', 'Good Receipt (Bilty) created successfully!');
+        return redirect()->route('lorry_receipts.index')
+            ->with('success', 'Good Receipt (Bilty) created successfully!');
     }
 
     /**
@@ -1716,69 +1718,69 @@ return $buttons;
         }
     }
 
-   public function destroy(
-    Request $request,
-    LorryReceipt $lorry_receipt
-): RedirectResponse {
-    if ($redirect = $this->redirectIfPlanExpired()) {
-        return $redirect;
-    }
-
-    $request->validate([
-        'delete_remark' => ['required', 'string', 'max:1000'],
-    ]);
-
-    $deleteRemark = $request->input('delete_remark');
-
-    $lorryReceiptsToDelete = $this->resolveLorryReceiptsForDeletion($lorry_receipt);
-
-    if ($lorryReceiptsToDelete === null) {
-        return redirect()->back()
-            ->with(
-                'error',
-                'Good receipt (bilty) can only be deleted when delivery status is Pending.'
-            );
-    }
-
-    try {
-        $deletedBy = Auth::id();
-
-        DB::transaction(function () use (
-            $lorryReceiptsToDelete,
-            $deleteRemark,
-            $deletedBy
-        ) {
-         foreach ($lorryReceiptsToDelete as $lr) {
-        $lr->deleted_by = $deletedBy;
-        $lr->deleted_remark = $deleteRemark;
-        $lr->save();
-        $lr->delete();
+    public function destroy(
+        Request $request,
+        LorryReceipt $lorry_receipt
+    ): RedirectResponse {
+        if ($redirect = $this->redirectIfPlanExpired()) {
+            return $redirect;
         }
-        });
 
-        $message = $lorryReceiptsToDelete->count() > 1
-            ? $lorryReceiptsToDelete->count()
-                . ' linked good receipts (bilty) and all associated data deleted successfully!'
-            : 'Good receipt (bilty) and all associated data deleted successfully!';
+        $request->validate([
+            'delete_remark' => ['required', 'string', 'max:1000'],
+        ]);
 
-        return $this->redirectToLorryReceiptsIndex(
-            request(),
-            'success',
-            $message
-        );
+        $deleteRemark = $request->input('delete_remark');
 
-    } catch (\Exception $e) {
-        Log::error(
-            'Error deleting lorry receipt: ' . $e->getMessage()
-        );
+        $lorryReceiptsToDelete = $this->resolveLorryReceiptsForDeletion($lorry_receipt);
 
-        return redirect()->back()
-            ->with(
-                'error',
-                'Error deleting good receipt (bilty). Please try again.'
+        if ($lorryReceiptsToDelete === null) {
+            return redirect()->back()
+                ->with(
+                    'error',
+                    'Good receipt (bilty) can only be deleted when delivery status is Pending.'
+                );
+        }
+
+        try {
+            $deletedBy = Auth::id();
+
+            DB::transaction(function () use (
+                $lorryReceiptsToDelete,
+                $deleteRemark,
+                $deletedBy
+            ) {
+                foreach ($lorryReceiptsToDelete as $lr) {
+                    $lr->deleted_by = $deletedBy;
+                    $lr->deleted_remark = $deleteRemark;
+                    $lr->save();
+                    $lr->delete();
+                }
+            });
+
+            $message = $lorryReceiptsToDelete->count() > 1
+                ? $lorryReceiptsToDelete->count()
+                    . ' linked good receipts (bilty) and all associated data deleted successfully!'
+                : 'Good receipt (bilty) and all associated data deleted successfully!';
+
+            return $this->redirectToLorryReceiptsIndex(
+                $request,
+                'success',
+                $message
             );
+
+        } catch (\Exception $e) {
+            Log::error(
+                'Error deleting lorry receipt: ' . $e->getMessage()
+            );
+
+            return redirect()->back()
+                ->with(
+                    'error',
+                    'Error deleting good receipt (bilty). Please try again.'
+                );
+        }
     }
-}
     
     private function resolveLorryReceiptsForDeletion(LorryReceipt $lorry_receipt): ?Collection
     {

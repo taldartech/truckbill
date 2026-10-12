@@ -483,11 +483,11 @@
                             </div>
                             <div class="app-index-filters__field app-index-filters__field--date">
                                 <label class="app-index-filters__label" for="fromDate">From</label>
-                                <input type="date" class="form-control form-control-sm" id="fromDate">
+                                <input type="date" class="form-control form-control-sm" id="fromDate" value="{{ request('gr_date_from') }}">
                             </div>
                             <div class="app-index-filters__field app-index-filters__field--date">
                                 <label class="app-index-filters__label" for="toDate">To</label>
-                                <input type="date" class="form-control form-control-sm" id="toDate">
+                                <input type="date" class="form-control form-control-sm" id="toDate" value="{{ request('gr_date_to') }}">
                             </div>
                             <div class="app-index-filters__actions">
                                 <button type="button" class="app-index-filters__btn app-index-filters__btn--apply" id="filterBtn" data-tooltip="Filter" aria-label="Filter">
@@ -1268,29 +1268,66 @@
          });
 
           $('#confirmDeleteLrBtn').on('click', function() {
+            const remark = $('#deleteRemark').val().trim();
 
-           const remark = $('#deleteRemark').val().trim();
+            // Remark is required
+            if (!remark) {
+              $('#deleteLrError')
+                .removeClass('d-none')
+                .text('Please enter a remark before deleting.');
+              return;
+            }
 
-             // Remark is required
-             if (!remark) {
-             $('#deleteLrError')
-            .removeClass('d-none')
-            .text('Please enter a remark before deleting.');
-             return;
-           }
+            if (!deleteLrForm) {
+              return;
+            }
 
-           // Add remark to delete form
+            const $btn = $(this);
+            $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Deleting...');
+            $('#deleteLrError').addClass('d-none').text('');
+
+            // Add remark to delete form
+            deleteLrForm.find('input[name="delete_remark"]').remove();
             deleteLrForm.append(
-            $('<input>', {
-            type: 'hidden',
-            name: 'delete_remark',
-            value: remark
-            })
-             );
+              $('<input>', {
+                type: 'hidden',
+                name: 'delete_remark',
+                value: remark
+              })
+            );
 
-                // Submit original delete form
-                  deleteLrForm.submit();
-                });
+            // Collect all current filter parameters from page inputs and URL
+            const filterMap = {
+              'gr_date_from': $('#fromDate').val(),
+              'gr_date_to': $('#toDate').val(),
+              'lr_number': $('#filterLrNumber').val(),
+              'customer_id': $('#filterCustomerId').val(),
+              'transporter_id': $('#filterTransporterId').val(),
+              'truck_id': $('#filterTruckId').val()
+            };
+
+            const currentParams = new URLSearchParams(window.location.search);
+            currentParams.forEach((val, key) => {
+              if (val && !filterMap[key]) {
+                filterMap[key] = val;
+              }
+            });
+
+            // Append filter parameters as hidden inputs so controller receives them and redirects with them
+            Object.entries(filterMap).forEach(([key, val]) => {
+              if (val) {
+                deleteLrForm.find(`input[name="${key}"]`).remove();
+                deleteLrForm.append($('<input>', {
+                  type: 'hidden',
+                  name: key,
+                  value: val
+                }));
+              }
+            });
+
+            // Submit form: page will refresh and controller will redirect with all filters intact
+            deleteLrForm.submit();
+          });
 
                 $('#filterBtn').on('click', function() {
                     syncListingQueryToUrl();
