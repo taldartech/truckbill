@@ -349,7 +349,7 @@
                             <select class="form-select" id="truck_type" name="truck_type" required>
                                 <option value="">Select</option>
                                 @foreach($truckTypes ?? [] as $type)
-                                    <option value="{{ $type->name }}">{{ $type->name }}</option>
+                                    <option value="{{ $type->name }}" data-id="{{ $type->id }}">{{ $type->name }}</option>
                                 @endforeach
                             </select>
                             <div class="invalid-feedback">Please select a truck type.</div>

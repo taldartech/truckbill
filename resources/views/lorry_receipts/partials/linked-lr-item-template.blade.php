@@ -124,7 +124,7 @@
                             <select class="form-select select2 goods-type" required>
                                 <option value="">Select Goods Type</option>
                                 @foreach ($goodsTypes as $goodsType)
-                                    <option value="{{ $goodsType->name }}">{{ $goodsType->name }}</option>
+                                    <option value="{{ $goodsType->name }}" data-id="{{ $goodsType->id }}">{{ $goodsType->name }}</option>
                                 @endforeach
                             </select>
                             <button type="button" class="btn btn-success" onclick="displayGoodAdd(this)" title="Add New Goods Type">

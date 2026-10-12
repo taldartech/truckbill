@@ -15,6 +15,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="user-id" content="{{ auth()->id() ?? '' }}">
+    <meta name="company-id" content="{{ auth()->user()->company_id ?? '' }}">
     <title>@yield('title', 'Invoice & Transport Management System')</title>
     @if (config('app.block_search_indexing'))
         <meta name="robots" content="noindex, nofollow, noarchive">
@@ -701,7 +703,7 @@
                             <!--end::User Image-->
                             <!--begin::Menu Footer-->
                             <div class="user-footer d-flex justify-content-center p-3">
-                                <form action="{{ route('logout') }}" method="POST" class="me-2">
+                                <form action="{{ route('logout') }}" method="POST" class="me-2 no-draft" data-draft-ignore="true">
                                     @csrf
                                     <button type="submit" class="btn btn-danger text-white btn-sm rounded-3">Sign out</button>
                                 </form>
@@ -1663,7 +1665,7 @@
     {{-- bootstrap.bundle includes Popper; do not also load popper + bootstrap.min.js --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="/js/theme-ui.js?v={{ config('app.ASSET_VERSION') }}"></script>
+    <script src="{{ asset('js/theme-ui.js') }}?v={{ config('app.ASSET_VERSION') }}"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/browser/overlayscrollbars.browser.es6.min.js"
         integrity="sha256-dghWARbRe2eLlIJ56wNB+b760ywulqK3DzZYEpsg2fQ=" crossorigin="anonymous"></script>

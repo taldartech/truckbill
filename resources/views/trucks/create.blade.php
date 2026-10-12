@@ -95,7 +95,7 @@
                                 <select class="form-select" id="truck_type" name="truck_type" required>
                                     <option value="">Select</option>
                                     @foreach($truckTypes ?? [] as $type)
-                                        <option value="{{ $type->name }}" {{ old('truck_type') == $type->name ? 'selected' : '' }}>{{ $type->name }}</option>
+                                        <option value="{{ $type->name }}" data-id="{{ $type->id }}" {{ old('truck_type') == $type->name ? 'selected' : '' }}>{{ $type->name }}</option>
                                     @endforeach
                                 </select>
                                 @error('truck_type') <div class="text-danger">{{ $message }}</div> @enderror
