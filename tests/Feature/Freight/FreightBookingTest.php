@@ -243,7 +243,7 @@ class FreightBookingTest extends TestCase
 
         $response = $this->actingAs($admin)
             ->withHeader('X-Requested-With', 'XMLHttpRequest')
-            ->get('/freight_bookings/data', $payload);
+            ->get('/freight_bookings/data?' . http_build_query($payload));
 
         $response->assertOk();
         $json = $response->json();
@@ -263,7 +263,7 @@ class FreightBookingTest extends TestCase
 
         $response = $this->actingAs($admin)
             ->withHeader('X-Requested-With', 'XMLHttpRequest')
-            ->get('/freight_bookings/data', $payload);
+            ->get('/freight_bookings/data?' . http_build_query($payload));
 
         $response->assertOk();
         $json = $response->json();
@@ -624,6 +624,68 @@ class FreightBookingTest extends TestCase
         $this->assertSame(1500.0, (float) $booking->advance_amount);
         $this->assertSame(2200.0, (float) $booking->tds_amount);
         $this->assertSame(5140.0, (float) $booking->balance_amount);
+    }
+
+    public function test_negative_balance_adjustment_reconciles_when_shortage_applied_after_delivery(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $service = app(FreightBookingCalculationService::class);
+
+        $booking = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 9001,
+            'transporter_id' => $lr->transporter_id,
+            'transporter_name' => $lr->transporter?->name,
+            'transporter_tds_percentage' => 1,
+            'tr_fr_rate' => 1000,
+            'tr_amount' => 10000,
+            'tds_amount' => 100,
+            'advance_amount' => 10500,
+            'balance_amount' => -600,
+            'negative_adjusted_amount' => 0,
+            'shortage_amount' => 0,
+            'is_delivered' => 1,
+        ]));
+
+        $lr->update(['freight_booking_id' => $booking->id, 'unloading_weight' => 10]);
+
+        $service->applyNegativeAdjustment($booking, $lr->lr_number);
+        $booking->refresh();
+
+        $this->assertSame(600.0, (float) $booking->negative_adjusted_amount);
+        $this->assertSame(0.0, (float) $booking->balance_amount);
+
+        $booking->shortage_amount = 5000;
+        $booking->balance_amount = $service->calculateForUpdate(
+            false,
+            1000,
+            10,
+            10,
+            10000,
+            10500,
+            0,
+            0,
+            0,
+            0,
+            5000,
+            1,
+            false,
+            100,
+            600,
+        )['balance_amount'];
+        $booking->save();
+
+        $service->applyNegativeAdjustment($booking, $lr->lr_number);
+        $booking->refresh();
+
+        $this->assertSame(5600.0, (float) $booking->negative_adjusted_amount);
+        $this->assertSame(0.0, (float) $booking->balance_amount);
+        $this->assertEqualsWithDelta(
+            0.0,
+            $booking->balanceFromAdvance(),
+            0.01,
+            'Stored balance must match balanceFromAdvance() after shortage is applied.'
+        );
     }
 
     public function test_linked_negative_balance_adjustment_skipped_when_group_net_is_zero(): void
@@ -1194,7 +1256,103 @@ class FreightBookingTest extends TestCase
             ->assertOk()
             ->assertSee('Custom Amounts')
             ->assertSee('Gate pass fee')
-            ->assertSee('Custom amounts total')
-            ->assertSee('Custom Amounts Total:');
+            ->assertSee('Custom amounts total');
+    }
+
+    /**
+     * @return array{0: User, 1: LorryReceipt, 2: FreightBooking}
+     */
+    private function makeBookedLorryReceipt(): array
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $booking = FreightBooking::create($this->bookingPayload($admin, $lr));
+        $lr->forceFill(['freight_booking_id' => $booking->id])->save();
+
+        return [$admin, $lr, $booking];
+    }
+
+    public function test_memo_uses_user_provided_date_and_time(): void
+    {
+        Carbon::setTestNow('2026-10-07 13:55:00');
+        [$admin, $lr] = $this->makeBookedLorryReceipt();
+
+        $this->actingAs($admin)
+            ->postJson(route('lorry_receipts.bulkPayment'), [
+                'memo_id' => 'MEMO-101',
+                'memo_created_at' => '2026-10-01T09:30',
+                'lr_ids' => [$lr->id],
+            ])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $lr->refresh();
+        $this->assertSame('MEMO-101', $lr->memo_id);
+        $this->assertSame('2026-10-01 09:30:00', Carbon::parse($lr->memo_created_at)->format('Y-m-d H:i:s'));
+        Carbon::setTestNow();
+    }
+
+    public function test_memo_defaults_to_current_time_when_date_not_provided(): void
+    {
+        Carbon::setTestNow('2026-10-07 13:55:00');
+        [$admin, $lr] = $this->makeBookedLorryReceipt();
+
+        $this->actingAs($admin)
+            ->postJson(route('lorry_receipts.bulkPayment'), [
+                'memo_id' => 'MEMO-102',
+                'lr_ids' => [$lr->id],
+            ])
+            ->assertOk();
+
+        $this->assertSame('2026-10-07 13:55:00', Carbon::parse($lr->fresh()->memo_created_at)->format('Y-m-d H:i:s'));
+        Carbon::setTestNow();
+    }
+
+    public function test_memo_date_cannot_be_in_the_future(): void
+    {
+        [$admin, $lr] = $this->makeBookedLorryReceipt();
+
+        $this->actingAs($admin)
+            ->postJson(route('lorry_receipts.bulkPayment'), [
+                'memo_id' => 'MEMO-103',
+                'memo_created_at' => now()->addDay()->format('Y-m-d\TH:i'),
+                'lr_ids' => [$lr->id],
+            ])
+            ->assertStatus(422)
+            ->assertJson(['success' => false]);
+
+        $this->assertNull($lr->fresh()->memo_id);
+    }
+
+    public function test_bulk_memo_records_provided_date_or_current_time(): void
+    {
+        Carbon::setTestNow('2026-10-07 13:55:00');
+        [$admin, $lr, $booking] = $this->makeBookedLorryReceipt();
+
+        $this->actingAs($admin)
+            ->post(route('freight_bookings.bulk_memo_id'), [
+                'memo_id' => 'MEMO-201',
+                'memo_created_at' => '2026-10-02T18:15',
+                'lr_ids' => [$lr->id],
+                'freight_booking_ids' => [$booking->id],
+            ])
+            ->assertRedirect();
+
+        $this->assertSame('2026-10-02 18:15:00', Carbon::parse($lr->fresh()->memo_created_at)->format('Y-m-d H:i:s'));
+
+        $lr->update(['memo_id' => null, 'memo_created_at' => null]);
+
+        $this->actingAs($admin)
+            ->post(route('freight_bookings.bulk_memo_id'), [
+                'memo_id' => 'MEMO-202',
+                'lr_ids' => [$lr->id],
+                'freight_booking_ids' => [$booking->id],
+            ])
+            ->assertRedirect();
+
+        $lr->refresh();
+        $this->assertSame('MEMO-202', $lr->memo_id);
+        $this->assertSame('2026-10-07 13:55:00', Carbon::parse($lr->memo_created_at)->format('Y-m-d H:i:s'));
+        Carbon::setTestNow();
     }
 }

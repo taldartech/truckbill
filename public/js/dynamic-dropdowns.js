@@ -1,66 +1,82 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Handle country change
+document.addEventListener('DOMContentLoaded', function () {
     const countrySelect = document.getElementById('country_id');
     const stateSelect = document.getElementById('state_id');
     const citySelect = document.getElementById('city_id');
 
-    // Only add event listeners if elements exist
-    if (countrySelect && stateSelect && citySelect) {
-        countrySelect.addEventListener('change', function() {
-        const countryId = this.value;
-        
-        // Clear state and city selections
-        stateSelect.innerHTML = '<option value="">Select State</option>';
-        citySelect.innerHTML = '<option value="">Select City</option>';
-
-        // If country is selected, fetch states
-        if (countryId) {
-            fetch(`/api/states/${countryId}`, {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-                .then(response => {
-                    return response.json();
-                })
-                .then(states => {
-                    states.forEach(state => {
-                        const option = document.createElement('option');
-                        option.value = state.id;
-                        option.textContent = state.name;
-                        stateSelect.appendChild(option);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error fetching states:', error);
-                });
-        }
-    });
-
-    // Handle state change
-    stateSelect.addEventListener('change', function() {
-        const stateId = this.value;
-        citySelect.innerHTML = '<option value="">Select City</option>';
-
-        // If state is selected, fetch cities
-        if (stateId) {
-            fetch(`/api/cities/${stateId}`, {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-                .then(response => response.json())
-                .then(cities => {
-                    cities.forEach(city => {
-                        const option = document.createElement('option');
-                        option.value = city.id;
-                        option.textContent = city.name;
-                        citySelect.appendChild(option);
-                    });
-                });
-        }
-    });
+    if (!countrySelect || !stateSelect || !citySelect) {
+        return;
     }
+
+    let cityRequestId = 0;
+
+    const resetSelect = (select, placeholder) => {
+        select.innerHTML = '';
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = placeholder;
+        select.appendChild(option);
+    };
+
+    const appendOptions = (select, items) => {
+        items.forEach((item) => {
+            const option = document.createElement('option');
+            option.value = item.id;
+            option.textContent = item.name;
+            select.appendChild(option);
+        });
+    };
+
+    countrySelect.addEventListener('change', function () {
+        const countryId = this.value;
+
+        resetSelect(stateSelect, 'Select State');
+        resetSelect(citySelect, 'Select City');
+
+        if (!countryId) {
+            return;
+        }
+
+        fetch(`/api/states/${countryId}`, {
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        })
+            .then((response) => response.json())
+            .then((states) => {
+                appendOptions(stateSelect, states);
+            })
+            .catch((error) => {
+                console.error('Error fetching states:', error);
+            });
+    });
+
+    stateSelect.addEventListener('change', function () {
+        const stateId = this.value;
+        const requestId = ++cityRequestId;
+
+        resetSelect(citySelect, 'Select City');
+
+        if (!stateId) {
+            return;
+        }
+
+        fetch(`/api/cities/${stateId}`, {
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        })
+            .then((response) => response.json())
+            .then((cities) => {
+                if (requestId !== cityRequestId || stateSelect.value !== stateId) {
+                    return;
+                }
+
+                appendOptions(citySelect, cities);
+            })
+            .catch((error) => {
+                console.error('Error fetching cities:', error);
+            });
+    });
 });

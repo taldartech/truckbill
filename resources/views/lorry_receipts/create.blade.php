@@ -46,8 +46,50 @@
         .select2-container.declaration-warning .select2-selection__rendered {
             background-color: #fff3cd !important;
         }
+        .driver-joined-group {
+            max-width: 100%;
+            min-width: 0;
+        }
+
+        .driver-joined-group > .flex-grow-1 {
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .driver-joined-group .select2-container {
+           width: 100% !important;
+           max-width: 100%;
+           min-width: 0;
+        }
+
+        .driver-joined-group .select2-container .select2-selection--single {
+           border-top-right-radius: 0;
+           border-bottom-right-radius: 0;
+           height: 38px;
+           display: flex;
+           align-items: center;
+        }
+
+       .driver-joined-group .select2-selection--single
+       .select2-selection__rendered {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          display: block;
+          padding-right: 1.5rem;
+        }
+
+       .driver-joined-group .btn {
+          flex-shrink: 0;
+          border-top-left-radius: 0;
+          border-bottom-left-radius: 0;
+          white-space: nowrap;
+          height: 38px;
+          display: inline-flex;
+          align-items: center;
+        }
     </style>
-    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
     <div class="lrf-page app-index-page">
         <div class="lrf-page__toolbar">
             <div>
@@ -122,9 +164,11 @@
                             <div class="lrf-receipt-card__row lrf-pf">
                                 <div class="lrf-pf__lbl-row">
                                     <label for="customer_id" class="lrf-pf__lbl">Customer<span class="lrf-pf__req">*</span></label>
-                                    <a href="{{ route('consignees.create') }}" class="lrf-quick-add" target="_blank" rel="noopener">
-                                        <i class="bi bi-plus-lg"></i> Add
-                                    </a>
+                                   <a href="#" class="lrf-quick-add"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#quickAddCustomerModal">
+                                  <i class="bi bi-plus-lg"></i> Add
+                                   </a>
                                 </div>
                                 <select class="form-select" id="customer_id" name="customer_id" required
                                     data-placeholder="Search and select customer...">
@@ -147,7 +191,16 @@
                             <div class="lrf-receipt-card__title">Vehicle &amp; Payee</div>
                             <div class="lrf-receipt-card__row lrf-grid lrf-grid--2">
                                 <div class="lrf-pf">
-                                    <label for="truck_id" class="lrf-pf__lbl">Truck<span class="lrf-pf__req">*</span></label>
+                                  <div class="lrf-pf__lbl-row">
+                                  <label for="truck_id" class="lrf-pf__lbl">
+                                  Truck<span class="lrf-pf__req">*</span>
+                                  </label>
+                                  <a href="#" class="lrf-quick-add"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#quickAddTruckModal">
+                                  <i class="bi bi-plus-lg"></i> Add
+                                  </a>
+                                </div>
                                     <select class="form-select" id="truck_id" name="truck_id" required
                                         data-placeholder="Search and select truck...">
                                         <option value="">Select Trucks</option>
@@ -392,7 +445,7 @@
                 <div class="lrf-section__body">
                     <input type="hidden" id="lane" name="lane" value="Road">
 
-                    <div class="lrf-grid lrf-grid--5">
+                    <div class="lrf-grid lrf-grid--6">
                         <div class="lrf-pf">
                             <label for="good_type" class="lrf-pf__lbl">Goods Type<span class="lrf-pf__req">*</span></label>
                             <div class="input-group flex-nowrap">
@@ -424,6 +477,16 @@
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                             <div class="invalid-feedback">Please enter a valid number of units (max 100,000).</div>
+                        </div>
+                        <div class="lrf-pf">
+                            <label for="weight_per_unit" class="lrf-pf__lbl">
+                                Wt / Unit (Tons)
+                            </label>
+                            <input type="number" step="0.001" class="form-control" id="weight_per_unit"
+                                min="0.001" max="100" placeholder="0.000"
+                                title="Helper only — used to calculate total weight. Not saved."
+                                autocomplete="off">
+                            <div class="lrf-pf__hint">Units × Wt/Unit → Weight</div>
                         </div>
                         <div class="lrf-pf">
                             <label for="weight" class="lrf-pf__lbl">Weight (Tons)<span class="lrf-pf__req">*</span></label>
@@ -520,7 +583,7 @@
                             @error('gr_number')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                           
+
                             <div id="gr-number-feedback" class="mt-1"></div>
                         </div>
                         <div class="lrf-pf">
@@ -540,7 +603,7 @@
                             @error('goods_value')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                           
+
                         </div>
                         <div class="lrf-pf">
                             <label for="reference_by" class="lrf-pf__lbl">Reference By</label>
@@ -612,13 +675,17 @@
         </div>
     </div>
 
+
+    @include('lorry_receipts.partials.quick-add-modals')
+
+
     <!-- Load Select2 from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <!-- Load SweetAlert2 from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Common LR entity confirmation helpers -->
-    <script src="/js/lr-entity.js"></script>
+    <script src="/js/lr-entity.js?v={{ config('app.ASSET_VERSION') }}"></script>
 
     <script>
         // Wait for DOM and jQuery to be ready
@@ -692,6 +759,8 @@
                     },
                     cache: true
                 };
+
+
 
                 const ajaxAgenciesConfig = {
                     url: '/api/agencies/search',
@@ -1823,8 +1892,51 @@ grNumberInput.addEventListener('blur', function() {
     }
 });
 
-            // No. of Units validation
+            // No. of Units validation + form-only weight per unit helper
             const noOfUnitsInput = document.getElementById('no_of_units');
+            const weightPerUnitInput = document.getElementById('weight_per_unit');
+            let weightPerUnitSyncSource = null;
+
+            function formatWeightValue(value) {
+                return Number(value.toFixed(3)).toString();
+            }
+
+            function syncWeightFromPerUnit() {
+                if (!weightPerUnitInput || !noOfUnitsInput || !weightInput) {
+                    return;
+                }
+
+                const units = parseFloat(noOfUnitsInput.value);
+                const perUnit = parseFloat(weightPerUnitInput.value);
+
+                if (!(units > 0) || !(perUnit > 0)) {
+                    return;
+                }
+
+                weightPerUnitSyncSource = 'per_unit';
+                weightInput.value = formatWeightValue(units * perUnit);
+                weightInput.dispatchEvent(new Event('input', { bubbles: true }));
+                weightPerUnitSyncSource = null;
+            }
+
+            function syncPerUnitFromWeight() {
+                if (!weightPerUnitInput || !noOfUnitsInput || !weightInput) {
+                    return;
+                }
+
+                if (weightPerUnitSyncSource === 'per_unit') {
+                    return;
+                }
+
+                const units = parseFloat(noOfUnitsInput.value);
+                const weight = parseFloat(weightInput.value);
+
+                if (!(units > 0) || !(weight > 0)) {
+                    return;
+                }
+
+                weightPerUnitInput.value = formatWeightValue(weight / units);
+            }
 
             function validateNoOfUnits() {
                 const value = parseFloat(noOfUnitsInput.value);
@@ -1844,9 +1956,19 @@ grNumberInput.addEventListener('blur', function() {
                 }
             }
 
-            // Add event listeners for No. of Units validation
-            noOfUnitsInput.addEventListener('input', validateNoOfUnits);
+            // Units/weight edits only refresh Wt/Unit. Only Wt/Unit edits rewrite total weight.
+            noOfUnitsInput.addEventListener('input', function () {
+                validateNoOfUnits();
+                syncPerUnitFromWeight();
+            });
             noOfUnitsInput.addEventListener('blur', validateNoOfUnits);
+
+            if (weightPerUnitInput) {
+                weightPerUnitInput.addEventListener('input', syncWeightFromPerUnit);
+            }
+
+            weightInput.addEventListener('input', syncPerUnitFromWeight);
+            syncPerUnitFromWeight();
 
             // Freight Rate validation (using existing frRateInput variable)
             function validateFreightRate() {
@@ -2033,9 +2155,9 @@ grNumberInput.addEventListener('blur', function() {
                         // Reset form
                         form.reset();
                     } else {
-                        errorBox.classList.remove('d-none');
-                        errorBox.innerHTML = 'Failed to add goods type';
-                    }
+                         errorBox.classList.remove('d-none');
+                         errorBox.innerHTML = data.message || 'Failed to add goods type';
+                        }
                 })
                 .catch(error => {
                     spinner.classList.add('d-none');

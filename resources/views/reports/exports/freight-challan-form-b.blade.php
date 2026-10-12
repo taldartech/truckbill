@@ -27,6 +27,21 @@
         .summary-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
         .summary-table td { border: 1px solid #000; padding: 3px; vertical-align: top; }
         .sig { margin-top: 8px; font-size: 7px; }
+        .footer-note { font-size: 7px; line-height: 1.35; color: #111; }
+        .footer-note p { margin: 0 0 3px 0; }
+        .sig-table {
+            width: 175px;
+            border: 1px solid #000 !important;
+            border-collapse: collapse;
+            margin-left: auto;
+            text-align: center;
+        }
+        .sig-table td {
+            border: none !important;
+            padding: 6px 8px;
+            text-align: center;
+            vertical-align: top;
+        }
         ul.chk { margin: 4px 0 0 12px; padding: 0; font-size: 7px; }
         ul.chk li { margin-bottom: 1px; }
         .ch-head-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; table-layout: fixed; }
@@ -275,16 +290,45 @@
     </table>
 
     <div class="sig">
-        <table style="width: 100%;">
+        <table style="width: 100%; border-collapse: collapse;">
             <tr>
-                <td style="width: 50%; border-top: 1px solid #000; padding-top: 4px;">Owner / Driver</td>
-                <td style="width: 50%; border-top: 1px solid #000; padding-top: 4px; text-align: right;">For {{ $company->setting?->template_name ?? $company->name }}</td>
+                <td style="width: 60%; vertical-align: top; padding-right: 12px;">
+                    @if (! empty($company->setting?->template_note))
+                        <div class="footer-note">
+                            {!! $company->setting->template_note !!}
+                        </div>
+                    @endif
+                </td>
+                <td style="width: 40%; vertical-align: top; text-align: right;">
+                    @php
+                        $signatureSrc = $company->signatureFilesystemPathForPdf() ?: $company->signaturePublicUrl();
+                        $challanSignName = $company->setting?->template_name ?? $company->name;
+                    @endphp
+                    <table class="sig-table" align="right">
+                        <tr>
+                            <td>
+                                <div style="font-weight: bold; font-size: 8px; margin-bottom: 3px;">For {{ $challanSignName }}</div>
+                                @if (! empty($signatureSrc))
+                                    @include('reports.exports.partials.pdf-company-signature-slot', [
+                                        'signatureSrc' => $signatureSrc,
+                                        'companyName' => $challanSignName,
+                                        'slotWidthPx' => 90,
+                                        'slotHeightPx' => 32,
+                                        'align' => 'center',
+                                    ])
+                                @else
+                                    <div style="height: 32px; line-height: 32px;">&nbsp;</div>
+                                @endif
+                                <div style="font-size: 7px; margin-top: 3px;">Authorized Signature</div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
             </tr>
         </table>
-        <p class="muted" style="margin-top: 6px;">
-            Checklist (manual): engine/chassis impression, licence &amp; documents, insurance, permit — not tracked in software; use physical form where required.
-        </p>
-        <p class="muted" style="margin-top: 6px; font-size: 7px; text-align: right;">Digitally Managed by TruckBill (www.truckbill.in)</p>
+        <div style="text-align: right; margin-top: 4px; line-height: 1;">
+            <span class="muted" style="font-size: 7px;">Digitally Managed by TruckBill (www.truckbill.in)</span>
+        </div>
     </div>
 </div>
 </body>

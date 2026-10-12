@@ -1,239 +1,140 @@
+@php
+    $period = $insights['period'];
+    $unbilled = $insights['unbilled'];
+    $margin = $insights['margin'];
+    $exceptions = $insights['exceptions'];
+    $growth = $insights['growth'];
+    $reportRange = ['start_date' => $period->start->toDateString(), 'end_date' => $period->end->toDateString()];
+    $maxReadyValue = collect($unbilled['ready_by_customer'])->max('value') ?: 1;
+    $maxTransporterTrips = collect($margin['transporters'])->max('trips') ?: 1;
+@endphp
+
 @include('dashboard.partials.hero', [
-    'subtitle' => 'Operational overview and priority tasks for your branch.',
+    'subtitle' => 'Trips to unblock, bilties to bill and hires to fix for '.strtolower($period->label).'.',
     'quickActions' => [
         ['label' => 'New Bilty', 'icon' => 'bi bi-plus-lg', 'url' => route('lorry_receipts.create')],
-        ['label' => 'Hires', 'icon' => 'bi bi-truck', 'url' => route('freight_bookings.index')],
+        ['label' => 'New Hire', 'icon' => 'bi bi-truck', 'url' => route('lorry_receipts.index', ['delivery_status' => 'Pending'])],
+        ['label' => 'Pending Memo / POD', 'icon' => 'bi bi-clipboard-check', 'url' => route('freight_bookings.index', ['pending_memo' => 1])],
     ],
-    'showPeriodFilter' => false,
+    'showPeriodFilter' => true,
+    'dashboardPeriod' => $period,
 ])
 
-<!-- Moderator KPI Cards -->
-<div class="row g-3">
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="card glass-card info-box">
-            <div class="card-body p-0 d-flex align-items-center">
-                <div class="icon-circle bg-soft-primary me-3 shadow-sm">
-                    <i class="fas fa-truck text-primary"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted fw-semi-bold mb-1">Incoming Bookings</h6>
-                    <h3 class="fw-bold mb-1">{{ number_format($moderatorStats['incoming_bookings']) }}</h3>
-                    <span class="badge bg-soft-primary text-primary rounded-pill">Pending Assignment</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="card glass-card info-box">
-            <div class="card-body p-0 d-flex align-items-center">
-                <div class="icon-circle bg-soft-success me-3 shadow-sm">
-                    <i class="fas fa-route text-success"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted fw-semi-bold mb-1">Loading In Progress</h6>
-                    <h3 class="fw-bold mb-1">{{ number_format($moderatorStats['loading_in_progress']) }}</h3>
-                    <span class="badge bg-soft-success text-success rounded-pill">At Warehouse</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="card glass-card info-box">
-            <div class="card-body p-0 d-flex align-items-center">
-                <div class="icon-circle bg-soft-info me-3 shadow-sm">
-                    <i class="fas fa-shipping-fast text-info"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted fw-semi-bold mb-1">En-Route</h6>
-                    <h3 class="fw-bold mb-1">{{ number_format($moderatorStats['en_route']) }}</h3>
-                    <span class="badge bg-soft-info text-info rounded-pill">On Road</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="card glass-card info-box">
-            <div class="card-body p-0 d-flex align-items-center">
-                <div class="icon-circle bg-soft-warning me-3 shadow-sm">
-                    <i class="fas fa-clock text-warning"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted fw-semi-bold mb-1">Delayed Trips</h6>
-                    <h3 class="fw-bold mb-1">{{ number_format($moderatorStats['delayed_trips']) }}</h3>
-                    <span class="badge bg-soft-warning text-warning rounded-pill">Check Required</span>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="dashboard-grid dashboard-grid--split">
+    @include('dashboard.partials.action-center', ['actions' => $actions, 'title' => 'Today\'s operations to-do'])
+    @include('dashboard.partials.profitability-panel', ['profitabilityHref' => route('reports.profitability', $reportRange)])
 </div>
 
-<div class="row g-3 mt-1">
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="card glass-card info-box">
-            <div class="card-body p-0 d-flex align-items-center">
-                <div class="icon-circle bg-soft-danger me-3 shadow-sm">
-                    <i class="fas fa-file-invoice text-danger"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted fw-semi-bold mb-1">Pending Invoice</h6>
-                    <h3 class="fw-bold mb-1">{{ number_format($operationalStats['lrs_pending_invoice']) }}</h3>
-                    <span class="badge bg-soft-danger text-danger rounded-pill">Not Invoiced</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="card glass-card info-box">
-            <div class="card-body p-0 d-flex align-items-center">
-                <div class="icon-circle bg-soft-warning me-3 shadow-sm">
-                    <i class="fas fa-exclamation-triangle text-warning"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted fw-semi-bold mb-1">E-Way Expiring</h6>
-                    <h3 class="fw-bold mb-1">{{ number_format($operationalStats['eway_bills_expiring_today']) }}</h3>
-                    <span class="badge bg-soft-warning text-warning rounded-pill">Expiring Today</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="card glass-card info-box">
-            <div class="card-body p-0 d-flex align-items-center">
-                <div class="icon-circle bg-soft-danger me-3 shadow-sm">
-                    <i class="fas fa-times-circle text-danger"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted fw-semi-bold mb-1">Expired E-Way</h6>
-                    <h3 class="fw-bold mb-1">{{ number_format($operationalStats['expired_eway_bills']) }}</h3>
-                    <span class="badge bg-soft-danger text-danger rounded-pill">Urgent Action</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="card glass-card info-box">
-            <div class="card-body p-0 d-flex align-items-center">
-                <div class="icon-circle bg-soft-warning me-3 shadow-sm">
-                    <i class="fas fa-indian-rupee-sign text-warning"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted fw-semi-bold mb-1">Outstanding Amount</h6>
-                    <h3 class="fw-bold mb-1">{{ number_format($operationalStats['outstanding_amount'], 2) }}</h3>
-                    <span class="badge bg-soft-warning text-warning rounded-pill">Invoice Balance</span>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="dashboard-kpis">
+    @include('dashboard.partials.kpi-card', [
+        'title' => 'Trips booked',
+        'value' => number_format($margin['trips']),
+        'icon' => 'bi bi-truck',
+        'tone' => 'primary',
+        'delta' => $growth['trips_change'],
+        'comparison' => $period->comparisonLabel,
+        'hint' => $period->label,
+        'href' => route('freight_bookings.index'),
+    ])
+    @include('dashboard.partials.kpi-card', [
+        'title' => 'In transit',
+        'value' => number_format($unbilled['in_transit_count']),
+        'icon' => 'bi bi-signpost-split',
+        'tone' => 'info',
+        'hint' => $exceptions['long_running'].' running '.\App\Services\Dashboard\BusinessInsightsService::LONG_RUNNING_TRIP_DAYS.'+ days',
+        'href' => route('freight_bookings.index'),
+    ])
+    @include('dashboard.partials.kpi-card', [
+        'title' => 'Awaiting memo / POD',
+        'value' => number_format($unbilled['pod_pending_count']),
+        'icon' => 'bi bi-clipboard-check',
+        'tone' => $unbilled['pod_pending_count'] > 0 ? 'warning' : 'success',
+        'hint' => formatRupeesCompact($unbilled['pod_pending_value']).' blocked from billing',
+        'href' => route('freight_bookings.index', ['pending_memo' => 1]),
+    ])
+    @include('dashboard.partials.kpi-card', [
+        'title' => 'Ready to invoice',
+        'value' => number_format($unbilled['ready_count']),
+        'icon' => 'bi bi-receipt-cutoff',
+        'tone' => $unbilled['ready_count'] > 0 ? 'warning' : 'success',
+        'hint' => formatRupeesCompact($unbilled['ready_value']).($unbilled['ready_count'] > 0 ? ' · oldest '.$unbilled['ready_oldest_days'].'d' : ''),
+        'href' => route('invoices.create'),
+    ])
+    @include('dashboard.partials.kpi-card', [
+        'title' => 'E-way alerts',
+        'value' => number_format($exceptions['eway_expired'] + $exceptions['eway_expiring']),
+        'icon' => 'bi bi-shield-exclamation',
+        'tone' => $exceptions['eway_expired'] > 0 ? 'danger' : ($exceptions['eway_expiring'] > 0 ? 'warning' : 'success'),
+        'hint' => $exceptions['eway_expired'].' expired · '.$exceptions['eway_expiring'].' expiring',
+        'href' => route('reports.eway-bill'),
+    ])
+    @include('dashboard.partials.kpi-card', [
+        'title' => 'Bilties without hire',
+        'value' => number_format($exceptions['without_hire']),
+        'icon' => 'bi bi-link-45deg',
+        'tone' => $exceptions['without_hire'] > 0 ? 'warning' : 'success',
+        'hint' => 'Last 90 days',
+        'href' => route('lorry_receipts.index', ['delivery_status' => 'Pending']),
+    ])
+    @include('dashboard.partials.kpi-card', [
+        'title' => 'Loss-making trips',
+        'value' => number_format($margin['loss_trips']),
+        'icon' => 'bi bi-graph-down-arrow',
+        'tone' => $margin['loss_trips'] > 0 ? 'danger' : 'success',
+        'hint' => $margin['low_margin_trips'].' more below '.\App\Services\Dashboard\BusinessInsightsService::LOW_MARGIN_PERCENT.'% margin',
+        'href' => route('reports.profitability', $reportRange + ['profit_loss' => 'loss']),
+    ])
+    @include('dashboard.partials.kpi-card', [
+        'title' => 'Cancelled hires',
+        'value' => number_format($exceptions['cancelled']),
+        'icon' => 'bi bi-x-circle',
+        'tone' => $exceptions['cancellation_rate'] >= 10 ? 'danger' : 'info',
+        'hint' => $exceptions['cancellation_rate'].'% of hires '.strtolower($period->label),
+    ])
 </div>
 
-<!-- Priority 1: Expired Eway Bills (Critical Alert) -->
-@if(isset($expiredEwayBills) && $expiredEwayBills->count() > 0)
-<div class="row mt-4">
-    <div class="col-md-12">
-        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
-            <div class="card-header bg-soft-danger text-danger border-0 py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold"><i class="fas fa-exclamation-triangle me-2"></i> Expired Eway Bills (Urgent)</h5>
-                    <span class="badge bg-danger text-white px-3 rounded-pill">{{ $expiredEwayBills->count() }} Urgent</span>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-soft-secondary">
-                            <tr>
-                                <th class="ps-4">LR Number</th>
-                                <th>Truck & Destination</th>
-                                <th>Driver Mobile</th>
-                                <th>Expiry Date</th>
-                                <th class="text-end pe-4">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($expiredEwayBills->take(10) as $ewayBill)
-                                @php
-                                    $expiryDate = \Carbon\Carbon::parse($ewayBill->eway_bill_expiry)->startOfDay();
-                                    $today = \Carbon\Carbon::today()->startOfDay();
-                                    $tomorrow = $today->copy()->addDay();
+@include('dashboard.partials.watchlist-panel', ['linkTrips' => true, 'ewayHref' => route('reports.eway-bill')])
 
-                                    if ($expiryDate->isPast() || $expiryDate->isSameDay($today)) {
-                                        $expiryClass = 'text-danger';
-                                        $bgClass = 'bg-soft-danger';
-                                    } elseif ($expiryDate->isSameDay($tomorrow)) {
-                                        $expiryClass = 'text-warning';
-                                        $bgClass = 'bg-soft-warning';
-                                    } else {
-                                        $expiryClass = 'text-muted';
-                                        $bgClass = '';
-                                    }
-                                @endphp
-                                <tr>
-                                    <td class="ps-4"><span class="fw-bold text-dark">#{{ $ewayBill->freightBooking?->lr?->lr_number }}</span></td>
-                                    <td>
-                                        <div class="d-flex flex-column">
-                                            <span class="fw-medium">{{ $ewayBill->freightBooking?->lr?->truck?->truck_number ?? 'N/A' }}</span>
-                                            <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i> {{ $ewayBill->freightBooking?->lr?->destination_city }}</small>
-                                        </div>
-                                    </td>
-                                    <td>{{ $ewayBill->freightBooking?->lr?->truck?->driver?->mobile ?? '-' }}</td>
-                                    <td><span class="badge {{ $bgClass }} {{ $expiryClass }} px-3 py-2 rounded-pill fw-bold"> {{ formatDate(optional($ewayBill)->eway_bill_expiry) }}</span></td>
-                                    <td class="text-end pe-4 align-middle">
-                                        <a href="{{ route('freight_bookings.show', $ewayBill->id) }}" class="btn btn-icon btn-view rounded-circle">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+<div class="dashboard-grid dashboard-grid--2">
+    <section class="dashboard-panel h-100">
+        <div class="dashboard-panel__header">
+            <h2 class="dashboard-panel__title"><i class="bi bi-receipt-cutoff"></i> Ready to bill by customer</h2>
+            <a href="{{ route('invoices.create') }}" class="dashboard-link">Create invoice <i class="bi bi-arrow-right-short"></i></a>
         </div>
-    </div>
-</div>
-@endif
-
-<!-- Priority 2: Booking Status Overview -->
-@if(isset($bookingStatuses))
-<div class="row mt-4 mb-4">
-    <div class="col-md-12">
-        <div class="card glass-card">
-            <div class="card-header bg-transparent border-0 py-3">
-                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-chart-bar text-brand-primary me-2"></i> Booking Status Overview</h5>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-md-4 border-end">
-                        <div class="p-3">
-                            <h2 class="text-success fw-bold mb-1">{{ number_format($bookingStatuses['delivered']) }}</h2>
-                            <p class="text-muted mb-0 fw-medium">Delivered</p>
-                            <div class="progress mt-2" style="height: 6px; border-radius: 3px;">
-                                <div class="progress-bar bg-success" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 border-end">
-                        <div class="p-3">
-                            <h2 class="text-info fw-bold mb-1">{{ number_format($bookingStatuses['in_progress']) }}</h2>
-                            <p class="text-muted mb-0 fw-medium">In Progress</p>
-                            <div class="progress mt-2" style="height: 6px; border-radius: 3px;">
-                                <div class="progress-bar bg-info" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="p-3">
-                            <h2 class="text-danger fw-bold mb-1">{{ number_format($bookingStatuses['cancelled']) }}</h2>
-                            <p class="text-muted mb-0 fw-medium">Cancelled</p>
-                            <div class="progress mt-2" style="height: 6px; border-radius: 3px;">
-                                <div class="progress-bar bg-danger" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="dashboard-panel__body">
+            @include('dashboard.partials.ranked-list', [
+                'rows' => collect($unbilled['ready_by_customer'])->map(fn (array $row): array => [
+                    'label' => $row['customer'],
+                    'value' => formatRupeesCompact($row['value']),
+                    'meta' => $row['trips'].' '.Str::plural('bilty', $row['trips']).' · oldest '.$row['oldest_days'].' days',
+                    'percent' => $row['value'] / $maxReadyValue * 100,
+                    'tone' => $row['oldest_days'] > 15 ? 'danger' : 'warning',
+                ])->all(),
+                'emptyText' => 'Every delivered bilty with a memo has been invoiced.',
+            ])
         </div>
-    </div>
-</div>
-@endif
+    </section>
 
+    <section class="dashboard-panel h-100">
+        <div class="dashboard-panel__header">
+            <h2 class="dashboard-panel__title"><i class="bi bi-people"></i> Transporters used {{ strtolower($period->label) }}</h2>
+            <a href="{{ route('reports.transporter-report') }}" class="dashboard-link">Transporter report <i class="bi bi-arrow-right-short"></i></a>
+        </div>
+        <div class="dashboard-panel__body">
+            @include('dashboard.partials.ranked-list', [
+                'rows' => collect($margin['transporters'])->map(fn (array $row): array => [
+                    'label' => $row['transporter'],
+                    'value' => $row['trips'].' '.Str::plural('trip', $row['trips']),
+                    'meta' => $row['margin'].'% margin on these trips',
+                    'percent' => $row['trips'] / $maxTransporterTrips * 100,
+                    'tone' => $row['margin'] < \App\Services\Dashboard\BusinessInsightsService::LOW_MARGIN_PERCENT ? 'warning' : 'info',
+                ])->all(),
+                'emptyText' => 'No hires in this period yet.',
+            ])
+        </div>
+    </section>
+</div>
+
+@include('dashboard.partials.profit-drivers-panel', ['profitabilityHref' => route('reports.profitability', $reportRange)])
+
+<script type="application/json" id="dashboard-chart-data">@json($chartPayload)</script>

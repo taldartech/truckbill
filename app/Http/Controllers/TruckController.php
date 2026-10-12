@@ -238,6 +238,11 @@ class TruckController extends Controller
         $buttons .= 'data-current-driver-name="'.htmlspecialchars($truck->driver_name ?? '').'">';
         $buttons .= '<i class="bi bi-person-plus"></i></button>';
 
+         // Edit button
+        $editUrl = route('trucks.edit', $truck->id);
+        $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-action-edit" title="Edit Truck" data-bs-toggle="tooltip">';
+        $buttons .= '<i class="bi bi-pencil"></i></a>';
+
         // Delete button
         $deleteUrl = route('trucks.destroy', $truck->id);
 
@@ -381,31 +386,49 @@ class TruckController extends Controller
         $exists = $this->isTruckNumberTakenInCompany($validated['truck_number'], $companyId);
         if ($exists) {
             $errorMessage = 'The truck number must be unique within the company.';
+
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
                     'message' => $errorMessage,
-                    'errors' => ['truck_number' => [$errorMessage]],
+                    'errors' => [
+                        'truck_number' => [$errorMessage],
+                    ],
                 ], 422);
             }
 
-            return redirect()->back()->withErrors(['truck_number' => $errorMessage])->withInput();
+            return redirect()
+                ->back()
+                ->withErrors(['truck_number' => $errorMessage])
+                ->withInput();
         }
 
         $validated['company_id'] = $companyId;
         try {
             $truck = Truck::create($validated);
+            $truck->load([
+                'transporter.transporterMaster',
+                'driver',
+            ]);
 
-            // Return JSON response for AJAX requests
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Truck created successfully!',
-                    'truck' => $truck,
+                    'truck' => [
+                        'id' => $truck->id,
+                        'truck_number' => $truck->truck_number,
+                        'truck_type' => $truck->truck_type,
+                        'transporter_id' => $truck->transporter_id,
+                        'transporter_name' => $truck->transporter?->name ?? '',
+                        'driver_id' => $truck->driver_id,
+                        'driver_name' => $truck->driver?->name ?? '',
+                    ],
                 ]);
             }
 
-            return redirect()->route('trucks.index')->with('success', 'Truck created successfully!');
+            return redirect()->route('trucks.index')
+                ->with('success', 'Truck created successfully!');
         } catch (QueryException $e) {
             // Handle database constraint violations
             if ($e->errorInfo[1] == 1062) { // Duplicate entry error

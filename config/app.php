@@ -55,6 +55,14 @@ return [
   'url' => env('APP_URL', 'http://localhost'),
   'website_url' => env('WEBSITE_URL', 'https://www.truckbill.in'),
   'block_search_indexing' => (bool) env('BLOCK_SEARCH_INDEXING', false),
+  // Cache-busting value for externally included CSS/JS (see Blade includes).
+  'ASSET_VERSION' => env('ASSET_VERSION', date('Ymd')),
+  'version' => env('APP_VERSION', '1.0.0'),
+  'copyright_year' => env('APP_COPYRIGHT_YEAR', null),
+  'support_email' => env('SUPPORT_EMAIL', 'support@truckbill.in'),
+  'support_phone' => env('SUPPORT_PHONE', '+91 97844 51256, +91 97849 46004'),
+  'company_name' => env('APP_COMPANY_NAME', 'Taldar Tech Consultancy'),
+  'company_url' => env('APP_COMPANY_URL', 'https://www.taldartechconsultancy.com/'),
 
   /*
     |--------------------------------------------------------------------------

@@ -400,8 +400,19 @@ public function bulkUploadTemplate()
             throw $exception;
         }
 
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Customer created successfully!',
+                'customer' => [
+                    'id' => $consignee->id,
+                    'name' => $consignee->name,
+                ],
+            ]);
+        }
+
         return redirect()->route('consignees.index')
-            ->with('success', 'Consignee created successfully! '.$customerEmailResult);
+            ->with('success', 'Customer created successfully! '.$customerEmailResult);
     }
 
     private function validateConsigneeUniquenessCreate($data, $companyId)
@@ -416,13 +427,6 @@ public function bulkUploadTemplate()
         if (! empty($data['email'])) {
             if ($query->clone()->where('email', $data['email'])->exists()) {
                 $errors['email'] = 'This email is already used by another consignee in your company.';
-            }
-        }
-
-        // Check GST number
-        if (! empty($data['gst_number'])) {
-            if ($query->clone()->where('gst_number', $data['gst_number'])->exists()) {
-                $errors['gst_number'] = 'This GST number is already used by another consignee in your company.';
             }
         }
 
@@ -542,13 +546,6 @@ public function bulkUploadTemplate()
         if (! empty($data['email'])) {
             if ($query->clone()->where('email', $data['email'])->exists()) {
                 $errors['email'] = 'This email is already used by another consignee in your company.';
-            }
-        }
-
-        // Check GST number
-        if (! empty($data['gst_number'])) {
-            if ($query->clone()->where('gst_number', $data['gst_number'])->exists()) {
-                $errors['gst_number'] = 'This GST number is already used by another consignee in your company.';
             }
         }
 

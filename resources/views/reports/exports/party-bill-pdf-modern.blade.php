@@ -381,12 +381,32 @@
                 </tr>
                 <tr>
                     <td class="footer-note"><strong>Amount in words:</strong> {{ ucfirst(getIndianCurrency($grandTotal)) }} Only</td>
-                    <td class="signature-box">FOR {{ $company->name }}<br><br><br><br>Authorized Signature</td>
+                    <td class="signature-box">
+                        For {{ $company->name }}
+                        <br>
+                        @php
+                            $usePdfLogoPath = ($partyBillInvoiceUsePdfLogoPath ?? false) === true;
+                            $invoiceCompanySignatureSrc = $usePdfLogoPath
+                                ? $company->signatureFilesystemPathForPdf()
+                                : $company->signaturePublicUrl();
+                        @endphp
+                        @include('reports.exports.partials.pdf-company-signature-slot', [
+                            'signatureSrc' => $invoiceCompanySignatureSrc,
+                            'companyName' => $company->name,
+                            'slotWidthPx' => 100,
+                            'slotHeightPx' => 36,
+                            'align' => 'center',
+                        ])
+                        @if (empty($invoiceCompanySignatureSrc))
+                            <br><br><br>
+                        @endif
+                        <div style="text-align: center;">Authorized Signature</div>
+                    </td>
                 </tr>
             </table>
-        </div>
-        <div class="section">
-            <div class="footer-note" style="font-size: 7px; text-align: right;">Digitally Managed by TruckBill (www.truckbill.in)</div>
+            <div style="text-align: right; margin-top: 2px; line-height: 1;">
+                <span style="font-size: 7px; font-weight: normal;">Digitally Managed by TruckBill (www.truckbill.in)</span>
+            </div>
         </div>
     </div>
 

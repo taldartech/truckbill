@@ -214,10 +214,28 @@
     }, true);
   }
 
+  function initIndexFiltersToggle() {
+    document.addEventListener('click', function (event) {
+      const toggle = event.target.closest('[data-app-index-filters-toggle]');
+      if (!toggle) {
+        return;
+      }
+
+      const root = toggle.closest('[data-app-index-filters]');
+      if (!root) {
+        return;
+      }
+
+      const isOpen = root.classList.toggle('is-open');
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+  }
+
   function boot() {
     ensureSwalDefaults();
     tagModals();
     interceptNativeConfirms();
+    initIndexFiltersToggle();
   }
 
   window.TruckbillUI = {

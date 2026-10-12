@@ -4,7 +4,7 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
     @include('lorry_receipts.partials.linked-lr-form-styles')
     <div class="lrf-page app-index-page linked-lr-page">
         <div class="lrf-page__toolbar">
@@ -90,7 +90,14 @@
                             <div class="lrf-receipt-card__title">Vehicle &amp; Payee</div>
                             <div class="lrf-receipt-card__row lrf-grid lrf-grid--2">
                                 <div class="lrf-pf">
-                                    <label for="truck_id" class="lrf-pf__lbl">Truck<span class="lrf-pf__req">*</span></label>
+                                    <div class="lrf-pf__lbl-row">
+                                        <label for="truck_id" class="lrf-pf__lbl">Truck<span class="lrf-pf__req">*</span></label>
+                                        <a href="#" class="lrf-quick-add"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#quickAddTruckModal">
+                                            <i class="bi bi-plus-lg"></i> Add
+                                        </a>
+                                    </div>
                                     <select class="form-select" id="truck_id" name="truck_id" required
                                         data-placeholder="Search and select truck...">
                                         <option value="">Select Trucks</option>
@@ -291,8 +298,8 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Common LR entity confirmation helpers -->
-    <script src="/js/linked-lr-form-ui.js"></script>
-    <script src="/js/lr-entity.js"></script>
+    <script src="/js/linked-lr-form-ui.js?v={{ config('app.ASSET_VERSION') }}"></script>
+    <script src="/js/lr-entity.js?v={{ config('app.ASSET_VERSION') }}"></script>
 
     <script>
         // Wait for DOM and jQuery to be ready
@@ -653,12 +660,21 @@
                 }
 
                 if (transporterTypeSelectEl && truckSelectEl && transporterSelectEl && transporterLabelEl) {
+                    const initialTrucksData = {};
+                    @if($selectedTruck)
+                        initialTrucksData[{{ $selectedTruck->id }}] = {
+                            transporterId: {{ $selectedTruck->transporter_id ?? 'null' }},
+                            transporterName: @json($selectedTruck->transporter?->name ?? ''),
+                            truckText: @json($selectedTruck->truck_number),
+                        };
+                    @endif
+
                     window.LREntity.initLorryReceiptTransporterSelectionFlow({
                         transporterTypeSelect: transporterTypeSelectEl,
                         truckSelect: truckSelectEl,
                         transporterSelect: transporterSelectEl,
                         transporterLabel: transporterLabelEl,
-                        trucksData: {},
+                        trucksData: initialTrucksData,
                         mode: 'create',
                         allowTransporterChanges: true,
                         afterTransporterTypeChange: function (selectedType) {
@@ -903,11 +919,66 @@
             lrItemsContainer.addEventListener('input', function(e) {
                 const scope = e.target.closest('.lr-item');
                 if (!scope) return;
-                if (e.target.classList.contains('weight') || e.target.classList.contains(
-                        'fr-rate')) {
+
+                if (e.target.classList.contains('weight-per-unit')) {
+                    syncLinkedWeightFromPerUnit(scope);
+                } else if (e.target.classList.contains('units') || e.target.classList.contains('weight')) {
+                    syncLinkedPerUnitFromWeight(scope);
+                }
+
+                if (e.target.classList.contains('weight') || e.target.classList.contains('fr-rate')) {
                     calculateAmount(scope);
                 }
             });
+
+            function formatLinkedWeightValue(value) {
+                return Number(value.toFixed(3)).toString();
+            }
+
+            function syncLinkedWeightFromPerUnit(scope) {
+                const unitsInput = scope.querySelector('.units');
+                const perUnitInput = scope.querySelector('.weight-per-unit');
+                const weightInput = scope.querySelector('.weight');
+
+                if (!unitsInput || !perUnitInput || !weightInput) {
+                    return;
+                }
+
+                const units = parseFloat(unitsInput.value);
+                const perUnit = parseFloat(perUnitInput.value);
+
+                if (!(units > 0) || !(perUnit > 0)) {
+                    return;
+                }
+
+                scope.dataset.weightPerUnitSync = '1';
+                weightInput.value = formatLinkedWeightValue(units * perUnit);
+                weightInput.dispatchEvent(new Event('input', { bubbles: true }));
+                delete scope.dataset.weightPerUnitSync;
+            }
+
+            function syncLinkedPerUnitFromWeight(scope) {
+                if (scope.dataset.weightPerUnitSync === '1') {
+                    return;
+                }
+
+                const unitsInput = scope.querySelector('.units');
+                const perUnitInput = scope.querySelector('.weight-per-unit');
+                const weightInput = scope.querySelector('.weight');
+
+                if (!unitsInput || !perUnitInput || !weightInput) {
+                    return;
+                }
+
+                const units = parseFloat(unitsInput.value);
+                const weight = parseFloat(weightInput.value);
+
+                if (!(units > 0) || !(weight > 0)) {
+                    return;
+                }
+
+                perUnitInput.value = formatLinkedWeightValue(weight / units);
+            }
 
             // Per-item amount calc
             function calculateAmount(scope) {
@@ -1690,4 +1761,5 @@ lrItemsContainer.addEventListener('blur', function(e) {
         });
 
     </script>
+    @include('lorry_receipts.partials.quick-add-modals')
 @endsection

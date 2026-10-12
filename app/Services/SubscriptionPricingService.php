@@ -151,10 +151,15 @@ class SubscriptionPricingService
 
     public function createTrialSubscription(Company $company): CompanySubscription
     {
-        $catalogPayload = $this->adminApi->getCatalog();
-        $catalog = $catalogPayload['catalog'];
+        try {
+            $catalogPayload = $this->adminApi->getCatalog();
+            $catalog = $catalogPayload['catalog'] ?? [];
+        } catch (\Throwable) {
+            $catalog = [];
+        }
         $startsOn = now()->toDateString();
         $endsOn = Carbon::parse($startsOn)->addDays(15)->toDateString();
+        $credits = (int) ($catalog['included_lr_credits'] ?? 100);
 
         return CompanySubscription::create([
             'company_id' => $company->id,
@@ -162,11 +167,11 @@ class SubscriptionPricingService
             'starts_on' => $startsOn,
             'ends_on' => $endsOn,
             'trial_ends_on' => $endsOn,
-            'included_branches' => $catalog['included_branches'],
-            'users_per_branch' => $catalog['users_per_branch'],
-            'included_lr_credits' => $catalog['included_lr_credits'],
+            'included_branches' => (int) ($catalog['included_branches'] ?? 1),
+            'users_per_branch' => (int) ($catalog['users_per_branch'] ?? 5),
+            'included_lr_credits' => $credits,
             'included_trucks' => 0,
-            'lr_credits_remaining' => $catalog['included_lr_credits'],
+            'lr_credits_remaining' => $credits,
         ]);
     }
 

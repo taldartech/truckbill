@@ -43,9 +43,9 @@ class InvoiceNotificationService
             return;
         }
 
-        $paidAmount = (float) $invoice->payments->sum('amount');
+        $paidAmount = (float) $invoice->paid_amount;
         $amountToCollect = (float) ($invoice->net_amount ?? $invoice->total_amount ?? 0);
-        $remainingAmount = max(0, $amountToCollect - $paidAmount);
+        $remainingAmount = (float) $invoice->remaining_amount;
 
         $baseVariables = array_merge([
             'companyName' => $company->name ?? '',
@@ -103,9 +103,9 @@ class InvoiceNotificationService
             return;
         }
 
-        $paidAmount = (float) $invoice->payments->sum('amount');
+        $paidAmount = (float) $invoice->paid_amount;
         $amountToCollect = (float) ($invoice->net_amount ?? $invoice->total_amount ?? 0);
-        $remainingAmount = max(0, $amountToCollect - $paidAmount);
+        $remainingAmount = (float) $invoice->remaining_amount;
 
         $baseVariables = [
             'companyName' => $company->name ?? '',

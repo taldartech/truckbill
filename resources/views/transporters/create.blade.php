@@ -46,21 +46,20 @@
                         <p class="app-form-section__hint mb-2">Enter the 10-digit PAN and click Check. The form appears only after a successful PAN check.</p>
                         <div class="mb-2">@include('shared.check-pan-status-link')</div>
                         <div class="row g-2">
-                            <div class="col-md-6">
-                                <label for="pan_lookup" class="form-label">PAN Number *</label>
-                                <div class="input-group">
+                            <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+                                <label for="pan_lookup" class="form-label small fw-semibold">PAN Number *</label>
+                                <div class="input-group input-group-sm">
                                     <input
                                         type="text"
-                                        class="form-control"
+                                        class="form-control form-control-sm text-uppercase"
                                         id="pan_lookup"
                                         name="pan_lookup"
-                                        placeholder="Enter 10-digit PAN"
+                                        placeholder="10-digit PAN"
                                         maxlength="10"
                                         value="{{ old('pan_lookup', old('pan_number', '')) }}"
-                                        style="text-transform: uppercase;"
                                     >
-                                    <button type="button" class="btn btn-brand-primary" id="btnPanLookup">
-                                        <i class="fas fa-check me-1"></i> Check PAN
+                                    <button type="button" class="btn btn-brand-primary btn-sm px-2 px-sm-3 text-nowrap" id="btnPanLookup" title="Check PAN">
+                                        <i class="fas fa-check"></i><span class="d-none d-sm-inline ms-1">Check PAN</span><span class="d-inline d-sm-none ms-1">Check</span>
                                     </button>
                                 </div>
                                 <div id="panLookupMessage" class="mt-2 small"></div>
@@ -252,17 +251,22 @@
                             </div>
 
                             <div class="row g-2 mb-2">
-                                <div class="col-md-4">
-                                    <label class="form-label">Declaration given? *</label><br>
+                                <div class="col-md-5">
+                                    <label class="form-label">Declaration u/s 194C(6) Received with PAN? *</label><br>
                                     <div class="form-check form-check-inline">
                                         <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given', 0) == 1 ? 'checked' : '' }} required>
-                                        <label class="form-check-label" for="decl_yes">Yes</label>
+                                        <label class="form-check-label fw-semibold" for="decl_yes">Yes (0.00% TDS)</label>
                                     </div>
                                     <div class="form-check form-check-inline">
                                         <input class="form-check-input" type="radio" name="declaration_given" id="decl_no" value="0" {{ old('declaration_given', 0) != 1 ? 'checked' : '' }} required>
                                         <label class="form-check-label" for="decl_no">No</label>
                                     </div>
                                     @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-md-3" id="declaration_date_col" style="{{ old('declaration_given', 0) == 1 ? '' : 'display:none;' }}">
+                                    <label for="declaration_194c6_date" class="form-label">Declaration Date</label>
+                                    <input type="date" class="form-control @error('declaration_194c6_date') is-invalid @enderror" id="declaration_194c6_date" name="declaration_194c6_date" value="{{ old('declaration_194c6_date', date('Y-m-d')) }}">
+                                    @error('declaration_194c6_date') <div class="text-danger">{{ $message }}</div> @enderror
                                 </div>
                                 <div class="col-md-4">
                                     <label for="tds_percentage" class="form-label">TDS % *</label>
@@ -278,6 +282,23 @@
                                     @error('tds_adjustment_remark') <div class="text-danger">{{ $message }}</div> @enderror
                                 </div>
                             </div>
+
+                            <div class="row g-2 mt-2">
+                                <div class="col-md-5">
+                                    <label class="form-label">MSME Status</label>
+                                    <div class="form-check form-switch mt-1">
+                                        <input class="form-check-input" type="checkbox" name="is_msme" id="is_msme" value="1" {{ old('is_msme') ? 'checked' : '' }}
+                                               onchange="document.getElementById('transporter_msme_reg_col').style.display = this.checked ? 'block' : 'none'">
+                                        <label class="form-check-label fw-semibold" for="is_msme">Registered MSME (Micro / Small)</label>
+                                    </div>
+                                    <small class="text-muted d-block" style="font-size: 0.75rem;">Subject to Sec 43B(h) prompt payment compliance by our company</small>
+                                </div>
+                                <div class="col-md-5" id="transporter_msme_reg_col" style="{{ old('is_msme') ? '' : 'display:none;' }}">
+                                    <label for="msme_reg_no" class="form-label">Udyam / MSME Registration #</label>
+                                    <input type="text" class="form-control @error('msme_reg_no') is-invalid @enderror" id="msme_reg_no" name="msme_reg_no" value="{{ old('msme_reg_no') }}" placeholder="UDYAM-XX-00-0000000">
+                                    @error('msme_reg_no') <div class="text-danger">{{ $message }}</div> @enderror
+                                </div>
+                            </div>
                             @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
                         </div>
                     </div>
@@ -286,11 +307,11 @@
         </div>
 
         <div id="transporterFormActions" class="app-form-actions card d-none">
-            <div class="card-body">
-                <a href="{{ route('transporters.index') }}" class="btn btn-secondary">
+            <div class="card-body d-flex flex-row flex-nowrap justify-content-end align-items-center gap-2 p-2 p-sm-3">
+                <a href="{{ route('transporters.index') }}" class="btn btn-secondary btn-sm flex-fill flex-sm-grow-0 text-nowrap w-auto">
                     <i class="bi bi-x-lg me-1"></i> Cancel
                 </a>
-                <button class="btn btn-brand-primary" type="button" onclick="showConfirmationModal()">
+                <button class="btn btn-brand-primary btn-sm flex-fill flex-sm-grow-0 text-nowrap w-auto" type="button" onclick="showConfirmationModal()">
                     <i class="bi bi-floppy-fill me-1"></i> Save
                 </button>
             </div>
@@ -731,9 +752,26 @@
             invalidatePanVerification(this.value);
           });
         }
+        function update194cDeclarationUi() {
+          const isYes = document.getElementById('decl_yes')?.checked;
+          const dateCol = document.getElementById('declaration_date_col');
+          const tdsInput = document.getElementById('tds_percentage');
+          if (dateCol) {
+            dateCol.style.display = isYes ? '' : 'none';
+          }
+          if (isYes && tdsInput) {
+            tdsInput.value = '0.00';
+            tdsInput.readOnly = true;
+          } else if (tdsInput) {
+            tdsInput.readOnly = false;
+          }
+        }
+        update194cDeclarationUi();
+
         document.querySelectorAll('input[name="declaration_given"]').forEach(function (el) {
           el.addEventListener('change', function () {
             window.__agencyTdsUserEdited = false;
+            update194cDeclarationUi();
             if (typeof refreshAgencyTdsBaseline === 'function') {
               refreshAgencyTdsBaseline();
             }
@@ -1522,6 +1560,6 @@ if (bulkUploadBtn && bulkUploadFile) {
         });
 
     </script>
-    <script src="/js/dynamic-dropdowns.js"></script>
+    <script src="/js/dynamic-dropdowns.js?v={{ config('app.ASSET_VERSION') }}"></script>
 
 @endsection

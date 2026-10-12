@@ -30,7 +30,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="/css/brand.css">
+    <link rel="stylesheet" href="/css/brand.css?v={{ config('app.ASSET_VERSION') }}">
 
     <style>
         label {
@@ -211,6 +211,8 @@
 </head>
 
 <body>
+     {{-- Global Truck Loader --}}
+    @include('components.loading.AppResponseLoader')
     <div class="container d-flex justify-content-center">
         <div class="auth-card">
             <div class="logo-section">
@@ -238,7 +240,20 @@
             }
         }
     </script>
-    @stack('scripts')
+
+    <script>
+    // Show loader when any form is submitted
+    document.addEventListener('submit', function () {
+        showTruckLoader();
+    });
+
+    // Hide loader when browser Back/Forward restores the page
+    window.addEventListener('pageshow', function () {
+        hideTruckLoader();
+    });
+</script>
+
+@stack('scripts')
 </body>
 
 </html>

@@ -7,7 +7,7 @@
     $emptyPaymentSummary = ['cash' => 0, 'bank' => 0, 'fuel' => 0, 'advance' => 0, 'total_paid' => 0, 'balance' => 0];
 @endphp
 
-<table class="table table-bordered table-striped" style="font-size: 12px !important;">
+<table class="table table-bordered table-striped table-hover align-middle mb-0 text-nowrap small">
     <thead>
         <tr>
             <th>Sr No</th>

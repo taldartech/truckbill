@@ -273,14 +273,16 @@ class CompanyController extends Controller
         } else {
             if ($company->is_blocked) {
                 $unblockUrl = route('company.unblock', $company->id);
-                $buttons .= '<a href="'.$unblockUrl.'" class="btn btn-sm btn-icon btn-action-restore" title="Unblock User"
-                          onclick="return confirm(\'Are you sure you want to unblock this company?\');">
-                          <i class="bi bi-unlock"></i></a>';
+                $buttons .= '<form action="'.$unblockUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to unblock this company?\')">';
+                $buttons .= csrf_field();
+                $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-restore" title="Unblock User">';
+                $buttons .= '<i class="bi bi-unlock"></i></button></form>';
             } else {
                 $blockUrl = route('company.block', $company->id);
-                $buttons .= '<a href="'.$blockUrl.'" class="btn btn-sm btn-icon btn-action-cancel" title="Block User"
-                          onclick="return confirm(\'Are you sure you want to block this company?\');">
-                          <i class="bi bi-lock"></i></a>';
+                $buttons .= '<form action="'.$blockUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to block this company?\')">';
+                $buttons .= csrf_field();
+                $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-cancel" title="Block User">';
+                $buttons .= '<i class="bi bi-lock"></i></button></form>';
             }
             $buttons .= '</div>';
             return $buttons;
@@ -413,6 +415,7 @@ class CompanyController extends Controller
                 },
             ],
             'company_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
+            'digital_signature' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
             'bank' => 'nullable|string|max:255',
             'account_number' => 'nullable|string|max:34',
             'ifsc' => ['nullable', 'string', 'size:11', 'regex:/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/'],
@@ -451,6 +454,10 @@ class CompanyController extends Controller
             $path = $request->file('company_logo')->store('company_logos', 'public');
 
             $validated['company_logo'] = $path;
+        }
+        if ($request->hasFile('digital_signature')) {
+            $path = $request->file('digital_signature')->store('company_signatures', 'public');
+            $validated['digital_signature'] = $path;
         }
         $validated['user_id'] = auth()->user()->id;
 
@@ -577,6 +584,7 @@ class CompanyController extends Controller
                 },
             ],
             'company_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
+            'digital_signature' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
             'bank' => 'nullable|string|max:255',
             'account_number' => 'nullable|string|max:34',
             'ifsc' => ['nullable', 'string', 'size:11', 'regex:/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/'],
@@ -601,6 +609,10 @@ class CompanyController extends Controller
             // Store the file in the 'public/company_logos' directory
             $path = $request->file('company_logo')->store('company_logos', 'public');
             $validated['company_logo'] = $path;
+        }
+        if ($request->hasFile('digital_signature')) {
+            $path = $request->file('digital_signature')->store('company_signatures', 'public');
+            $validated['digital_signature'] = $path;
         }
         $validated['user_id'] = auth()->user()->id;
         if (! $request->filled('gst_type')) {

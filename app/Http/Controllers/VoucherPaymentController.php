@@ -352,6 +352,7 @@ class VoucherPaymentController extends Controller
             'payment_status' => 'required|in:pending,in-progress,paid',
             'pump_id' => 'nullable|exists:pumps,id',
             'date' => 'nullable|date',
+            'bank_ledger_id' => 'nullable|exists:ledgers,id',
         ]);
         // If payment date is omitted, keep behavior aligned with legacy flow.
         if ($request->date == null) {
@@ -426,6 +427,13 @@ class VoucherPaymentController extends Controller
 
             $voucherPayment->loadMissing(['company', 'freight_booking.lr', 'freight_booking.transporter.transporterMaster']);
             $this->voucherPaymentNotificationService->notifyForCurrentStatus($voucherPayment, auth()->user());
+
+            try {
+                $voucherPayment->loadMissing(['company', 'freight_booking.transporter', 'freight_booking.truck', 'pump']);
+                app(\App\Services\AccountingPostingService::class)->postVoucherPayment($voucherPayment);
+            } catch (\Throwable $e) {
+                \Log::error('Accounting post voucher payment failed: '.$e->getMessage());
+            }
 
             // Redirect back to lorry receipts page with success message
             return redirect()->route('lorry_receipts.index')

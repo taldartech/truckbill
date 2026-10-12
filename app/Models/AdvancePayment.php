@@ -14,6 +14,7 @@ class AdvancePayment extends Model
         'advance_amount',
         'payment_date',
         'company_id',
+        'bank_ledger_id',
         'remark',
     ];
 
@@ -25,5 +26,10 @@ class AdvancePayment extends Model
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function bankLedger()
+    {
+        return $this->belongsTo(Ledger::class, 'bank_ledger_id');
     }
 }

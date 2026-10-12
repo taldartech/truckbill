@@ -37,9 +37,13 @@
                 </div>
             </div>
         </div>
-        <div class="card-footer">
-            <button class="btn btn-brand-primary" type="submit">Submit form</button>
-            <a href="{{ route('drivers.index') }}" class="btn btn-back">Back to List</a>
+        <div class="card-footer d-flex flex-row flex-nowrap justify-content-end align-items-center gap-2 p-2 p-sm-3">
+            <a href="{{ route('drivers.index') }}" class="btn btn-secondary btn-sm flex-fill flex-sm-grow-0 text-nowrap w-auto">
+                <i class="bi bi-x-lg me-1"></i> Cancel
+            </a>
+            <button class="btn btn-brand-primary btn-sm flex-fill flex-sm-grow-0 text-nowrap w-auto" type="submit">
+                <i class="bi bi-floppy-fill me-1"></i> Submit form
+            </button>
         </div>
     </form>
     <!--end::Form-->

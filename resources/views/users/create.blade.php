@@ -156,5 +156,5 @@
         });
     })();
 </script>
-<script src="{{ asset('js/user-form.js') }}"></script>
+<script src="{{ asset('js/user-form.js') }}?v={{ config('app.ASSET_VERSION') }}"></script>
 @endpush

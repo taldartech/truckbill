@@ -50,6 +50,14 @@
                 </div>
             </div>
             <div class="card-body">
+                @if ($invoice->is_rcm)
+                    <div class="alert alert-warning py-2.5 mb-3 d-flex align-items-center shadow-sm" style="border-radius: 8px;">
+                        <i class="bi bi-shield-check fs-4 me-2 text-warning"></i>
+                        <div>
+                            <strong>GTA Reverse Charge Notice:</strong> Tax is payable on Reverse Charge basis: <strong>YES</strong> (Payable by consignee/recipient u/s 9(3) of CGST Act)
+                        </div>
+                    </div>
+                @endif
                 @if (empty($companyLogoUrl))
                     <h2 class="h5 mb-3">Invoice Details</h2>
                 @endif
@@ -70,7 +78,14 @@
                                 </tr>
                                 <tr>
                                     <th>Invoice Type:</th>
-                                    <td>{{ ucfirst($invoice->invoice_type) }}</td>
+                                    <td>
+                                        {{ ucfirst($invoice->invoice_type) }}
+                                        @if ($invoice->is_rcm)
+                                            <span class="badge bg-warning text-dark ms-2 fw-semibold">
+                                                <i class="bi bi-shield-check me-1"></i>Tax is payable on Reverse Charge basis: YES
+                                            </span>
+                                        @endif
+                                    </td>
                                 </tr>
                                 @if ($invoice->custom_invoice)
                                     <tr>
@@ -85,6 +100,15 @@
                                 <tr>
                                     <th>Generated Date:</th>
                                     <td>{{ $invoice->generated_date }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Due Date:</th>
+                                    <td>
+                                        {{ formatDate($invoice->effectiveDueDate()) }}
+                                        @if (! $invoice->due_date)
+                                            <small class="text-muted">({{ \App\Models\Invoice::DEFAULT_CREDIT_DAYS }} days from invoice date)</small>
+                                        @endif
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th>Customer:</th>
@@ -294,13 +318,16 @@
                         <div class="card">
                             <div class="card-body">
                                 <div class="table-responsive">
-                                    <table class="table table-striped table-hover">
+                                    <table class="table table-striped table-hover align-middle">
                                         <thead class="table-light">
                                             <tr>
                                                 <th>#</th>
                                                 <th>Payment Date</th>
                                                 <th>Payment Mode</th>
-                                                <th>Amount</th>
+                                                <th class="text-end">Remitted (₹)</th>
+                                                <th class="text-end">TDS 194C (₹)</th>
+                                                <th class="text-end">Deductions (₹)</th>
+                                                <th class="text-end">Total Settled (₹)</th>
                                                 <th>Remark</th>
                                                 <th>Recorded By</th>
                                             </tr>
@@ -313,7 +340,23 @@
                                                     <td>
                                                         <span class="badge bg-info">{{ $payment->mode }}</span>
                                                     </td>
-                                                    <td class="text-brand-primary fw-bold">&#8377;{{ number_format($payment->amount, 2) }}</td>
+                                                    <td class="text-end fw-semibold text-dark">&#8377;{{ number_format($payment->amount, 2) }}</td>
+                                                    <td class="text-end fw-semibold text-primary">
+                                                        {{ (float)($payment->tds_amount ?? 0) > 0 ? '₹'.number_format($payment->tds_amount, 2) : '-' }}
+                                                    </td>
+                                                    <td class="text-end fw-semibold text-danger">
+                                                        @if((float)($payment->deduction_amount ?? 0) > 0)
+                                                            <span>₹{{ number_format($payment->deduction_amount, 2) }}</span>
+                                                            @if($payment->deduction_reason)
+                                                                <small class="text-muted d-block text-xs">({{ $payment->deduction_reason }})</small>
+                                                            @endif
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    </td>
+                                                    <td class="text-end text-brand-primary fw-bold">
+                                                        &#8377;{{ number_format((float)$payment->amount + (float)($payment->tds_amount ?? 0) + (float)($payment->deduction_amount ?? 0), 2) }}
+                                                    </td>
                                                     <td>{{ $payment->remark ?: '-' }}</td>
                                                     <td>
                                                         @if($payment->creator)
@@ -325,7 +368,7 @@
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="6" class="text-center text-muted py-4">
+                                                    <td colspan="9" class="text-center text-muted py-4">
                                                         <i class="bi bi-inbox"></i> No payments recorded yet
                                                     </td>
                                                 </tr>
@@ -334,8 +377,8 @@
                                         @if($invoice->payments->count() > 0)
                                             <tfoot class="table-light">
                                                 <tr>
-                                                    <th colspan="3" class="text-end">Total Paid:</th>
-                                                    <th class="text-brand-primary">&#8377;{{ number_format($invoice->paid_amount, 2) }}</th>
+                                                    <th colspan="6" class="text-end">Total Settled (Paid + Deductions):</th>
+                                                    <th class="text-end text-brand-primary">&#8377;{{ number_format($invoice->paid_amount, 2) }}</th>
                                                     <th colspan="2"></th>
                                                 </tr>
                                             </tfoot>
@@ -385,6 +428,11 @@
                         <input type="hidden" id="payment_invoice_id" name="invoice_id" value="{{ $invoice->id }}">
                         <input type="hidden" id="payment_invoice_number" value="{{ $invoice->invoice_number ?: $invoice->manual_invoice_number }}">
                         <input type="hidden" id="payment_total_amount" value="{{ (float) ($invoice->net_amount ?? $invoice->total_amount) }}">
+                        @php
+                            $hasGst = (($invoice->cgst ?? 0) > 0 || ($invoice->sgst ?? 0) > 0 || ($invoice->igst ?? 0) > 0);
+                            $baseAmountForTds = ($hasGst && ($invoice->base_amount ?? 0) > 0) ? (float) $invoice->base_amount : (float) ($invoice->net_amount ?? $invoice->total_amount);
+                        @endphp
+                        <input type="hidden" id="payment_base_amount" value="{{ $baseAmountForTds }}">
                         <input type="hidden" id="payment_paid_amount" value="{{ (float) $invoice->paid_amount }}">
                         <input type="hidden" id="payment_remaining_amount" value="{{ (float) $invoice->remaining_amount }}">
 
@@ -408,13 +456,63 @@
                         </div>
 
                         <div class="mb-2">
-                            <label for="payment_amount" class="form-label fw-semibold mb-1">Amount <span class="text-danger">*</span></label>
+                            <label for="payment_bank_ledger_id" class="form-label fw-semibold mb-1">Deposit To Account</label>
+                            <select class="form-select form-select-sm" id="payment_bank_ledger_id" name="bank_ledger_id">
+                                <option value="">Default Primary Bank / Cash A/c</option>
+                                @foreach($bankLedgers ?? [] as $bLedger)
+                                    <option value="{{ $bLedger->id }}">{{ $bLedger->name }} ({{ $bLedger->accountGroup?->name ?? 'Bank/Cash' }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="mb-2">
+                            <label for="payment_amount" class="form-label fw-semibold mb-1">Amount Received (₹) <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text">&#8377;</span>
-                                <input type="number" class="form-control" id="payment_amount" name="amount" step="0.01" min="0.01" max="{{ $invoice->remaining_amount }}" required placeholder="0.00">
-                                <button type="button" class="btn btn-outline-secondary" id="fill_full_amount">Full</button>
+                                <input type="number" class="form-control" id="payment_amount" name="amount" step="0.01" min="0" required placeholder="0.00">
+                                <button type="button" class="btn btn-outline-secondary" id="fill_full_amount" title="Fill net remaining balance">Full</button>
                             </div>
-                            <div class="form-text mt-1">Max: &#8377;{{ formatIndianNumber($invoice->remaining_amount) }}</div>
+                            <div class="form-text mt-1">Invoice Balance: &#8377;<span id="disp_remaining_amount">{{ formatIndianNumber($invoice->remaining_amount) }}</span></div>
+                        </div>
+
+                        <!-- Customer Deductions Section (TDS & Transit Claims) -->
+                        <div class="p-2.5 rounded border mb-2" style="background-color: #f8fafc; border-color: var(--brand-border) !important;">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small fw-bold text-dark"><i class="bi bi-scissors me-1 text-danger"></i>Customer Deductions (Optional)</span>
+                                <span class="badge bg-light text-muted border small">TDS & Claims</span>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="form-label small fw-semibold text-muted mb-0">TDS u/s 194C (₹)</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">₹</span>
+                                        <input type="number" step="0.01" min="0" class="form-control" id="payment_tds_amount" name="tds_amount" placeholder="0.00">
+                                    </div>
+                                    <div class="d-flex gap-1 mt-1">
+                                        <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1 calc-tds-btn" style="font-size: 0.75rem;" data-pct="1">1%</button>
+                                        <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1 calc-tds-btn" style="font-size: 0.75rem;" data-pct="2">2%</button>
+                                        <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1 calc-tds-btn" style="font-size: 0.75rem;" data-pct="0">Clear</button>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-semibold text-muted mb-0">Shortage / Claims (₹)</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">₹</span>
+                                        <input type="number" step="0.01" min="0" class="form-control" id="payment_deduction_amount" name="deduction_amount" placeholder="0.00">
+                                    </div>
+                                    <input type="text" class="form-control form-control-sm mt-1" id="payment_deduction_reason" name="deduction_reason" placeholder="Reason (e.g. Shortage, Penalty)">
+                                </div>
+                            </div>
+                            <div class="p-2 rounded bg-white border small">
+                                <div class="d-flex justify-content-between text-muted mb-1">
+                                    <span>Total Invoice Cleared:</span>
+                                    <span class="fw-bold text-dark" id="summary_total_cleared">₹0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted">
+                                    <span>Remaining Balance After:</span>
+                                    <span class="fw-bold text-primary" id="summary_remaining_balance">&#8377;{{ formatIndianNumber($invoice->remaining_amount) }}</span>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mb-1">
@@ -438,10 +536,38 @@
 
     <script>
         $(document).ready(function() {
+            function updateSettlementSummary() {
+                var remaining = parseFloat($('#payment_remaining_amount').val()) || 0;
+                var amount = parseFloat($('#payment_amount').val()) || 0;
+                var tds = parseFloat($('#payment_tds_amount').val()) || 0;
+                var ded = parseFloat($('#payment_deduction_amount').val()) || 0;
+                var totalCleared = amount + tds + ded;
+                var balanceAfter = Math.max(0, remaining - totalCleared);
+
+                $('#summary_total_cleared').text('₹' + totalCleared.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#summary_remaining_balance').text('₹' + balanceAfter.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+            }
+
+            $('#payment_amount, #payment_tds_amount, #payment_deduction_amount').on('input', updateSettlementSummary);
+
+            $('.calc-tds-btn').on('click', function() {
+                var pct = parseFloat($(this).data('pct')) || 0;
+                var baseTotal = parseFloat($('#payment_base_amount').val()) || parseFloat($('#payment_total_amount').val()) || 0;
+                if (pct > 0) {
+                    var tds = Math.round((baseTotal * (pct / 100)) * 100) / 100;
+                    $('#payment_tds_amount').val(tds.toFixed(2)).trigger('input');
+                } else {
+                    $('#payment_tds_amount').val('').trigger('input');
+                }
+            });
+
             // Quick-fill the full remaining balance
             $('#fill_full_amount').on('click', function() {
-                var max = parseFloat($('#payment_amount').attr('max')) || 0;
-                $('#payment_amount').val(max.toFixed(2)).focus();
+                var remaining = parseFloat($('#payment_remaining_amount').val()) || 0;
+                var tds = parseFloat($('#payment_tds_amount').val()) || 0;
+                var ded = parseFloat($('#payment_deduction_amount').val()) || 0;
+                var netRemit = Math.max(0, remaining - tds - ded);
+                $('#payment_amount').val(netRemit.toFixed(2)).trigger('input').focus();
             });
 
             // Handle payment form submission
@@ -450,25 +576,31 @@
                 var invoiceId = $('#payment_invoice_id').val();
                 var formData = {
                     mode: $('#payment_mode').val(),
-                    amount: parseFloat($('#payment_amount').val()),
+                    amount: parseFloat($('#payment_amount').val()) || 0,
+                    tds_amount: parseFloat($('#payment_tds_amount').val()) || 0,
+                    deduction_amount: parseFloat($('#payment_deduction_amount').val()) || 0,
+                    deduction_reason: $('#payment_deduction_reason').val(),
                     remark: $('#payment_remark').val(),
                     payment_date: $('#payment_date').val() || new Date().toISOString().split('T')[0],
+                    bank_ledger_id: $('#payment_bank_ledger_id').val() || null,
                     _token: '{{ csrf_token() }}'
                 };
 
                 var invoiceTotal = parseFloat($('#payment_total_amount').val()) || 0;
                 var paidAmount = parseFloat($('#payment_paid_amount').val()) || 0;
                 var remainingAmount = parseFloat($('#payment_remaining_amount').val()) || 0;
+                var totalCleared = formData.amount + formData.tds_amount + formData.deduction_amount;
+
                 if (!formData.mode) {
                     $('#payment_error').removeClass('d-none').text('Please select a payment mode.');
                     return;
                 }
-                if (!formData.amount || formData.amount <= 0) {
-                    $('#payment_error').removeClass('d-none').text('Please enter a valid payment amount.');
+                if (totalCleared <= 0) {
+                    $('#payment_error').removeClass('d-none').text('Total payment settlement (Remitted + TDS + Deductions) must be greater than zero.');
                     return;
                 }
-                if (formData.amount > remainingAmount) {
-                    $('#payment_error').removeClass('d-none').text('Payment amount cannot exceed remaining balance of ' + remainingAmount.toFixed(2));
+                if (totalCleared > (remainingAmount + 0.01)) {
+                    $('#payment_error').removeClass('d-none').text('Total cleared amount (₹' + totalCleared.toFixed(2) + ') cannot exceed remaining balance of ₹' + remainingAmount.toFixed(2));
                     return;
                 }
 
@@ -480,11 +612,13 @@
                     paymentDate: formData.payment_date,
                     mode: formData.mode,
                     amount: formData.amount,
+                    tdsAmount: formData.tds_amount,
+                    deductionAmount: formData.deduction_amount,
                     remark: formData.remark,
                     invoiceTotal: invoiceTotal,
                     paidAmount: paidAmount,
                     balanceBefore: remainingAmount,
-                    balanceAfter: Math.max(0, remainingAmount - formData.amount),
+                    balanceAfter: Math.max(0, remainingAmount - totalCleared),
                 };
 
                 function submitPayment() {

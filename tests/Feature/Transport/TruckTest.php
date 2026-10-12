@@ -4,6 +4,7 @@ namespace Tests\Feature\Transport;
 
 use App\Models\City;
 use App\Models\Company;
+use App\Models\CompanySubscription;
 use App\Models\Country;
 use App\Models\Driver;
 use App\Models\State;
@@ -38,6 +39,16 @@ class TruckTest extends TestCase
             'user_id' => null,
             'gst_slab' => config('payments.gst_slabs')[0],
             'is_blocked' => false,
+            'plan_end_date' => now()->addYear(),
+        ]);
+
+        CompanySubscription::create([
+            'company_id' => $company->id,
+            'status' => 'active',
+            'starts_on' => now()->subMonth(),
+            'ends_on' => now()->addYear(),
+            'included_branches' => 2,
+            'users_per_branch' => 3,
         ]);
 
         return User::factory()->create([
@@ -99,6 +110,64 @@ class TruckTest extends TestCase
             'truck_number' => 'GJ01AB1234',
             'transporter_id' => $transporter->id,
         ]);
+    }
+
+    public function test_ajax_store_returns_json_payload_for_quick_add(): void
+    {
+        $admin = $this->makeAdmin();
+        [, , $city] = $this->seedGeo();
+        $transporter = $this->makeTransporter($admin, $city);
+
+        $response = $this->actingAs($admin)
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'X-Requested-With' => 'XMLHttpRequest',
+            ])
+            ->post('/trucks', [
+                'transporter_id' => $transporter->id,
+                'truck_number' => 'GJ01AX1234',
+                'truck_type' => 'Flatbed',
+                'registration_date' => now()->toDateString(),
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('truck.truck_number', 'GJ01AX1234')
+            ->assertJsonPath('truck.transporter_id', $transporter->id);
+
+        $this->assertDatabaseHas('trucks', [
+            'truck_number' => 'GJ01AX1234',
+            'transporter_id' => $transporter->id,
+        ]);
+    }
+
+    public function test_ajax_store_rejects_duplicate_truck_number_with_json_errors(): void
+    {
+        $admin = $this->makeAdmin();
+        [, , $city] = $this->seedGeo();
+        $transporter = $this->makeTransporter($admin, $city);
+
+        Truck::create([
+            'transporter_id' => $transporter->id,
+            'truck_number' => 'GJ01DP1234',
+            'truck_type' => 'Flatbed',
+            'company_id' => $admin->company_id,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'X-Requested-With' => 'XMLHttpRequest',
+            ])
+            ->post('/trucks', [
+                'transporter_id' => $transporter->id,
+                'truck_number' => 'GJ01DP1234',
+                'truck_type' => 'Flatbed',
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('errors.truck_number.0', 'The truck number must be unique within the company.');
     }
 
     public function test_store_rejects_duplicate_truck_number_in_company(): void

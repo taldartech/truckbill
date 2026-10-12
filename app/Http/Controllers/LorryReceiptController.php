@@ -24,9 +24,18 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Yajra\DataTables\Facades\DataTables;
+use App\Models\Country;
+use App\Models\TruckType;
 
 class LorryReceiptController extends Controller
 {
+    /**
+     * Status options for the bilty list filter; "Invoiced" matches the list badge rather than delivery_status.
+     *
+     * @var list<string>
+     */
+    public const LISTING_STATUSES = ['Pending', 'In-Progress', 'Delivered', 'Cancelled', 'Invoiced'];
+
     public function __construct(
         private readonly LorryReceiptNotificationService $lrNotificationService,
         private readonly LorryReceiptCalculationService $lrCalculationService,
@@ -117,7 +126,30 @@ class LorryReceiptController extends Controller
             return $this->getLorryReceiptsData($request);
         }
 
-        return view('lorry_receipts.index');
+        $companyId = $this->getCurrentCompanyId();
+
+        $selectedCustomer = $request->filled('customer_id')
+            ? Consignee::where('company_id', $companyId)->find($request->customer_id)
+            : null;
+
+        $selectedTransporter = $request->filled('transporter_id')
+            ? Transporter::where('company_id', $companyId)->with('transporterMaster')->find($request->transporter_id)
+            : null;
+
+        $selectedTruck = $request->filled('truck_id')
+            ? Truck::where(function ($query) use ($companyId) {
+                if ($companyId) {
+                    $query->whereHas('transporter', function ($transporterQuery) use ($companyId) {
+                        $transporterQuery->where('company_id', $companyId);
+                    })->orWhere(function ($orphanQuery) use ($companyId) {
+                        $orphanQuery->whereNull('transporter_id')
+                            ->where('company_id', $companyId);
+                    });
+                }
+            })->find($request->truck_id)
+            : null;
+
+        return view('lorry_receipts.index', compact('selectedCustomer', 'selectedTransporter', 'selectedTruck'));
     }
 
     private function getLorryReceiptsData(Request $request): JsonResponse
@@ -154,8 +186,30 @@ class LorryReceiptController extends Controller
                 $query->where('lorry_receipts.company_id', $user->company_id);
             }
             $query->orderBy('lorry_receipts.gr_date', 'desc')->orderBy('lorry_receipts.linked_lr_id', 'desc');
-            $query->when($request->has('gr_date_from') && $request->has('gr_date_to'), function ($query) use ($request) {
+            $query->when($request->filled('gr_date_from') && $request->filled('gr_date_to'), function ($query) use ($request) {
                 $query->whereBetween('lorry_receipts.gr_date', [$request->gr_date_from, $request->gr_date_to]);
+            });
+            $query->when($request->filled('lr_number'), function ($query) use ($request) {
+                $query->where('lorry_receipts.lr_number', 'like', '%'.trim($request->lr_number).'%');
+            });
+            $query->when($request->filled('customer_id'), function ($query) use ($request) {
+                $query->where('lorry_receipts.customer_id', $request->customer_id);
+            });
+            $query->when($request->filled('transporter_id'), function ($query) use ($request) {
+                $query->where('lorry_receipts.transporter_id', $request->transporter_id);
+            });
+            $query->when($request->filled('truck_id'), function ($query) use ($request) {
+                $query->where('lorry_receipts.truck_id', $request->truck_id);
+            });
+            $query->when(in_array($request->delivery_status, self::LISTING_STATUSES, true), function ($query) use ($request) {
+                if ($request->delivery_status === 'Invoiced') {
+                    $query->where('lorry_receipts.invoice_generated', 1);
+
+                    return;
+                }
+
+                $query->where('lorry_receipts.delivery_status', $request->delivery_status)
+                    ->where('lorry_receipts.invoice_generated', 0);
             });
 
             return DataTables::of($query)
@@ -322,7 +376,9 @@ return $buttons;
         }
 
         $companyId = $this->getCurrentCompanyId();
+        $countries = Country::orderBy('name')->get();
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
+        $truckTypes = TruckType::orderBy('name')->get();
 
         // Only fetch selected IDs (if any) to avoid loading large dropdown datasets.
         $selectedConsigneeIds = collect([
@@ -377,7 +433,15 @@ return $buttons;
                 ->first()
             : null;
 
-        return view('lorry_receipts.create', compact('trucks', 'consignees', 'goodsTypes', 'agencies', 'payeeTransporter'));
+        return view('lorry_receipts.create', compact(
+            'trucks',
+            'consignees',
+            'goodsTypes',
+            'agencies',
+            'payeeTransporter',
+            'countries',
+            'truckTypes'
+        ));
     }
 
     public function createLinked(): View|RedirectResponse
@@ -387,7 +451,9 @@ return $buttons;
         }
 
         $companyId = $this->getCurrentCompanyId();
+        $countries = Country::orderBy('name')->get();
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
+        $truckTypes = TruckType::orderBy('name')->get();
 
         // Only fetch selected IDs (if any) to avoid loading large dropdown datasets.
         $selectedConsigneeIds = collect([
@@ -442,7 +508,15 @@ return $buttons;
                 ->first()
             : null;
 
-        return view('lorry_receipts.create-linked', compact('trucks', 'consignees', 'goodsTypes', 'agencies', 'payeeTransporter'));
+        return view('lorry_receipts.create-linked', compact(
+            'trucks',
+            'consignees',
+            'goodsTypes',
+            'agencies',
+            'payeeTransporter',
+            'countries',
+            'truckTypes'
+        ));
     }
 
     /**
@@ -453,8 +527,11 @@ return $buttons;
         try {
             $validated = $request->validate([
                 'memo_id' => 'required|string',
+                'memo_created_at' => 'nullable|date|before_or_equal:now',
                 'lr_ids' => 'required|array',
                 'lr_ids.*' => 'integer|exists:lorry_receipts,id',
+            ], [
+                'memo_created_at.before_or_equal' => 'The memo date & time cannot be in the future.',
             ]);
 
             $companyId = Auth::user()->company_id;
@@ -531,9 +608,11 @@ return $buttons;
                 foreach ($lorryReceipts as $lr) {
                     $oldDeliveryStatus = $lr->delivery_status;
                     $lr->memo_id = $validated['memo_id'];
-                    if (empty($lr->memo_created_at)) {
-                      $lr->memo_created_at = now();
-                   }
+                    if (! empty($validated['memo_created_at'])) {
+                        $lr->memo_created_at = Carbon::parse($validated['memo_created_at']);
+                    } elseif (empty($lr->memo_created_at)) {
+                        $lr->memo_created_at = now();
+                    }
                     $lr->delivery_status = 'Delivered';
                     $lr->save();
 
@@ -657,23 +736,39 @@ return $buttons;
                         $amountInput
                     );
 
+                    $sourceCity = $item['source_city'] ?? null;
+                    $sourceState = $item['source_state'] ?? null;
+                    if (empty($sourceCity) && ! empty($item['consignor_id'])) {
+                        $consignorParty = Consignee::with(['city', 'state'])->find($item['consignor_id']);
+                        $sourceCity = $consignorParty?->city?->name ?? 'N/A';
+                        $sourceState = $consignorParty?->state?->name ?? 'N/A';
+                    }
+
+                    $destCity = $item['destination_city'] ?? null;
+                    $destState = $item['destination_state'] ?? null;
+                    if (empty($destCity) && ! empty($item['consignee_id'])) {
+                        $consigneeParty = Consignee::with(['city', 'state'])->find($item['consignee_id']);
+                        $destCity = $consigneeParty?->city?->name ?? 'N/A';
+                        $destState = $consigneeParty?->state?->name ?? 'N/A';
+                    }
+
                     $data = [
                         'lr_number' => $item['lr_number'],
                         'gr_number' => $item['gr_number'],
                         'invoice_number' => $item['invoice_number'],
                         'customer_id' => $item['customer_id'],
                         'consignor_id' => $item['consignor_id'],
-                        'consignor_contact_number' => $item['consignor_contact_number'],
+                        'consignor_contact_number' => $item['consignor_contact_number'] ?? null,
                         'consignee_id' => $item['consignee_id'],
-                        'consignee_contact_number' => $item['consignee_contact_number'],
-                        'source_city' => $item['source_city'],
-                        'source_state' => $item['source_state'],
-                        'destination_city' => $item['destination_city'],
-                        'destination_state' => $item['destination_state'],
+                        'consignee_contact_number' => $item['consignee_contact_number'] ?? null,
+                        'source_city' => $sourceCity ?? 'N/A',
+                        'source_state' => $sourceState ?? 'N/A',
+                        'destination_city' => $destCity ?? 'N/A',
+                        'destination_state' => $destState ?? 'N/A',
                         'loading_station' => $item['loading_station'] ?? null,
                         'unloading_station' => $item['unloading_station'] ?? null,
-                        'lane' => $item['lane'],
-                        'good_type' => $item['good_type'],
+                        'lane' => $item['lane'] ?? null,
+                        'good_type' => $item['good_type'] ?? null,
                         'goods_value' => $item['goods_value'] ?? null,
                         'weight' => $item['weight'],
                         'unloading_weight' => $itemWeight,
@@ -895,7 +990,9 @@ return $buttons;
         }
 
         $sharedLorryReceipt = $linkedLorryReceipts->first();
+        $countries = Country::orderBy('name')->get();
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
+        $truckTypes = TruckType::orderBy('name')->get();
 
         $selectedConsigneeIds = $linkedLorryReceipts
             ->flatMap(fn (LorryReceipt $lr): array => [$lr->customer_id, $lr->consignor_id, $lr->consignee_id])
@@ -1004,6 +1101,8 @@ return $buttons;
             'payeeTransporter' => $payeeTransporter,
             'canChangeTransporter' => $canChangeTransporter,
             'tdsPercentages' => $tdsPercentages,
+            'countries' => $countries,
+            'truckTypes' => $truckTypes,
         ]);
     }
 
@@ -1347,6 +1446,8 @@ return $buttons;
                 ->get()
             : collect();
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
+        $countries = Country::orderBy('name')->get();
+        $truckTypes = TruckType::orderBy('name')->get();
         $statuses = ['Pending', 'Delivered', 'Cancelled', 'In-Progress'];
         $tdsPercentages = [
             'default' => config('payments.tds_percentages.default', 20),
@@ -1399,6 +1500,8 @@ return $buttons;
             'consignors' => $consignees,
             'consignees' => $consignees,
             'goodsTypes' => $goodsTypes,
+            'countries' => $countries,
+            'truckTypes' => $truckTypes,
             'truckOwners' => $truckOwners,
             'agencies' => $agencies,
             'tdsPercentages' => $tdsPercentages,
@@ -1534,7 +1637,9 @@ return $buttons;
         // Add company_id to validated data
         $validated['company_id'] = $companyId;
 
-        $freightBooking = FreightBooking::find($lorry_receipt->freight_booking_id);
+        $freightBooking = $lorry_receipt->freight_booking_id
+            ? FreightBooking::find($lorry_receipt->freight_booking_id)
+            : FreightBooking::where('lr_id', $lorry_receipt->id)->first();
         if ($freightBooking) {
             if (! $freightBooking->canChangeTdsAmount() && isset($validated['transporter_id']) && $validated['transporter_id'] != $lorry_receipt->transporter_id) {
                 return redirect()->back()->withErrors([

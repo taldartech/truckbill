@@ -69,7 +69,7 @@ class FreightBooking extends Model implements Auditable
 
     public function truck()
     {
-        return $this->belongsTo(Truck::class);
+        return $this->hasOneThrough(Truck::class, LorryReceipt::class, 'id', 'id', 'lr_id', 'truck_id');
     }
 
     public function consignee()
@@ -119,6 +119,22 @@ class FreightBooking extends Model implements Auditable
         }
 
         return (float) $this->customAmounts()->sum('amount');
+    }
+
+    /**
+     * Allocate the next hire voucher number. Call inside an open DB transaction.
+     * Uses withTrashed() because the unique index still covers soft-deleted rows,
+     * and locks the current max row to serialize concurrent creates.
+     */
+    public static function allocateNextVoucherNumber(): int
+    {
+        static::query()
+            ->withTrashed()
+            ->orderByDesc('voucher_number')
+            ->lockForUpdate()
+            ->first();
+
+        return ((int) static::withTrashed()->max('voucher_number')) + 1;
     }
 
     public function effectivePayableAmount(): float
@@ -241,6 +257,12 @@ class FreightBooking extends Model implements Auditable
    }
     protected static function booted(): void
     {
+        static::creating(function (FreightBooking $booking): void {
+            if (empty($booking->voucher_number)) {
+                $booking->voucher_number = (int) (static::withTrashed()->max('voucher_number') ?? 0) + 1;
+            }
+        });
+
         static::deleting(function (FreightBooking $freightBooking): void {
             $freightBooking->customAmounts()->each(function (FreightBookingCustomAmount $customAmount): void {
                 $customAmount->delete();

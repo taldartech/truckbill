@@ -7,8 +7,31 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-    <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <style>
+        .select2-container--bootstrap-5 .select2-selection {
+            min-height: 2.125rem !important;
+            padding: 0.2rem 0.55rem !important;
+            font-size: 0.8125rem !important;
+            border-radius: 0.55rem !important;
+            border-color: var(--brand-border, #e5e7eb) !important;
+        }
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            padding-left: 0 !important;
+            line-height: 1.7rem !important;
+            color: #334155 !important;
+        }
+        .select2-container--bootstrap-5 .select2-dropdown {
+            font-size: 0.8125rem !important;
+            border-radius: 8px !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+        }
+        .select2-container--bootstrap-5 .select2-results__option {
+            padding: 4px 8px !important;
+        }
+
         :root {
             --glass-bg: rgba(255, 255, 255, 0.75);
             --glass-border: rgba(255, 255, 255, 0.3);
@@ -22,10 +45,16 @@
         }
 
         .table td, .table th {
-            padding: 4px 8px !important;
-            font-size: 12px !important;
+            padding: 8px 10px;
             vertical-align: middle;
             border-color: rgba(0,0,0,0.05) !important;
+        }
+
+        @media (max-width: 767.98px) {
+            .table td, .table th {
+                font-size: 0.8125rem !important;
+                padding: 4px 6px !important;
+            }
         }
 
         /* Action Buttons */
@@ -68,7 +97,8 @@
             border-radius: 50px !important;
             font-size: 11px !important;
             font-weight: 600 !important;
-            padding: 4px 12px !important;
+            height: 32px;
+            padding: 0 16px !important;
             display: inline-flex;
             align-items: center;
             transition: all 0.2s ease;
@@ -79,78 +109,205 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
         }
 
-        .input-group-custom {
-            background: white;
-            border-radius: 10px;
-            padding: 2px 8px;
-            border: 1px solid rgba(0,0,0,0.08);
-            display: flex;
-            align-items: center;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-        }
-
-        .input-group-custom span {
-            font-size: 10px;
-            text-transform: uppercase;
-            font-weight: 700;
-            color: var(--slate-600);
-            margin-right: 8px;
-        }
-
-        .input-group-custom input {
-            border: none !important;
-            font-size: 12px !important;
-            padding: 2px 0 !important;
-            background: transparent !important;
-            outline: none !important;
-            box-shadow: none !important;
-        }
-
-        /* Compact Status Legend */
-        .status-legend {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            font-size: 11px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .legend-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 3px;
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-
-        .legend-delivered { background-color: #d1e7dd; }
-        .legend-cancelled { background-color: #f8d7da; }
-        .legend-pending   { background-color: #ffffff; }
-
         .table-success { background-color: #d1e7dd !important; border-color: #badbcc !important; }
         .table-danger  { background-color: #f8d7da !important; border-color: #f5c2c7 !important; }
 
-        .filter-action-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 10px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: none;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        .freight-bookings-index .table-responsive {
+            max-height: none !important;
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
         }
 
-        .filter-action-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        .freight-bookings-index .table-responsive::-webkit-scrollbar {
+            height: 6px;
         }
 
+        .freight-bookings-index .table-responsive::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        .freight-bookings-index .table-responsive::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .freight-bookings-index .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        #freightBookingsTable {
+            width: 100% !important;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        #freightBookingsTable th,
+        #freightBookingsTable td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-left: 5px !important;
+            padding-right: 5px !important;
+        }
+
+        #freightBookingsTable thead th {
+            position: sticky;
+            top: 0;
+            background: var(--brand-table-header-bg) !important;
+            z-index: 20;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            padding-top: 4px !important;
+            padding-bottom: 4px !important;
+            padding-left: 3px !important;
+            padding-right: 3px !important;
+            font-size: 11.5px !important;
+            font-weight: 700;
+            letter-spacing: 0;
+        }
+
+        /* Large desktop view: fit within 100% */
+        @media (min-width: 1200px) {
+            #freightBookingsTable {
+                table-layout: fixed;
+                min-width: 0 !important;
+            }
+
+            #freightBookingsTable th:nth-child(1), #freightBookingsTable td:nth-child(1) { width: 3.5%; text-align: center; } /* Checkbox */
+            #freightBookingsTable th:nth-child(2), #freightBookingsTable td:nth-child(2) { width: 7.5%; } /* GR Date */
+            #freightBookingsTable th:nth-child(3), #freightBookingsTable td:nth-child(3) { width: 8.5%; } /* LR No */
+            #freightBookingsTable th:nth-child(4), #freightBookingsTable td:nth-child(4) { width: 11%; }  /* Customer */
+            #freightBookingsTable th:nth-child(5), #freightBookingsTable td:nth-child(5) { width: 11%; }  /* Transporter */
+            #freightBookingsTable th:nth-child(6), #freightBookingsTable td:nth-child(6) { width: 9%; }   /* Truck */
+            #freightBookingsTable th:nth-child(7), #freightBookingsTable td:nth-child(7) { width: 10%; }  /* Route */
+            #freightBookingsTable th:nth-child(8), #freightBookingsTable td:nth-child(8) { width: 6%; }   /* Weight */
+            #freightBookingsTable th:nth-child(9), #freightBookingsTable td:nth-child(9) { width: 6%; }   /* Rate */
+            #freightBookingsTable th:nth-child(10), #freightBookingsTable td:nth-child(10) { width: 8%; } /* Total */
+            #freightBookingsTable th:nth-child(11), #freightBookingsTable td:nth-child(11) { width: 8%; } /* Balance */
+            #freightBookingsTable th:nth-child(12), #freightBookingsTable td:nth-child(12) { width: 11.5%; min-width: 115px; } /* Actions */
+        }
+
+        #freightBookingsTable td:nth-child(12),
+        #freightBookingsTable th:nth-child(12) {
+            overflow: visible;
+            text-overflow: clip;
+        }
+
+        .freight-bookings-index .app-index-table-actions {
+            display: inline-flex !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            gap: 4px !important;
+            white-space: nowrap !important;
+            max-width: none !important;
+        }
+
+        /* Mobile & Tablet: smooth internal horizontal scroll without page overflow */
+        @media (max-width: 1199.98px) {
+            #freightBookingsTable {
+                table-layout: auto !important;
+                min-width: 1050px !important;
+                width: 100% !important;
+            }
+
+            #freightBookingsTable th:nth-child(n),
+            #freightBookingsTable td:nth-child(n) {
+                width: auto !important;
+                white-space: nowrap !important;
+            }
+
+            #freightBookingsTable th:nth-child(12),
+            #freightBookingsTable td:nth-child(12) {
+                min-width: 120px !important;
+                width: 120px !important;
+                white-space: nowrap !important;
+                overflow: visible !important;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .freight-bookings-index .app-index-list-card > .card-header {
+                padding: 0.5rem 0.75rem !important;
+            }
+
+            .freight-bookings-index .modal-footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.4rem;
+            }
+
+            .freight-bookings-index .modal-footer .btn {
+                width: 100%;
+                margin: 0 !important;
+                text-align: center;
+            }
+
+            /* Pagination size matches Bilty standard: unified block with small font */
+            .freight-bookings-index .app-index-partload-pagination {
+                padding: 0.4rem 0.5rem !important;
+                gap: 0.35rem !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .dataTables_info {
+                font-size: 0.72rem !important;
+                text-align: center !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination {
+                margin: 0 !important;
+                gap: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-link {
+                font-size: 0.72rem !important;
+                padding: 0.22rem 0.5rem !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item:first-child .page-link {
+                border-top-left-radius: 0.375rem !important;
+                border-bottom-left-radius: 0.375rem !important;
+                border-top-right-radius: 0 !important;
+                border-bottom-right-radius: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item:last-child .page-link {
+                border-top-right-radius: 0.375rem !important;
+                border-bottom-right-radius: 0.375rem !important;
+                border-top-left-radius: 0 !important;
+                border-bottom-left-radius: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item:not(:first-child):not(:last-child) .page-link {
+                border-radius: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-item:only-child .page-link {
+                border-radius: 0.375rem !important;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .freight-bookings-index .app-index-partload-pagination .dataTables_info {
+                font-size: 0.75rem !important;
+                text-align: center !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination {
+                margin: 0 !important;
+                gap: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-partload-pagination .pagination .page-link {
+                font-size: 0.75rem !important;
+                padding: 0.25rem 0.55rem !important;
+            }
+        }
     </style>
 @endpush
 
@@ -181,7 +338,7 @@
 
 
 
-    <div class="container-fluid mt-4 app-index-page app-index-page--standard">
+    <div class="container-fluid mt-2 pt-1 app-index-page app-index-page--standard freight-bookings-index">
         @if (session('success'))
             <div class="mb-3">
                 <span class="badge text-bg-dark border app-index-flash">
@@ -203,81 +360,124 @@
             </div>
 
             <div class="app-index-dt-toolbar">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                    <div class="d-flex flex-wrap align-items-center gap-3">
-                        <h6 class="mb-0" style="font-size: 0.8125rem; color: var(--brand-text-muted);">Search & Filters</h6>
-                        <div class="status-legend mb-0 d-none d-md-flex">
-                            <div class="legend-item">
-                                <div class="legend-color legend-delivered"></div>
-                                <span class="small">Delivered</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-color legend-cancelled"></div>
-                                <span class="small">Cancelled</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-color legend-pending"></div>
-                                <span class="small">Pending</span>
+                <div class="app-index-filters" data-app-index-filters>
+                    <div class="app-index-filters__top">
+                        <div class="app-index-filters__intro">
+                            <h6 class="app-index-filters__title">Search &amp; Filters</h6>
+                            <div class="app-index-filters__legend d-none d-md-inline-flex">
+                                <span class="app-index-filters__legend-item">
+                                    <span class="app-index-filters__swatch app-index-filters__swatch--delivered"></span>
+                                    Delivered
+                                </span>
+                                <span class="app-index-filters__legend-item">
+                                    <span class="app-index-filters__swatch app-index-filters__swatch--cancelled"></span>
+                                    Cancelled
+                                </span>
+                                <span class="app-index-filters__legend-item">
+                                    <span class="app-index-filters__swatch app-index-filters__swatch--pending"></span>
+                                    Pending
+                                </span>
                             </div>
                         </div>
+                        <div class="app-index-filters__top-actions">
+                            <div class="app-index-filters__bulk">
+                                <button id="bulk-memo-id-btn" class="header-pill-btn btn btn-primary border-0" style="display: none;" data-bs-toggle="modal" data-bs-target="#bulkMemoIdModal">
+                                    <i class="bi bi-clipboard-check"></i> Bulk Memo / POD
+                                </button>
+                                <button id="voucher-payment-btn" class="header-pill-btn btn btn-brand-primary border-0" style="display: none;">
+                                    <i class="bi bi-receipt"></i> Voucher
+                                </button>
+                                <button id="combined-payment-btn" class="header-pill-btn btn btn-warning border-0" style="display: none;">
+                                    <i class="bi bi-collection"></i> Combined
+                                </button>
+                            </div>
+                            <button type="button"
+                                class="app-index-filters__toggle d-md-none"
+                                data-app-index-filters-toggle
+                                aria-expanded="false"
+                                aria-controls="fbIndexFiltersBody">
+                                <i class="bi bi-sliders"></i>
+                                <span>Filters</span>
+                                <i class="bi bi-chevron-down app-index-filters__toggle-chevron"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="d-flex flex-wrap gap-2">
-                        <button id="bulk-memo-id-btn" class="header-pill-btn btn btn-primary border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;" data-bs-toggle="modal" data-bs-target="#bulkMemoIdModal">
-                            <i class="bi bi-clipboard-check"></i> Bulk Memo / POD
-                        </button>
-                        <button id="voucher-payment-btn" class="header-pill-btn btn btn-brand-primary border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;">
-                            <i class="bi bi-receipt"></i> Voucher
-                        </button>
-                        <button id="combined-payment-btn" class="header-pill-btn btn btn-warning border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;">
-                            <i class="bi bi-collection"></i> Combined
-                        </button>
+
+                    <div class="app-index-filters__body" id="fbIndexFiltersBody">
+                        <form method="GET" action="{{ route('freight_bookings.index') }}" id="searchForm" class="app-index-filters__form">
+                            <div class="app-index-filters__controls">
+                                <div class="app-index-filters__field app-index-filters__field--search">
+                                    <label class="app-index-filters__label" for="filterFbSearch">Search</label>
+                                    <input type="text" class="form-control form-control-sm" name="search" id="filterFbSearch"
+                                        value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'search', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}"
+                                        placeholder="LR, city, route...">
+                                </div>
+                                <div class="app-index-filters__field app-index-filters__field--lr">
+                                    <label class="app-index-filters__label" for="filterFbLrNumber">Bilty / LR</label>
+                                    <input type="text" class="form-control form-control-sm" name="lr_number" id="filterFbLrNumber"
+                                        value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'lr_number', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}"
+                                        placeholder="LR number">
+                                </div>
+                                <div class="app-index-filters__field app-index-filters__field--party">
+                                    <label class="app-index-filters__label" for="filterFbCustomerId">Customer</label>
+                                    <select name="customer_id" id="filterFbCustomerId" class="form-select form-select-sm select2-fb-filter">
+                                        <option value="">All Customers</option>
+                                        @if(isset($selectedCustomer) && $selectedCustomer)
+                                            <option value="{{ $selectedCustomer->id }}" selected>{{ $selectedCustomer->name }}</option>
+                                        @endif
+                                    </select>
+                                </div>
+                                <div class="app-index-filters__field app-index-filters__field--party">
+                                    <label class="app-index-filters__label" for="filterFbTransporterId">Transporter</label>
+                                    <select name="transporter_id" id="filterFbTransporterId" class="form-select form-select-sm select2-fb-filter">
+                                        <option value="">All Transporters</option>
+                                        @if(isset($selectedTransporter) && $selectedTransporter)
+                                            <option value="{{ $selectedTransporter->id }}" selected>{{ $selectedTransporter->displayNameWithShortName() }}</option>
+                                        @endif
+                                    </select>
+                                </div>
+                                <div class="app-index-filters__field app-index-filters__field--truck">
+                                    <label class="app-index-filters__label" for="filterFbTruckId">Truck</label>
+                                    <select name="truck_id" id="filterFbTruckId" class="form-select form-select-sm select2-fb-filter">
+                                        <option value="">All Trucks</option>
+                                        @if(isset($selectedTruck) && $selectedTruck)
+                                            <option value="{{ $selectedTruck->id }}" selected>{{ $selectedTruck->truck_number }}</option>
+                                        @endif
+                                    </select>
+                                </div>
+                                <div class="app-index-filters__field app-index-filters__field--date">
+                                    <label class="app-index-filters__label" for="fbStartDate">From</label>
+                                    <input type="date" class="form-control form-control-sm" name="start_date" id="fbStartDate" value="{{ $startDate }}">
+                                </div>
+                                <div class="app-index-filters__field app-index-filters__field--date">
+                                    <label class="app-index-filters__label" for="fbEndDate">To</label>
+                                    <input type="date" class="form-control form-control-sm" name="end_date" id="fbEndDate" value="{{ $endDate }}">
+                                </div>
+                                <label class="app-index-filters__chip{{ request('pending_memo') ? ' is-active' : '' }}" for="pendingMemoFilter">
+                                    <input class="form-check-input" type="checkbox" name="pending_memo" value="1"
+                                        id="pendingMemoFilter" {{ request('pending_memo') ? 'checked' : '' }}>
+                                    <span class="app-index-filters__chip-label">Pending Memo / POD</span>
+                                </label>
+                                <div class="app-index-filters__actions">
+                                    <button type="submit" class="app-index-filters__btn app-index-filters__btn--apply" id="filterFbBtn" data-tooltip="Filter" aria-label="Filter">
+                                        <i class="bi bi-funnel-fill"></i>
+                                    </button>
+                                    <a href="{{ route('freight_bookings.index') }}" class="app-index-filters__btn app-index-filters__btn--reset" id="resetFbBtn" data-tooltip="Reset" aria-label="Reset">
+                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+
+                        @if (request('search'))
+                            <div class="app-index-filters__result">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Results for: <strong>"{{ request('search') }}"</strong>
+                                <a href="{{ route('freight_bookings.index') }}" class="btn btn-link btn-sm p-0 ms-2" style="font-size: 0.75rem;">Clear Search</a>
+                            </div>
+                        @endif
                     </div>
                 </div>
-                <form method="GET" action="{{ route('freight_bookings.index') }}" id="searchForm">
-                    <div class="row g-2 align-items-end">
-                        <div class="col-12 col-md-5">
-                            <input type="text" class="form-control form-control-sm" name="search"
-                                value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'search', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" placeholder="LR, Customer, Truck, City...">
-                        </div>
-                        <div class="col-12 col-md-4">
-                            <div class="d-flex  gap-2">
-                                <div class="input-group-custom flex-grow-1">
-                                    <span>From</span>
-                                    <input type="date" name="start_date" value="{{ $startDate }}">
-                                </div>
-                                <div class="input-group-custom flex-grow-1">
-                                    <span>To</span>
-                                    <input type="date" name="end_date" value="{{ $endDate }}">
-                                </div>
-                            </div>
-                        </div>
-
-
-                        <div class="col-12 col-sm-6 col-md-2 d-flex align-items-end">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" name="pending_memo" value="1"
-                                    id="pendingMemoFilter" {{ request('pending_memo') ? 'checked' : '' }}>
-                                <label class="form-check-label" for="pendingMemoFilter">
-                                    Pending Memo / POD
-                                </label>
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-6 col-md-1 d-flex gap-2 justify-content-sm-end">
-                            <button type="submit" class="filter-action-btn" style="background: var(--brand-primary); color: white;" title="Filter" data-bs-toggle="tooltip">
-                                <i class="bi bi-funnel-fill"></i>
-                            </button>
-                            <a href="{{ route('freight_bookings.index') }}" class="filter-action-btn" style="background: var(--brand-text-primary); color: white;" title="Reset" data-bs-toggle="tooltip">
-                                <i class="bi bi-arrow-counterclockwise"></i>
-                            </a>
-                        </div>
-                    </div>
-                </form>
-                @if (request('search'))
-                    <div class="alert alert-info py-1 px-3 mb-0 mt-2" style="font-size: 11px;">
-                        <i class="bi bi-info-circle me-1"></i> Results for: <strong>"{{ request('search') }}"</strong>
-                        <a href="{{ route('freight_bookings.index') }}" class="btn btn-link btn-sm p-0 ms-2" style="font-size: 11px;">Clear Search</a>
-                    </div>
-                @endif
             </div>
 
             <div class="card-body">
@@ -357,19 +557,157 @@
     <!-- Voucher Payment Modal -->
     <div class="modal fade fb-pay-modal" id="voucherPaymentModal" tabindex="-1" aria-labelledby="voucherPaymentModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-xl">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="voucherPaymentModalLabel">💳 Voucher Payment</h5>
+                    <h5 class="modal-title" id="voucherPaymentModalLabel">
+                        <i class="bi bi-wallet2"></i> Voucher Payment
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="voucherPaymentBody">
-                    <!-- Dynamic content will be loaded here -->
+                    <div class="fb-pay-panel">
+                        <div class="fb-pay-panel__head">
+                            <i class="bi bi-clock-history"></i> Previous Payments
+                        </div>
+                        <div class="fb-pay-panel__body--flush" id="previousPaymentsTable">
+                            <div class="fb-pay-loading">
+                                <div class="spinner-border spinner-border-sm me-1" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                Loading payment history...
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="fb-pay-panel">
+                        <div class="fb-pay-panel__head">
+                            <i class="bi bi-truck"></i> Transporter Details
+                        </div>
+                        <div class="fb-pay-panel__body">
+                            <div class="fb-pay-facts fb-pay-facts--7">
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">Transporter</span>
+                                    <div class="fb-pay-fact__value" id="lrTransporter">-</div>
+                                </div>
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">Mobile</span>
+                                    <div class="fb-pay-fact__value" id="transporterMobile">-</div>
+                                </div>
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">Short Name</span>
+                                    <div class="fb-pay-fact__value" id="transporterShortName">-</div>
+                                </div>
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">Beneficiary ID</span>
+                                    <div class="fb-pay-fact__value" id="transporterBeneficiaryId">-</div>
+                                </div>
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">TDS Percentage</span>
+                                    <div class="fb-pay-fact__value" id="tdsPercentage">-</div>
+                                </div>
+                                <div class="fb-pay-fact">
+                                    <span class="fb-pay-fact__label">Truck Number</span>
+                                    <div class="fb-pay-fact__value fb-pay-fact__value--accent" id="truckNumber">-</div>
+                                </div>
+                                <div class="fb-pay-fact" id="advanceAmountFact" style="display: none;">
+                                    <span class="fb-pay-fact__label">Advance Amount</span>
+                                    <div class="fb-pay-fact__value fb-pay-fact__value--warn" id="advanceAmount">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="fb-pay-panel fb-pay-panel--alloc">
+                        <div class="fb-pay-panel__head">
+                            <i class="bi bi-currency-rupee"></i> Payment Allocation
+                        </div>
+                        <div class="fb-pay-panel__body--flush">
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0 fb-pay-table">
+                                    <thead>
+                                        <tr>
+                                            <th>FR No.</th>
+                                            <th>LR Number</th>
+                                            <th>Balance Amount</th>
+                                            <th>Payment Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="voucherPaymentTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="fb-pay-total">
+                                <span>Total Payment Amount</span>
+                                <strong>₹<span id="totalPaymentAmount">0.00</span></strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="fb-pay-panel">
+                        <div class="fb-pay-panel__head">
+                            <i class="bi bi-pencil-square"></i> Payment Details
+                        </div>
+                        <div class="fb-pay-panel__body">
+                            <div class="fb-pay-fields fb-pay-fields--4">
+                                <div>
+                                    <label for="paymentType" class="form-label">Payment Type *</label>
+                                    <select class="form-select" id="paymentType" required>
+                                        <option value="">Select Payment Type</option>
+                                        @foreach ($paymentTypes as $type)
+                                            <option value="{{ $type->name }}" data-id="{{ $type->id }}">
+                                                {{ $type->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="paymentMode" class="form-label">Payment Mode *</label>
+                                    <select class="form-select" id="paymentMode" required>
+                                        <option value="">Select Payment Mode</option>
+                                        @foreach ($paymentModes as $mode)
+                                            <option value="{{ $mode->name }}" data-id="{{ $mode->id }}">
+                                                {{ $mode->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="paymentDate" class="form-label">Payment Date</label>
+                                    <input type="date" class="form-control" name="date" id="paymentDate"
+                                        value="{{ date('Y-m-d') }}">
+                                </div>
+                                <div>
+                                    <label for="paymentRemarks" class="form-label">Remarks</label>
+                                    <input type="text" class="form-control" id="paymentRemarks" placeholder="Enter remarks">
+                                </div>
+                                <div id="pumpNameContainer" style="display: none;">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="pumpName" class="form-label mb-0">Pump Name *</label>
+                                        <a href="javascript:void(0)"
+                                            class="lrf-quick-add js-open-quick-add-pump"
+                                            data-pump-select="pumpName">
+                                            <i class="bi bi-plus-lg"></i> Add
+                                        </a>
+                                    </div>
+                                    <select class="form-select" id="pumpName">
+                                        <option value="">Select Pump</option>
+                                        @foreach ($pumps as $pump)
+                                            <option value="{{ $pump->id }}">{{ $pump->pump_name }}
+                                                {{ $pump->contact_name ? '('.$pump->contact_name.')' : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success" onclick="submitVoucherPayment()"><i class="bi bi-currency-rupee"></i> Process
-                        Payment</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success btn-sm" onclick="submitVoucherPayment()">
+                        <i class="bi bi-check-lg me-1"></i> Submit Payment
+                    </button>
                 </div>
             </div>
         </div>
@@ -456,6 +794,9 @@
             </div>
         </div>
     </div>
+
+    @include('freight_bookings.partials.quick-add-pump')
+
 @endsection
 
 @push('scripts')
@@ -483,16 +824,16 @@
                     freight_booking_id: $(this).data('freight-booking-id'),
                     lr_id: $(this).data('lr-id'),
                     transporter: $(this).data('transporter'),
-                    lr_transporter: $(this).data('lr-transporter'),
-                        transporter_mobile_number: $(this).data('lr-transporter-mobile-number'),
-                        transporter_short_name: $(this).data('lr-transporter-short-name'),
-                        transporter_beneficiary_id: $(this).data('lr-transporter-beneficiary-id'),
-                    fb_transporter: $(this).data('fb-transporter'),
-                    tds_percentage: $(this).data('tds-percentage'),
+                    lr_transporter: $(this).attr('data-lr-transporter') || $(this).data('lr-transporter'),
+                    transporter_mobile_number: $(this).attr('data-lr-transporter-mobile-number') || $(this).data('lr-transporter-mobile-number'),
+                    transporter_short_name: $(this).attr('data-lr-transporter-short-name') || $(this).data('lr-transporter-short-name'),
+                    transporter_beneficiary_id: $(this).attr('data-lr-transporter-beneficiary-id') || $(this).data('lr-transporter-beneficiary-id'),
+                    fb_transporter: $(this).attr('data-fb-transporter') || $(this).data('fb-transporter'),
+                    tds_percentage: $(this).attr('data-tds-percentage') || $(this).data('tds-percentage'),
                     amount: $(this).data('amount'),
                     shortage_amount: $(this).data('shortage-amount'),
                     damage_amount: $(this).data('damage-amount'),
-                    advance_amount: $(this).data('advance-amount')
+                    advance_amount: $(this).attr('data-advance-amount') || $(this).data('advance-amount')
                 };
                 if (!selectedBookingIds.includes(id)) {
                     selectedBookingIds.push(id);
@@ -525,18 +866,18 @@
                             voucher_number: $(this).data('voucher_number'),
                             freight_rate: parseFloat($(this).data('freight-rate') || 0),
                             freight_booking_id: $(this).data('freight-booking-id'),
-                                    lr_id: $(this).data('lr-id'),
-                                    transporter: $(this).data('transporter'),
-                                    lr_transporter: $(this).data('lr-transporter'),
-                                    transporter_mobile_number: $(this).data('lr-transporter-mobile-number'),
-                                    transporter_short_name: $(this).data('lr-transporter-short-name'),
-                                    transporter_beneficiary_id: $(this).data('lr-transporter-beneficiary-id'),
-                                    fb_transporter: $(this).data('fb-transporter'),
-                                    tds_percentage: $(this).data('tds-percentage'),
-                                    amount: $(this).data('amount'),
-                                    shortage_amount: $(this).data('shortage-amount'),
-                                    damage_amount: $(this).data('damage-amount'),
-                                    advance_amount: $(this).data('advance-amount')
+                            lr_id: $(this).data('lr-id'),
+                            transporter: $(this).data('transporter'),
+                            lr_transporter: $(this).attr('data-lr-transporter') || $(this).data('lr-transporter'),
+                            transporter_mobile_number: $(this).attr('data-lr-transporter-mobile-number') || $(this).data('lr-transporter-mobile-number'),
+                            transporter_short_name: $(this).attr('data-lr-transporter-short-name') || $(this).data('lr-transporter-short-name'),
+                            transporter_beneficiary_id: $(this).attr('data-lr-transporter-beneficiary-id') || $(this).data('lr-transporter-beneficiary-id'),
+                            fb_transporter: $(this).attr('data-fb-transporter') || $(this).data('fb-transporter'),
+                            tds_percentage: $(this).attr('data-tds-percentage') || $(this).data('tds-percentage'),
+                            amount: $(this).data('amount'),
+                            shortage_amount: $(this).data('shortage-amount'),
+                            damage_amount: $(this).data('damage-amount'),
+                            advance_amount: $(this).attr('data-advance-amount') || $(this).data('advance-amount')
                         };
                     }
                 } else {
@@ -602,105 +943,6 @@
                 }
             });
 
-            // Voucher Payment Modal
-            $('#voucher-payment-btn').on('click', function() {
-                const checkedBoxes = Object.values(selectedRows);
-                if (checkedBoxes.length === 0) {
-                    alert('Please select at least one good hire (lorry hire).');
-                    return;
-                }
-
-                let tableBody = '';
-                let totalAmount = 0;
-
-                checkedBoxes.forEach(function(data) {
-                    const lrNumber = data.lr;
-                    const truckNumber = data.truck;
-                    const balance = data.balance;
-                    const voucherNumber = data.voucher_number || '-';
-
-                    totalAmount += balance;
-
-                    tableBody += `
-                        <tr>
-                            <td>${lrNumber}</td>
-                            <td>${truckNumber}</td>
-                            <td>${voucherNumber}</td>
-                            <td class="text-end">${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                            <td>
-                                <input type="number" class="form-control payment-amount allocated-input"
-                                      data-id="${data.id}"
-                                      value="${balance}"
-                                      min="0.01"
-                                      max="${balance}"
-                                      step="0.01">
-                                <div class="form-text">Amount must be greater than zero and not exceed balance</div>
-                            </td>
-                        </tr>
-                    `;
-                });
-
-                const modalContent = `
-                    <form id="voucherPaymentForm" method="POST" action="{{ route('freight_bookings.voucher_payment') }}">
-                        @csrf
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Payment Type</label>
-                                <select name="payment_type_id" id="paymentType" class="form-select" required>
-                                    <option value="">Select Payment Type</option>
-                                    @foreach ($paymentTypes as $type)
-                                        <option value="{{ $type->id }}">{{ $type->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Payment Mode</label>
-                                <select name="payment_mode_id" id="paymentMode" class="form-select" required>
-                                    <option value="">Select Payment Mode</option>
-                                    @foreach ($paymentModes as $mode)
-                                        <option value="{{ $mode->id }}">{{ $mode->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>LR Number</th>
-                                        <th>Truck Number</th>
-                                        <th>Voucher Number</th>
-                                        <th class="text-end">Balance Amount</th>
-                                        <th class="text-end">Payment Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tableBody}
-                                </tbody>
-                                <tfoot>
-                                    <tr class="table-info">
-                                        <th colspan="4" class="text-end">Total Payment:</th>
-                                        <th class="text-end" id="totalPaymentAmount">${totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Remarks</label>
-                            <textarea name="remarks" id="paymentRemarks" class="form-control" rows="3"></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Reference ID (Optional)</label>
-                            <input type="text" name="reference_id" id="referenceId" class="form-control">
-                        </div>
-                    </form>
-                `;
-
-                $('#voucherPaymentBody').html(modalContent);
-                updatePaymentTypeFromAmounts({ inputSelector: '.payment-amount' });
-            });
 
             // Combined Payment Button Click Handler
             const planEndDateStr = @json(Auth::user()->company?->subscription?->ends_on?->toDateString() ?? null);
@@ -912,7 +1154,14 @@
                                 </select>
                             </div>
                             <div class="col-md-4" id="combinedPumpContainer" style="display: none;">
-                                <label for="combinedPumpName" class="form-label">Pump Name *</label>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="combinedPumpName" class="form-label mb-0">Pump Name *</label>
+                                    <a href="javascript:void(0)"
+                                        class="lrf-quick-add js-open-quick-add-pump"
+                                        data-pump-select="combinedPumpName">
+                                        <i class="bi bi-plus-lg"></i> Add
+                                    </a>
+                                </div>
                                 <select class="form-select" id="combinedPumpName" name="pump_id">
                                     <option value="">Select Pump</option>
                                     @foreach ($pumps as $pump)
@@ -1196,10 +1445,15 @@
                     <form id="bulkMemoIdForm" method="POST" action="{{ route('freight_bookings.bulk_memo_id') }}">
                         @csrf
                         <div class="row mb-3">
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <label class="form-label">Memo ID / POD *</label>
                                 <input type="text" name="memo_id" class="form-control" required placeholder="Enter Memo / POD ID">
                                 <div class="form-text">This memo / POD ID will be assigned to all selected good receipts (bilty)</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Memo Date &amp; Time</label>
+                                <input type="datetime-local" name="memo_created_at" class="form-control" max="${new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}">
+                                <div class="form-text">Optional. Leave blank to use the current date &amp; time.</div>
                             </div>
                         </div>
 
@@ -1524,10 +1778,6 @@
         letter-spacing: 0.5px;
     }
 
-    /* Tooltip enhancement */
-    [data-bs-toggle="tooltip"] {
-        position: relative;
-    }
 </style>
 
 @push('scripts')
@@ -1536,117 +1786,6 @@
             // Initialize tooltips
             $('[data-bs-toggle="tooltip"]').tooltip();
 
-            // Voucher Payment Modal
-            $('#voucher-payment-btn').on('click', function() {
-                const checkedBoxes = Object.values(selectedRows);
-
-                if (checkedBoxes.length === 0) {
-                    alert('Please select at least one good hire (lorry hire).');
-                    return;
-                }
-
-                // ✅ Collect transporter IDs from selected rows
-                let transporterIds = [];
-                checkedBoxes.forEach(function(data) {
-                    transporterIds.push(data.transporterId);
-                });
-
-                // ✅ Check if all transporter IDs are the same
-                const uniqueTransporters = [...new Set(transporterIds)];
-                if (uniqueTransporters.length > 1) {
-                    alert('You can only create a voucher for bookings from the same transporter.');
-                    $('#voucherPaymentModal').hide();
-
-                    return;
-                }
-                // Clear previous data
-                $('#voucherPaymentTableBody').empty();
-
-                let totalBalance = 0;
-                checkedBoxes.forEach(function(data) {
-                    const lrNumber = data.lr;
-                    const balance = data.balance;
-                    const freightBookingId = data.freight_booking_id;
-                    const voucherNumber = data.voucher_number || '-';
-
-                    totalBalance += balance;
-
-                    const row = `
-                      <tr>
-                          <td>${lrNumber}</td>
-                          <td>${voucherNumber}</td>
-                          <td class="text-end">${balance.toFixed(2)}</td>
-                          <td>
-                              <input type="number" class="form-control form-control-sm payment-amount"
-                                    name="payments[${freightBookingId}]"
-                                    min="${Math.min(balance, 0)}" max="${Math.max(balance, 0)}" step="0.01"
-                                    value="${balance.toFixed(2)}"
-                                    data-max="${balance}">
-                          </td>
-                      </tr>
-                    `;
-                    $('#voucherPaymentTableBody').append(row);
-                });
-
-                $('#totalPaymentAmount').text('' + totalBalance.toLocaleString('en-IN', {
-                    minimumFractionDigits: 2
-                }));
-            });
-
-            // Payment amount validation
-            $(document).on('input', '.payment-amount', function() {
-                const input = $(this);
-                const max = parseFloat(input.data('max'));
-                const value = parseFloat(input.val()) || 0;
-
-                // Validate amount is greater than zero
-                if (value <= 0) {
-                    input.addClass('is-invalid');
-                    if (!input.next('.invalid-feedback').length) {
-                        input.after('<div class="invalid-feedback">Amount must be greater than zero</div>');
-                    } else {
-                        input.next('.invalid-feedback').text('Amount must be greater than zero');
-                    }
-                }
-                // Validate amount doesn't exceed balance
-                else if (value > max) {
-                    input.addClass('is-invalid');
-                    if (!input.next('.invalid-feedback').length) {
-                        input.after(
-                            `<div class="invalid-feedback">Amount cannot exceed balance (${max.toFixed(2)})</div>`
-                        );
-                    } else {
-                        input.next('.invalid-feedback').text(
-                            `Amount cannot exceed balance (${max.toFixed(2)})`);
-                    }
-                    input.val(max.toFixed(2)); // Correct the value to maximum allowed
-                }
-                // Valid amount
-                else {
-                    input.removeClass('is-invalid').addClass('is-valid');
-                    input.next('.invalid-feedback').remove();
-                }
-
-                // Update total
-                let total = 0;
-                let hasError = false;
-
-                $('.payment-amount').each(function() {
-                    const inputVal = parseFloat($(this).val()) || 0;
-                    total += inputVal;
-                    if ($(this).hasClass('is-invalid')) {
-                        hasError = true;
-                    }
-                });
-
-                $('#totalPaymentAmount').text('' + total.toLocaleString('en-IN', {
-                    minimumFractionDigits: 2
-                }));
-
-                // Enable/disable submit button based on validation
-                const submitBtn = $('#voucherPaymentModal .btn-success');
-                submitBtn.prop('disabled', hasError || total <= 0);
-            });
 
             // Handle bulk memo ID button
             $('#bulk-memo-id-btn').on('click', function() {
@@ -1728,10 +1867,111 @@
         }
     </style>
 
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $(document).ready(function() {
-            // Initialize tooltips
-            $('[data-bs-toggle="tooltip"]').tooltip();
+            // Initialize Select2 filter dropdowns
+            $('#filterFbCustomerId').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'All Customers',
+                allowClear: true,
+                minimumInputLength: 0,
+                ajax: {
+                    url: '/api/consignees/search',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term || '',
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        return {
+                            results: data.results,
+                            pagination: data.pagination
+                        };
+                    }
+                }
+            });
+
+            $('#filterFbTransporterId').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'All Transporters',
+                allowClear: true,
+                minimumInputLength: 0,
+                ajax: {
+                    url: '/api/transporters/search',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term || '',
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        return {
+                            results: data.results,
+                            pagination: data.pagination
+                        };
+                    }
+                }
+            });
+
+            $('#filterFbTruckId').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'All Trucks',
+                allowClear: true,
+                minimumInputLength: 0,
+                ajax: {
+                    url: '/api/trucks/search',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term || '',
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        return {
+                            results: data.results,
+                            pagination: data.pagination
+                        };
+                    }
+                }
+            });
+
+            function syncFbListingQueryToUrl() {
+                const params = new URLSearchParams();
+                const lrNumber = $('#filterFbLrNumber').val();
+                const customerId = $('#filterFbCustomerId').val();
+                const transporterId = $('#filterFbTransporterId').val();
+                const truckId = $('#filterFbTruckId').val();
+                const startDate = $('#fbStartDate').val();
+                const endDate = $('#fbEndDate').val();
+                const search = $('#filterFbSearch').val();
+                const pendingMemo = $('#pendingMemoFilter').is(':checked');
+
+                if (lrNumber) params.set('lr_number', lrNumber);
+                if (customerId) params.set('customer_id', customerId);
+                if (transporterId) params.set('transporter_id', transporterId);
+                if (truckId) params.set('truck_id', truckId);
+                if (startDate) params.set('start_date', startDate);
+                if (endDate) params.set('end_date', endDate);
+                if (search) params.set('search', search);
+                if (pendingMemo) params.set('pending_memo', '1');
+
+                const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+                window.history.pushState({}, '', newUrl);
+            }
 
             // DataTable initialization (server-side; rows load via AJAX)
             var table = $('#freightBookingsTable').DataTable({
@@ -1854,12 +2094,10 @@
                 searching: false,
                 ordering: true,
                 theme: 'bootstrap-5',
-                responsive: true,
-                lengthChange: true,
-                lengthMenu: [
-                    [10, 25, 50, 100],
-                    [10, 25, 50, 100]
-                ],
+                responsive: false,
+                scrollX: false,
+                autoWidth: false,
+                lengthChange: false,
                 order: [
                     [1, 'desc']
                 ],
@@ -1867,8 +2105,7 @@
                     orderable: false,
                     targets: [0, 3, 4, 5, 6, -1]
                 }],
-                dom: '<"app-index-dt-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2"<"d-flex flex-wrap align-items-center gap-2"l>>' +
-                    't' +
+                dom: 't' +
                     '<"app-index-partload-pagination d-flex flex-wrap align-items-center justify-content-between gap-2"<"app-index-partload-pagination__summary"i><"app-index-partload-pagination__nav"p>>',
                 language: {
                     emptyTable: `<div class="text-muted">
@@ -1901,7 +2138,18 @@
                                 voucher_number: $(this).data('voucher_number'),
                                 freight_rate: parseFloat($(this).data('freight-rate') || 0),
                                 freight_booking_id: $(this).data('freight-booking-id'),
-                                lr_id: $(this).data('lr-id')
+                                lr_id: $(this).data('lr-id'),
+                                transporter: $(this).data('transporter'),
+                                lr_transporter: $(this).attr('data-lr-transporter') || $(this).data('lr-transporter'),
+                                transporter_mobile_number: $(this).attr('data-lr-transporter-mobile-number') || $(this).data('lr-transporter-mobile-number'),
+                                transporter_short_name: $(this).attr('data-lr-transporter-short-name') || $(this).data('lr-transporter-short-name'),
+                                transporter_beneficiary_id: $(this).attr('data-lr-transporter-beneficiary-id') || $(this).data('lr-transporter-beneficiary-id'),
+                                fb_transporter: $(this).attr('data-fb-transporter') || $(this).data('fb-transporter'),
+                                tds_percentage: $(this).attr('data-tds-percentage') || $(this).data('tds-percentage'),
+                                amount: $(this).data('amount'),
+                                shortage_amount: $(this).data('shortage-amount'),
+                                damage_amount: $(this).data('damage-amount'),
+                                advance_amount: $(this).attr('data-advance-amount') || $(this).data('advance-amount')
                             };
                         }
                     } else {
@@ -1947,10 +2195,32 @@
                 handleVoucherPayment();
             });
 
+            $(document).on('change', '#paymentMode', function() {
+                togglePumpName();
+            });
+
             // Bulk payment button click handler
             $('#bulk-payment-btn').on('click', function(e) {
                 e.preventDefault();
                 handleBulkPayment();
+            });
+
+            // Filter form submission and changes
+            $('#searchForm').on('submit', function(e) {
+                e.preventDefault();
+                syncFbListingQueryToUrl();
+                table.ajax.reload();
+            });
+
+            $('#pendingMemoFilter').on('change', function() {
+                $(this).closest('.app-index-filters__chip').toggleClass('is-active', this.checked);
+                syncFbListingQueryToUrl();
+                table.ajax.reload();
+            });
+
+            $('#filterFbCustomerId, #filterFbTransporterId, #filterFbTruckId').on('change', function() {
+                syncFbListingQueryToUrl();
+                table.ajax.reload();
             });
         });
     </script>
@@ -1959,11 +2229,138 @@
         const planEndDateStr = @json(Auth::user()->company?->subscription?->ends_on?->toDateString() ?? null);
         const today = new Date();
 
+        function validatePaymentAmount(input) {
+            const value = parseFloat(input.value) || 0;
+            const min = parseFloat(input.min) || 0.01;
+            const max = parseFloat(input.max) || 0;
+
+            const existingFeedback = input.nextElementSibling;
+            if (existingFeedback && existingFeedback.classList.contains('invalid-feedback')) {
+                existingFeedback.remove();
+            }
+
+            input.classList.remove('is-invalid', 'is-valid');
+
+            if (value <= 0) {
+                input.classList.add('is-invalid');
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'invalid-feedback';
+                errorMsg.textContent = 'Amount must be greater than zero';
+                input.parentNode.insertBefore(errorMsg, input.nextSibling);
+                return false;
+            } else if (value > max) {
+                input.classList.add('is-invalid');
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'invalid-feedback';
+                errorMsg.textContent = `Amount cannot exceed balance (${max.toFixed(2)})`;
+                input.parentNode.insertBefore(errorMsg, input.nextSibling);
+                return false;
+            } else {
+                input.classList.add('is-valid');
+                return true;
+            }
+        }
+
+        function togglePumpName() {
+            const paymentMode = document.getElementById('paymentMode');
+            const pumpNameContainer = document.getElementById('pumpNameContainer');
+            const pumpName = document.getElementById('pumpName');
+
+            if (paymentMode && pumpNameContainer) {
+                const modeText = (paymentMode.options[paymentMode.selectedIndex]?.text || paymentMode.value || '').toLowerCase();
+                const isFuel = modeText.includes('fuel');
+                pumpNameContainer.style.display = isFuel ? 'block' : 'none';
+                if (pumpName) {
+                    pumpName.required = isFuel;
+                    if (!isFuel) pumpName.value = '';
+                }
+            }
+        }
+
+        function loadPaymentHistory(freightBookingIds) {
+            const tableContainer = document.getElementById('previousPaymentsTable');
+            if (!tableContainer) return;
+
+            tableContainer.innerHTML = `
+                <div class="fb-pay-loading">
+                    <div class="spinner-border spinner-border-sm me-1" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    Loading payment history...
+                </div>
+            `;
+
+            fetch('{{ route('freight_bookings.payment_history') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ freight_booking_ids: freightBookingIds })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.payments && data.payments.length > 0) {
+                    let tableHtml = `
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0 fb-pay-table">
+                                <thead>
+                                    <tr>
+                                        <th>Payment ID</th>
+                                        <th>FR No.</th>
+                                        <th>Voucher Number</th>
+                                        <th>Amount</th>
+                                        <th>Payment Type</th>
+                                        <th>Payment Mode</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+
+                    data.payments.forEach(payment => {
+                        const statusLower = (payment.payment_status || '').toLowerCase();
+                        const statusBadge = statusLower === 'paid' ? 'bg-success' :
+                            statusLower === 'pending' ? 'bg-warning text-dark' :
+                            statusLower === 'in progress' ? 'bg-info' : 'bg-secondary';
+                        const pumpName = payment.pump ? (payment.pump.pump_name || '') : '';
+                        const paymentModeDisplay = pumpName ?
+                            `${payment.payment_mode || 'N/A'}<div class="fb-info-grid__sub">${pumpName}</div>` :
+                            (payment.payment_mode || 'N/A');
+
+                        tableHtml += `
+                            <tr>
+                                <td>#${payment.id}</td>
+                                <td>#${payment.freight_booking_id}</td>
+                                <td>${payment.voucher_number || 'N/A'}</td>
+                                <td>₹${parseFloat(payment.amount || 0).toFixed(2)}</td>
+                                <td>${payment.payment_type || 'N/A'}</td>
+                                <td>${paymentModeDisplay}</td>
+                                <td>${new Date(payment.date).toLocaleDateString('en-IN')}</td>
+                                <td><span class="badge ${statusBadge}">${payment.payment_status || 'N/A'}</span></td>
+                            </tr>
+                        `;
+                    });
+
+                    tableHtml += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    tableContainer.innerHTML = tableHtml;
+                } else {
+                    tableContainer.innerHTML = '<div class="fb-pay-empty">No previous payments found.</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading payment history:', error);
+                tableContainer.innerHTML = '<div class="fb-pay-empty text-danger">Error loading payment history.</div>';
+            });
+        }
+
         function handleVoucherPayment() {
             const checkedBoxes = Object.values(selectedRows);
-            const modalBody = document.getElementById('voucherPaymentBody');
-
-            modalBody.innerHTML = '';
 
             if (checkedBoxes.length === 0) {
                 alert("Please select at least one Good Hire (Lorry Hire).");
@@ -1975,8 +2372,7 @@
                     alert(
                         'Your subscription plan has expired. Please renew your subscription to continue using the service.'
                     );
-                    // Stop further execution so modal doesn't open
-                    return false; // or just return
+                    return false;
                 }
             }
 
@@ -2021,284 +2417,122 @@
                 return;
             }
 
-            // Header: show truck number once at top-right
-            modalBody.innerHTML += `
-                  <div class="lr-details-section">
-                      <h5>Selected Good Hires (Lorry Hire)</h5>
-                      <div class="lr-details-content">
-                          <div class="d-flex justify-content-between align-items-center">
-                              <div class="badge bg-info fs-6">Truck Number: ${firstTruck || 'N/A'}</div>
-                              <div class="badge bg-secondary fs-6">${checkedBoxes.length} booking(s) selected</div>
-                          </div>
-                      </div>
-                  </div>
-              `;
+            // Verify same transporter
+            const transporterNames = checkedBoxes.map(data => data.lr_transporter || data.fb_transporter || data.transporter);
+            const firstTransporter = transporterNames[0];
+            const allSameTransporter = transporterNames.every(t => t === firstTransporter);
+            if (!allSameTransporter) {
+                alert("You can only create a voucher for bookings from the same transporter.");
+                return;
+            }
 
-            // Collect LR data for allocation
-            const lrData = checkedBoxes.map(data => ({
-                lrNumber: data.lr,
-                balance: data.balance
-            }));
+            // Set modal title
+            const modalTitle = document.getElementById('voucherPaymentModalLabel');
+            if (modalTitle) {
+                const firstFbId = checkedBoxes[0].freight_booking_id || checkedBoxes[0].id;
+                if (checkedBoxes.length === 1) {
+                    modalTitle.innerHTML = `<i class="bi bi-wallet2"></i> Voucher Payment — FR #${firstFbId}`;
+                } else {
+                    modalTitle.innerHTML = `<i class="bi bi-wallet2"></i> Voucher Payment — ${checkedBoxes.length} Bookings`;
+                }
+            }
 
-            // Add transporter details section
+            // Populate Transporter Details facts
             const firstData = checkedBoxes[0];
-            const firstTransporterName = firstData.lr_transporter;
+            const firstTransporterName = firstData.lr_transporter || firstData.fb_transporter || firstData.transporter;
             const firstTransporterMobileNumber = firstData.transporter_mobile_number;
             const firstTransporterShortName = firstData.transporter_short_name;
             const firstTransporterBeneficiaryId = firstData.transporter_beneficiary_id;
             const firstTdsPercentage = firstData.tds_percentage;
-            const firstAdvanceAmount = firstData.advance_amount;
+            const firstAdvanceAmount = parseFloat(firstData.advance_amount) || 0;
 
-            modalBody.innerHTML += `
-                  <div class="alert alert-primary mb-3">
-                      <h6 class="mb-2"><i class="fas fa-truck"></i> Transporter Details</h6>
-                      <div class="row">
-                            <div class="col-md-4">
-                                <strong>Transporter:</strong> ${firstTransporterName || 'N/A'}
-                            </div>
-                            <div class="col-md-4">
-                                <strong>Mobile:</strong> ${firstTransporterMobileNumber || 'N/A'}
-                            </div>
-                            <div class="col-md-4">
-                                <strong>Short Name:</strong> ${firstTransporterShortName || 'N/A'}
-                            </div>
-                            <div class="col-md-4">
-                                <strong>Beneficiary ID:</strong> ${firstTransporterBeneficiaryId || 'N/A'}
-                            </div>
-                            <div class="col-md-4">
-                              <strong>TDS Percentage:</strong> ${firstTdsPercentage ? firstTdsPercentage + '%' : 'N/A'}
-                            </div>
-                            <div class="col-md-4">
-                                <strong>Truck Number:</strong> ${firstTruck || 'N/A'}
-                            </div>
-                            <div class="col-md-4 text-danger">
-                                <strong>Advance Amount:</strong> ${firstAdvanceAmount || 'N/A'}
-                            </div>
-                      </div>
-                  </div>
-              `;
+            const elTransporter = document.getElementById('lrTransporter');
+            if (elTransporter) elTransporter.textContent = firstTransporterName || 'N/A';
 
-            // Fetch and display payment history first
-            fetchPaymentHistory(checkedBoxes.map(data => data.id)).then(paymentHistory => {
-                if (paymentHistory && paymentHistory.length > 0) {
-                    let paymentRows = '';
-                    paymentHistory.forEach(payment => {
-                        const pumpName = payment.pump ? (payment.pump.pump_name || 'N/A') : '';
-                        const paymentModeDisplay = pumpName
-                            ? `${payment.payment_mode}<br><small class="text-muted">${pumpName}</small>`
-                            : payment.payment_mode;
-                        paymentRows += `
-                            <tr>
-                                <td>${new Date(payment.date).toLocaleDateString()}</td>
-                                <td>${payment.freight_booking_id || 'N/A'}</td>
-                                <td>${payment.freight_booking?.lr?.lr_number || 'N/A'}</td>
-                                <td>${payment.payment_type}</td>
-                                <td>${paymentModeDisplay}</td>
-                                <td class="text-end">${parseFloat(payment.amount).toFixed(2)}</td>
-                            </tr>
-                        `;
-                    });
+            const elMobile = document.getElementById('transporterMobile');
+            if (elMobile) elMobile.textContent = firstTransporterMobileNumber || 'N/A';
 
-                    modalBody.innerHTML += `
-                        <div class="alert alert-info mb-3">
-                            <h6 class="mb-2"><i class="fas fa-history"></i> Previous Payments</h6>
-                            <div class="table-responsive">
-                                <table class="table table-sm table-striped mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>FR No.</th>
-                                            <th>LR Number</th>
-                                            <th>Type</th>
-                                            <th>Mode</th>
-                                            <th class="text-end">Amount</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${paymentRows}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    `;
+            const elShortName = document.getElementById('transporterShortName');
+            if (elShortName) elShortName.textContent = firstTransporterShortName || 'N/A';
+
+            const elBeneficiary = document.getElementById('transporterBeneficiaryId');
+            if (elBeneficiary) elBeneficiary.textContent = firstTransporterBeneficiaryId || 'N/A';
+
+            const elTds = document.getElementById('tdsPercentage');
+            if (elTds) {
+                if (firstTdsPercentage !== null && firstTdsPercentage !== '' && !isNaN(parseFloat(firstTdsPercentage))) {
+                    elTds.textContent = parseFloat(firstTdsPercentage).toFixed(2) + '%';
+                } else {
+                    elTds.textContent = 'N/A';
                 }
+            }
 
-                // Continue with original layout - show payment form in original SweetAlert style
-                const lrRows = checkedBoxes.map((data, index) => {
-                    const voucherNumber = data.voucher_number || '-';
-                    const freightBookingId = data.freight_booking_id;
-                    const lrNumber = data.lr;
-                    const balance = data.balance;
-                    return `
-                        <tr>
-                            <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${freightBookingId || 'N/A'}</td>
-                            <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${lrNumber || 'N/A'}</td>
-                            <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${firstTruck || 'N/A'}</td>
-                            <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${voucherNumber || 'N/A'}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">${balance.toFixed(2)}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">
-                                <input type="number" step="0.01" min="0" max="${balance}"
-                                      style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
-                                      class="allocated-input" data-lr="${lrNumber}"
-                                      oninput="updateTotalPayment()" onchange="updateTotalPayment()">
-                            </td>
-                        </tr>
+            const elTruck = document.getElementById('truckNumber');
+            if (elTruck) elTruck.textContent = firstTruck || 'N/A';
+
+            const elAdvanceFact = document.getElementById('advanceAmountFact');
+            const elAdvance = document.getElementById('advanceAmount');
+            if (elAdvanceFact && elAdvance) {
+                if (firstAdvanceAmount > 0) {
+                    elAdvance.textContent = firstAdvanceAmount.toFixed(2);
+                    elAdvanceFact.style.display = '';
+                } else {
+                    elAdvanceFact.style.display = 'none';
+                }
+            }
+
+            // Populate Payment Allocation Table
+            const tbody = document.getElementById('voucherPaymentTableBody');
+            if (tbody) {
+                tbody.innerHTML = '';
+                checkedBoxes.forEach(data => {
+                    const fbId = data.freight_booking_id || data.id;
+                    const balance = parseFloat(data.balance) || 0;
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>#${fbId}</td>
+                        <td>${data.lr || 'N/A'}</td>
+                        <td>₹${balance.toFixed(2)}</td>
+                        <td style="max-width: 10rem;">
+                            <input type="number" class="form-control allocated-input"
+                                data-fb-id="${fbId}"
+                                data-lr="${data.lr || ''}"
+                                step="0.01" min="0.01"
+                                max="${balance.toFixed(2)}"
+                                value="${balance.toFixed(2)}"
+                                oninput="validatePaymentAmount(this); updateTotalPayment();"
+                                onchange="updateTotalPayment()">
+                        </td>
                     `;
-                }).join('');
+                    tbody.appendChild(row);
+                });
+            }
 
-                modalBody.innerHTML += `
-                  <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-                      <thead>
-                          <tr style="background-color: #f8f9fa;">
-                              <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">FR NO.</th>
-                              <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">LR NUMBER</th>
-                              <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">TRUCK NUMBER</th>
-                              <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">VOUCHER NUMBER</th>
-                              <th style="text-align: right; padding: 8px; border: 1px solid #ddd;">BALANCE AMOUNT</th>
-                              <th style="text-align: right; padding: 8px; border: 1px solid #ddd;">PAYMENT AMOUNT</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-                          ${lrRows}
-                      </tbody>
-                  </table>
+            // Set today date if empty
+            const paymentDate = document.getElementById('paymentDate');
+            if (paymentDate && !paymentDate.value) {
+                paymentDate.value = new Date().toISOString().slice(0, 10);
+            }
 
-                  <div style="background-color: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 4px;">
-                      <strong>TOTAL PAYMENT: <span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
-                  </div>
-                  <div style="margin: 15px 0;">
-                      <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-                          <div style="flex: 1;">
-                              <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Type *</label>
-                              <select id="paymentType" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
-                                  <option value="">Select Payment Type</option>
-                                  ${paymentTypes.map(type =>
-                                      `<option value="${type.id}">${type.name}</option>`
-                                  ).join('')}
-                              </select>
-                          </div>
-                          <div style="flex: 1;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Mode *</label>
-                            <select id="paymentMode" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
-                                <option value="">Select Payment Mode</option>
-                                ${paymentModes.map(mode =>
-                                    `<option value="${mode.id}">${mode.name}</option>`
-                                ).join('')}
-                            </select>
-                          </div>
-                          <div id="pumpNameContainer" style="display: none ; margin-bottom: 15px; flex: 1;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Pump Name *</label>
-                            <select id="pumpName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <option value="">Select Pump</option>
-                                @foreach ($pumps as $pump)
-                                    <option value="{{ $pump->id }}">{{ $pump->pump_name }} {{ $pump->contact_name ? '('.$pump->contact_name.')' : '' }} </option>
-                                @endforeach
-                            </select>
-                          </div>
-                      </div>
-                      <div style="display: flex; gap: 20px; margin-bottom: 15px;">
-                         <!-- Payment Date -->
-                          <div style="flex: 1;">
-                              <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Date</label>
-                              <input type="date" id="paymentDate" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                          </div>
-                          <!-- Reference Transaction ID -->
-                          <div style="flex: 1;">
-                             <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
-                          <textarea id="paymentRemarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
-                          </div>
+            // Clear remarks
+            const remarks = document.getElementById('paymentRemarks');
+            if (remarks) remarks.value = '';
 
-                      </div>
+            // Handle pump toggle
+            togglePumpName();
 
-                  </div>
-                `;
+            // Load payment history
+            const bookingIds = checkedBoxes.map(data => parseInt(data.freight_booking_id || data.id)).filter(id => !isNaN(id));
+            loadPaymentHistory(bookingIds);
 
-                // Show the modal
-                $('#voucherPaymentModal').modal('show');
-                updatePaymentTypeFromAmounts();
-            }).catch(error => {
-                console.error('Error fetching payment history:', error);
-                // Continue with original layout even if history fetch fails
-                const lrRows = checkedBoxes.map((data, index) => {
-                    const voucherNumber = data.voucher_number || '-';
-                    const freightBookingId = data.freight_booking_id;
-                    const lrNumber = data.lr;
-                    const balance = data.balance;
-                    return `
-                        <tr>
-                            <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${freightBookingId || 'N/A'}</td>
-                            <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${lrNumber || 'N/A'}</td>
-                            <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${firstTruck || 'N/A'}</td>
-                            <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${voucherNumber || 'N/A'}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">${balance.toFixed(2)}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">
-                                <input type="number" step="0.01" min="0" max="${balance}"
-                                      style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
-                                      class="allocated-input" data-lr="${lrNumber}"
-                                      oninput="updateTotalPayment()" onchange="updateTotalPayment()">
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
+            // Show modal
+            updatePaymentButtonsVisibility();
+            const modalEl = document.getElementById('voucherPaymentModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
 
-                modalBody.innerHTML += `
-                    <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-                        <thead>
-                            <tr style="background-color: #f8f9fa;">
-                                <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">FR NO.</th>
-                                <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">LR NUMBER</th>
-                                <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">TRUCK NUMBER</th>
-                                <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">VOUCHER NUMBER</th>
-                                <th style="text-align: right; padding: 8px; border: 1px solid #ddd;">BALANCE AMOUNT</th>
-                                <th style="text-align: right; padding: 8px; border: 1px solid #ddd;">PAYMENT AMOUNT</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${lrRows}
-                        </tbody>
-                    </table>
-
-                    <div style="background-color: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 4px;">
-                        <strong>TOTAL PAYMENT: <span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
-                    </div>
-
-                    <div style="margin: 15px 0;">
-                        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-                            <div style="flex: 1;">
-                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Type *</label>
-                                <select id="paymentType" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
-                                    <option value="">Select Payment Type</option>
-                                    ${paymentTypes.map(type =>
-                                        `<option value="${type.id}">${type.name}</option>`
-                                    ).join('')}
-                                </select>
-                            </div>
-                            <div style="flex: 1;">
-                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Mode *</label>
-                                <select id="paymentMode" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
-                                    <option value="">Select Payment Mode</option>
-                                    ${paymentModes.map(mode =>
-                                        `<option value="${mode.id}">${mode.name}</option>`
-                                    ).join('')}
-                                </select>
-                            </div>
-                        </div>
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Reference Transaction ID</label>
-                            <input type="text" id="referenceId" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter reference/transaction ID (optional)">
-                        </div>
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
-                            <textarea id="paymentRemarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
-                        </div>
-                    </div>
-                `;
-
-                // Show the modal
-                updatePaymentButtonsVisibility();
-                $('#voucherPaymentModal').modal('show');
-                updatePaymentTypeFromAmounts();
-            });
+            updatePaymentTypeFromAmounts();
+            updateTotalPayment();
         }
 
         // Individual voucher payment handler
@@ -2577,7 +2811,7 @@
 
         // Function to update total payment amount
         function updateTotalPayment() {
-            const allocatedInputs = document.querySelectorAll('.allocated-input');
+            const allocatedInputs = document.querySelectorAll('#voucherPaymentModal .allocated-input');
             let total = 0;
             let hasError = false;
 
@@ -2585,45 +2819,9 @@
                 const value = parseFloat(input.value) || 0;
                 const maxValue = parseFloat(input.getAttribute('max')) || 0;
 
-                // Validate amount is greater than zero
-                if (value <= 0) {
-                    input.classList.add('is-invalid');
-                    if (!input.nextElementSibling || !input.nextElementSibling.classList.contains(
-                            'invalid-feedback')) {
-                        const errorMsg = document.createElement('div');
-                        errorMsg.className = 'invalid-feedback';
-                        errorMsg.textContent = 'Amount must be greater than zero';
-                        input.parentNode.insertBefore(errorMsg, input.nextSibling);
-                    } else {
-                        input.nextElementSibling.textContent = 'Amount must be greater than zero';
-                    }
+                if (value <= 0 || value > maxValue) {
                     hasError = true;
                 }
-                // Validate amount doesn't exceed balance
-                else if (value > maxValue) {
-                    input.classList.add('is-invalid');
-                    if (!input.nextElementSibling || !input.nextElementSibling.classList.contains(
-                            'invalid-feedback')) {
-                        const errorMsg = document.createElement('div');
-                        errorMsg.className = 'invalid-feedback';
-                        errorMsg.textContent = `Amount cannot exceed balance (${maxValue.toFixed(2)})`;
-                        input.parentNode.insertBefore(errorMsg, input.nextSibling);
-                    } else {
-                        input.nextElementSibling.textContent =
-                            `Amount cannot exceed balance (${maxValue.toFixed(2)})`;
-                    }
-                    hasError = true;
-                }
-                // Valid amount
-                else {
-                    input.classList.remove('is-invalid');
-                    input.classList.add('is-valid');
-                    if (input.nextElementSibling && input.nextElementSibling.classList.contains(
-                            'invalid-feedback')) {
-                        input.nextElementSibling.textContent = '';
-                    }
-                }
-
                 total += value;
             });
 
@@ -2653,35 +2851,31 @@
             const paymentDate = document.getElementById('paymentDate')?.value;
             const remarks = document.getElementById('paymentRemarks')?.value;
 
-            // Get the selected values
-            const paymentTypeValue = paymentTypeSelect?.value || '';
-            const paymentModeValue = paymentModeSelect?.value || '';
+            const selectedTypeOption = paymentTypeSelect?.options[paymentTypeSelect.selectedIndex];
+            const selectedModeOption = paymentModeSelect?.options[paymentModeSelect.selectedIndex];
+
+            const paymentTypeId = selectedTypeOption?.getAttribute('data-id') || selectedTypeOption?.value || '';
+            const paymentModeId = selectedModeOption?.getAttribute('data-id') || selectedModeOption?.value || '';
+            const paymentType = selectedTypeOption?.text?.trim() || '';
+            const paymentMode = selectedModeOption?.text?.trim() || '';
 
             // Validate required fields
-            if (!paymentTypeValue) {
+            if (!paymentTypeId || !paymentType) {
                 alert('Please select a payment type');
-                paymentTypeSelect.focus();
+                paymentTypeSelect?.focus();
                 return;
             }
 
-            if (!paymentModeValue) {
+            if (!paymentModeId || !paymentMode) {
                 alert('Please select a payment mode');
-                paymentModeSelect.focus();
+                paymentModeSelect?.focus();
                 return;
             }
 
-            // Get the text values for display purposes
-            const paymentType = paymentTypeSelect?.options[paymentTypeSelect.selectedIndex]?.text || '';
-            const paymentMode = paymentModeSelect?.options[paymentModeSelect.selectedIndex]?.text || '';
-
-            // Get selected freight booking IDs
-            const selectedIds = Object.values(selectedRows).map(data => data.id);
-
-            // Get allocated amounts
-            const allocatedInputs = document.querySelectorAll('.allocated-input');
-
-            // Validate all payment amounts
+            // Get allocated amounts from modal inputs
+            const allocatedInputs = document.querySelectorAll('#voucherPaymentModal .allocated-input');
             let hasValidationError = false;
+            const selectedIds = [];
             const paymentAmounts = [];
 
             allocatedInputs.forEach(input => {
@@ -2689,6 +2883,7 @@
                 const maxAmount = parseFloat(input.getAttribute('max')) || 0;
                 const minAmount = parseFloat(input.getAttribute('min')) || 0;
                 const lrNumber = input.getAttribute('data-lr') || 'Unknown';
+                const fbId = input.getAttribute('data-fb-id');
 
                 if (amount < minAmount || amount > maxAmount) {
                     alert(
@@ -2699,6 +2894,7 @@
                     return;
                 }
 
+                selectedIds.push(fbId);
                 paymentAmounts.push(amount);
             });
 
@@ -2724,8 +2920,8 @@
             const formData = new FormData();
             formData.append('pump_id', pumpId || '');
             // Append payment type and mode IDs for backend processing
-            formData.append('payment_type_id', paymentTypeValue);
-            formData.append('payment_mode_id', paymentModeValue);
+            formData.append('payment_type_id', paymentTypeId);
+            formData.append('payment_mode_id', paymentModeId);
             // Also append text values for display if needed
             formData.append('payment_type', paymentType);
             formData.append('payment_mode', paymentMode);
@@ -2747,10 +2943,11 @@
 
             // Show loading state
             const submitBtn = document.querySelector('#voucherPaymentModal .btn-success');
-            const originalBtnText = submitBtn.innerHTML;
-            submitBtn.innerHTML =
-                '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
-            submitBtn.disabled = true;
+            const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Processing...';
+                submitBtn.disabled = true;
+            }
 
             // Submit the form via AJAX
             fetch('{{ route('freight_bookings.voucher_payment') }}', {
@@ -2770,15 +2967,27 @@
                             const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
                             successText += '\n\nRemaining advance balance (' + name + '):  ' + bal;
                         }
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success!',
-                            text: successText,
-                            confirmButtonColor: '#28a745'
-                        }).then(() => {
-                            $('#voucherPaymentModal').modal('hide');
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: successText,
+                                confirmButtonColor: '#28a745'
+                            }).then(() => {
+                                const modalEl = document.getElementById('voucherPaymentModal');
+                                if (modalEl) {
+                                    bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                                }
+                                location.reload();
+                            });
+                        } else {
+                            alert(successText);
+                            const modalEl = document.getElementById('voucherPaymentModal');
+                            if (modalEl) {
+                                bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                            }
                             location.reload();
-                        });
+                        }
                     } else {
                         // Check if this is a duplicate warning
                         if (data.warning && data.duplicate_details) {
@@ -2813,15 +3022,27 @@
                                             const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
                                             successText += '\n\nRemaining advance balance (' + name + '):  ' + bal;
                                         }
-                                        Swal.fire({
-                                            icon: 'success',
-                                            title: 'Success!',
-                                            text: successText,
-                                            confirmButtonColor: '#28a745'
-                                        }).then(() => {
-                                            $('#voucherPaymentModal').modal('hide');
+                                        if (typeof Swal !== 'undefined') {
+                                            Swal.fire({
+                                                icon: 'success',
+                                                title: 'Success!',
+                                                text: successText,
+                                                confirmButtonColor: '#28a745'
+                                            }).then(() => {
+                                                const modalEl = document.getElementById('voucherPaymentModal');
+                                                if (modalEl) {
+                                                    bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                                                }
+                                                location.reload();
+                                            });
+                                        } else {
+                                            alert(successText);
+                                            const modalEl = document.getElementById('voucherPaymentModal');
+                                            if (modalEl) {
+                                                bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                                            }
                                             location.reload();
-                                        });
+                                        }
                                     } else {
                                         alert(data.message || 'Error processing payment. Please try again.');
                                     }
@@ -2831,14 +3052,18 @@
                                     alert('An error occurred while processing the payment. Please try again.');
                                 })
                                 .finally(() => {
-                                    submitBtn.innerHTML = originalBtnText;
-                                    submitBtn.disabled = false;
+                                    if (submitBtn) {
+                                        submitBtn.innerHTML = originalBtnText;
+                                        submitBtn.disabled = false;
+                                    }
                                 });
                                 return; // Exit early
                             } else {
                                 // User cancelled, restore button
-                                submitBtn.innerHTML = originalBtnText;
-                                submitBtn.disabled = false;
+                                if (submitBtn) {
+                                    submitBtn.innerHTML = originalBtnText;
+                                    submitBtn.disabled = false;
+                                }
                                 return;
                             }
                         }
@@ -2852,10 +3077,18 @@
                 })
                 .finally(() => {
                     // Restore button state
-                    submitBtn.innerHTML = originalBtnText;
-                    submitBtn.disabled = false;
+                    if (submitBtn) {
+                        submitBtn.innerHTML = originalBtnText;
+                        submitBtn.disabled = false;
+                    }
                 });
         }
+
+        $('#voucherPaymentModal').on('shown.bs.modal', function() {
+            togglePumpName();
+            updatePaymentTypeFromAmounts();
+            updateTotalPayment();
+        });
     </script>
     <script>
         document.addEventListener("change", function(e) {
@@ -2896,8 +3129,37 @@
                 }
             });
 
+            if (confirmModalElement) {
+                confirmModalElement.addEventListener('shown.bs.modal', function() {
+                    if (confirmYesBtn) {
+                        confirmYesBtn.focus();
+                    }
+                });
+
+                confirmModalElement.addEventListener('hidden.bs.modal', function() {
+                    pendingPrintButton = null;
+                    if (confirmYesBtn) {
+                        confirmYesBtn.disabled = false;
+                    }
+                });
+            }
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter' && confirmModalElement && confirmModalElement.classList.contains('show')) {
+                    event.preventDefault();
+                    if (confirmYesBtn && !confirmYesBtn.disabled) {
+                        confirmYesBtn.click();
+                    }
+                }
+            });
+
             if (confirmYesBtn) {
                 confirmYesBtn.addEventListener('click', function() {
+                    if (confirmYesBtn.disabled) {
+                        return;
+                    }
+                    confirmYesBtn.disabled = true;
+
                     const printButton = pendingPrintButton;
                     pendingPrintButton = null;
 
@@ -2906,6 +3168,7 @@
                     }
 
                     if (!printButton) {
+                        confirmYesBtn.disabled = false;
                         return;
                     }
 
@@ -2930,9 +3193,16 @@
                             return data;
                         })
                         .then((data) => {
-                            printButton.classList.add('is-printed');
-                            printButton.setAttribute('title',
-                                `Last printed: ${data.voucher_last_printed_at}`);
+                            (data.updated_booking_ids || [printButton.dataset.freightBookingId]).forEach((id) => {
+                                document.querySelectorAll(`.voucher-print-btn[data-freight-booking-id="${id}"]`).forEach((btn) => {
+                                    btn.classList.add('is-printed');
+                                    btn.title = `Last printed: ${data.voucher_last_printed_at}`;
+                                });
+                            });
+
+                            if (window.$?.fn?.DataTable?.isDataTable('#freightBookingsTable')) {
+                                $('#freightBookingsTable').DataTable().ajax.reload(null, false);
+                            }
                         })
                         .catch((error) => {
                             Swal.fire({
@@ -2940,13 +3210,10 @@
                                 title: 'Update Failed',
                                 text: error.message || 'Could not update print status.',
                             });
+                        })
+                        .finally(() => {
+                            confirmYesBtn.disabled = false;
                         });
-                });
-            }
-
-            if (confirmModalElement) {
-                confirmModalElement.addEventListener('hidden.bs.modal', function() {
-                    pendingPrintButton = null;
                 });
             }
         })();

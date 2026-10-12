@@ -53,12 +53,20 @@ class InvoiceController extends Controller
         $unpaidCount = (int) ($stats->unpaid_count ?? 0);
         $partialCount = (int) ($stats->partial_count ?? 0);
 
+        $companyId = Auth::user()->company_id;
+        $bankLedgers = $companyId ? \App\Models\Ledger::where('company_id', $companyId)
+            ->whereHas('accountGroup', fn ($q) => $q->whereIn('code', ['BANK_ACCOUNTS', 'CASH_IN_HAND']))
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get() : collect();
+
         return view('invoices.index', compact(
             'totalInvoices',
             'totalAmount',
             'paidCount',
             'unpaidCount',
-            'partialCount'
+            'partialCount',
+            'bankLedgers'
         ));
     }
 
@@ -67,7 +75,7 @@ class InvoiceController extends Controller
         try {
             $paymentTotalsSub = DB::table('invoice_payments')
                 ->select('invoice_id')
-                ->selectRaw('COALESCE(SUM(amount), 0) as paid_amount_sum')
+                ->selectRaw('COALESCE(SUM(amount + COALESCE(tds_amount, 0) + COALESCE(deduction_amount, 0)), 0) as paid_amount_sum')
                 ->groupBy('invoice_id');
 
             $latestInvoiceIdByCompanySub = Invoice::query()
@@ -82,7 +90,7 @@ class InvoiceController extends Controller
                 ->leftJoinSub($latestInvoiceIdByCompanySub, 'invoice_latest_by_company', 'invoices.company_id', '=', 'invoice_latest_by_company.company_id')
                 ->select('invoices.*')
                 ->selectRaw('COALESCE(invoice_payment_totals.paid_amount_sum, 0) as paid_amount_sum')
-                ->selectRaw('GREATEST(0, COALESCE(invoices.net_amount, invoices.total_amount) - COALESCE(invoice_payment_totals.paid_amount_sum, 0)) as remaining_amount_value')
+                ->selectRaw('CASE WHEN (COALESCE(invoices.net_amount, invoices.total_amount) - COALESCE(invoice_payment_totals.paid_amount_sum, 0)) > 0 THEN (COALESCE(invoices.net_amount, invoices.total_amount) - COALESCE(invoice_payment_totals.paid_amount_sum, 0)) ELSE 0 END as remaining_amount_value')
                 ->selectRaw('(invoices.id = invoice_latest_by_company.latest_invoice_id) as is_latest_for_company');
 
             $this->applyInvoiceFilters($query, $request, 'invoices');
@@ -178,7 +186,7 @@ class InvoiceController extends Controller
                     $query->whereRaw('COALESCE(invoice_payment_totals.paid_amount_sum, 0) LIKE ?', ["%{$keyword}%"]);
                 })
                 ->filterColumn('remaining_amount_formatted', function ($query, $keyword) {
-                    $query->whereRaw('(GREATEST(0, COALESCE(invoices.net_amount, invoices.total_amount) - COALESCE(invoice_payment_totals.paid_amount_sum, 0))) LIKE ?', ["%{$keyword}%"]);
+                    $query->whereRaw('(CASE WHEN (COALESCE(invoices.net_amount, invoices.total_amount) - COALESCE(invoice_payment_totals.paid_amount_sum, 0)) > 0 THEN (COALESCE(invoices.net_amount, invoices.total_amount) - COALESCE(invoice_payment_totals.paid_amount_sum, 0)) ELSE 0 END) LIKE ?', ["%{$keyword}%"]);
                 })
                 ->orderColumn('consignee_name', 'consignees.name $1')
                 ->orderColumn('invoice_link', 'invoices.invoice_number $1')
@@ -215,10 +223,17 @@ class InvoiceController extends Controller
                 ? $invoice->invoice_number.($invoice->manual_invoice_number ? ' ('.$invoice->manual_invoice_number.')' : '')
                 : $invoice->manual_invoice_number;
 
+            $totalAmountToCollect = (float) ($invoice->net_amount ?? $invoice->total_amount);
+            $hasGst = (($invoice->cgst ?? 0) > 0 || ($invoice->sgst ?? 0) > 0 || ($invoice->igst ?? 0) > 0);
+            $baseAmountForTds = ($hasGst && ($invoice->base_amount ?? 0) > 0)
+                ? (float) $invoice->base_amount
+                : $totalAmountToCollect;
+
             $actions .= '<button type="button" class="btn btn-sm btn-icon btn-action-mark-paid add-payment-btn" title="Add Payment" data-bs-toggle="tooltip"';
             $actions .= ' data-invoice-id="'.$invoice->id.'"';
             $actions .= ' data-invoice-number="'.e($invoiceLabel).'"';
-            $actions .= ' data-total-amount="'.(float) $invoice->total_amount.'"';
+            $actions .= ' data-total-amount="'.$totalAmountToCollect.'"';
+            $actions .= ' data-base-amount="'.$baseAmountForTds.'"';
             $actions .= ' data-paid-amount="'.$paidAmountForRow.'"';
             $actions .= ' data-remaining-amount="'.$remainingAmountForRow.'">';
             $actions .= '<i class="bi bi-currency-rupee"></i></button>';
@@ -394,6 +409,7 @@ class InvoiceController extends Controller
             ],
             'invoice_type' => 'required|in:Reverse,Forward',
             'generated_date' => 'required|date',
+            'due_date' => 'nullable|date|after_or_equal:generated_date',
             'customer_id' => 'required|exists:consignees,id',
             'total_amount' => 'required|numeric|min:0',
 
@@ -451,6 +467,12 @@ class InvoiceController extends Controller
         if ($createdInvoice instanceof Invoice) {
             $createdInvoice->loadMissing(['company', 'consignee', 'payments']);
             $this->invoiceNotificationService->notifyForCurrentStatus($createdInvoice, Auth::user());
+
+            try {
+                app(\App\Services\AccountingPostingService::class)->postInvoice($createdInvoice);
+            } catch (\Throwable $e) {
+                Log::error('Accounting post invoice failed: '.$e->getMessage());
+            }
         }
 
         return redirect()->route('invoices.index')->with('success', 'Invoice created successfully.');
@@ -513,6 +535,7 @@ class InvoiceController extends Controller
                 'manual_invoice_number' => $invoice->manual_invoice_number,
                 'invoice_type' => $invoice->invoice_type,
                 'generated_date' => $invoice->generated_date,
+                'due_date' => $invoice->effectiveDueDate()?->toDateString(),
                 'payment_status' => $invoice->payment_status,
                 'total_amount' => $baseAmount,
                 'net_amount' => $invoice->net_amount,
@@ -537,7 +560,14 @@ class InvoiceController extends Controller
             ]);
         }
 
-        return view('invoices.show', compact('invoice', 'memos', 'customDetails', 'companyLogoUrl'));
+        $companyId = $invoice->company_id ?: Auth::user()->company_id;
+        $bankLedgers = $companyId ? \App\Models\Ledger::where('company_id', $companyId)
+            ->whereHas('accountGroup', fn ($q) => $q->whereIn('code', ['BANK_ACCOUNTS', 'CASH_IN_HAND']))
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get() : collect();
+
+        return view('invoices.show', compact('invoice', 'memos', 'customDetails', 'companyLogoUrl', 'bankLedgers'));
     }
 
     public function edit(Invoice $invoice)
@@ -580,6 +610,7 @@ class InvoiceController extends Controller
                 )->ignore($invoice->id),
             ],
             'generated_date' => 'required|date',
+            'due_date' => 'nullable|date|after_or_equal:generated_date',
         ];
 
         if (! $invoice->custom_invoice) {
@@ -595,6 +626,7 @@ class InvoiceController extends Controller
                 ? trim((string) $data['manual_invoice_number'])
                 : null;
             $invoice->generated_date = $data['generated_date'];
+            $invoice->due_date = $data['due_date'] ?? null;
 
             if (! $invoice->custom_invoice) {
                 $memoIds = $request->input('memo_ids', []);
@@ -853,28 +885,44 @@ class InvoiceController extends Controller
         }
         $validated = $request->validate([
             'mode' => 'required|string|max:255',
-            'amount' => 'required|numeric|min:0.01',
+            'amount' => 'required|numeric|min:0',
+            'tds_amount' => 'nullable|numeric|min:0',
+            'deduction_amount' => 'nullable|numeric|min:0',
+            'deduction_reason' => 'nullable|string|max:255',
             'remark' => 'nullable|string|max:1000',
             'payment_date' => 'required|date',
+            'bank_ledger_id' => 'nullable|exists:ledgers,id',
         ]);
 
-        $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
-        $paidAmount = $invoice->payments()->sum('amount');
-        $remainingAmount = $amountToCollect - $paidAmount;
+        $validated['tds_amount'] = (float) ($validated['tds_amount'] ?? 0);
+        $validated['deduction_amount'] = (float) ($validated['deduction_amount'] ?? 0);
+        $totalSettledThisTransaction = round((float) $validated['amount'] + $validated['tds_amount'] + $validated['deduction_amount'], 2);
 
-        if ($validated['amount'] > $remainingAmount) {
+        if ($totalSettledThisTransaction <= 0) {
             return response()->json([
                 'success' => false,
-                'message' => 'Payment amount cannot exceed the remaining balance of '.number_format($remainingAmount, 2),
+                'message' => 'Total payment settlement (Remitted Amount + TDS + Deductions) must be greater than zero.',
+            ], 422);
+        }
+
+        $amountToCollect = (float) ($invoice->net_amount ?? $invoice->total_amount);
+        $currentPaidAmount = (float) $invoice->paid_amount;
+        $remainingAmount = max(0.0, round($amountToCollect - $currentPaidAmount, 2));
+
+        if ($totalSettledThisTransaction > ($remainingAmount + 0.01)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Total settlement amount (₹'.number_format($totalSettledThisTransaction, 2).') cannot exceed the remaining balance of ₹'.number_format($remainingAmount, 2),
             ], 422);
         }
 
         $payment = $invoice->payments()->create($validated);
+        $invoice->refresh();
 
-        $newPaidAmount = $invoice->payments()->sum('amount');
-        if ($newPaidAmount >= $amountToCollect) {
+        $newPaidAmount = (float) $invoice->paid_amount;
+        if ($newPaidAmount >= ($amountToCollect - 0.01)) {
             $invoice->payment_status = 'paid';
-        } elseif ($newPaidAmount > 0) {
+        } elseif ($newPaidAmount > 0.01) {
             $invoice->payment_status = 'partial';
         } else {
             $invoice->payment_status = 'pending';
@@ -886,12 +934,18 @@ class InvoiceController extends Controller
             'paymentDate' => Carbon::parse((string) $validated['payment_date'])->format('d M Y'),
         ]);
 
+        try {
+            app(\App\Services\AccountingPostingService::class)->postInvoicePayment($payment);
+        } catch (\Throwable $e) {
+            Log::error('Accounting post payment failed: '.$e->getMessage());
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Payment added successfully',
             'payment' => $payment,
             'paid_amount' => $newPaidAmount,
-            'remaining_amount' => max(0, $amountToCollect - $newPaidAmount),
+            'remaining_amount' => max(0.0, round($amountToCollect - $newPaidAmount, 2)),
             'payment_status' => $invoice->payment_status,
         ]);
     }
@@ -905,9 +959,9 @@ class InvoiceController extends Controller
             abort(403, 'Unauthorized access to this invoice.');
         }
         $payments = $invoice->payments()->orderByRaw('COALESCE(payment_date, created_at) DESC')->get();
-        $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
-        $paidAmount = $invoice->payments()->sum('amount');
-        $remainingAmount = max(0, $amountToCollect - $paidAmount);
+        $amountToCollect = (float) ($invoice->net_amount ?? $invoice->total_amount);
+        $paidAmount = (float) $invoice->paid_amount;
+        $remainingAmount = max(0.0, round($amountToCollect - $paidAmount, 2));
 
         return response()->json([
             'payments' => $payments,

@@ -358,7 +358,7 @@ class LorryReceiptTest extends TestCase
             'invoice_number' => 'INV001',
         ]);
         $invCheck->assertOk();
-        $this->assertFalse($invCheck->json('valid'));
+        $this->assertTrue($invCheck->json('valid'));
 
         $grCheck = $this->actingAs($admin)->post('/api/check-gr-number-uniqueness', [
             'gr_number' => 'GR001',
@@ -862,6 +862,10 @@ class LorryReceiptTest extends TestCase
         $responseCreateLinked->assertSee('id="linked-lr-submit"', false);
         $responseCreateLinked->assertSee('disabled', false);
         $responseCreateLinked->assertSee('Minimum 2 LRs required', false);
+        $responseCreateLinked->assertSee('id="quickAddCustomerModal"', false);
+        $responseCreateLinked->assertSee('id="quickAddTruckModal"', false);
+        $responseCreateLinked->assertSee('data-bs-target="#quickAddTruckModal"', false);
+        $responseCreateLinked->assertSee('data-bs-target="#quickAddCustomerModal"', false);
 
         $lr = LorryReceipt::create([
             'company_id' => $admin->company_id,
@@ -962,7 +966,11 @@ class LorryReceiptTest extends TestCase
             ->assertSee('lrf-page', false)
             ->assertSee('linked-lr-form', false)
             ->assertSee('LRB101', false)
-            ->assertSee('LRB102', false);
+            ->assertSee('LRB102', false)
+            ->assertSee('id="quickAddCustomerModal"', false)
+            ->assertSee('id="quickAddTruckModal"', false)
+            ->assertSee('data-bs-target="#quickAddTruckModal"', false)
+            ->assertSee('data-bs-target="#quickAddCustomerModal"', false);
 
         $newGrDate = now()->addDay()->toDateString();
 
@@ -1040,11 +1048,15 @@ class LorryReceiptTest extends TestCase
     {
         $super = $this->makeUser('super_admin');
 
-        $this->actingAs($super)->get('/lorry_receipts')->assertForbidden();
+        $this->actingAs($super)->get('/lorry_receipts')->assertRedirect(route('company.index'));
         $this->actingAs($super)
             ->withHeader('X-Requested-With', 'XMLHttpRequest')
             ->get('/lorry_receipts')
-            ->assertForbidden();
+            ->assertRedirect(route('company.index'));
+
+        UserRole::firstOrCreate(['id' => 6, 'name' => 'driver']);
+        $driver = User::factory()->create(['user_role_id' => 6, 'company_id' => null]);
+        $this->actingAs($driver)->get('/lorry_receipts')->assertForbidden();
 
         // log out to simulate guest
         $this->post(route('logout'));

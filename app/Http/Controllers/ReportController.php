@@ -14,6 +14,7 @@ use App\Exports\PendingInvoiceExport;
 use App\Exports\PendingMemoExport;
 use App\Exports\ProfitabilityReportExport;
 use App\Exports\PumpExport;
+use App\Exports\CustomerTDSExport;
 use App\Exports\ShortageDamageExport;
 use App\Exports\TDSExport;
 use App\Exports\TransporterMasterExport;
@@ -25,6 +26,7 @@ use App\Models\Consignee;
 use App\Models\EwayBill;
 use App\Models\FreightBooking;
 use App\Models\Invoice;
+use App\Models\InvoicePayment;
 use App\Models\LorryReceipt;
 use App\Models\PaymentMode;
 use App\Models\Pump;
@@ -218,6 +220,7 @@ $lrs = $query
     public function tds(Request $request)
     {
         [$startDate, $endDate, $generated] = $this->normalizeDateRange($request);
+        $tab = $request->input('tab', 'payable');
 
         $user = Auth::user()->company_id;
         if ($generated) {
@@ -234,23 +237,42 @@ $lrs = $query
                     ->whereColumn('lorry_receipts.id', 'freight_bookings.lr_id')
                     ->limit(1);
             }, 'asc');
-            $lrs = $query->paginate(self::REPORTS_PER_PAGE)->appends($request->query());
+            $lrs = $query->paginate(self::REPORTS_PER_PAGE, ['*'], 'payable_page')->appends($request->query());
+
+            $customerQuery = InvoicePayment::query()
+                ->with(['invoice.consignee', 'invoice.company'])
+                ->where('tds_amount', '>', 0)
+                ->whereBetween('payment_date', [$startDate, $endDate]);
+
+            if ($user) {
+                $customerQuery->whereHas('invoice', function ($q) use ($user) {
+                    $q->where('company_id', $user);
+                });
+            }
+            $customerPayments = $customerQuery->orderBy('payment_date', 'asc')
+                ->paginate(self::REPORTS_PER_PAGE, ['*'], 'receivable_page')
+                ->appends($request->query());
+
             $generated = true;
         } else {
             $lrs = collect();
+            $customerPayments = collect();
         }
 
-        return view('reports.tds', compact('lrs', 'startDate', 'endDate', 'generated'));
+        return view('reports.tds', compact('lrs', 'customerPayments', 'startDate', 'endDate', 'generated', 'tab'));
     }
 
     public function tds_export(Request $request)
     {
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
+        $tab = $request->input('tab', 'payable');
 
-        $export = Excel::download(new TDSExport($startDate, $endDate), 'tds_report.xlsx');
+        if ($tab === 'receivable') {
+            return Excel::download(new CustomerTDSExport($startDate, $endDate), 'customer_tds_receivable_report.xlsx');
+        }
 
-        return $export;
+        return Excel::download(new TDSExport($startDate, $endDate), 'tds_report.xlsx');
     }
 
     public function dispatch(Request $request)
@@ -1125,38 +1147,53 @@ $lrs = $query
             'freight_booking_id' => ['required', 'integer', 'exists:freight_bookings,id'],
         ]);
 
-        $freightBooking = FreightBooking::find($validated['freight_booking_id']);
+        $freightBooking = FreightBooking::with('lr')->find($validated['freight_booking_id']);
         if (! $freightBooking) {
             return response()->json(['message' => 'Freight Booking not found.'], 404);
         }
 
-        if (Auth::user()->company_id && $freightBooking->company_id !== Auth::user()->company_id) {
+        $companyId = Auth::user()->company_id;
+        if ($companyId && (int) $freightBooking->company_id !== (int) $companyId) {
             return response()->json(['message' => 'Unauthorized access to this freight booking.'], 403);
         }
 
         $printTime = now();
-        $query = FreightBooking::query();
+        $linkedLrId = $freightBooking->linked_lr_id ?: $freightBooking->lr?->linked_lr_id;
+        $linkedFbId = $freightBooking->linked_freight_booking_id;
 
-        if (Auth::user()->company_id) {
-            $query->where('company_id', Auth::user()->company_id);
-        }
+        $bookingIds = FreightBooking::query()
+            ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
+            ->where(function ($q) use ($freightBooking, $linkedLrId, $linkedFbId) {
+                $q->where('id', $freightBooking->id);
+                if ($linkedLrId) {
+                    $q->orWhere('linked_lr_id', $linkedLrId)
+                      ->orWhereHas('lr', fn ($lrQ) => $lrQ->where('linked_lr_id', $linkedLrId));
+                }
+                if ($linkedFbId) {
+                    $q->orWhere('id', $linkedFbId)
+                      ->orWhere('linked_freight_booking_id', $linkedFbId);
+                }
+                $q->orWhere('linked_freight_booking_id', $freightBooking->id);
+            })
+            ->pluck('id');
 
-        if ($freightBooking->linked_lr_id) {
-            $query->where('linked_lr_id', $freightBooking->linked_lr_id);
-        } else {
-            $query->where('id', $freightBooking->id);
-        }
-
-        $query->update([
+        $updateData = [
             'voucher_printed' => true,
             'voucher_last_printed_at' => $printTime,
             'updated_at' => $printTime,
-        ]);
+        ];
+        if ($linkedLrId) {
+            $updateData['linked_lr_id'] = $linkedLrId;
+        }
+
+        FreightBooking::whereIn('id', $bookingIds)->update($updateData);
 
         return response()->json([
             'message' => 'Voucher print status updated.',
             'voucher_printed' => true,
             'voucher_last_printed_at' => $printTime->format('d-m-Y h:i A'),
+            'updated_booking_ids' => $bookingIds->all(),
+            'linked_lr_id' => $linkedLrId,
         ]);
     }
 

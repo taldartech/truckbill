@@ -41,7 +41,7 @@
         };
     @endphp
 
-    <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
 
     @if (session('success'))
         <div class="alert alert-success mt-2" style="max-width: 1200px; margin-left: auto; margin-right: auto;">
@@ -436,7 +436,7 @@
                     <div class="card-body p-0">
                         @if ($payments->count() > 0)
                             <div class="table-responsive">
-                                <table class="table table-sm table-hover align-middle mb-0 fb-compact-table">
+                                <table class="table table-sm table-hover align-middle mb-0 fb-compact-table text-nowrap">
                                     <thead>
                                         <tr>
                                             <th>Voucher</th>
@@ -549,7 +549,7 @@
                                 <strong>₹{{ number_format($tdsAmount, 2) }}</strong>
                             </div>
                             <div class="fb-financial-summary__row">
-                                <span>Negative Adjusted</span>
+                                <span>Negative Adjusted Amount</span>
                                 <strong class="{{ $negativeAdjusted > 0 ? '' : 'text-muted' }}">₹{{ number_format($negativeAdjusted, 2) }}</strong>
                             </div>
                             <div class="fb-financial-summary__row">
@@ -806,7 +806,14 @@
                                     <input type="text" class="form-control" id="paymentRemarks" placeholder="Enter remarks">
                                 </div>
                                 <div id="pumpNameContainer" style="display: none;">
-                                    <label for="pumpName" class="form-label">Pump Name *</label>
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="pumpName" class="form-label mb-0">Pump Name *</label>
+                                        <a href="javascript:void(0)"
+                                            class="lrf-quick-add js-open-quick-add-pump"
+                                            data-pump-select="pumpName">
+                                            <i class="bi bi-plus-lg"></i> Add
+                                        </a>
+                                    </div>
                                     <select class="form-select" id="pumpName">
                                         <option value="">Select Pump</option>
                                         @foreach ($pumps as $pump)
@@ -1307,8 +1314,8 @@
                                         <thead>
                                             <tr>
                                                 <th>LR Number</th>
-                                                <th>Shortage</th>
-                                                <th>Damage</th>
+                                                <th>Shortage Amount</th>
+                                                <th>Damage Amount</th>
                                                 <th>Balance</th>
                                                 <th>Allocated</th>
                                             </tr>
@@ -1363,7 +1370,14 @@
                                         </select>
                                     </div>
                                     <div id="combinedPumpContainer" style="display: none;">
-                                        <label for="combinedPumpName" class="form-label">Pump Name *</label>
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label for="combinedPumpName" class="form-label mb-0">Pump Name *</label>
+                                            <a href="javascript:void(0)"
+                                                class="lrf-quick-add js-open-quick-add-pump"
+                                                data-pump-select="combinedPumpName">
+                                                <i class="bi bi-plus-lg"></i> Add
+                                            </a>
+                                        </div>
                                         <select class="form-select" id="combinedPumpName" name="pump_id">
                                             <option value="">Select Pump</option>
                                             @foreach ($pumps as $pump)
@@ -1578,8 +1592,37 @@
                 }
             });
 
+            if (confirmModalElement) {
+                confirmModalElement.addEventListener('shown.bs.modal', function() {
+                    if (confirmYesBtn) {
+                        confirmYesBtn.focus();
+                    }
+                });
+
+                confirmModalElement.addEventListener('hidden.bs.modal', function() {
+                    pendingPrintButton = null;
+                    if (confirmYesBtn) {
+                        confirmYesBtn.disabled = false;
+                    }
+                });
+            }
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter' && confirmModalElement && confirmModalElement.classList.contains('show')) {
+                    event.preventDefault();
+                    if (confirmYesBtn && !confirmYesBtn.disabled) {
+                        confirmYesBtn.click();
+                    }
+                }
+            });
+
             if (confirmYesBtn) {
                 confirmYesBtn.addEventListener('click', function() {
+                    if (confirmYesBtn.disabled) {
+                        return;
+                    }
+                    confirmYesBtn.disabled = true;
+
                     const printButton = pendingPrintButton;
                     pendingPrintButton = null;
 
@@ -1588,6 +1631,7 @@
                     }
 
                     if (!printButton) {
+                        confirmYesBtn.disabled = false;
                         return;
                     }
 
@@ -1611,8 +1655,12 @@
                             return data;
                         })
                         .then((data) => {
-                            printButton.classList.add('is-printed');
-                            printButton.setAttribute('title', `Last printed: ${data.voucher_last_printed_at}`);
+                            (data.updated_booking_ids || [printButton.dataset.freightBookingId]).forEach((id) => {
+                                document.querySelectorAll(`.voucher-print-btn[data-freight-booking-id="${id}"]`).forEach((btn) => {
+                                    btn.classList.add('is-printed');
+                                    btn.title = `Last printed: ${data.voucher_last_printed_at}`;
+                                });
+                            });
                         })
                         .catch((error) => {
                             if (typeof Swal !== 'undefined') {
@@ -1624,16 +1672,14 @@
                             } else {
                                 alert(error.message || 'Could not update print status.');
                             }
+                        })
+                        .finally(() => {
+                            confirmYesBtn.disabled = false;
                         });
-                });
-            }
-
-            if (confirmModalElement) {
-                confirmModalElement.addEventListener('hidden.bs.modal', function() {
-                    pendingPrintButton = null;
                 });
             }
         })();
     </script>
 
+    @include('freight_bookings.partials.quick-add-pump')
 @endsection

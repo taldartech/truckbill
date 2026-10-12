@@ -76,7 +76,7 @@
         }
         .lr-sheet--a .lr-sheet__ribbon {
             letter-spacing: 0.6px;
-            padding: 7px 12px;
+            padding: 2px 7px;
             text-align: center;
         }
         .lr-sheet--a .lr-sheet__inner {
@@ -107,7 +107,7 @@
             <div class="lr-bilty-wrap lr-sheet lr-sheet--a">
             @include('reports.exports.partials.lr-copy-bilty-block', ['lr' => $lr, 'company' => $company, 'copyLabel' => 'CONSIGNOR COPY'])
         </div>
-        <div class="lr-bilty-wrap lr-sheet lr-sheet--a" style="margin-top: 35px!important;">
+        <div class="lr-bilty-wrap lr-sheet lr-sheet--a" style="margin-top: 25px!important;">
             @include('reports.exports.partials.lr-copy-bilty-block', ['lr' => $lr, 'company' => $company, 'copyLabel' => 'DRIVER COPY'])
         </div>
     @endforeach

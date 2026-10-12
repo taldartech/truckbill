@@ -122,5 +122,5 @@
         });
     })();
 </script>
-<script src="{{ asset('js/branch-form.js') }}"></script>
+<script src="{{ asset('js/branch-form.js') }}?v={{ config('app.ASSET_VERSION') }}"></script>
 @endpush

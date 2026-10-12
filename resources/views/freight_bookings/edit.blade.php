@@ -43,8 +43,8 @@
         }
     </style>
 
-    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
+    <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
 
     <div class="lrf-page app-index-page">
         <div class="lrf-page__toolbar">
@@ -267,7 +267,7 @@
                             <div class="lrf-pf__hint">Read-only</div>
                         </div>
                         <div class="lrf-pf">
-                            <label for="negative_adjusted_amount_display" class="lrf-pf__lbl">Negative Adjusted</label>
+                            <label for="negative_adjusted_amount_display" class="lrf-pf__lbl">Negative Adjusted Amount</label>
                             <input type="number" step="0.01"
                                 class="form-control is-auto {{ ($freightBooking->negative_adjusted_amount ?? 0) > 0 ? '' : 'text-muted' }}"
                                 id="negative_adjusted_amount_display"
@@ -278,6 +278,16 @@
                             <div class="lrf-pf__hint">System-managed</div>
                         </div>
                     </div>
+
+                    @if (! ($canChangeTds ?? true))
+                        <div class="alert alert-warning py-2 mb-3 small">
+                            <i class="bi bi-lock me-1"></i> TDS already submitted; amount cannot be changed.
+                        </div>
+                    @else
+                        <div class="form-text small text-muted mb-2">
+                            Auto-calculated based on transporter TDS percentage
+                        </div>
+                    @endif
 
                     <input type="hidden" name="tds_amount" id="tds_amount"
                         value="{{ old('tds_amount', $freightBooking->tds_amount) }}">
@@ -867,6 +877,12 @@
                                             required placeholder="Enter memo ID / POD" pattern="[A-Za-z0-9\-\/]+">
                                         <div class="lrf-pf__hint mt-1">Saved to the good receipt (bilty) record.</div>
                                     </div>
+                                    <div>
+                                        <label for="deliveryMemoCreatedAt" class="form-label">Memo Date &amp; Time</label>
+                                        <input type="datetime-local" class="form-control" id="deliveryMemoCreatedAt"
+                                            name="memo_created_at" max="{{ now()->format('Y-m-d\TH:i') }}">
+                                        <div class="lrf-pf__hint mt-1">Optional. Leave blank to use the current date &amp; time.</div>
+                                    </div>
                                 </div>
                             </form>
                         </div>
@@ -1019,6 +1035,7 @@
         // Function to save memo ID for delivery
         window.saveMemoId = function() {
             const memoId = document.getElementById('deliveryMemoId').value.trim();
+            const memoCreatedAt = document.getElementById('deliveryMemoCreatedAt').value;
             const saveBtn = document.getElementById('saveMemoBtn');
             const spinner = saveBtn.querySelector('.spinner-border');
             const errorDiv = document.getElementById('memoModalError');
@@ -1038,6 +1055,9 @@
             // Create form data
             const formData = new FormData();
             formData.append('memo_id', memoId);
+            if (memoCreatedAt) {
+                formData.append('memo_created_at', memoCreatedAt);
+            }
             formData.append('lr_ids[]', {{ $freightBooking->lr_id }});
 
             // Send AJAX request to update memo ID

@@ -3,7 +3,7 @@
 @section('title', 'Dashboard')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/dashboard-redesigned.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/dashboard-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
 @endpush
 
 @section('content')
@@ -23,16 +23,8 @@
             $userRole = auth()->user()->userRole->name;
         @endphp
 
-        @if ($userRole === 'master_admin' && isset($systemStats))
-            @include('dashboard.roles.master_admin')
-        @elseif ($userRole === 'super_admin' && isset($adminStats))
-            @include('dashboard.roles.super_admin')
-        @elseif ((($userRole === 'admin') || ($userRole === 'super_admin' && session('super_admin_company_id'))) && isset($monthlyStats))
-            @include('dashboard.roles.admin')
-        @elseif ($userRole === 'moderator' && isset($operationalStats))
-            @include('dashboard.roles.moderator')
-        @elseif ($userRole === 'accountant' && isset($financialStats))
-            @include('dashboard.roles.accountant')
+        @if (isset($dashboardView) && in_array($dashboardView, ['master_admin', 'super_admin', 'admin', 'moderator', 'accountant'], true))
+            @include('dashboard.roles.'.$dashboardView)
         @elseif ($userRole === 'transporter' && isset($transporterStats))
             @include('dashboard.roles.transporter')
         @elseif ($userRole === 'customer' && isset($customerStats))
@@ -97,19 +89,118 @@
             }
 
             function initTabs() {
-                const root = document.querySelector('[data-dashboard-analytics]');
-                if (!root) {
-                    return;
-                }
-
-                root.querySelectorAll('[data-dash-tab]').forEach((btn) => {
-                    btn.addEventListener('click', () => {
-                        const tab = btn.getAttribute('data-dash-tab');
-                        root.querySelectorAll('[data-dash-tab]').forEach((b) => b.classList.toggle('is-active', b === btn));
-                        root.querySelectorAll('[data-dash-pane]').forEach((pane) => {
-                            pane.hidden = pane.getAttribute('data-dash-pane') !== tab;
+                document.querySelectorAll('[data-dashboard-analytics]').forEach((root) => {
+                    root.querySelectorAll('[data-dash-tab]').forEach((btn) => {
+                        btn.addEventListener('click', () => {
+                            const tab = btn.getAttribute('data-dash-tab');
+                            root.querySelectorAll('[data-dash-tab]').forEach((b) => b.classList.toggle('is-active', b === btn));
+                            root.querySelectorAll('[data-dash-pane]').forEach((pane) => {
+                                pane.hidden = pane.getAttribute('data-dash-pane') !== tab;
+                            });
                         });
                     });
+                });
+            }
+
+            const compactRupees = (value) => '₹' + Number(value).toLocaleString('en-IN', { notation: 'compact', maximumFractionDigits: 1 });
+            const fullRupees = (value) => '₹' + Number(value).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+
+            const legendTop = {
+                display: true,
+                position: 'top',
+                labels: { usePointStyle: true, boxWidth: 8, font: { size: 11, weight: '600' } },
+            };
+
+            const moneyTooltip = {
+                callbacks: {
+                    label: (context) => context.dataset.label + ': ' + fullRupees(context.raw),
+                },
+            };
+
+            const categoryAxis = { grid: { display: false }, ticks: { font: { size: 10, weight: '600' } } };
+            const moneyAxis = { beginAtZero: true, grid: { color: brand.grid }, ticks: { callback: compactRupees } };
+
+            function renderMonthlyPnl(canvas, trend) {
+                new Chart(canvas, {
+                    data: {
+                        labels: trend.labels || [],
+                        datasets: [
+                            { type: 'bar', label: 'Revenue', data: trend.revenue || [], backgroundColor: 'rgba(47, 179, 111, 0.8)', borderRadius: 6, maxBarThickness: 26, order: 2 },
+                            { type: 'bar', label: 'Trip cost', data: trend.cost || [], backgroundColor: 'rgba(217, 119, 6, 0.75)', borderRadius: 6, maxBarThickness: 26, order: 2 },
+                            { type: 'line', label: 'Profit', data: trend.profit || [], borderColor: brand.blue, backgroundColor: brand.blue, tension: 0.35, pointRadius: 3, order: 1 },
+                            { type: 'line', label: 'Collected', data: trend.collected || [], borderColor: brand.slate, borderDash: [5, 4], backgroundColor: brand.slate, tension: 0.35, pointRadius: 2, order: 1 },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: { legend: legendTop, tooltip: moneyTooltip },
+                        scales: { x: categoryAxis, y: moneyAxis },
+                    },
+                });
+            }
+
+            function renderProfitTrend(canvas, trend) {
+                new Chart(canvas, {
+                    data: {
+                        labels: trend.labels || [],
+                        datasets: [
+                            { type: 'bar', label: 'Revenue', data: trend.revenue || [], backgroundColor: 'rgba(47, 179, 111, 0.75)', borderRadius: 4, maxBarThickness: 18, order: 2 },
+                            { type: 'bar', label: 'Trip cost', data: trend.cost || [], backgroundColor: 'rgba(217, 119, 6, 0.7)', borderRadius: 4, maxBarThickness: 18, order: 2 },
+                            {
+                                type: 'line',
+                                label: 'Profit',
+                                data: trend.profit || [],
+                                borderColor: brand.blue,
+                                backgroundColor: brand.blue,
+                                tension: 0.3,
+                                pointRadius: 2,
+                                order: 1,
+                                segment: { borderColor: (ctx) => (ctx.p1.parsed.y < 0 ? brand.red : brand.blue) },
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: { legend: legendTop, tooltip: moneyTooltip },
+                        scales: { x: categoryAxis, y: { ...moneyAxis, beginAtZero: false } },
+                    },
+                });
+            }
+
+            function renderPlatformTrend(canvas, trend) {
+                new Chart(canvas, {
+                    data: {
+                        labels: trend.labels || [],
+                        datasets: [
+                            { type: 'bar', label: 'Subscription revenue', data: trend.subscription_revenue || [], backgroundColor: 'rgba(47, 179, 111, 0.8)', borderRadius: 6, maxBarThickness: 28, yAxisID: 'y', order: 2 },
+                            { type: 'line', label: 'Bilties created', data: trend.lrs || [], borderColor: brand.blue, backgroundColor: brand.blue, tension: 0.35, pointRadius: 3, yAxisID: 'y1', order: 1 },
+                            { type: 'line', label: 'New companies', data: trend.signups || [], borderColor: brand.amber, backgroundColor: brand.amber, borderDash: [5, 4], tension: 0.35, pointRadius: 3, yAxisID: 'y1', order: 1 },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: legendTop,
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => context.dataset.yAxisID === 'y'
+                                        ? context.dataset.label + ': ' + fullRupees(context.raw)
+                                        : context.dataset.label + ': ' + Number(context.raw).toLocaleString('en-IN'),
+                                },
+                            },
+                        },
+                        scales: {
+                            x: categoryAxis,
+                            y: moneyAxis,
+                            y1: { beginAtZero: true, position: 'right', grid: { display: false }, ticks: { precision: 0 } },
+                        },
+                    },
                 });
             }
 
@@ -126,204 +217,20 @@
                     return;
                 }
 
-                const lrCounts = payload.lrStatusCounts || {};
-                const payments = payload.invoicePaymentStatuses || {};
-                const trend = payload.monthlyTrend || { labels: [], bookings: [], revenue: [] };
+                const charts = [
+                    ['dashMonthlyPnlChart', renderMonthlyPnl, payload.monthlyTrend],
+                    ['dashProfitTrendChart', renderProfitTrend, payload.profitTrend],
+                    ['dashPlatformTrendChart', renderPlatformTrend, payload.platformTrend],
+                ];
 
-                const doughnutDefaults = {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { boxWidth: 10, usePointStyle: true, font: { size: 11, weight: '600' } },
-                        },
-                    },
-                    cutout: '62%',
-                };
+                charts.forEach(([id, render, data]) => {
+                    const canvas = document.getElementById(id);
+                    if (canvas && data) {
+                        render(canvas, data);
+                    }
+                });
+            }
 
-                const lrCanvas = document.getElementById('dashLrStatusChart');
-                if (lrCanvas) {
-                    new Chart(lrCanvas, {
-                        type: 'doughnut',
-                        data: {
-                            labels: Object.keys(lrCounts),
-                            datasets: [{
-                                data: Object.values(lrCounts),
-                                backgroundColor: [brand.amber, brand.blue, brand.green, brand.red],
-                                borderWidth: 0,
-                            }],
-                        },
-                        options: doughnutDefaults,
-                    });
-                }
-
-                const paymentCanvas = document.getElementById('dashPaymentStatusChart');
-                if (paymentCanvas) {
-                    new Chart(paymentCanvas, {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['Pending', 'Partial', 'Paid'],
-                            datasets: [{
-                                data: [payments.pending || 0, payments.partial || 0, payments.paid || 0],
-                                backgroundColor: [brand.amber, brand.blue, brand.green],
-                                borderWidth: 0,
-                            }],
-                        },
-                        options: doughnutDefaults,
-                    });
-                }
-
-                const bookingCanvas = document.getElementById('dashBookingTrendChart');
-                if (bookingCanvas) {
-                    new Chart(bookingCanvas, {
-                        type: 'bar',
-                        data: {
-                            labels: trend.labels || [],
-                            datasets: [{
-                                label: 'Hires',
-                                data: trend.bookings || [],
-                                backgroundColor: 'rgba(47, 179, 111, 0.75)',
-                                borderRadius: 8,
-                                maxBarThickness: 28,
-                            }],
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
-                            scales: {
-                                x: { grid: { display: false }, ticks: { font: { size: 10, weight: '600' } } },
-                                y: { beginAtZero: true, grid: { color: brand.grid }, ticks: { precision: 0 } },
-                            },
-                        },
-                    });
-                }
-
-                const revenueCanvas = document.getElementById('dashRevenueTrendChart');
-                if (revenueCanvas) {
-                    new Chart(revenueCanvas, {
-                        type: 'line',
-                        data: {
-                            labels: trend.labels || [],
-                            datasets: [{
-                                label: 'Revenue',
-                                data: trend.revenue || [],
-                                borderColor: brand.greenDark,
-                                backgroundColor: 'rgba(47, 179, 111, 0.12)',
-                                fill: true,
-                                tension: 0.35,
-                                pointRadius: 3,
-                                pointBackgroundColor: brand.green,
-                            }],
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
-                            scales: {
-                                x: { grid: { display: false }, ticks: { font: { size: 10, weight: '600' } } },
-                                y: {
-                                    beginAtZero: true,
-                                    grid: { color: brand.grid },
-                                    ticks: {
-                                        callback: (v) => '₹' + Number(v).toLocaleString('en-IN', { notation: 'compact' }),
-                                    },
-                                },
-                            },
-                        },
-                    });
-
-                }
-      const profitabilityCanvas = document.getElementById('dashProfitabilityTrendChart');
-
-if (profitabilityCanvas) {
-    const profitability = payload.profitabilityTrend || {};
-
-    new Chart(profitabilityCanvas, {
-        type: 'bar',
-        data: {
-            labels: profitability.labels || [],
-            datasets: [
-                {
-                    label: 'Revenue',
-                    data: profitability.revenue || [],
-                    backgroundColor: brand.green,
-                    borderRadius: 3,
-                    barThickness: 14,
-                },
-                {
-                    label: 'Cost',
-                    data: profitability.cost || [],
-                    backgroundColor: brand.amber,
-                    borderRadius: 3,
-                    barThickness: 14,
-                },
-                {
-                    label: 'Profit',
-                    data: profitability.profit || [],
-                    backgroundColor: brand.blue,
-                    borderRadius: 3,
-                    barThickness: 14,
-                },
-            ],
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        usePointStyle: true,
-                        boxWidth: 8,
-                        font: {
-                            size: 11,
-                            weight: '600',
-                        },
-                    },
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            return context.dataset.label + ': ₹' +
-                                Number(context.raw).toLocaleString('en-IN');
-                        },
-                    },
-                },
-            },
-            scales: {
-                x: {
-                    stacked: false,
-                    grid: {
-                        display: false,
-                    },
-                    ticks: {
-                        font: {
-                            size: 10,
-                            weight: '600',
-                        },
-                    },
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: brand.grid,
-                    },
-                    ticks: {
-                        callback: function (value) {
-                            return '₹' + Number(value).toLocaleString('en-IN', {
-                                notation: 'compact',
-                            });
-                        },
-                    },
-                },
-            },
-        },
-    });
-}
-}
             document.addEventListener('DOMContentLoaded', function () {
                 animateCountUps();
                 initTabs();

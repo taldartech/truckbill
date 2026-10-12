@@ -21,17 +21,14 @@
     <div class="card app-index-list-card mb-4">
         <div class="card-header">
             <h3 class="card-title mb-0">Consignees / Consignors / Customers</h3>
-            <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
-
-                <a href="{{ route('consignees.create') }}" class="btn app-index-header-btn" aria-label="Create consignee">
-                    <i class="fas fa-plus"></i> Create
-                </a>
-                <button type="button"
-               class="btn app-index-header-btn"
-               data-bs-toggle="modal"
-               data-bs-target="#consigneeBulkUploadModal">
-               <i class="fas fa-upload"></i> Bulk Upload
-               </button>
+            <div class="app-index-card-toolbar d-flex flex-nowrap gap-1 gap-sm-2 align-items-center">
+                    <a href="{{ route('consignees.create') }}" class="btn app-index-header-btn" aria-label="Create consignee">
+                        <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Create</span>
+                    </a>
+                    <button type="button" class="btn app-index-header-btn" data-bs-toggle="modal"
+                        data-bs-target="#consigneeBulkUploadModal" aria-label="Bulk upload consignees">
+                        <i class="bi bi-upload"></i> <span class="d-none d-sm-inline">Bulk Upload</span>
+                    </button>
             </div>
         </div>
         <div class="card-body">
@@ -39,12 +36,12 @@
                 <table id="consigneesTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
                     <thead class="table-light">
                         <tr>
-                            <th style="width: 80px;">Sr. No</th>
-                            <th>Name</th>
-                            <th>City</th>
-                            <th>State</th>
-                            <th>Country</th>
-                            <th>Contact Number</th>
+                            <th style="width: 80px;" class="text-nowrap">Sr. No</th>
+                            <th class="text-nowrap">Name</th>
+                            <th class="text-nowrap">City</th>
+                            <th class="text-nowrap">State</th>
+                            <th class="text-nowrap">Country</th>
+                            <th class="text-nowrap">Contact Number</th>
                             @if(auth()->check() && auth()->user()->canActAsAdmin())
                             <th class="app-index-actions-cell" style="width: 120px;">Actions</th>
                             @endif

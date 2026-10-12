@@ -13,18 +13,18 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.pending-invoice') }}" id="searchForm" class="tb-report-customer-select2-form">
-                <div class="row mb-2">
-                    <div class="col-md-3">
-                        <label class="form-label">Start Date</label>
-                        <input type="date" name="start_date" class="form-control" value="{{ $startDate }}">
+                <div class="row g-2 align-items-end mb-2">
+                    <div class="col-6 col-md-3">
+                        <label class="form-label small mb-1">Start Date</label>
+                        <input type="date" name="start_date" class="form-control form-control-sm" value="{{ $startDate }}">
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">End Date</label>
-                        <input type="date" name="end_date" class="form-control" value="{{ $endDate }}">
+                    <div class="col-6 col-md-3">
+                        <label class="form-label small mb-1">End Date</label>
+                        <input type="date" name="end_date" class="form-control form-control-sm" value="{{ $endDate }}">
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Customer <span class="text-danger">*</span></label>
-                        <select name="customer_id" id="pending_invoice_customer_id" class="form-select js-report-customer-ajax-select2">
+                    <div class="col-6 col-md-3">
+                        <label class="form-label small mb-1">Customer <span class="text-danger">*</span></label>
+                        <select name="customer_id" id="pending_invoice_customer_id" class="form-select form-select-sm js-report-customer-ajax-select2">
                             <option value=""></option>
                             @if ($presetCustomer)
                                 <option value="{{ $presetCustomer->id }}" selected>{{ $presetCustomer->name }}</option>
@@ -32,12 +32,12 @@
                         </select>
                     </div>
 
-                    <div class="col-md-3 text-end d-flex align-items-end justify-content-end gap-2">
-                        <button type="submit" class="btn btn-brand-primary">
-                            <i class="bi bi-search"></i> Search
+                    <div class="col-6 col-md-3 text-end d-flex align-items-end justify-content-end gap-1 gap-sm-2 mt-2 mt-md-0">
+                        <button type="submit" class="btn btn-brand-primary btn-sm" title="Search">
+                            <i class="bi bi-search"></i><span class="d-none d-sm-inline ms-1">Search</span>
                         </button>
-                        <a href="{{ route('reports.pending-invoice') }}" class="btn btn-secondary">
-                            <i class="bi bi-arrow-clockwise"></i> Reset
+                        <a href="{{ route('reports.pending-invoice') }}" class="btn btn-secondary btn-sm" title="Reset">
+                            <i class="bi bi-arrow-clockwise"></i><span class="d-none d-sm-inline ms-1">Reset</span>
                         </a>
                     </div>
                 </div>
@@ -52,13 +52,13 @@
                     <h3 class="card-title mb-0">Pending Invoice</h3>
                 </div>
                 <div class="d-flex">
-                    <a class="btn btn-warning ms-2" target="_blank"
+                    <a class="btn btn-warning btn-sm ms-2" target="_blank"
                         href="{{ route('reports.pending-invoice-export', [
                             'customer_id' => $customerId,
                             'start_date' => $startDate,
                             'end_date' => $endDate,
                         ]) }}">
-                        <i class="bi bi-file-earmark-spreadsheet"></i> Export
+                        <i class="bi bi-file-earmark-spreadsheet"></i> <span class="d-none d-sm-inline ms-1">Export</span>
                     </a>
 
                 </div>
@@ -72,7 +72,7 @@
                     $shortageAmount = 0;
                 @endphp
                 <div class="table-responsive">
-                    <table class="table table-bordered table-striped">
+                    <table class="table table-bordered table-striped table-hover align-middle mb-0 text-nowrap small">
                         <thead>
                             <tr>
                                 <th>Date</th>

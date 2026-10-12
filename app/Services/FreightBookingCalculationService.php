@@ -342,9 +342,7 @@ class FreightBookingCalculationService
             return;
         }
 
-        $requiredTotal = round(abs($totalBalance), 2);
-        $alreadyAdjusted = round($bookings->sum(fn (FreightBooking $b) => (float) ($b->negative_adjusted_amount ?? 0)), 2);
-        $increment = round($requiredTotal - $alreadyAdjusted, 2);
+        $increment = round(-$totalBalance, 2);
 
         if (abs($increment) <= 0.01) {
             foreach ($bookings as $booking) {
@@ -422,8 +420,18 @@ class FreightBookingCalculationService
 
     public function applyNegativeAdjustmentForSingleBooking(FreightBooking $freightBooking, ?string $lrNumber = null): void
     {
-        $currentBalance = (float) ($freightBooking->balance_amount ?? 0);
-        if ($currentBalance >= -0.01) {
+        $freightBooking->loadMissing('customAmounts');
+
+        $requiredAdjustedTotal = $this->requiredNegativeAdjustedAmount($freightBooking);
+        $alreadyAdjusted = round((float) ($freightBooking->negative_adjusted_amount ?? 0), 2);
+        $incrementalAdjustAmount = round($requiredAdjustedTotal - $alreadyAdjusted, 2);
+        $resolvedLrNumber = $lrNumber ?? $freightBooking->lr?->lr_number ?? 'N/A';
+
+        if (abs($incrementalAdjustAmount) <= 0.01) {
+            $freightBooking->negative_adjusted_amount = $requiredAdjustedTotal;
+            $freightBooking->balance_amount = $freightBooking->balanceFromAdvance();
+            $freightBooking->save();
+
             return;
         }
 
@@ -433,19 +441,6 @@ class FreightBookingCalculationService
                 'freight_booking_id' => $freightBooking->id,
                 'transporter_id' => $freightBooking->transporter_id,
             ]);
-
-            return;
-        }
-
-        $alreadyAdjusted = round((float) ($freightBooking->negative_adjusted_amount ?? 0), 2);
-        $requiredAdjustedTotal = round(abs($currentBalance), 2);
-        $incrementalAdjustAmount = round($requiredAdjustedTotal - $alreadyAdjusted, 2);
-        $resolvedLrNumber = $lrNumber ?? $freightBooking->lr?->lr_number ?? 'N/A';
-
-        if (abs($incrementalAdjustAmount) <= 0.01) {
-            $freightBooking->negative_adjusted_amount = $requiredAdjustedTotal;
-            $freightBooking->balance_amount = 0;
-            $freightBooking->save();
 
             return;
         }
@@ -476,8 +471,26 @@ class FreightBookingCalculationService
         }
 
         $freightBooking->negative_adjusted_amount = $requiredAdjustedTotal;
-        $freightBooking->balance_amount = 0;
+        $freightBooking->balance_amount = $freightBooking->balanceFromAdvance();
         $freightBooking->save();
+    }
+
+    private function requiredNegativeAdjustedAmount(FreightBooking $freightBooking): float
+    {
+        $freightBooking->loadMissing('customAmounts');
+
+        $basePayable = (float) $freightBooking->tr_amount
+            - (float) ($freightBooking->tds_amount ?? 0)
+            - (float) ($freightBooking->damage_amount ?? 0)
+            - (float) ($freightBooking->shortage_amount ?? 0)
+            + (float) ($freightBooking->detention ?? 0)
+            + (float) ($freightBooking->deviation ?? 0)
+            - (float) ($freightBooking->misc_expense ?? 0)
+            + $freightBooking->customAmountsTotal();
+
+        $advance = (float) ($freightBooking->advance_amount ?? 0);
+
+        return max(0.0, round($advance - $basePayable, 2));
     }
 
 }
