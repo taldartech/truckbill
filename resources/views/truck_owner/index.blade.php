@@ -385,6 +385,7 @@
         'templateUrl' => route('truck_owners.bulk-upload-template'),
         'columns' => [
             ['name' => 'Name', 'format' => 'Name', 'required' => true],
+            ['name' => 'PAN Number', 'format' => 'PAN number', 'required' => true],
             ['name' => 'Mobile Number', 'format' => '10-digit number', 'required' => true],
             ['name' => 'PAN Active', 'format' => 'Yes / No', 'required' => true],
             ['name' => 'Country', 'format' => 'Existing country', 'required' => true],
@@ -392,7 +393,6 @@
             ['name' => 'City', 'format' => 'Existing city', 'required' => true],
             ['name' => 'Declaration Given', 'format' => 'Yes / No', 'required' => true],
             ['name' => 'TDS %', 'format' => 'Number', 'required' => true],
-            ['name' => 'PAN Number', 'format' => 'PAN number', 'required' => false],
             ['name' => 'Email', 'format' => 'Email address', 'required' => false],
             ['name' => 'GST Number', 'format' => 'GST number', 'required' => false],
             ['name' => 'Contact Person Name', 'format' => 'Name', 'required' => false],

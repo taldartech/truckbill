@@ -251,8 +251,7 @@ class TruckOwnerImport implements
         $city = $normalized['city'] ?? null;
         $address = $normalized['address'] ?? null;
 
-        // Fallback to dummy PAN if empty
-        $finalPan = $panNumber ? strtoupper(trim((string) $panNumber)) : $dummyPan;
+        $finalPan = $panNumber ? strtoupper(trim((string) $panNumber)) : '';
 
         return [
             'pan_number' => $finalPan,
