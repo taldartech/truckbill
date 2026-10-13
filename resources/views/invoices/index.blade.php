@@ -751,6 +751,10 @@
                                         <td>${data.generated_date || 'N/A'}</td>
                                     </tr>
                                     <tr>
+                                        <td class="fw-bold">Due Date:</td>
+                                        <td>${data.due_date || 'N/A'}</td>
+                                    </tr>
+                                    <tr>
                                         <td class="fw-bold">Status:</td>
                                         <td><span class="badge bg-${data.payment_status === 'paid' ? 'brand-primary' : data.payment_status === 'partial' ? 'warning' : 'danger'}">${data.payment_status || 'N/A'}</span></td>
                                     </tr>

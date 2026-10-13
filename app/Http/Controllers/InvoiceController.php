@@ -409,6 +409,7 @@ class InvoiceController extends Controller
             ],
             'invoice_type' => 'required|in:Reverse,Forward',
             'generated_date' => 'required|date',
+            'due_date' => 'nullable|date|after_or_equal:generated_date',
             'customer_id' => 'required|exists:consignees,id',
             'total_amount' => 'required|numeric|min:0',
 
@@ -534,6 +535,7 @@ class InvoiceController extends Controller
                 'manual_invoice_number' => $invoice->manual_invoice_number,
                 'invoice_type' => $invoice->invoice_type,
                 'generated_date' => $invoice->generated_date,
+                'due_date' => $invoice->effectiveDueDate()?->toDateString(),
                 'payment_status' => $invoice->payment_status,
                 'total_amount' => $baseAmount,
                 'net_amount' => $invoice->net_amount,
@@ -608,6 +610,7 @@ class InvoiceController extends Controller
                 )->ignore($invoice->id),
             ],
             'generated_date' => 'required|date',
+            'due_date' => 'nullable|date|after_or_equal:generated_date',
         ];
 
         if (! $invoice->custom_invoice) {
@@ -623,6 +626,7 @@ class InvoiceController extends Controller
                 ? trim((string) $data['manual_invoice_number'])
                 : null;
             $invoice->generated_date = $data['generated_date'];
+            $invoice->due_date = $data['due_date'] ?? null;
 
             if (! $invoice->custom_invoice) {
                 $memoIds = $request->input('memo_ids', []);

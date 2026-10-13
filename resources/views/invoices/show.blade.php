@@ -102,6 +102,15 @@
                                     <td>{{ $invoice->generated_date }}</td>
                                 </tr>
                                 <tr>
+                                    <th>Due Date:</th>
+                                    <td>
+                                        {{ formatDate($invoice->effectiveDueDate()) }}
+                                        @if (! $invoice->due_date)
+                                            <small class="text-muted">({{ \App\Models\Invoice::DEFAULT_CREDIT_DAYS }} days from invoice date)</small>
+                                        @endif
+                                    </td>
+                                </tr>
+                                <tr>
                                     <th>Customer:</th>
                                     <td>{{ $invoice->consignee ? $invoice->consignee->name : 'N/A' }}</td>
                                 </tr>

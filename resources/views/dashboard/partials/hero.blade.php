@@ -3,10 +3,12 @@
     $greeting = $hour < 12 ? 'Good Morning' : ($hour < 17 ? 'Good Afternoon' : 'Good Evening');
     $userName = auth()->user()->name ?? '';
     $period = $dashboardPeriod ?? request('period', 'month');
+    $period = $period instanceof \App\Services\Dashboard\DashboardPeriod ? $period->key : $period;
     $periods = [
         '7d' => '7 days',
         '30d' => '30 days',
         'month' => 'This month',
+        'quarter' => 'This quarter',
     ];
 @endphp
 

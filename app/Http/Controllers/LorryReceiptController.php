@@ -29,6 +29,13 @@ use App\Models\TruckType;
 
 class LorryReceiptController extends Controller
 {
+    /**
+     * Status options for the bilty list filter; "Invoiced" matches the list badge rather than delivery_status.
+     *
+     * @var list<string>
+     */
+    public const LISTING_STATUSES = ['Pending', 'In-Progress', 'Delivered', 'Cancelled', 'Invoiced'];
+
     public function __construct(
         private readonly LorryReceiptNotificationService $lrNotificationService,
         private readonly LorryReceiptCalculationService $lrCalculationService,
@@ -193,6 +200,16 @@ class LorryReceiptController extends Controller
             });
             $query->when($request->filled('truck_id'), function ($query) use ($request) {
                 $query->where('lorry_receipts.truck_id', $request->truck_id);
+            });
+            $query->when(in_array($request->delivery_status, self::LISTING_STATUSES, true), function ($query) use ($request) {
+                if ($request->delivery_status === 'Invoiced') {
+                    $query->where('lorry_receipts.invoice_generated', 1);
+
+                    return;
+                }
+
+                $query->where('lorry_receipts.delivery_status', $request->delivery_status)
+                    ->where('lorry_receipts.invoice_generated', 0);
             });
 
             return DataTables::of($query)
@@ -510,8 +527,11 @@ return $buttons;
         try {
             $validated = $request->validate([
                 'memo_id' => 'required|string',
+                'memo_created_at' => 'nullable|date|before_or_equal:now',
                 'lr_ids' => 'required|array',
                 'lr_ids.*' => 'integer|exists:lorry_receipts,id',
+            ], [
+                'memo_created_at.before_or_equal' => 'The memo date & time cannot be in the future.',
             ]);
 
             $companyId = Auth::user()->company_id;
@@ -588,9 +608,11 @@ return $buttons;
                 foreach ($lorryReceipts as $lr) {
                     $oldDeliveryStatus = $lr->delivery_status;
                     $lr->memo_id = $validated['memo_id'];
-                    if (empty($lr->memo_created_at)) {
-                      $lr->memo_created_at = now();
-                   }
+                    if (! empty($validated['memo_created_at'])) {
+                        $lr->memo_created_at = Carbon::parse($validated['memo_created_at']);
+                    } elseif (empty($lr->memo_created_at)) {
+                        $lr->memo_created_at = now();
+                    }
                     $lr->delivery_status = 'Delivered';
                     $lr->save();
 

@@ -215,6 +215,15 @@
                                         <div class="invalid-feedback">Please select a date.</div>
                                     </div>
                                     <div class="col-md-4">
+                                        <label class="form-label">Due Date (Optional)</label>
+                                        <input type="date" name="due_date" class="form-control @error('due_date') is-invalid @enderror"
+                                            value="{{ old('due_date') }}">
+                                        <small class="text-muted">Leave blank to use {{ \App\Models\Invoice::DEFAULT_CREDIT_DAYS }} days from the invoice date.</small>
+                                        @error('due_date')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="col-md-4">
                                         <label class="form-label">Customer *</label>
                                         {{-- <select name="customer_id" class="form-select" required>
                                             <option value="">Select</option>
