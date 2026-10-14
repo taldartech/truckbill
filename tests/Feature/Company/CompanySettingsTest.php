@@ -55,7 +55,7 @@ class CompanySettingsTest extends TestCase
 
         $response->assertOk();
         $response->assertViewIs('company_settings.index');
-        $response->assertSee('Company settings');
+        $response->assertSee('Company Settings');
         $response->assertSee('Super Co');
     }
 

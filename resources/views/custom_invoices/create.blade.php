@@ -105,6 +105,14 @@
                                 @enderror
                             </div>
                             <div class="col-md-4">
+                                <label class="form-label">Due date (optional)</label>
+                                <input type="date" name="due_date" class="form-control" value="{{ old('due_date') }}">
+                                <small class="text-muted">Leave blank to use {{ \App\Models\Invoice::DEFAULT_CREDIT_DAYS }} days from the bill date.</small>
+                                @error('due_date')
+                                    <div class="text-danger small">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-4">
                                 <label class="form-label">Charge type</label>
                                 @php
                                     $invoiceTypeValue = (optional($company)->gst_scheme ?? '') == 'reverse charge' ? 'Reverse' : 'Forward';

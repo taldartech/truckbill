@@ -17,22 +17,29 @@ class Transporter extends Model
         'transporter_master_id',
         'company_id',
         'is_owner',
+        'is_msme',
+        'msme_reg_no',
         'contact_person_name',
         'mobile_number',
         'declaration_given',
+        'declaration_194c6_date',
         'total_trucks',
         'advance_amount',
         'short_name',
         'beneficiary_id',
         'tds_percentage',
         'tds_adjustment_remark',
+        'deleted_by',
+        'deleted_remark',
     ];
 
     protected function casts(): array
     {
         return [
             'is_owner' => 'boolean',
+            'is_msme' => 'boolean',
             'declaration_given' => 'boolean',
+            'declaration_194c6_date' => 'date',
         ];
     }
 
@@ -54,6 +61,16 @@ class Transporter extends Model
     protected function panActive(): Attribute
     {
         return Attribute::get(fn () => $this->transporterMaster?->pan_active ?? false);
+    }
+
+    protected function isMsme(): Attribute
+    {
+        return Attribute::get(fn () => (bool) ($this->attributes['is_msme'] ?? $this->transporterMaster?->is_msme ?? false));
+    }
+
+    protected function msmeRegNo(): Attribute
+    {
+        return Attribute::get(fn () => $this->attributes['msme_reg_no'] ?? $this->transporterMaster?->msme_reg_no);
     }
 
     protected function address(): Attribute

@@ -6,6 +6,8 @@ use App\Models\GoodType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use App\Imports\GoodsTypeImport;
+use Illuminate\Support\Facades\Validator;
 
 class GoodsTypeController extends Controller
 {
@@ -90,25 +92,43 @@ class GoodsTypeController extends Controller
     }
 
     private function getActionButtons($goodsType)
-    {
-        $editUrl = route('master.goods-types.edit', $goodsType->id);
-        $deleteUrl = route('master.goods-types.destroy', $goodsType->id);
+{
+    $editUrl = route('master.goods-types.edit', $goodsType->id);
+    $deleteUrl = route('master.goods-types.destroy', $goodsType->id);
 
-        return '
-            <div class="app-index-table-actions">
-                <a href="' . $editUrl . '" class="btn btn-sm btn-icon btn-action-edit">
-                    <i class="bi bi-pencil"></i>
-                </a>
-                <form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Delete this goods type?\')">
-                    ' . csrf_field() . '
-                    ' . method_field('DELETE') . '
-                    <button type="submit" class="btn btn-sm btn-icon btn-action-delete">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </form>
-            </div>
-        ';
-    }
+    return '
+        <div class="app-index-table-actions">
+
+            <a href="' . $editUrl . '"
+                class="btn btn-sm btn-icon btn-action-edit"
+                title="Edit Goods Type">
+                <i class="bi bi-pencil"></i>
+            </a>
+
+            <form action="' . $deleteUrl . '"
+                method="POST"
+                class="good-type-delete-form"
+                style="display:inline-block;">
+
+                ' . csrf_field() . '
+                ' . method_field('DELETE') . '
+
+                <button type="button"
+                    class="btn btn-sm btn-icon btn-action-delete good-type-delete-btn"
+                    title="Delete Goods Type"
+                    data-bs-toggle="modal"
+                    data-bs-target="#goodTypeDeleteModal"
+                    data-good-type-id="' . $goodsType->id . '"
+                    data-good-type-name="' . e($goodsType->name ?? '-') . '">
+
+                    <i class="bi bi-trash"></i>
+                </button>
+
+            </form>
+
+        </div>
+    ';
+}
 
     public function create()
     {
@@ -128,6 +148,7 @@ class GoodsTypeController extends Controller
             ],
         ]);
 
+
         $validated['user_id'] = Auth::user()->company->user_id;
         $goodsType = GoodType::create($validated);
         if ($request->ajax() || $request->has('from_modal')) {
@@ -139,6 +160,61 @@ class GoodsTypeController extends Controller
         }
         return redirect()->route('master.goods-types.index')->with('success', 'Goods type created successfully');
     }
+
+
+    public function bulkUpload(Request $request)
+{
+    $request->validate([
+        'file' => [
+            'required',
+            'file',
+            'max:10240',
+        ],
+    ]);
+
+    try {
+        $import = new GoodsTypeImport();
+
+        \Maatwebsite\Excel\Facades\Excel::import(
+            $import,
+            $request->file('file')
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => $import->imported . ' goods type(s) imported successfully.',
+            'imported' => $import->imported,
+            'failed' => count($import->errors),
+            'errors' => $import->errors,
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Bulk upload failed.',
+            'error' => $e->getMessage(),
+        ], 422);
+    }
+}
+
+
+public function bulkUploadTemplate()
+{
+    $headers = [
+        'Goods Name',
+    ];
+
+    $callback = function () use ($headers) {
+        $file = fopen('php://output', 'w');
+
+        fputcsv($file, $headers);
+
+        fclose($file);
+    };
+
+    return response()->streamDownload($callback, 'goods_type_template.csv', [
+        'Content-Type' => 'text/csv',
+    ]);
+}
 
     public function edit(GoodType $goodsType)
     {
@@ -156,9 +232,20 @@ class GoodsTypeController extends Controller
         return redirect()->route('master.goods-types.index')->with('success', 'Goods type updated successfully');
     }
 
-    public function destroy(GoodType $goodsType)
-    {
-        $goodsType->delete();
-        return redirect()->route('master.goods-types.index')->with('success', 'Goods type deleted successfully');
-    }
+   public function destroy(Request $request, GoodType $goodsType)
+{
+    $request->validate([
+        'delete_remark' => ['required', 'string', 'max:1000'],
+    ]);
+
+    $goodsType->deleted_by = Auth::id();
+    $goodsType->deleted_remark = $request->input('delete_remark');
+    $goodsType->save();
+
+    $goodsType->delete();
+
+    return redirect()
+        ->route('master.goods-types.index')
+        ->with('success', 'Good type deleted successfully!');
+}
 }

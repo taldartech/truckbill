@@ -90,6 +90,32 @@ class FreightBookingTest extends TestCase
         ]);
     }
 
+    public function test_allocate_next_voucher_number_starts_at_one_when_empty(): void
+    {
+        $this->assertSame(1, FreightBooking::allocateNextVoucherNumber());
+    }
+
+    public function test_allocate_next_voucher_number_includes_soft_deleted_rows(): void
+    {
+        $fb = $this->makeFreightBookingWithLr();
+        $fb->voucher_number = 6434;
+        $fb->save();
+        $fb->delete();
+
+        $this->assertSoftDeleted($fb);
+        $this->assertNull(FreightBooking::max('voucher_number'));
+        $this->assertSame(6435, FreightBooking::allocateNextVoucherNumber());
+    }
+
+    public function test_allocate_next_voucher_number_uses_current_max(): void
+    {
+        $fb = $this->makeFreightBookingWithLr();
+        $fb->voucher_number = 100;
+        $fb->save();
+
+        $this->assertSame(101, FreightBooking::allocateNextVoucherNumber());
+    }
+
     public function test_can_change_tds_returns_false_when_payment_complete(): void
     {
         $fb = $this->makeFreightBookingWithLr(grDate: '2025-01-15', balanceAmount: 0);

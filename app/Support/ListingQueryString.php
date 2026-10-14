@@ -9,6 +9,11 @@ class ListingQueryString
     public const LORRY_RECEIPT_KEYS = [
         'gr_date_from',
         'gr_date_to',
+        'lr_number',
+        'customer_id',
+        'transporter_id',
+        'truck_id',
+        'delivery_status',
     ];
 
     public const FREIGHT_BOOKING_KEYS = [
@@ -16,7 +21,10 @@ class ListingQueryString
         'start_date',
         'end_date',
         'pending_memo',
+        'lr_number',
+        'customer_id',
         'transporter_id',
+        'truck_id',
         'truck_owner_id',
     ];
 

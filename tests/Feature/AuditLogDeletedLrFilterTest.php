@@ -108,8 +108,8 @@ class AuditLogDeletedLrFilterTest extends TestCase
         $lr->delete();
 
         $this->assertSoftDeleted('lorry_receipts', ['id' => $lr->id]);
-        $this->assertDatabaseMissing('freight_bookings', ['id' => $freightBooking->id]);
-        $this->assertDatabaseMissing('voucher_payments', ['id' => $voucherPayment->id]);
+        $this->assertSoftDeleted('freight_bookings', ['id' => $freightBooking->id]);
+        $this->assertSoftDeleted('voucher_payments', ['id' => $voucherPayment->id]);
 
         $this->assertDatabaseHas('audit_logs', [
             'subject_type' => LorryReceipt::class,

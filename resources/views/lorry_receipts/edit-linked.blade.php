@@ -378,6 +378,13 @@
                 setValue('.fr-rate', prefill.fr_rate ?? '');
                 setValue('.amount', prefill.amount ?? '');
 
+                const unitsVal = parseFloat(item.querySelector('.units')?.value);
+                const weightVal = parseFloat(item.querySelector('.weight')?.value);
+                const perUnitInput = item.querySelector('.weight-per-unit');
+                if (perUnitInput && unitsVal > 0 && weightVal > 0) {
+                    perUnitInput.value = Number((weightVal / unitsVal).toFixed(3)).toString();
+                }
+
                 const fixedCheckbox = item.querySelector('.is-fixed-amount');
                 if (fixedCheckbox) {
                     fixedCheckbox.checked = Boolean(Number(prefill.is_fixed_amount ?? 0));
@@ -991,11 +998,66 @@
             lrItemsContainer.addEventListener('input', function(e) {
                 const scope = e.target.closest('.lr-item');
                 if (!scope) return;
-                if (e.target.classList.contains('weight') || e.target.classList.contains(
-                        'fr-rate')) {
+
+                if (e.target.classList.contains('weight-per-unit')) {
+                    syncLinkedWeightFromPerUnit(scope);
+                } else if (e.target.classList.contains('units') || e.target.classList.contains('weight')) {
+                    syncLinkedPerUnitFromWeight(scope);
+                }
+
+                if (e.target.classList.contains('weight') || e.target.classList.contains('fr-rate')) {
                     calculateAmount(scope);
                 }
             });
+
+            function formatLinkedWeightValue(value) {
+                return Number(value.toFixed(3)).toString();
+            }
+
+            function syncLinkedWeightFromPerUnit(scope) {
+                const unitsInput = scope.querySelector('.units');
+                const perUnitInput = scope.querySelector('.weight-per-unit');
+                const weightInput = scope.querySelector('.weight');
+
+                if (!unitsInput || !perUnitInput || !weightInput) {
+                    return;
+                }
+
+                const units = parseFloat(unitsInput.value);
+                const perUnit = parseFloat(perUnitInput.value);
+
+                if (!(units > 0) || !(perUnit > 0)) {
+                    return;
+                }
+
+                scope.dataset.weightPerUnitSync = '1';
+                weightInput.value = formatLinkedWeightValue(units * perUnit);
+                weightInput.dispatchEvent(new Event('input', { bubbles: true }));
+                delete scope.dataset.weightPerUnitSync;
+            }
+
+            function syncLinkedPerUnitFromWeight(scope) {
+                if (scope.dataset.weightPerUnitSync === '1') {
+                    return;
+                }
+
+                const unitsInput = scope.querySelector('.units');
+                const perUnitInput = scope.querySelector('.weight-per-unit');
+                const weightInput = scope.querySelector('.weight');
+
+                if (!unitsInput || !perUnitInput || !weightInput) {
+                    return;
+                }
+
+                const units = parseFloat(unitsInput.value);
+                const weight = parseFloat(weightInput.value);
+
+                if (!(units > 0) || !(weight > 0)) {
+                    return;
+                }
+
+                perUnitInput.value = formatLinkedWeightValue(weight / units);
+            }
 
             // Per-item amount calc
             function calculateAmount(scope) {

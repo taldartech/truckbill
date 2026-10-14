@@ -15,23 +15,23 @@ class TransporterTdsCalculator
         }
 
         if (! $panActive) {
-            return 20.00;
+            return (float) config('payments.tds_percentages.default', 20);
         }
 
         if (strlen($panNumber) < 4) {
-            return 20.00;
+            return (float) config('payments.tds_percentages.default', 20);
         }
 
         $fourthChar = strtoupper(substr($panNumber, 3, 1));
 
         if (in_array($fourthChar, ['P', 'H'], true)) {
-            return 1.00;
+            return (float) config('payments.tds_percentages.owner', 1);
         }
 
         if (in_array($fourthChar, ['C', 'F', 'A', 'B', 'J', 'L', 'T'], true)) {
-            return 2.00;
+            return (float) config('payments.tds_percentages.agency', 2);
         }
 
-        return 20.00;
+        return (float) config('payments.tds_percentages.default', 20);
     }
 }

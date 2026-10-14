@@ -273,10 +273,12 @@ class UserManagementTest extends TestCase
             'company_id' => $company->id,
         ]);
 
-        $response = $this->actingAs($super)->delete('/users/' . $target->id);
+        $response = $this->actingAs($super)->delete('/users/' . $target->id, [
+            'delete_remark' => 'User left company',
+        ]);
 
         $response->assertRedirect(route('users.index'));
-        $this->assertSoftDeleted('users', ['id' => $target->id]);
+        $this->assertSoftDeleted('users', ['id' => $target->id, 'deleted_remark' => 'User left company']);
     }
 
     public function test_destroy_forbidden_for_user_outside_owned_company(): void

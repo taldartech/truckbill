@@ -25,6 +25,14 @@
                 <button type="button" class="btn app-index-header-btn" data-bs-toggle="modal" data-bs-backdrop="false" data-bs-target="#addDriverModal" aria-label="Create driver" title="Create Driver">
                     <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Create</span>
                 </button>
+
+                <button type="button"
+        class="btn app-index-header-btn"
+        data-bs-toggle="modal"
+        data-bs-target="#driverBulkUploadModal">
+    <i class="fas fa-upload"></i>
+    Bulk Upload
+</button>
             </div>
         </div>
         <div class="card-body">
@@ -149,6 +157,113 @@
         </div>
     </div>
 </div>
+
+<!-- Driver Delete Modal -->
+<div class="modal fade" id="driverDeleteModal" tabindex="-1"
+    aria-labelledby="driverDeleteModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="driverDeleteModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                    Confirm Delete
+                </h5>
+
+                <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <p>Are you sure you want to delete this driver?</p>
+
+                <p>
+                    <strong>Name:</strong>
+                    <span id="deleteDriverName"></span>
+                </p>
+
+                <p>
+                    <strong>Mobile:</strong>
+                    <span id="deleteDriverMobile"></span>
+                </p>
+
+                <p>
+                    <strong>License Number:</strong>
+                    <span id="deleteDriverLicense"></span>
+                </p>
+
+                <p>
+                    <strong>Address:</strong>
+                    <span id="deleteDriverAddress"></span>
+                </p>
+
+                <div class="mb-3 mt-3">
+
+                    <label for="deleteDriverRemark" class="form-label">
+                        <strong>
+                            Remark <span class="text-danger">*</span>
+                        </strong>
+                    </label>
+
+                    <textarea
+                        id="deleteDriverRemark"
+                        class="form-control"
+                        rows="4"
+                        placeholder="Enter reason for deletion"></textarea>
+
+                </div>
+
+                <div id="deleteDriverRemarkError"
+                    class="text-danger small d-none">
+                    Delete remark is required.
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+
+                    <i class="bi bi-x"></i>
+                    Cancel
+
+                </button>
+
+                <button type="button"
+                    class="btn btn-danger"
+                    id="confirmDriverDelete">
+
+                    <i class="bi bi-trash"></i>
+                    Confirm Delete
+
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@include('shared.bulk-upload-modal', [
+    'modalId' => 'driverBulkUploadModal',
+    'uploadUrl' => route('drivers.bulkUpload'),
+    'templateUrl' => route('drivers.bulkUploadTemplate'),
+    'title' => 'Bulk Upload Drivers',
+    'recordName' => 'drivers',
+    'columns' => [
+        ['name' => 'Name', 'format' => 'Name', 'required' => true],
+        ['name' => 'Mobile', 'format' => '10-digit number', 'required' => true],
+        ['name' => 'License Number', 'format' => 'License Number', 'required' => false],
+        ['name' => 'Address', 'format' => 'Text', 'required' => false],
+    ],
+])
 @endsection
 
 @push('scripts')
@@ -219,54 +334,54 @@ $(document).ready(function() {
         searchDelay: 500
     });
 
-    // Handle form submissions with AJAX to prevent page reload
-    $(document).on('submit', 'form[action*="drivers"][action*="destroy"]', function(e) {
-        e.preventDefault();
+    
+   // Open Driver Delete Modal
+    $(document).on('click', '.driver-delete-btn', function() {
+    const button = $(this);
+    const form = button.closest('.driver-delete-form');
 
-        if (confirm('Are you sure you want to delete this driver?')) {
-            var form = $(this);
-            var url = form.attr('action');
+    const driverName = button.data('driver-name') || '-';
+    const mobileNumber = button.data('driver-mobile') || '-';
+    const licenseNumber = button.data('driver-license') || '-';
+    const address = button.data('driver-address') || '-';
 
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: form.serialize(),
-                success: function(response) {
-                    // Show success message
-                    $('body').prepend(`
-                        <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
-                            <i class="bi bi-check-circle"></i>
-                            <strong>Success!</strong> Driver deleted successfully.
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    `);
+    $('#deleteDriverName').text(driverName);
+    $('#deleteDriverMobile').text(mobileNumber);
+    $('#deleteDriverLicense').text(licenseNumber);
+    $('#deleteDriverAddress').text(address);
 
-                    // Auto-hide alert after 5 seconds
-                    setTimeout(function() {
-                        $('.alert-success').fadeOut();
-                    }, 5000);
+    $('#deleteDriverRemark').val('');
+    $('#deleteDriverRemarkError').addClass('d-none');
 
-                    // Reload DataTable
-                    table.ajax.reload(null, false);
-                },
-                error: function(xhr) {
-                    // Show error message
-                    $('body').prepend(`
-                        <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
-                            <i class="bi bi-exclamation-triangle"></i>
-                            <strong>Error!</strong> Unable to delete driver. Please try again.
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    `);
+    $('#confirmDriverDelete').data('form', form);
+ });
 
-                    setTimeout(function() {
-                        $('.alert-danger').fadeOut();
-                    }, 5000);
-                }
-            });
-        }
-    });
 
+// Confirm Driver Delete
+    $('#confirmDriverDelete').on('click', function() {
+    const remark = $('#deleteDriverRemark').val().trim();
+    const form = $('#confirmDriverDelete').data('form');
+
+    if (!remark) {
+        $('#deleteDriverRemarkError')
+            .removeClass('d-none')
+            .text('Please enter a remark before deleting.');
+
+        return;
+    }
+
+    $('#deleteDriverRemarkError').addClass('d-none');
+
+    form.find('input[name="delete_remark"]').remove();
+
+    $('<input>', {
+        type: 'hidden',
+        name: 'delete_remark',
+        value: remark
+    }).appendTo(form);
+
+    form[0].submit();
+});
     // Handle Add Driver form submission
     $('#addDriverForm').on('submit', function(e) {
         e.preventDefault();

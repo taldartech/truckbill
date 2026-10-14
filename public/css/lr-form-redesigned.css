@@ -240,6 +240,10 @@
     grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
+.lrf-grid--7 {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
 .lrf-grid--2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -254,7 +258,8 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .lrf-grid--6 {
+    .lrf-grid--6,
+    .lrf-grid--7 {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
@@ -264,7 +269,8 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .lrf-grid--6 {
+    .lrf-grid--6,
+    .lrf-grid--7 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
@@ -274,6 +280,7 @@
     .lrf-grid--4,
     .lrf-grid--5,
     .lrf-grid--6,
+    .lrf-grid--7,
     .lrf-grid--2 {
         grid-template-columns: 1fr;
     }

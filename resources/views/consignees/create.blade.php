@@ -41,8 +41,8 @@
                     <div class="app-form-section__body">
                         <div class="row g-2 mb-2">
                             <div class="col-md-4">
-                                <label for="name" class="form-label">Consignee Name *</label>
-                                <input placeholder="Enter Consignee Name" type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}">
+                                <label for="name" class="form-label">Name *</label>
+                                <input placeholder="Enter Name" type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}">
                                 @error('name') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-4">

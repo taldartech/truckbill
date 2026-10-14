@@ -122,10 +122,12 @@ class DriverTest extends TestCase
             'company_id' => $admin->company_id,
         ]);
 
-        $response = $this->actingAs($admin)->delete("/drivers/{$driver->id}");
+        $response = $this->actingAs($admin)->delete("/drivers/{$driver->id}", [
+            'delete_remark' => 'Driver left',
+        ]);
 
         $response->assertRedirect(route('drivers.index'));
-        $this->assertSoftDeleted('drivers', ['id' => $driver->id]);
+        $this->assertSoftDeleted('drivers', ['id' => $driver->id, 'deleted_remark' => 'Driver left']);
     }
 
     public function test_get_drivers_api_returns_company_scoped_list(): void

@@ -260,57 +260,17 @@ class CompanyBranchTest extends TestCase
 
     public function test_master_admin_can_update_company_subscription_fields(): void
     {
-        $master = $this->makeMasterAdmin();
-        $company = $this->createCompanyFor($master, [
-            'plan_end_date' => now()->subDay()->toDateString(),
-            'lr_credits' => 10,
-            'truck_credits' => 5,
-            'name' => 'Subscription Co',
-        ]);
-
-        $response = $this->actingAs($master)->patch(route('company.subscription.update', $company), [
-            'plan_end_date' => now()->addDays(30)->toDateString(),
-            'lr_credits' => 120,
-            'truck_credits' => 45,
-        ]);
-
-        $response->assertRedirect(route('company.index'));
-        $this->assertDatabaseHas('companies', [
-            'id' => $company->id,
-            'name' => 'Subscription Co',
-            'lr_credits' => 120,
-            'truck_credits' => 45,
-        ]);
+        $this->markTestSkipped('Legacy subscription fields dropped from companies table in migration 2026_06_19_000006');
     }
 
     public function test_super_admin_cannot_update_company_subscription_fields(): void
     {
-        $master = $this->makeMasterAdmin();
-        $super = $this->makeSuperAdmin();
-        $company = $this->createCompanyFor($master);
-
-        $response = $this->actingAs($super)->patch(route('company.subscription.update', $company), [
-            'plan_end_date' => now()->addDays(15)->toDateString(),
-            'lr_credits' => 200,
-            'truck_credits' => 20,
-        ]);
-
-        $response->assertForbidden();
+        $this->markTestSkipped('Legacy subscription fields dropped from companies table in migration 2026_06_19_000006');
     }
 
     public function test_non_master_admin_cannot_update_company_subscription_fields(): void
     {
-        $master = $this->makeMasterAdmin();
-        $admin = $this->makeAdmin();
-        $company = $this->createCompanyFor($master);
-
-        $response = $this->actingAs($admin)->patch(route('company.subscription.update', $company), [
-            'plan_end_date' => now()->addDays(15)->toDateString(),
-            'lr_credits' => 200,
-            'truck_credits' => 20,
-        ]);
-
-        $response->assertForbidden();
+        $this->markTestSkipped('Legacy subscription fields dropped from companies table in migration 2026_06_19_000006');
     }
 
     public function test_company_block_and_unblock_toggle_flag(): void
@@ -318,9 +278,17 @@ class CompanyBranchTest extends TestCase
         $master = $this->makeMasterAdmin();
         $company = $this->createCompanyFor($master);
 
+        $this->actingAs($master)
+            ->get(route('company.block', $company->id))
+            ->assertMethodNotAllowed();
+
         $blockResponse = $this->actingAs($master)->post(route('company.block', $company->id));
         $blockResponse->assertRedirect();
         $this->assertSame(true, (bool) $company->fresh()->is_blocked);
+
+        $this->actingAs($master)
+            ->get(route('company.unblock', $company->id))
+            ->assertMethodNotAllowed();
 
         $unblockResponse = $this->actingAs($master)->post(route('company.unblock', $company->id));
         $unblockResponse->assertRedirect();

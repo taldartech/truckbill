@@ -251,30 +251,40 @@ class CompanyController extends Controller
             $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-action-edit" title="Edit Company">
                     <i class="bi bi-pencil"></i></a>';
 
-            // Delete button
+           // Delete button
             $deleteUrl = route('company.destroy', $company->id);
-            $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this company?\')">';
+
+            $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" class="company-delete-form">';
             $buttons .= csrf_field().method_field('DELETE');
-            $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete Company">';
-            $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
+           $buttons .= '<button type="button"
+           class="btn btn-sm btn-icon btn-action-delete company-delete-btn"
+           data-bs-toggle="modal"
+           data-bs-target="#companyDeleteModal"
+           data-company-name="'.e($company->name).'"
+           data-company-pan="'.e($company->pan_number ?? '-').'"
+           data-company-address="'.e($company->address ?? '-').'"
+           title="Delete Company">
+           <i class="bi bi-trash"></i>
+           </button>';
+            $buttons .= '</form>';
             $buttons .= '</div>';
-
             return $buttons;
         } else {
             if ($company->is_blocked) {
                 $unblockUrl = route('company.unblock', $company->id);
-                $buttons .= '<a href="'.$unblockUrl.'" class="btn btn-sm btn-icon btn-action-restore" title="Unblock User"
-                          onclick="return confirm(\'Are you sure you want to unblock this company?\');">
-                          <i class="bi bi-unlock"></i></a>';
+                $buttons .= '<form action="'.$unblockUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to unblock this company?\')">';
+                $buttons .= csrf_field();
+                $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-restore" title="Unblock User">';
+                $buttons .= '<i class="bi bi-unlock"></i></button></form>';
             } else {
                 $blockUrl = route('company.block', $company->id);
-                $buttons .= '<a href="'.$blockUrl.'" class="btn btn-sm btn-icon btn-action-cancel" title="Block User"
-                          onclick="return confirm(\'Are you sure you want to block this company?\');">
-                          <i class="bi bi-lock"></i></a>';
+                $buttons .= '<form action="'.$blockUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to block this company?\')">';
+                $buttons .= csrf_field();
+                $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-cancel" title="Block User">';
+                $buttons .= '<i class="bi bi-lock"></i></button></form>';
             }
             $buttons .= '</div>';
-
             return $buttons;
         }
     }
@@ -405,6 +415,7 @@ class CompanyController extends Controller
                 },
             ],
             'company_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
+            'digital_signature' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
             'bank' => 'nullable|string|max:255',
             'account_number' => 'nullable|string|max:34',
             'ifsc' => ['nullable', 'string', 'size:11', 'regex:/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/'],
@@ -444,6 +455,10 @@ class CompanyController extends Controller
 
             $validated['company_logo'] = $path;
         }
+        if ($request->hasFile('digital_signature')) {
+            $path = $request->file('digital_signature')->store('company_signatures', 'public');
+            $validated['digital_signature'] = $path;
+        }
         $validated['user_id'] = auth()->user()->id;
 
         if (! empty($validated['ifsc'] ?? null)) {
@@ -455,13 +470,24 @@ class CompanyController extends Controller
         return redirect()->route('company.index')->with('success', 'Company updated successfully!');
     }
 
-    public function destroy($id)
-    {
-        $company = Company::findOrFail($id);
-        $company->delete();
+    public function destroy(Request $request, $id)
+{
+    $request->validate([
+        'delete_remark' => ['required', 'string', 'max:1000'],
+    ]);
 
-        return redirect()->route('company.index')->with('success', 'Company deleted successfully!');
-    }
+    $company = Company::findOrFail($id);
+
+    $company->deleted_by = Auth::id();
+    $company->deleted_remark = $request->input('delete_remark');
+    $company->save();
+
+    $company->delete();
+
+    return redirect()
+        ->route('company.index')
+        ->with('success', 'Company deleted successfully!');
+}
 
     public function create()
     {
@@ -558,6 +584,7 @@ class CompanyController extends Controller
                 },
             ],
             'company_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
+            'digital_signature' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
             'bank' => 'nullable|string|max:255',
             'account_number' => 'nullable|string|max:34',
             'ifsc' => ['nullable', 'string', 'size:11', 'regex:/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/'],
@@ -582,6 +609,10 @@ class CompanyController extends Controller
             // Store the file in the 'public/company_logos' directory
             $path = $request->file('company_logo')->store('company_logos', 'public');
             $validated['company_logo'] = $path;
+        }
+        if ($request->hasFile('digital_signature')) {
+            $path = $request->file('digital_signature')->store('company_signatures', 'public');
+            $validated['digital_signature'] = $path;
         }
         $validated['user_id'] = auth()->user()->id;
         if (! $request->filled('gst_type')) {

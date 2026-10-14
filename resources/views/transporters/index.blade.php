@@ -6,6 +6,25 @@
 @endpush
 
 @section('content')
+
+  @if (session('bulk_upload_errors') && count(session('bulk_upload_errors')) > 0)
+        <div class="container mt-3">
+            <div class="alert alert-danger">
+                <strong>Bulk Upload Errors:</strong>
+
+                <ul class="mb-0 mt-2">
+                    @foreach (session('bulk_upload_errors') as $error)
+                        <li>
+                            <strong>Row {{ $error['row'] }}:</strong>
+                            {{ $error['error'] }}
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    @endif
+
+
     <div class="container mt-4 app-index-page app-index-page--standard">
         @if (session('success'))
             <div class="mb-3">
@@ -25,8 +44,16 @@
                     <a href="{{ route('reports.transporter-master-export', ['type' => 'transporter']) }}" class="btn app-index-header-btn" aria-label="Export transporters">
                         <i class="bi bi-file-earmark-excel"></i> <span class="d-none d-sm-inline">Export</span>
                     </a>
-                </div>
+              
+
+               <button type="button"
+                class="btn app-index-header-btn"
+                data-bs-toggle="modal"
+                data-bs-target="#transporterBulkUploadModal">
+               <i class="fas fa-upload"></i> Bulk Upload
+                </button>
             </div>
+        </div> 
 
             <div class="card-body">
                 <div class="table-responsive">
@@ -139,7 +166,108 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="transporterDeleteModal" tabindex="-1"
+    aria-labelledby="transporterDeleteModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="transporterDeleteModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                    Confirm Delete
+                </h5>
+
+                <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <p>Are you sure you want to delete this transporter?</p>
+
+                <p>
+                    <strong>Transporter Name:</strong>
+                    <span id="deleteTransporterName"></span>
+                </p>
+
+                <p>
+                    <strong>PAN Number:</strong>
+                    <span id="deleteTransporterPan"></span>
+                </p>
+
+                <div class="mb-3 mt-3">
+                    <label for="deleteTransporterRemark" class="form-label">
+                        <strong>
+                            Remark <span class="text-danger">*</span>
+                        </strong>
+                    </label>
+
+                    <textarea
+                        id="deleteTransporterRemark"
+                        class="form-control"
+                        rows="4"
+                        placeholder="Enter reason for deletion"></textarea>
+                </div>
+
+                <div id="deleteTransporterRemarkError"
+                    class="text-danger small d-none">
+                    Delete remark is required.
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i>
+                    Cancel
+                </button>
+
+                <button type="button"
+                    class="btn btn-danger"
+                    id="confirmTransporterDelete">
+                    <i class="bi bi-trash"></i>
+                    Confirm Delete
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+</div>
 @endsection
+
+@include('shared.bulk-upload-modal', [
+    'modalId' => 'transporterBulkUploadModal',
+    'title' => 'Bulk Upload Transporters',
+    'templateUrl' => route('transporters.bulk-upload-template'),
+    'uploadUrl' => route('transporters.bulk-upload'),
+    'recordName' => 'transporters',
+    'columns' => [
+        ['name' => 'PAN Number', 'format' => 'PAN number', 'required' => true],
+        ['name' => 'Transport Name', 'format' => 'Name', 'required' => true],
+        ['name' => 'Mobile Number', 'format' => '10-digit number', 'required' => true],
+        ['name' => 'PAN Active', 'format' => 'Yes / No', 'required' => true],
+        ['name' => 'Country', 'format' => 'Country name', 'required' => true],
+        ['name' => 'State', 'format' => 'State name', 'required' => true],
+        ['name' => 'City', 'format' => 'City name', 'required' => true],
+        ['name' => 'Declaration Given', 'format' => 'Yes / No', 'required' => true],
+        ['name' => 'TDS Percentage', 'format' => 'Number', 'required' => true],
+        ['name' => 'Email', 'format' => 'Email address', 'required' => false],
+        ['name' => 'GST Number', 'format' => 'GST number', 'required' => false],
+        ['name' => 'Contact Person Name', 'format' => 'Name', 'required' => false],
+        ['name' => 'Address', 'format' => 'Text', 'required' => false],
+        ['name' => 'TDS Adjustment Remark', 'format' => 'Text', 'required' => false],
+        ['name' => 'Short Name', 'format' => 'Short Name', 'required' => false],
+        ['name' => 'Advance Amount', 'format' => 'Amount', 'required' => false],
+    ],
+])
 
 @push('scripts')
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
@@ -245,12 +373,73 @@
                 searchDelay: 500
             });
 
-            $(document).on('submit', 'form[action*="destroy"]', function(e) {
-                if (!confirm('Are you sure you want to delete this transporter?')) {
-                    e.preventDefault();
-                    return false;
-                }
-            });
+           // Open Transporter Delete Modal
+               $(document).on('click', '.transporter-delete-btn', function() {
+
+               const button = $(this);
+               const form = button.closest('.transporter-delete-form');
+
+              const transporterName =
+              button.data('transporter-name') || '-';
+
+              const transporterPan =
+              button.data('transporter-pan') || '-';
+
+              $('#deleteTransporterName').text(transporterName);
+              $('#deleteTransporterPan').text(transporterPan);
+ 
+              $('#deleteTransporterRemark').val('');
+              $('#deleteTransporterRemarkError').addClass('d-none');
+
+              $('#confirmTransporterDelete').data('form', form);
+           });
+
+           // Open Transporter Delete Modal
+         $(document).on('click', '.transporter-delete-btn', function() {
+
+         const button = $(this);
+         const form = button.closest('.transporter-delete-form');
+
+         const transporterName = button.attr('data-transporter-name') || '-';
+         const transporterPan = button.attr('data-transporter-pan') || '-';
+
+         $('#deleteTransporterName').text(transporterName);
+         $('#deleteTransporterPan').text(transporterPan);
+
+         $('#deleteTransporterRemark').val('');
+         $('#deleteTransporterRemarkError').addClass('d-none');
+
+         $('#confirmTransporterDelete').data('form', form);
+       });
+
+
+         // Confirm Transporter Delete
+          $(document).on('click', '#confirmTransporterDelete', function() {
+
+        const remark = $('#deleteTransporterRemark').val().trim();
+        const form = $('#confirmTransporterDelete').data('form');
+
+      if (!remark) {
+
+        $('#deleteTransporterRemarkError')
+            .removeClass('d-none')
+            .text('Please enter a remark before deleting.');
+
+          return;
+       }
+
+      $('#deleteTransporterRemarkError').addClass('d-none');
+
+      form.find('input[name="delete_remark"]').remove();
+
+      $('<input>', {
+        type: 'hidden',
+        name: 'delete_remark',
+        value: remark
+       }).appendTo(form);
+
+         form[0].submit();
+        });
 
             $(document).on('click', '.transporter-name-link', function(e) {
                 e.preventDefault();
@@ -559,6 +748,1001 @@
                 $('#advancePaymentForm .form-control').removeClass('is-invalid is-valid');
                 $('#advancePaymentForm .invalid-feedback').text('');
             });
-        });
+
+             });
+
     </script>
+
+     <script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const form = document.getElementById('bulkUploadForm');
+    const fileInput = document.getElementById('bulkUploadFile');
+    const startUploadBtn = document.getElementById('startUploadBtn');
+
+    const progressContainer =
+        document.getElementById('uploadProgressContainer');
+
+    const progressBar =
+        document.getElementById('uploadProgressBar');
+
+    const percentage =
+        document.getElementById('uploadPercentage');
+
+    const status =
+        document.getElementById('uploadStatus');
+
+    const fileName =
+        document.getElementById('uploadFileName');
+
+    const message =
+        document.getElementById('uploadMessage');
+
+    const cancelButton =
+        document.getElementById('cancelUploadBtn');
+
+    const confirmCancelUploadBtn =
+        document.getElementById('confirmCancelUploadBtn');
+
+    const cancelUploadModalElement =
+        document.getElementById('cancelUploadModal');
+
+
+    // Stop if required elements are missing
+    if (
+        !form ||
+        !fileInput ||
+        !startUploadBtn ||
+        !progressContainer ||
+        !progressBar ||
+        !percentage ||
+        !status ||
+        !fileName ||
+        !message
+    ) {
+        return;
+    }
+
+
+    let xhr = null;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | FILE SELECT
+    |--------------------------------------------------------------------------
+    */
+
+    fileInput.addEventListener('change', function () {
+
+        if (!fileInput.files.length) {
+
+            fileName.value = 'No file selected';
+
+            return;
+        }
+
+
+        const file = fileInput.files[0];
+
+
+        // Only show selected file.
+        // Upload does NOT start here.
+        fileName.value =
+            file.name + ' (' +
+            formatFileSize(file.size) +
+            ')';
+
+
+        // Reset previous upload state
+        progressContainer.style.display = 'none';
+
+        progressBar.style.width = '0%';
+
+        progressBar.classList.remove('bg-danger');
+
+        progressBar.classList.add('bg-success');
+
+        percentage.textContent = '0%';
+
+        percentage.classList.remove('text-danger');
+
+        percentage.classList.add('text-success');
+
+        status.textContent = '';
+
+        message.textContent = '';
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPLOAD BUTTON
+    |--------------------------------------------------------------------------
+    */
+
+    startUploadBtn.addEventListener('click', function () {
+
+        // No file selected
+        if (!fileInput.files.length) {
+
+            showUploadError('Please choose a file first.');
+
+            return;
+        }
+
+
+        const file = fileInput.files[0];
+
+
+        // Check file size
+        if (file.size > 10 * 1024 * 1024) {
+
+            showUploadError(
+                'File size must not exceed 10 MB.'
+            );
+
+            return;
+        }
+
+
+        // Check file extension
+        const allowedExtensions = [
+            'xlsx',
+            'xls',
+            'csv'
+        ];
+
+
+        const extension =
+            file.name.split('.').pop().toLowerCase();
+
+
+        if (!allowedExtensions.includes(extension)) {
+
+            showUploadError(
+                'Invalid file type. Please select XLSX, XLS or CSV.'
+            );
+
+            return;
+        }
+
+
+        const formData = new FormData(form);
+
+
+        xhr = new XMLHttpRequest();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SHOW PROGRESS CONTAINER
+        |--------------------------------------------------------------------------
+        */
+
+        progressContainer.style.display = 'block';
+
+
+        progressBar.classList.remove('bg-danger');
+
+        progressBar.classList.add('bg-success');
+
+        progressBar.classList.add('progress-bar-striped');
+
+        progressBar.classList.add('progress-bar-animated');
+
+
+        progressBar.style.width = '0%';
+
+        percentage.textContent = '0%';
+
+        percentage.classList.remove('text-danger');
+
+        percentage.classList.add('text-success');
+
+
+        status.textContent =
+            'Uploading file...';
+
+
+        message.textContent =
+            "Please don't close or refresh this page.";
+
+
+        // Disable upload button while uploading
+        startUploadBtn.disabled = true;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPLOAD PROGRESS
+        |--------------------------------------------------------------------------
+        */
+
+        xhr.upload.addEventListener(
+            'progress',
+            function (event) {
+
+                if (event.lengthComputable) {
+
+                    const percent = Math.round(
+                        (event.loaded / event.total) * 100
+                    );
+
+
+                    progressBar.style.width =
+                        percent + '%';
+
+
+                    percentage.textContent =
+                        percent + '%';
+
+                }
+
+            }
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | REQUEST COMPLETED
+        |--------------------------------------------------------------------------
+        */
+
+        xhr.addEventListener(
+            'load',
+            function () {
+
+                console.log('STATUS:', xhr.status);
+
+                console.log(
+                    'RESPONSE:',
+                    xhr.responseText
+                );
+
+
+                let response = {};
+
+
+                try {
+
+                    response =
+                        JSON.parse(xhr.responseText);
+
+                } catch (e) {
+
+                    console.log(
+                        'Response is not JSON'
+                    );
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | SUCCESS
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    xhr.status >= 200 &&
+                    xhr.status < 300 &&
+                    response.success
+                ) {
+
+                    progressBar.style.width =
+                        '100%';
+
+                    percentage.textContent =
+                        '100%';
+
+
+                    progressBar.classList.remove(
+                        'progress-bar-animated'
+                    );
+
+
+                    status.textContent =
+                        'Upload completed successfully!';
+
+
+                    message.textContent =
+                        response.message ||
+                        'Transporter records processed successfully.';
+
+
+                    message.classList.remove(
+                        'text-danger'
+                    );
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | SHOW PARTIAL ERRORS IF ANY
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        response.errors &&
+                        response.errors.length > 0
+                    ) {
+
+                        let errorHtml =
+                            '<br><strong>Errors:</strong><br>';
+
+
+                        response.errors.forEach(
+                            function (item) {
+
+                                if (
+                                    typeof item === 'object' &&
+                                    item !== null
+                                ) {
+
+                                    errorHtml +=
+                                        'Row ' +
+                                        item.row +
+                                        ': ' +
+                                        item.error +
+                                        '<br>';
+
+                                } else {
+
+                                    errorHtml +=
+                                        String(item) +
+                                        '<br>';
+
+                                }
+
+                            }
+                        );
+
+
+                        message.innerHTML +=
+                            errorHtml;
+
+                    }
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | REFRESH DATATABLE ONLY
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        typeof $ !== 'undefined' &&
+                        $.fn.DataTable &&
+                        $.fn.DataTable.isDataTable(
+                            '#transportersTable'
+                        )
+                    ) {
+
+                        $('#transportersTable')
+                            .DataTable()
+                            .ajax
+                            .reload(null, false);
+
+                    }
+
+
+                    // Enable button again
+                    startUploadBtn.disabled = false;
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | DO NOT HIDE PROGRESS CONTAINER
+                    |--------------------------------------------------------------------------
+                    |
+                    | It stays visible so user can see:
+                    | success message / errors.
+                    |
+                    */
+
+                } else {
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | SERVER / VALIDATION ERROR
+                    |--------------------------------------------------------------------------
+                    */
+
+                    let errorMessage =
+                        response.message || '';
+
+
+                    if (response.errors) {
+
+                        if (
+                            Array.isArray(
+                                response.errors
+                            )
+                        ) {
+
+                            errorMessage =
+                                response.errors
+                                    .map(function (item) {
+
+                                        if (
+                                            typeof item === 'object' &&
+                                            item !== null
+                                        ) {
+
+                                            return (
+                                                'Row ' +
+                                                item.row +
+                                                ': ' +
+                                                item.error
+                                            );
+
+                                        }
+
+                                        return String(item);
+
+                                    })
+                                    .join('<br>');
+
+
+                        } else if (
+                            typeof response.errors === 'object'
+                        ) {
+
+                            let errors = [];
+
+
+                            Object.values(
+                                response.errors
+                            ).forEach(
+                                function (error) {
+
+                                    if (
+                                        Array.isArray(error)
+                                    ) {
+
+                                        errors =
+                                            errors.concat(
+                                                error
+                                            );
+
+                                    } else {
+
+                                        errors.push(
+                                            error
+                                        );
+
+                                    }
+
+                                }
+                            );
+
+
+                            errorMessage =
+                                errors.join('<br>');
+
+
+                        } else {
+
+                            errorMessage =
+                                String(
+                                    response.errors
+                                );
+
+                        }
+
+                    }
+
+
+                    showUploadError(
+                        errorMessage ||
+                        'Something went wrong while uploading.'
+                    );
+
+
+                    startUploadBtn.disabled = false;
+
+                }
+
+            }
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | NETWORK ERROR
+        |--------------------------------------------------------------------------
+        */
+
+        xhr.addEventListener(
+            'error',
+            function () {
+
+                showUploadError(
+                    'Network or server error occurred.'
+                );
+
+
+                startUploadBtn.disabled = false;
+
+            }
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPLOAD ABORTED
+        |--------------------------------------------------------------------------
+        */
+
+        xhr.addEventListener(
+            'abort',
+            function () {
+
+                progressContainer.style.display =
+                    'block';
+
+
+                progressBar.classList.remove(
+                    'progress-bar-animated'
+                );
+
+
+                status.textContent =
+                    'Upload cancelled';
+
+
+                message.textContent =
+                    'The file upload was cancelled.';
+
+
+                startUploadBtn.disabled =
+                    false;
+
+            }
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | OPEN REQUEST
+        |--------------------------------------------------------------------------
+        */
+
+        xhr.open(
+            'POST',
+            form.action,
+            true
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | CSRF TOKEN
+        |--------------------------------------------------------------------------
+        */
+
+        const csrfToken =
+            document.querySelector(
+                'meta[name="csrf-token"]'
+            );
+
+
+        if (csrfToken) {
+
+            xhr.setRequestHeader(
+                'X-CSRF-TOKEN',
+                csrfToken.getAttribute('content')
+            );
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | AJAX REQUEST
+        |--------------------------------------------------------------------------
+        */
+
+        xhr.setRequestHeader(
+            'X-Requested-With',
+            'XMLHttpRequest'
+        );
+
+
+        xhr.setRequestHeader(
+            'Accept',
+            'application/json'
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SEND FILE
+        |--------------------------------------------------------------------------
+        */
+
+        xhr.send(formData);
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CANCEL BUTTON
+    |--------------------------------------------------------------------------
+    |
+    | Cancel button first opens confirmation modal.
+    |
+    */
+
+    if (cancelButton) {
+
+        cancelButton.addEventListener(
+            'click',
+            function () {
+
+                /*
+                |--------------------------------------------------------------------------
+                | If upload is running
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    xhr &&
+                    xhr.readyState !== XMLHttpRequest.DONE
+                ) {
+
+                    showCancelConfirmation();
+
+                    return;
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | If upload hasn't started
+                |--------------------------------------------------------------------------
+                */
+
+                if (fileInput.files.length) {
+
+                    showCancelConfirmation();
+
+                    return;
+
+                }
+
+
+                // Nothing selected
+                resetUpload();
+
+            }
+        );
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CONFIRM CANCEL
+    |--------------------------------------------------------------------------
+    */
+
+    if (confirmCancelUploadBtn) {
+
+        confirmCancelUploadBtn.addEventListener(
+            'click',
+            function () {
+
+                /*
+                |--------------------------------------------------------------------------
+                | Abort active upload
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    xhr &&
+                    xhr.readyState !== XMLHttpRequest.DONE
+                ) {
+
+                    xhr.abort();
+
+                    xhr = null;
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Reset everything
+                |--------------------------------------------------------------------------
+                */
+
+                resetUpload();
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Close confirmation modal
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    cancelUploadModalElement &&
+                    typeof bootstrap !== 'undefined'
+                ) {
+
+                    const modal =
+                        bootstrap.Modal.getInstance(
+                            cancelUploadModalElement
+                        );
+
+                    if (modal) {
+
+                        modal.hide();
+
+                    }
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SHOW CANCEL CONFIRMATION
+    |--------------------------------------------------------------------------
+    */
+
+    function showCancelConfirmation() {
+
+        if (
+            cancelUploadModalElement &&
+            typeof bootstrap !== 'undefined'
+        ) {
+
+            const modal =
+                bootstrap.Modal.getOrCreateInstance(
+                    cancelUploadModalElement
+                );
+
+            modal.show();
+
+        } else {
+
+            // Fallback if Bootstrap modal is unavailable
+            const confirmCancel =
+                confirm(
+                    'Are you sure you want to cancel this upload?'
+                );
+
+
+            if (confirmCancel) {
+
+                if (
+                    xhr &&
+                    xhr.readyState !== XMLHttpRequest.DONE
+                ) {
+
+                    xhr.abort();
+
+                    xhr = null;
+
+                }
+
+                resetUpload();
+
+            }
+
+        }
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SHOW UPLOAD ERROR
+    |--------------------------------------------------------------------------
+    */
+
+    function showUploadError(errorMessage) {
+
+        progressContainer.style.display =
+            'block';
+
+
+        progressBar.classList.remove(
+            'bg-success'
+        );
+
+
+        progressBar.classList.add(
+            'bg-danger'
+        );
+
+
+        progressBar.classList.remove(
+            'progress-bar-animated'
+        );
+
+
+        progressBar.style.width =
+            '100%';
+
+
+        percentage.classList.remove(
+            'text-success'
+        );
+
+
+        percentage.classList.add(
+            'text-danger'
+        );
+
+
+        percentage.textContent =
+            '100%';
+
+
+        status.textContent =
+            'Upload completed with errors!';
+
+
+        message.innerHTML =
+            errorMessage ||
+            'Some rows could not be imported.';
+
+
+        message.classList.add(
+            'text-danger'
+        );
+
+
+        message.style.whiteSpace =
+            'pre-line';
+
+
+        startUploadBtn.disabled =
+            false;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | RESET UPLOAD
+    |--------------------------------------------------------------------------
+    */
+
+    function resetUpload() {
+
+        if (
+            xhr &&
+            xhr.readyState !== XMLHttpRequest.DONE
+        ) {
+
+            xhr.abort();
+
+        }
+
+
+        xhr = null;
+
+
+        fileInput.value = '';
+
+
+        fileName.value =
+            'No file selected';
+
+
+        progressContainer.style.display =
+            'none';
+
+
+        progressBar.style.width =
+            '0%';
+
+
+        progressBar.classList.remove(
+            'bg-danger'
+        );
+
+
+        progressBar.classList.add(
+            'bg-success'
+        );
+
+
+        progressBar.classList.remove(
+            'progress-bar-animated'
+        );
+
+
+        percentage.textContent =
+            '0%';
+
+
+        percentage.classList.remove(
+            'text-danger'
+        );
+
+
+        percentage.classList.add(
+            'text-success'
+        );
+
+
+        status.textContent =
+            '';
+
+
+        message.textContent =
+            '';
+
+
+        startUploadBtn.disabled =
+            false;
+
+    }
+
+    const bulkUploadModal = document.getElementById('bulkUploadModal');
+
+if (bulkUploadModal) {
+    bulkUploadModal.addEventListener('hidden.bs.modal', function () {
+        resetUpload();
+    });
+}
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | FORMAT FILE SIZE
+    |--------------------------------------------------------------------------
+    */
+
+    function formatFileSize(bytes) {
+
+        if (bytes === 0) {
+
+            return '0 Bytes';
+
+        }
+
+
+        const sizes = [
+            'Bytes',
+            'KB',
+            'MB',
+            'GB'
+        ];
+
+
+        const i = Math.floor(
+            Math.log(bytes) /
+            Math.log(1024)
+        );
+
+
+        return (
+            Math.round(
+                bytes /
+                Math.pow(1024, i) *
+                100
+            ) / 100
+        ) +
+        ' ' +
+        sizes[i];
+
+    }
+
+});
+</script>
+
+
 @endpush

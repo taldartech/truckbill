@@ -24,9 +24,9 @@
                         </select>
                     </div>
                     <div class="col-6 col-md-4">
-                        <label class="form-label small mb-1">Memo ID <span class="text-danger">*</span></label>
+                        <label class="form-label small mb-1">Memo ID / POD <span class="text-danger">*</span></label>
                         <select name="memo_id" id="memo_copy_memo_id" class="form-select form-select-sm" required>
-                            <option value="">Select Memo ID</option>
+                            <option value="">Select Memo / POD ID</option>
                             @foreach ($memo_ids as $id)
                                 <option @if ($memo_id == $id) selected @endif value="{{ $id }}">
                                     {{ $id }}</option>

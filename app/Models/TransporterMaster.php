@@ -19,6 +19,8 @@ class TransporterMaster extends Model
         'pan_number',
         'gst_number',
         'gst_type',
+        'is_msme',
+        'msme_reg_no',
         'pan_active',
         'address',
         'city_id',
@@ -30,6 +32,7 @@ class TransporterMaster extends Model
     {
         return [
             'pan_active' => 'boolean',
+            'is_msme' => 'boolean',
         ];
     }
 

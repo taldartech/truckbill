@@ -22,6 +22,15 @@
                 <a href="{{ route('master.goods-types.create') }}" class="btn app-index-header-btn" aria-label="Create goods type" title="Create Goods Type">
                     <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Create</span>
                 </a>
+
+    <button type="button"
+        class="btn app-index-header-btn"
+        data-bs-toggle="modal"
+        data-bs-target="#goodsTypeBulkUploadModal">
+    <i class="fas fa-upload"></i> Bulk Upload
+</button>
+
+</div>
             </div>
         </div>
         <div class="card-body">
@@ -44,7 +53,92 @@
         </div>
     </div>
 </div>
+
 @endsection
+
+<!-- Good Type Delete Modal -->
+<div class="modal fade" id="goodTypeDeleteModal" tabindex="-1"
+    aria-labelledby="goodTypeDeleteModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="goodTypeDeleteModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                    Confirm Delete
+                </h5>
+
+                <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <p>Are you sure you want to delete this goods type?</p>
+
+                <p>
+                    <strong>Name:</strong>
+                    <span id="deleteGoodTypeName"></span>
+                </p>
+
+                <div class="mb-3 mt-3">
+                    <label for="deleteGoodTypeRemark" class="form-label">
+                        <strong>
+                            Remark <span class="text-danger">*</span>
+                        </strong>
+                    </label>
+
+                    <textarea
+                        id="deleteGoodTypeRemark"
+                        class="form-control"
+                        rows="4"
+                        placeholder="Enter reason for deletion"></textarea>
+                </div>
+
+                <div id="deleteGoodTypeRemarkError"
+                    class="text-danger small d-none">
+                    Delete remark is required.
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i>
+                    Cancel
+                </button>
+
+                <button type="button"
+                    class="btn btn-danger"
+                    id="confirmGoodTypeDelete">
+                    <i class="bi bi-trash"></i>
+                    Confirm Delete
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+@include('shared.bulk-upload-modal', [
+    'modalId' => 'goodsTypeBulkUploadModal',
+    'title' => 'Bulk Upload Goods Types',
+    'templateUrl' => route('master.goods-types.bulk-upload.template'),
+    'uploadUrl' => route('master.goods-types.bulk-upload'),
+    'recordName' => 'goods types',
+    'columns' => [
+        ['name' => 'Goods Name', 'format' => 'Name', 'required' => true],
+    ],
+])
 
 @push('scripts')
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
@@ -119,12 +213,50 @@ $(document).ready(function() {
         searchDelay: 500
     });
 
-    $(document).on('submit', 'form[action*="destroy"]', function(e) {
-        if (!confirm('Are you sure you want to delete this goods type?')) {
-            e.preventDefault();
-            return false;
-        }
-    });
+   // Open Good Type Delete Modal
+$(document).on('click', '.good-type-delete-btn', function() {
+
+    const button = $(this);
+    const form = button.closest('.good-type-delete-form');
+
+    const goodTypeName = button.data('good-type-name') || '-';
+
+    $('#deleteGoodTypeName').text(goodTypeName);
+
+    $('#deleteGoodTypeRemark').val('');
+    $('#deleteGoodTypeRemarkError').addClass('d-none');
+
+    $('#confirmGoodTypeDelete').data('form', form);
+});
+
+
+// Confirm Good Type Delete
+$(document).on('click', '#confirmGoodTypeDelete', function() {
+
+    const remark = $('#deleteGoodTypeRemark').val().trim();
+    const form = $('#confirmGoodTypeDelete').data('form');
+
+    if (!remark) {
+
+        $('#deleteGoodTypeRemarkError')
+            .removeClass('d-none')
+            .text('Please enter a remark before deleting.');
+
+        return;
+    }
+
+    $('#deleteGoodTypeRemarkError').addClass('d-none');
+
+    form.find('input[name="delete_remark"]').remove();
+
+    $('<input>', {
+        type: 'hidden',
+        name: 'delete_remark',
+        value: remark
+    }).appendTo(form);
+
+    form[0].submit();
+});
 });
 </script>
 @endpush

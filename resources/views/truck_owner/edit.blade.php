@@ -145,17 +145,22 @@
                         @endif
                         @error('beneficiary_id') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Declaration Given? *</label><br>
+                    <div class="col-md-5">
+                        <label class="form-label">Declaration u/s 194C(6) Received with PAN? *</label><br>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given', $truck_owner->declaration_given) == 1 ? 'checked' : '' }} required>
-                            <label class="form-check-label" for="decl_yes">Yes</label>
+                            <label class="form-check-label fw-semibold" for="decl_yes">Yes (0.00% TDS)</label>
                         </div>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="declaration_given" id="decl_no" value="0" {{ old('declaration_given', $truck_owner->declaration_given) == 0 ? 'checked' : '' }} required>
                             <label class="form-check-label" for="decl_no">No</label>
                         </div>
                         @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-3" id="declaration_date_col" style="{{ old('declaration_given', $truck_owner->declaration_given) == 1 ? '' : 'display:none;' }}">
+                        <label for="declaration_194c6_date" class="form-label">Declaration Date</label>
+                        <input type="date" class="form-control @error('declaration_194c6_date') is-invalid @enderror" id="declaration_194c6_date" name="declaration_194c6_date" value="{{ old('declaration_194c6_date', $truck_owner->declaration_194c6_date?->format('Y-m-d') ?? date('Y-m-d')) }}">
+                        @error('declaration_194c6_date') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                 </div>
                 <div class="row mb-3">
@@ -187,6 +192,23 @@
                             'entityLabel' => 'Truck Owner',
                             'part' => 'alert',
                         ])
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-5">
+                        <label class="form-label">MSME Status</label>
+                        <div class="form-check form-switch mt-1">
+                            <input class="form-check-input" type="checkbox" name="is_msme" id="is_msme" value="1" {{ old('is_msme', $truck_owner->is_msme) ? 'checked' : '' }}
+                                   onchange="document.getElementById('truck_owner_msme_reg_col').style.display = this.checked ? 'block' : 'none'">
+                            <label class="form-check-label fw-semibold" for="is_msme">Registered MSME (Micro / Small)</label>
+                        </div>
+                        <small class="text-muted d-block" style="font-size: 0.75rem;">Subject to Sec 43B(h) prompt payment compliance by our company</small>
+                    </div>
+                    <div class="col-md-5" id="truck_owner_msme_reg_col" style="{{ old('is_msme', $truck_owner->is_msme) ? '' : 'display:none;' }}">
+                        <label for="msme_reg_no" class="form-label">Udyam / MSME Registration #</label>
+                        <input type="text" class="form-control @error('msme_reg_no') is-invalid @enderror" id="msme_reg_no" name="msme_reg_no" value="{{ old('msme_reg_no', $truck_owner->msme_reg_no) }}" placeholder="UDYAM-XX-00-0000000">
+                        @error('msme_reg_no') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                 </div>
             </div>
@@ -663,10 +685,28 @@
         .catch(() => {});
     }
 
+    function updateTruckOwner194cUi() {
+        const isYes = document.getElementById('decl_yes')?.checked;
+        const dateCol = document.getElementById('declaration_date_col');
+        const tdsInput = document.getElementById('tds_percentage');
+        if (dateCol) {
+            dateCol.style.display = isYes ? '' : 'none';
+        }
+        if (isYes && tdsInput) {
+            tdsInput.value = '0.00';
+            tdsInput.readOnly = true;
+        } else if (tdsInput) {
+            tdsInput.readOnly = false;
+        }
+    }
+    updateTruckOwner194cUi();
+
     document.addEventListener('DOMContentLoaded', function () {
+        updateTruckOwner194cUi();
         document.querySelectorAll('input[name="declaration_given"]').forEach(function (el) {
             el.addEventListener('change', function () {
                 window.__truckOwnerEditTdsUserEdited = false;
+                updateTruckOwner194cUi();
                 refreshTruckOwnerEditTdsBaseline();
             });
         });

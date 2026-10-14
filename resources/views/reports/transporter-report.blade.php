@@ -63,18 +63,18 @@
     <div class="card-body p-2 p-md-3">
         <form method="GET" action="{{ route('reports.transporter-report') }}" id="searchForm">
             <div class="row g-2 align-items-end">
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-3 col-xl">
                     <label class="form-label small mb-1">Start Date <span class="text-danger">*</span></label>
                     <input type="date" name="start_date" class="form-control form-control-sm" value="{{ $startDate }}" required>
                 </div>
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-3 col-xl">
                     <label class="form-label small mb-1">End Date <span class="text-danger">*</span></label>
                     <input type="date" name="end_date" class="form-control form-control-sm" value="{{ $endDate }}" required>
                 </div>
-                <div class="col-6 col-md-6">
-                    <label class="form-label small mb-1">Transporter/Truck Owner</label>
+                <div class="col-6 col-md-6 col-xl">
+                    <label class="form-label small mb-1">Transporter/Owner</label>
                     <select name="transporter_id" id="transporterFilter" class="form-select form-select-sm select2">
-                        <option value="">Select Transporter/Truck Owner</option>
+                        <option value="">Select Transporter/Owner</option>
                         @foreach ($transporters as $transporter)
                         <option @if ($transporterId==$transporter->id) selected @endif value="{{ $transporter->id }}">
                             {{ $transporter->name }} (@if ($transporter->is_owner) Owner @else Transporter @endif)
@@ -82,7 +82,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-6 col-md-4">
+                <div class="col-6 col-md-4 col-xl">
                     <label class="form-label small mb-1">Truck No</label>
                     <select name="truck_id" id="truckFilter" class="form-select form-select-sm select2">
                         <option value="">Select Truck No</option>
@@ -93,10 +93,10 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-6 col-md-4">
-                    <label class="form-label small mb-1">Reference By</label>
+                <div class="col-6 col-md-4 col-xl">
+                    <label class="form-label small mb-1">Reference</label>
                     <select name="reference_by" id="referenceFilter" class="form-select form-select-sm select2">
-                        <option value="">Select Reference By</option>
+                        <option value="">Select Reference</option>
                         @foreach ($references as $reference)
                         <option @if ($referenceId==$reference->id) selected @endif value="{{ $reference->id }}">
                             {{ $reference->name }}
@@ -104,7 +104,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-6 col-md-4 d-flex align-items-end justify-content-end gap-1 gap-sm-2">
+                <div class="col-6 col-md-4 col-xl-auto d-flex align-items-end justify-content-end gap-1 gap-sm-2">
                     <button type="submit" class="btn btn-brand-primary btn-sm" title="Search">
                         <i class="bi bi-search"></i> <span class="d-none d-sm-inline ms-1">Search</span>
                     </button>

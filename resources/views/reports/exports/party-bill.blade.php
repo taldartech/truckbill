@@ -15,6 +15,9 @@
     $invoiceCompanyLogoSrc = $usePdfLogoPath
         ? $company->logoFilesystemPathForPdf()
         : $company->logoPublicUrl();
+    $invoiceCompanySignatureSrc = $usePdfLogoPath
+        ? $company->signatureFilesystemPathForPdf()
+        : $company->signaturePublicUrl();
     $partyBillHeaderCompact = ($partyBillHeaderCompact ?? false) === true;
     $columns = $invoice->custom_invoice ? ($invoice->custom_invoice === 'rate_difference' ? 10 : 11) : 13;
 @endphp
@@ -216,41 +219,41 @@
         $totalgst = $cgst + $sgst + $igst;
     @endphp
     <tr>
-        <td style="font-weight: bold;" colspan="{{ $columns - 4 }}">
+        <td style="font-weight: bold;" colspan="{{ $columns - 3 }}">
             @if ($invoice->invoice_type == 'Reverse')
                 Rs: {{ $totalgst }} GST to be deposited by the party under reverse charge.
             @endif
         </td>
-        <td style="font-weight: bold;" colspan="3">Amount</td>
+        <td style="font-weight: bold;" colspan="2">Amount</td>
         <td colspan="1">{{ number_format($totalAmount, 2) }}</td>
     </tr>
     <tr>
         <td style="font-weight: bold;" colspan="2">Account No:</td>
-        <td colspan="{{ $columns - 6 }}" style="text-align: left; {{ $forExcel ? "mso-number-format:'\\@';" : '' }}">{{ $accountNumberDisplay }}</td>
+        <td colspan="{{ $columns - 5 }}" style="text-align: left; {{ $forExcel ? "mso-number-format:'\\@';" : '' }}">{{ $accountNumberDisplay }}</td>
         @if ($cgst > 0)
-            <td style="font-weight: bold;" colspan="3">CGST {{ $cgstpercent }}%</td>
+            <td style="font-weight: bold;" colspan="2">CGST {{ $cgstpercent }}%</td>
             <td colspan="1">{{ number_format($cgst, 2) }}</td>
         @elseif ($igst > 0)
-            <td style="font-weight: bold;" colspan="3">IGST {{ $igstpercent }}%</td>
+            <td style="font-weight: bold;" colspan="2">IGST {{ $igstpercent }}%</td>
             <td colspan="1">{{ number_format($igst, 2) }}</td>
         @else
-            <td colspan="4"></td>
+            <td colspan="3"></td>
         @endif
     </tr>
     <tr>
         <td style="font-weight: bold;" colspan="2">IFSC CODE:</td>
-        <td colspan="{{ $columns - 6 }}">{{ $company->ifsc ?? '' }}</td>
+        <td colspan="{{ $columns - 5 }}">{{ $company->ifsc ?? '' }}</td>
         @if ($sgst > 0)
-            <td style="font-weight: bold;" colspan="3">SGST {{ $sgstpercent }}%</td>
+            <td style="font-weight: bold;" colspan="2">SGST {{ $sgstpercent }}%</td>
             <td colspan="1">{{ number_format($sgst, 2) }}</td>
         @else
-            <td colspan="4"></td>
+            <td colspan="3"></td>
         @endif
     </tr>
     <tr>
         <td style="font-weight: bold;" colspan="2">BANK:</td>
-        <td colspan="{{ $columns - 6 }}">{{ $company->bank ?? '' }}</td>
-        <td style="font-weight: bold;" colspan="3">Total Amount</td>
+        <td colspan="{{ $columns - 5 }}">{{ $company->bank ?? '' }}</td>
+        <td style="font-weight: bold;" colspan="2">Total Amount</td>
         @php
             $grandTotal = ($invoice->invoice_type ?? '') === 'Reverse'
                 ? (float) ($invoice->net_amount ?? $invoice->base_amount ?? $totalAmount)
@@ -260,27 +263,43 @@
     </tr>
     @if (trim($remark))
         <tr>
-            <td style="font-weight: bold;" colspan="{{ $columns - 4 }}">Remark: {{ trim($remark) }}</td>
-            <td colspan="4"></td>
+            <td style="font-weight: bold;" colspan="{{ $columns - 3 }}">Remark: {{ trim($remark) }}</td>
+            <td colspan="3"></td>
         </tr>
     @endif
     <tr>
-        <td style="font-weight: bold;" colspan="{{ $columns - 4 }}">{{ ucfirst(getIndianCurrency($grandTotal)) }} Only</td>
-        <td style="font-weight: bold;" colspan="4">FOR {{ $company->name }}</td>
+        <td style="font-weight: bold;" colspan="{{ $columns - 3 }}">{{ ucfirst(getIndianCurrency($grandTotal)) }} Only</td>
+        <td style="font-weight: bold; text-align: right; vertical-align: bottom;" colspan="3">
+            For {{ $company->name }}
+            @if (! $forExcel)
+                <br>
+                @include('reports.exports.partials.pdf-company-signature-slot', [
+                    'signatureSrc' => $invoiceCompanySignatureSrc,
+                    'companyName' => $company->name,
+                    'slotWidthPx' => 100,
+                    'slotHeightPx' => 36,
+                    'align' => 'right',
+                ])
+                @if (empty($invoiceCompanySignatureSrc))
+                    <br><br>
+                @endif
+            @else
+                <br><br><br>
+            @endif
+            <br>
+            Authorized Signature
+        </td>
     </tr>
     <tr>
-        <td colspan="{{ $columns - 4 }}"></td>
-        <td colspan="4" rowspan="2"></td>
-    </tr>
-    <tr>
-        <td colspan="{{ $columns }}"></td>
-    </tr>
-    <tr>
-        <td style="font-weight: bold;" colspan="{{ $columns - 4 }}">
+        <td style="font-weight: bold;" colspan="{{ $columns - 3 }}">
             @if ($invoice->invoice_type == 'Reverse')
                 Note :- GST Liability of Debtor:-  {{ $invoice->consignee->name }}  Under Reverse Charge Mechanism of GST Act, 2017
             @endif
         </td>
-        <td style="font-weight: bold;" colspan="4">Authorized Signature</td>
+        <td style="text-align: right; vertical-align: middle; white-space: nowrap; padding: 2px 4px;" colspan="3">
+            @if (! ($forExcel ?? false))
+                <span style="font-size: 7px; font-weight: normal; white-space: nowrap;">Digitally Managed by TruckBill (www.truckbill.in)</span>
+            @endif
+        </td>
     </tr>
 </table>

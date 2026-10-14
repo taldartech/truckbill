@@ -549,7 +549,7 @@
                                 <strong>₹{{ number_format($tdsAmount, 2) }}</strong>
                             </div>
                             <div class="fb-financial-summary__row">
-                                <span>Negative Adjusted</span>
+                                <span>Negative Adjusted Amount</span>
                                 <strong class="{{ $negativeAdjusted > 0 ? '' : 'text-muted' }}">₹{{ number_format($negativeAdjusted, 2) }}</strong>
                             </div>
                             <div class="fb-financial-summary__row">
@@ -1314,8 +1314,8 @@
                                         <thead>
                                             <tr>
                                                 <th>LR Number</th>
-                                                <th>Shortage</th>
-                                                <th>Damage</th>
+                                                <th>Shortage Amount</th>
+                                                <th>Damage Amount</th>
                                                 <th>Balance</th>
                                                 <th>Allocated</th>
                                             </tr>
@@ -1592,8 +1592,37 @@
                 }
             });
 
+            if (confirmModalElement) {
+                confirmModalElement.addEventListener('shown.bs.modal', function() {
+                    if (confirmYesBtn) {
+                        confirmYesBtn.focus();
+                    }
+                });
+
+                confirmModalElement.addEventListener('hidden.bs.modal', function() {
+                    pendingPrintButton = null;
+                    if (confirmYesBtn) {
+                        confirmYesBtn.disabled = false;
+                    }
+                });
+            }
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter' && confirmModalElement && confirmModalElement.classList.contains('show')) {
+                    event.preventDefault();
+                    if (confirmYesBtn && !confirmYesBtn.disabled) {
+                        confirmYesBtn.click();
+                    }
+                }
+            });
+
             if (confirmYesBtn) {
                 confirmYesBtn.addEventListener('click', function() {
+                    if (confirmYesBtn.disabled) {
+                        return;
+                    }
+                    confirmYesBtn.disabled = true;
+
                     const printButton = pendingPrintButton;
                     pendingPrintButton = null;
 
@@ -1602,6 +1631,7 @@
                     }
 
                     if (!printButton) {
+                        confirmYesBtn.disabled = false;
                         return;
                     }
 
@@ -1625,8 +1655,12 @@
                             return data;
                         })
                         .then((data) => {
-                            printButton.classList.add('is-printed');
-                            printButton.setAttribute('title', `Last printed: ${data.voucher_last_printed_at}`);
+                            (data.updated_booking_ids || [printButton.dataset.freightBookingId]).forEach((id) => {
+                                document.querySelectorAll(`.voucher-print-btn[data-freight-booking-id="${id}"]`).forEach((btn) => {
+                                    btn.classList.add('is-printed');
+                                    btn.title = `Last printed: ${data.voucher_last_printed_at}`;
+                                });
+                            });
                         })
                         .catch((error) => {
                             if (typeof Swal !== 'undefined') {
@@ -1638,13 +1672,10 @@
                             } else {
                                 alert(error.message || 'Could not update print status.');
                             }
+                        })
+                        .finally(() => {
+                            confirmYesBtn.disabled = false;
                         });
-                });
-            }
-
-            if (confirmModalElement) {
-                confirmModalElement.addEventListener('hidden.bs.modal', function() {
-                    pendingPrintButton = null;
                 });
             }
         })();

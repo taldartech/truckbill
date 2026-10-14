@@ -8,8 +8,22 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
     <style>
+        .lorry-receipts-index .select2-container--bootstrap-5 .select2-selection {
+            min-height: 2.125rem;
+            height: 2.125rem;
+            font-size: 0.8125rem;
+            padding: 0.2rem 0.55rem;
+            border-radius: 0.55rem;
+        }
+        .lorry-receipts-index .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            line-height: 1.7rem;
+            padding-left: 0;
+            font-size: 0.8125rem;
+        }
         :root {
             --glass-bg: rgba(255, 255, 255, 0.75);
             --glass-border: rgba(255, 255, 255, 0.3);
@@ -226,59 +240,6 @@
                 box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
             }
 
-            .lorry-receipts-index .lr-date-filter-bar {
-                flex-direction: column !important;
-                align-items: stretch !important;
-                gap: 0.4rem !important;
-                padding: 0.45rem 0.65rem !important;
-            }
-
-            .lorry-receipts-index .lr-date-filter-inputs {
-                display: flex !important;
-                flex-direction: row !important;
-                flex-wrap: nowrap !important;
-                width: 100% !important;
-                gap: 0.35rem !important;
-                min-width: 0 !important;
-            }
-
-            .lorry-receipts-index .lr-date-filter-inputs .input-group-custom,
-            .lorry-receipts-index .input-group-custom {
-                flex: 1 1 50% !important;
-                width: 50% !important;
-                min-width: 0 !important;
-                max-width: 50% !important;
-                padding: 2px 5px !important;
-                box-sizing: border-box !important;
-            }
-
-            .lorry-receipts-index .input-group-custom span {
-                font-size: 8.5px !important;
-                margin-right: 3px !important;
-                flex-shrink: 0 !important;
-            }
-
-            .lorry-receipts-index .input-group-custom input {
-                font-size: 11px !important;
-                padding: 1px 0 !important;
-                width: 100% !important;
-                min-width: 0 !important;
-                max-width: 100% !important;
-            }
-
-            .lorry-receipts-index .input-group-custom input::-webkit-calendar-picker-indicator {
-                padding: 0 !important;
-                margin: 0 !important;
-                cursor: pointer;
-            }
-
-            .lorry-receipts-index .lr-date-filter-actions {
-                width: 100% !important;
-                display: flex !important;
-                justify-content: flex-end !important;
-                gap: 0.4rem !important;
-            }
-
             #lrDetailsModal .modal-footer {
                 flex-direction: column;
                 align-items: stretch;
@@ -417,59 +378,6 @@
             font-weight: 500;
         }
 
-        .filter-action-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: none;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .filter-action-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-
-        .input-group-custom {
-            background: white;
-            border-radius: 8px;
-            padding: 2px 8px;
-            border: 1px solid rgba(0,0,0,0.12);
-            display: flex;
-            align-items: center;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-            min-width: 0;
-            flex: 1 1 auto;
-            overflow: hidden;
-        }
-
-        .input-group-custom span {
-            font-size: 9px;
-            text-transform: uppercase;
-            font-weight: 700;
-            color: var(--slate-600);
-            margin-right: 6px;
-            flex-shrink: 0;
-            white-space: nowrap;
-        }
-
-        .input-group-custom input {
-            border: none !important;
-            font-size: 11px !important;
-            padding: 1px 0 !important;
-            background: transparent !important;
-            outline: none !important;
-            box-shadow: none !important;
-            min-width: 0;
-            width: 100%;
-        }
-
-
-
         .lorry-receipts-index .app-index-list-card {
             margin-bottom: 0.75rem !important;
         }
@@ -480,7 +388,7 @@
         }
 
         .lorry-receipts-index .app-index-dt-toolbar {
-            padding: 0.4rem 0.75rem !important;
+            padding: 0.65rem 0.85rem !important;
         }
 
         .lorry-receipts-index .app-index-partload-pagination {
@@ -520,24 +428,84 @@
                 </div>
             </div>
 
-            <div class="app-index-dt-toolbar lr-date-filter-bar d-flex flex-wrap justify-content-end align-items-center gap-2">
-                <div class="lr-date-filter-inputs d-flex align-items-center gap-2">
-                    <div class="input-group-custom">
-                        <span>From</span>
-                        <input type="date" id="fromDate">
+            <div class="app-index-dt-toolbar">
+                <div class="app-index-filters" data-app-index-filters>
+                    <div class="app-index-filters__top">
+                        <div class="app-index-filters__intro">
+                            <h6 class="app-index-filters__title">Search &amp; Filters</h6>
+                        </div>
+                        <div class="app-index-filters__top-actions">
+                            <button type="button"
+                                class="app-index-filters__toggle d-md-none"
+                                data-app-index-filters-toggle
+                                aria-expanded="false"
+                                aria-controls="lrIndexFiltersBody">
+                                <i class="bi bi-sliders"></i>
+                                <span>Filters</span>
+                                <i class="bi bi-chevron-down app-index-filters__toggle-chevron"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="input-group-custom">
-                        <span>To</span>
-                        <input type="date" id="toDate">
+                    <div class="app-index-filters__body" id="lrIndexFiltersBody">
+                        <div class="app-index-filters__controls">
+                            <div class="app-index-filters__field app-index-filters__field--lr">
+                                <label class="app-index-filters__label" for="filterLrNumber">Bilty / LR</label>
+                                <input type="text" id="filterLrNumber" class="form-control form-control-sm" placeholder="LR number" value="{{ request('lr_number') }}">
+                            </div>
+                            <div class="app-index-filters__field app-index-filters__field--party">
+                                <label class="app-index-filters__label" for="filterCustomerId">Customer</label>
+                                <select id="filterCustomerId" class="form-select form-select-sm select2-filter">
+                                    <option value="">All Customers</option>
+                                    @if(isset($selectedCustomer) && $selectedCustomer)
+                                        <option value="{{ $selectedCustomer->id }}" selected>{{ $selectedCustomer->name }}</option>
+                                    @endif
+                                </select>
+                            </div>
+                            <div class="app-index-filters__field app-index-filters__field--party">
+                                <label class="app-index-filters__label" for="filterTransporterId">Transporter</label>
+                                <select id="filterTransporterId" class="form-select form-select-sm select2-filter">
+                                    <option value="">All Transporters</option>
+                                    @if(isset($selectedTransporter) && $selectedTransporter)
+                                        <option value="{{ $selectedTransporter->id }}" selected>{{ $selectedTransporter->displayNameWithShortName() }}</option>
+                                    @endif
+                                </select>
+                            </div>
+                            <div class="app-index-filters__field app-index-filters__field--truck">
+                                <label class="app-index-filters__label" for="filterTruckId">Truck</label>
+                                <select id="filterTruckId" class="form-select form-select-sm select2-filter">
+                                    <option value="">All Trucks</option>
+                                    @if(isset($selectedTruck) && $selectedTruck)
+                                        <option value="{{ $selectedTruck->id }}" selected>{{ $selectedTruck->truck_number }}</option>
+                                    @endif
+                                </select>
+                            </div>
+                            <div class="app-index-filters__field app-index-filters__field--truck">
+                                <label class="app-index-filters__label" for="filterDeliveryStatus">Status</label>
+                                <select id="filterDeliveryStatus" class="form-select form-select-sm">
+                                    <option value="">All Statuses</option>
+                                    @foreach (\App\Http\Controllers\LorryReceiptController::LISTING_STATUSES as $listingStatus)
+                                        <option value="{{ $listingStatus }}" @selected(request('delivery_status') === $listingStatus)>{{ $listingStatus }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="app-index-filters__field app-index-filters__field--date">
+                                <label class="app-index-filters__label" for="fromDate">From</label>
+                                <input type="date" class="form-control form-control-sm" id="fromDate">
+                            </div>
+                            <div class="app-index-filters__field app-index-filters__field--date">
+                                <label class="app-index-filters__label" for="toDate">To</label>
+                                <input type="date" class="form-control form-control-sm" id="toDate">
+                            </div>
+                            <div class="app-index-filters__actions">
+                                <button type="button" class="app-index-filters__btn app-index-filters__btn--apply" id="filterBtn" data-tooltip="Filter" aria-label="Filter">
+                                    <i class="bi bi-funnel-fill"></i>
+                                </button>
+                                <button type="button" class="app-index-filters__btn app-index-filters__btn--reset" id="resetDateFilter" data-tooltip="Reset" aria-label="Reset">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="lr-date-filter-actions d-flex gap-2">
-                    <button type="button" class="filter-action-btn" id="filterBtn" style="background: var(--brand-primary); color: white;" title="Filter" data-bs-toggle="tooltip">
-                        <i class="bi bi-funnel-fill"></i>
-                    </button>
-                    <button type="button" class="filter-action-btn" id="resetDateFilter" style="background: var(--brand-text-primary); color: white;" title="Reset" data-bs-toggle="tooltip">
-                        <i class="bi bi-arrow-counterclockwise"></i>
-                    </button>
                 </div>
             </div>
 
@@ -658,6 +626,96 @@
             </div>
         </div>
     </div>
+        <!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteLrModal" tabindex="-1"
+    aria-labelledby="deleteLrModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteLrModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                    Confirm Delete
+                </h5>
+
+                <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <p>Are you sure you want to delete this record?</p>
+
+              <div class="delete-record-details">
+           <div>
+             <strong>LR Number&nbsp;:&nbsp;</strong>
+             <span id="deleteLrNumber">-</span>
+         </div>
+
+         <div>
+            <strong>Truck&nbsp;:&nbsp;</strong>
+            <span id="deleteTruckNumber">-</span>
+        </div>
+
+        <div>
+           <strong>Customer&nbsp;:&nbsp;</strong>
+           <span id="deleteCustomer">-</span>
+        </div>
+
+        <div>
+           <strong>Consignor&nbsp;:&nbsp;</strong>
+           <span id="deleteConsignor">-</span>
+       </div>
+
+        <div>
+            <strong>Consignee&nbsp;:&nbsp;</strong>
+            <span id="deleteConsignee">-</span>
+        </div>
+     </div>
+
+                <div class="mt-3">
+                    <label for="deleteRemark" class="form-label">
+                        <strong>Remark <span class="text-danger">*</span></strong>
+                    </label>
+
+                    <textarea
+                        class="form-control"
+                        id="deleteRemark"
+                        rows="4"
+                        placeholder="Enter reason for deletion"></textarea>
+
+                    <div id="deleteLrError"
+                        class="text-danger mt-1 d-none">
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                    class="btn btn-outline-secondary"
+                    data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-1"></i>
+                    Cancel
+                </button>
+
+                <button type="button"
+                    class="btn btn-danger"
+                    id="confirmDeleteLrBtn">
+                    <i class="bi bi-trash me-1"></i>
+                    Confirm Delete
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+ </div>
 
     <style>
         /* Modal styles */
@@ -871,10 +929,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* Tooltip enhancement */
-        [data-bs-toggle="tooltip"] {
-            position: relative;
-        }
+
 
         /* Memo badge */
         .memo-badge {
@@ -908,6 +963,7 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
         <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
         <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
         <script>
             $(document).ready(function() {
@@ -918,6 +974,85 @@
 
                     return `${year}-${month}-${day}`;
                 };
+
+                // Initialize Select2 for filters
+                $('#filterCustomerId').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    placeholder: 'All Customers',
+                    allowClear: true,
+                    minimumInputLength: 0,
+                    ajax: {
+                        url: '{{ route('api.consignees.search') }}',
+                        dataType: 'json',
+                        delay: 250,
+                        data: function(params) {
+                            return {
+                                q: params.term || '',
+                                page: params.page || 1
+                            };
+                        },
+                        processResults: function(data, params) {
+                            params.page = params.page || 1;
+                            return {
+                                results: data.results,
+                                pagination: data.pagination
+                            };
+                        }
+                    }
+                });
+
+                $('#filterTransporterId').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    placeholder: 'All Transporters',
+                    allowClear: true,
+                    minimumInputLength: 0,
+                    ajax: {
+                        url: '/api/transporters/search',
+                        dataType: 'json',
+                        delay: 250,
+                        data: function(params) {
+                            return {
+                                q: params.term || '',
+                                page: params.page || 1
+                            };
+                        },
+                        processResults: function(data, params) {
+                            params.page = params.page || 1;
+                            return {
+                                results: data.results,
+                                pagination: data.pagination
+                            };
+                        }
+                    }
+                });
+
+                $('#filterTruckId').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    placeholder: 'All Trucks',
+                    allowClear: true,
+                    minimumInputLength: 0,
+                    ajax: {
+                        url: '/api/trucks/search',
+                        dataType: 'json',
+                        delay: 250,
+                        data: function(params) {
+                            return {
+                                q: params.term || '',
+                                page: params.page || 1
+                            };
+                        },
+                        processResults: function(data, params) {
+                            params.page = params.page || 1;
+                            return {
+                                results: data.results,
+                                pagination: data.pagination
+                            };
+                        }
+                    }
+                });
 
                 function loadListingQueryFromUrl() {
                     const params = new URLSearchParams(window.location.search);
@@ -930,20 +1065,43 @@
                         $('#toDate').val(params.get('gr_date_to'));
                     }
 
-                    return params.has('gr_date_from') || params.has('gr_date_to');
+                    if (params.has('lr_number')) {
+                        $('#filterLrNumber').val(params.get('lr_number'));
+                    }
+
+                    return params.has('gr_date_from') || params.has('gr_date_to') || params.has('lr_number') || params.has('customer_id') || params.has('transporter_id') || params.has('truck_id') || params.has('delivery_status');
                 }
 
                 function syncListingQueryToUrl() {
                     const params = new URLSearchParams();
                     const fromDate = $('#fromDate').val();
                     const toDate = $('#toDate').val();
+                    const lrNumber = $('#filterLrNumber').val();
+                    const customerId = $('#filterCustomerId').val();
+                    const transporterId = $('#filterTransporterId').val();
+                    const truckId = $('#filterTruckId').val();
+                    const deliveryStatus = $('#filterDeliveryStatus').val();
 
                     if (fromDate) {
                         params.set('gr_date_from', fromDate);
                     }
-
                     if (toDate) {
                         params.set('gr_date_to', toDate);
+                    }
+                    if (lrNumber) {
+                        params.set('lr_number', lrNumber);
+                    }
+                    if (customerId) {
+                        params.set('customer_id', customerId);
+                    }
+                    if (transporterId) {
+                        params.set('transporter_id', transporterId);
+                    }
+                    if (truckId) {
+                        params.set('truck_id', truckId);
+                    }
+                    if (deliveryStatus) {
+                        params.set('delivery_status', deliveryStatus);
                     }
 
                     const query = params.toString();
@@ -992,6 +1150,11 @@
                         data: function(d) {
                             d.gr_date_from = $('#fromDate').val();
                             d.gr_date_to = $('#toDate').val();
+                            d.lr_number = $('#filterLrNumber').val();
+                            d.customer_id = $('#filterCustomerId').val();
+                            d.transporter_id = $('#filterTransporterId').val();
+                            d.truck_id = $('#filterTruckId').val();
+                            d.delivery_status = $('#filterDeliveryStatus').val();
                         },
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
@@ -1069,25 +1232,98 @@
                     ],
                     order: [[0, 'desc']],
                     pageLength: 25,
+                    lengthChange: false,
+                    searching: false,
                     responsive: false,
                     scrollX: false,
                     autoWidth: false,
-                    dom: '<"app-index-dt-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2"<"d-flex flex-wrap align-items-center gap-2"l><"d-flex flex-wrap align-items-center gap-2"f>>' +
-                        't' +
+                    dom: 't' +
                         '<"app-index-partload-pagination d-flex flex-wrap align-items-center justify-content-between gap-2"<"app-index-partload-pagination__summary"i><"app-index-partload-pagination__nav"p>>',
                     drawCallback: function(settings) {
                         $('[data-bs-toggle="tooltip"]').tooltip();
                     }
                 });
 
+                let deleteLrForm = null;
+
+     $(document).on('click', '.delete-lr-btn', function(e) {
+      e.preventDefault();
+
+      deleteLrForm = $(this).closest('form');
+
+       // Get record details from delete button
+      
+        const lrNumber = $(this).data('lr-number') || '-';
+         const truckNumber = $(this).data('truck-number') || '-';
+         const customer = $(this).data('customer') || '-';
+         const consignor = $(this).data('consignor') || '-';
+         const consignee = $(this).data('consignee') || '-';
+
+        // Show record details in confirmation modal
+        $('#deleteLrNumber').text(lrNumber);
+        $('#deleteTruckNumber').text(truckNumber);
+        $('#deleteCustomer').text(customer);
+        $('#deleteConsignor').text(consignor);
+        $('#deleteConsignee').text(consignee);
+
+        // Reset remark and error
+        $('#deleteRemark').val('');
+        $('#deleteLrError').addClass('d-none').text('');
+
+        // Open confirmation modal
+         $('#deleteLrModal').modal('show');
+         });
+
+          $('#confirmDeleteLrBtn').on('click', function() {
+
+           const remark = $('#deleteRemark').val().trim();
+
+             // Remark is required
+             if (!remark) {
+             $('#deleteLrError')
+            .removeClass('d-none')
+            .text('Please enter a remark before deleting.');
+             return;
+           }
+
+           // Add remark to delete form
+            deleteLrForm.append(
+            $('<input>', {
+            type: 'hidden',
+            name: 'delete_remark',
+            value: remark
+            })
+             );
+
+                // Submit original delete form
+                  deleteLrForm.submit();
+                });
+
                 $('#filterBtn').on('click', function() {
                     syncListingQueryToUrl();
-                    $('#lorryReceiptsTable').DataTable().ajax.reload();
+                    table.ajax.reload();
+                });
+
+                $('#filterLrNumber').on('keypress', function(e) {
+                    if (e.which === 13) {
+                        e.preventDefault();
+                        syncListingQueryToUrl();
+                        table.ajax.reload();
+                    }
+                });
+
+                $('#filterCustomerId, #filterTransporterId, #filterTruckId, #filterDeliveryStatus').on('change', function() {
+                    syncListingQueryToUrl();
+                    table.ajax.reload();
                 });
 
                 $('#resetDateFilter').on('click', function() {
-                    $('#fromDate').val('');
-                    $('#toDate').val('');
+                    $('#filterLrNumber').val('');
+                    $('#filterCustomerId').val('').trigger('change.select2');
+                    $('#filterTransporterId').val('').trigger('change.select2');
+                    $('#filterTruckId').val('').trigger('change.select2');
+                    $('#filterDeliveryStatus').val('');
+                    setDefaultDates();
                     syncListingQueryToUrl();
                     table.ajax.reload();
                 });

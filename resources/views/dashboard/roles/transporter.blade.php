@@ -134,16 +134,16 @@
                         <tbody>
                             @foreach($expiredEwayBills->take(10) as $ewayBill)
                                 <tr>
-                                    <td class="ps-4 text-nowrap"><span class="fw-bold text-dark">#{{ $ewayBill->lr->lr_number ?? 'N/A' }}</span></td>
+                                    <td class="ps-4 text-nowrap"><span class="fw-bold text-dark">#{{ $ewayBill->freightBooking?->lr?->lr_number ?? 'N/A' }}</span></td>
                                     <td>
                                         <div class="d-flex flex-column">
-                                            <span class="fw-medium text-nowrap">{{ $ewayBill->lr->truck->truck_number ?? 'N/A' }}</span>
-                                            <small class="text-muted text-truncate" style="max-width: 160px;">{{ $ewayBill->lr->destination_city ?? '-' }}</small>
+                                            <span class="fw-medium text-nowrap">{{ $ewayBill->freightBooking?->lr?->truck?->truck_number ?? 'N/A' }}</span>
+                                            <small class="text-muted text-truncate" style="max-width: 160px;">{{ $ewayBill->freightBooking?->lr?->destination_city ?? '-' }}</small>
                                         </div>
                                     </td>
                                     <td class="text-nowrap"><span class="badge bg-danger text-white px-3 py-2 rounded-pill text-nowrap"> {{ formatDate(optional($ewayBill)->eway_bill_expiry) }}</span></td>
                                     <td class="text-end pe-4 text-nowrap">
-                                        <a href="{{ route('transporter.freight_bookings.show', $ewayBill->id) }}" class="btn btn-sm btn-view" title="View"><i class="fas fa-eye"></i></a>
+                                        <a href="{{ route('transporter.freight_bookings.show', $ewayBill->freight_booking_id) }}" class="btn btn-sm btn-view" title="View"><i class="fas fa-eye"></i></a>
                                     </td>
                                 </tr>
                             @endforeach
