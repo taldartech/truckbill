@@ -1582,17 +1582,17 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
                 <!-- Modal Header -->
-                <div class="modal-header bg-success text-white px-4 py-3 border-0">
+                <div class="modal-header bg-success px-4 py-3 border-0">
                     <div class="d-flex align-items-center gap-2">
                         <div class="rounded-circle d-flex align-items-center justify-content-center bg-white text-success flex-shrink-0" style="width: 38px; height: 38px;">
                             <i class="fas fa-headset fa-lg"></i>
                         </div>
                         <div>
-                            <h5 class="modal-title fw-bold mb-0 text-white" id="helpSupportModalLabel">Help &amp; Support</h5>
-                            <span class="small text-white-50">TruckBill Technical &amp; Operational Assistance</span>
+                            <h5 class="modal-title fw-bold mb-0" id="helpSupportModalLabel">Help &amp; Support</h5>
+                            <span class="small text-success d-block fw-semibold" style="color: #4BB563 !important;">TruckBill Technical &amp; Operational Assistance</span>
                         </div>
                     </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
                 <!-- Modal Body -->
