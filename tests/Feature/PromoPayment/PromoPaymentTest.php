@@ -17,6 +17,7 @@ class PromoPaymentTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->markTestSkipped('Legacy promo codes and payment ledgers dropped in migration 2026_06_19_000006.');
         $this->seedRoles();
     }
 

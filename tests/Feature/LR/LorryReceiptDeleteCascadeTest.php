@@ -159,7 +159,7 @@ class LorryReceiptDeleteCascadeTest extends TestCase
         $payment->update(['linked_voucher_id' => $linked->id]);
 
         $this->actingAs($admin)
-            ->delete("/lorry_receipts/{$lr->id}")
+            ->delete("/lorry_receipts/{$lr->id}", ['delete_remark' => 'Entered by mistake'])
             ->assertRedirect(route('lorry_receipts.index'));
 
         $this->assertSoftDeleted('lorry_receipts', ['id' => $lr->id]);
@@ -184,7 +184,7 @@ class LorryReceiptDeleteCascadeTest extends TestCase
 
         $this->actingAs($admin)
             ->from('/lorry_receipts')
-            ->delete("/lorry_receipts/{$lr->id}")
+            ->delete("/lorry_receipts/{$lr->id}", ['delete_remark' => 'Entered by mistake'])
             ->assertRedirect('/lorry_receipts')
             ->assertSessionHas('error');
 
@@ -215,7 +215,7 @@ class LorryReceiptDeleteCascadeTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->delete("/lorry_receipts/{$lr1->id}")
+            ->delete("/lorry_receipts/{$lr1->id}", ['delete_remark' => 'Entered by mistake'])
             ->assertRedirect(route('lorry_receipts.index'));
 
         $this->assertSoftDeleted('lorry_receipts', ['id' => $lr1->id]);
@@ -244,7 +244,7 @@ class LorryReceiptDeleteCascadeTest extends TestCase
 
         $this->actingAs($admin)
             ->from('/lorry_receipts')
-            ->delete("/lorry_receipts/{$lr1->id}")
+            ->delete("/lorry_receipts/{$lr1->id}", ['delete_remark' => 'Entered by mistake'])
             ->assertRedirect('/lorry_receipts')
             ->assertSessionHas('error');
 

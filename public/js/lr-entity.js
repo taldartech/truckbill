@@ -1230,6 +1230,12 @@
 
     const enforceAgencyForOwnerlessTruck = (truckId) => {
       rememberTruckMeta(truckId);
+
+      if (mode === 'edit') {
+        setOwnerOptionAvailability(true);
+        return true;
+      }
+
       const meta = getTruckMeta(truckId);
       const transporterId = meta?.transporterId ?? meta?.transporter_id ?? null;
       const ownerAvailable = transporterId !== null && transporterId !== undefined && transporterId !== '';

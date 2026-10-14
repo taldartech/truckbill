@@ -180,7 +180,7 @@
             
                 function togglePumpDropdown() {
                     const selectedText = paymentModeIdSelect.options[paymentModeIdSelect.selectedIndex]?.text.toLowerCase() || '';
-                    if (selectedText === 'fuel') {
+                    if (selectedText.includes('fuel') || selectedText.includes('pump')) {
                         pumpDropdownContainer.style.display = 'block';
                     } else {
                         pumpDropdownContainer.style.display = 'none';
@@ -202,10 +202,11 @@
                 paymentModeIdSelect.addEventListener('change', function() {
                     const selectedText = this.options[this.selectedIndex]?.text.toLowerCase() || '';
             
+                    const isPendingMode = selectedText.includes('bank') || selectedText.includes('online') || selectedText.includes('fuel') || selectedText.includes('pump');
                     if (isAdmin) {
                         if (selectedText === 'cash' || selectedText === 'adjust in advance') {
                             paymentStatusSelect.value = 'in-progress';
-                        } else if (['bank', 'online', 'fuel'].includes(selectedText)) {
+                        } else if (isPendingMode) {
                             paymentStatusSelect.value = 'pending';
                             paymentStatusSelect.disabled = false;
                         } else {
@@ -215,7 +216,7 @@
                         // Operator (non-admin)
                         if (selectedText === 'cash' || selectedText === 'adjust in advance') {
                             paymentStatusSelect.value = 'in-progress';
-                        } else if (['bank', 'online', 'fuel'].includes(selectedText)) {
+                        } else if (isPendingMode) {
                             paymentStatusSelect.value = 'pending';
                         }
                     }

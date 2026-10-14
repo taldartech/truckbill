@@ -4,22 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Models\AdvancePayment;
 use App\Models\Company;
-use App\Models\CompanySubscription;
 use App\Models\FreightBooking;
 use App\Models\FreightBooking as Booking;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
 use App\Models\LorryReceipt;
 use App\Models\Transporter;
-use App\Models\Truck;
-use App\Models\User;
 use App\Models\VoucherPayment;
-use App\Models\UpcomingSubscription;
+use App\Services\Dashboard\BusinessInsightsService;
+use App\Services\Dashboard\DashboardPeriod;
+use App\Services\Dashboard\PlatformInsightsService;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use App\Models\EwayBill;
+use Illuminate\Contracts\View\View;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        private readonly BusinessInsightsService $businessInsights,
+        private readonly PlatformInsightsService $platformInsights,
+    ) {}
+
     public function index()
     {
         $user = auth()->user();
@@ -28,10 +33,6 @@ class DashboardController extends Controller
             return $this->adminDashboard();
         }
         $userRole = $user->userRole->name;
-
-        $now = Carbon::now();
-        $startOfMonth = $now->copy()->startOfMonth();
-        $endOfMonth = $now->copy()->endOfMonth();
 
         // Role-based data fetching
         switch ($userRole) {
@@ -61,585 +62,80 @@ class DashboardController extends Controller
         }
     }
 
-    private function masterAdminDashboard()
+    private function masterAdminDashboard(): View
     {
-        $now = Carbon::now();
-        $startOfMonth = $now->copy()->startOfMonth();
-        $endOfMonth = $now->copy()->endOfMonth();
+        $platform = $this->platformInsights->build();
 
-        $pendingRenewalCompanyIds = UpcomingSubscription::query()
-            ->where('status', 'pending')
-            ->pluck('company_id');
-
-        // System-wide statistics
-        $totalRevenue = $this->sumInvoiceTotalRevenue(null, $startOfMonth, $endOfMonth);
-
-        $systemStats = [
-            'monthly_revenue' => $totalRevenue,
-            'total_companies' => Company::count(),
-            'active_companies' => Company::where('is_blocked', 0)->count(),
-            'expired_plans' => CompanySubscription::where('ends_on', '<', now()->toDateString())
-                ->whereNotIn('company_id', $pendingRenewalCompanyIds)
-                ->count(),
-            'upcoming_renewals' => CompanySubscription::whereBetween('ends_on', [now()->toDateString(), now()->addDays(30)->toDateString()])
-                ->whereNotIn('company_id', $pendingRenewalCompanyIds)
-                ->count(),
-            'total_users' => User::count(),
-        ];
-
-        // Companies with expiring/expired plans
-        $expiringCompanies = Company::with('subscription')
-            ->whereDoesntHave('pendingUpcomingRenewals')
-            ->whereHas('subscription', fn ($q) => $q->where('ends_on', '<=', now()->addDays(30)->toDateString()))
-            ->get()
-            ->sortBy(fn ($c) => $c->subscription?->ends_on)
-            ->take(10)
-            ->values();
-
-        // Recent companies
-        $recentCompanies = Company::latest()->take(5)->get();
-
-        // Revenue by company (top 10) — sum of invoice totals
-        $topCompaniesByRevenue = Company::select('companies.*')
-            ->selectSub(
-                Invoice::selectRaw('COALESCE(SUM(total_amount), 0)')
-                    ->whereColumn('invoices.company_id', 'companies.id')
-                    ->whereBetween('invoices.created_at', [$startOfMonth, $endOfMonth]),
-                'monthly_revenue'
-            )
-            ->orderByDesc('monthly_revenue')
-            ->take(10)
-            ->get();
-
-        // Monthly growth data
-        $monthlyGrowth = Company::select(
-            DB::raw('DATE_FORMAT(created_at, "%b %Y") as month'),
-            DB::raw('COUNT(*) as count')
-        )
-            ->where('created_at', '>=', now()->subMonths(5)->startOfMonth())
-            ->groupBy('month')
-            ->orderBy('created_at')
-            ->pluck('count', 'month');
-
-        return view('dashboard', compact(
-            'systemStats',
-            'expiringCompanies',
-            'recentCompanies',
-            'topCompaniesByRevenue',
-            'monthlyGrowth'
-        ));
+        return view('dashboard', [
+            'dashboardView' => 'master_admin',
+            'platform' => $platform,
+            'chartPayload' => ['platformTrend' => $platform['trend']],
+        ]);
     }
 
-    private function superAdminDashboard()
+    private function superAdminDashboard(): View
     {
-        $now = Carbon::now();
-        $startOfMonth = $now->copy()->startOfMonth();
-        $endOfMonth = $now->copy()->endOfMonth();
+        $period = DashboardPeriod::fromKey(request('period'));
 
-        // Get companies owned by super admin
-        $companyIds = Company::where('user_id', auth()->user()->id)->pluck('id');
-
-        $totalRevenue = $this->sumInvoiceTotalRevenue($companyIds->all(), $startOfMonth, $endOfMonth);
-
-        // Calculate outstanding amount across all companies
-        $allInvoicesForStats = Invoice::whereIn('company_id', $companyIds)
-            ->with('payments')
-            ->get();
-
-        $outstandingAmount = 0;
-        foreach ($allInvoicesForStats as $invoice) {
-            $paidAmount = $invoice->paid_amount;
-            $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
-            $remainingAmount = $amountToCollect - $paidAmount;
-            if ($paidAmount < $amountToCollect) {
-                $outstandingAmount += $remainingAmount;
-            }
-        }
-
-        $pendingRenewalCompanyIds = UpcomingSubscription::query()
-            ->where('status', 'pending')
-            ->whereIn('company_id', $companyIds)
-            ->pluck('company_id');
-
-        $adminStats = [
-            'monthly_revenue' => $totalRevenue,
-            'total_companies' => Company::where('user_id', auth()->user()->id)->count(),
-            'active_companies' => Company::where('user_id', auth()->user()->id)
-                ->where('is_blocked', 0)
-                ->count(),
-            'expired_plans' => CompanySubscription::whereIn('company_id', $companyIds)
-                ->where('ends_on', '<', now()->toDateString())
-                ->whereNotIn('company_id', $pendingRenewalCompanyIds)
-                ->count(),
-            'upcoming_renewals' => CompanySubscription::whereIn('company_id', $companyIds)
-                ->whereBetween('ends_on', [now()->toDateString(), now()->addDays(30)->toDateString()])
-                ->whereNotIn('company_id', $pendingRenewalCompanyIds)
-                ->count(),
-            'total_users' => User::whereIn('company_id', $companyIds)->count(),
-            'outstanding_amount' => $outstandingAmount,
-        ];
-
-        // Companies with expiring/expired plans (today or past)
-        $expiringCompanies = Company::where('user_id', auth()->user()->id)
+        $companies = Company::query()
+            ->where('user_id', auth()->id())
             ->with('subscription')
-            ->whereDoesntHave('pendingUpcomingRenewals')
-            ->whereHas('subscription', fn ($q) => $q->where('ends_on', '<=', now()->toDateString()))
-            ->get()
-            ->sortBy(fn ($c) => $c->subscription?->ends_on);
-
-        $upcomingPlanExpiry = Company::where('user_id', auth()->user()->id)
-            ->with('subscription')
-            ->whereDoesntHave('pendingUpcomingRenewals')
-            ->whereHas('subscription', fn ($q) => $q
-                ->where('ends_on', '>', now()->toDateString())
-                ->where('ends_on', '<=', now()->addDays(30)->toDateString()))
-            ->get()
-            ->sortBy(fn ($c) => $c->subscription?->ends_on);
-
-        // Revenue by company — sum of invoice totals
-        $revenueByCompany = Company::where('user_id', auth()->user()->id)
-            ->select('companies.*')
-            ->selectSub(
-                Invoice::selectRaw('COALESCE(SUM(total_amount), 0)')
-                    ->whereColumn('invoices.company_id', 'companies.id')
-                    ->whereBetween('invoices.created_at', [$startOfMonth, $endOfMonth]),
-                'monthly_revenue'
-            )
-            ->orderByDesc('monthly_revenue')
-            ->get();
-
-        $ownedCompanies = Company::query()
-            ->where('user_id', auth()->user()->id)
+            ->withCount('pendingUpcomingRenewals')
             ->orderBy('name')
-            ->get(['id', 'name', 'is_blocked']);
+            ->get();
 
-        return view('dashboard', compact(
-            'adminStats',
-            'expiringCompanies',
-            'upcomingPlanExpiry',
-            'revenueByCompany',
-            'ownedCompanies',
-        ));
+        $insights = $this->businessInsights->build($companies->pluck('id')->all(), $period);
+
+        return view('dashboard', [
+            'dashboardView' => 'super_admin',
+            'insights' => $insights,
+            'actions' => $this->businessInsights->actionItems($insights, BusinessInsightsService::AUDIENCE_PORTFOLIO),
+            'scorecards' => $this->businessInsights->companyScorecards($companies, $insights),
+            'ownedCompanies' => $companies,
+            'dashboardPeriod' => $period,
+            'chartPayload' => $this->businessChartPayload($insights),
+        ]);
     }
 
-    private function adminDashboard()
+    private function adminDashboard(): View
     {
-        $period = request('period', 'month');
-        if (! in_array($period, ['7d', '30d', 'month'], true)) {
-            $period = 'month';
-        }
-
-        $now = Carbon::now();
-        [$rangeStart, $rangeEnd, $periodLabel] = match ($period) {
-            '7d' => [$now->copy()->subDays(6)->startOfDay(), $now->copy()->endOfDay(), 'Last 7 days'],
-            '30d' => [$now->copy()->subDays(29)->startOfDay(), $now->copy()->endOfDay(), 'Last 30 days'],
-            default => [$now->copy()->startOfMonth(), $now->copy()->endOfMonth(), 'This month'],
-        };
-
-        $companyId = auth()->user()->company_id;
-
-        $companyInvoices = Invoice::where('company_id', $companyId)
-            ->with(['payments', 'consignee'])
-            ->get();
-
-        $outstandingAmount = 0;
-        $invoicePaymentStatuses = [
-            'pending' => 0,
-            'partial' => 0,
-            'paid' => 0,
-        ];
-
-        foreach ($companyInvoices as $invoice) {
-            $paidAmount = $invoice->paid_amount;
-            $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
-            $remainingAmount = $amountToCollect - $paidAmount;
-
-            if ($paidAmount < $amountToCollect) {
-                $outstandingAmount += $remainingAmount;
-            }
-
-            if ($paidAmount >= $amountToCollect) {
-                $invoicePaymentStatuses['paid']++;
-            } elseif ($paidAmount > 0) {
-                $invoicePaymentStatuses['partial']++;
-            } else {
-                $invoicePaymentStatuses['pending']++;
-            }
-        }
-
-        $pendingInvoices = $companyInvoices
-            ->filter(function ($invoice) {
-                $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
-
-                return $invoice->paid_amount < $amountToCollect;
-            })
-            ->sortByDesc('generated_date')
-            ->take(5)
-            ->values();
-
-        $today = now()->startOfDay();
-
-        $monthlyStats = [
-            'total_bookings' => Booking::whereBetween('freight_bookings.created_at', [$rangeStart, $rangeEnd])
-                ->where('freight_bookings.company_id', $companyId)
-                ->count(),
-            'active_trips' => Booking::where('is_delivered', false)
-                ->where('is_cancelled', false)
-                ->where('company_id', $companyId)
-                ->count(),
-            'pending_lrs' => LorryReceipt::where('delivery_status', 'Pending')
-                ->where('company_id', $companyId)
-                ->whereNull('deleted_at')
-                ->count(),
-            'delivered_today' => LorryReceipt::where('delivery_status', 'Delivered')
-                ->where('company_id', $companyId)
-                ->whereDate('updated_at', $today)
-                ->whereNull('deleted_at')
-                ->count(),
-            'lrs_pending_invoice' => LorryReceipt::where('invoice_generated', 0)
-                ->where('company_id', $companyId)
-                ->whereNull('deleted_at')
-                ->count(),
-            'eway_bills_expiring_today' => FreightBooking::where('company_id', $companyId)
-                ->where('is_delivered', 0)
-                ->where('is_cancelled', 0)
-                ->whereDate('eway_bill_expiry', $today)
-                ->count(),
-            'expired_eway_bills' => FreightBooking::where('company_id', $companyId)
-                ->where('is_delivered', 0)
-                ->where('is_cancelled', 0)
-                ->where('eway_bill_expiry', '<', $today)
-                ->count(),
-            'outstanding_amount' => $outstandingAmount,
-            'period_revenue' => $this->sumInvoiceTotalRevenue([$companyId], $rangeStart, $rangeEnd),
-        ];
-
-        $bookingStatuses = [
-            'in_progress' => Booking::where('is_delivered', false)
-                ->where('is_cancelled', false)
-                ->where('company_id', $companyId)
-                ->count(),
-            'delivered' => Booking::where('is_delivered', true)
-                ->where('company_id', $companyId)
-                ->whereBetween('updated_at', [$rangeStart, $rangeEnd])
-                ->count(),
-            'cancelled' => Booking::where('is_cancelled', true)
-                ->where('company_id', $companyId)
-                ->whereBetween('updated_at', [$rangeStart, $rangeEnd])
-                ->count(),
-            'created' => Booking::where('company_id', $companyId)
-                ->whereBetween('created_at', [$rangeStart, $rangeEnd])
-                ->count(),
-        ];
-
-        $lrStatusCounts = [
-            'Pending' => LorryReceipt::where('company_id', $companyId)->whereNull('deleted_at')->where('delivery_status', 'Pending')->count(),
-            'In-Progress' => LorryReceipt::where('company_id', $companyId)->whereNull('deleted_at')->where('delivery_status', 'In-Progress')->count(),
-            'Delivered' => LorryReceipt::where('company_id', $companyId)->whereNull('deleted_at')->where('delivery_status', 'Delivered')->count(),
-            'Cancelled' => LorryReceipt::where('company_id', $companyId)->whereNull('deleted_at')->where('delivery_status', 'Cancelled')->count(),
-        ];
-
-        $monthlyTrendLabels = [];
-        $monthlyTrendBookings = [];
-        $monthlyTrendRevenue = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $monthStart = $now->copy()->subMonths($i)->startOfMonth();
-            $monthEnd = $now->copy()->subMonths($i)->endOfMonth();
-            $monthlyTrendLabels[] = $monthStart->format('M Y');
-            $monthlyTrendBookings[] = Booking::where('company_id', $companyId)
-                ->whereBetween('created_at', [$monthStart, $monthEnd])
-                ->count();
-            $monthlyTrendRevenue[] = round($this->sumInvoiceTotalRevenue([$companyId], $monthStart, $monthEnd), 2);
-        }
-
-        $chartPayload = [
-            'periodLabel' => $periodLabel,
-            'bookingStatuses' => $bookingStatuses,
-            'lrStatusCounts' => $lrStatusCounts,
-            'invoicePaymentStatuses' => $invoicePaymentStatuses,
-            'monthlyTrend' => [
-                'labels' => $monthlyTrendLabels,
-                'bookings' => $monthlyTrendBookings,
-                'revenue' => $monthlyTrendRevenue,
-            ],
-        ];
-
-        $expiredEwayBills = FreightBooking::with('lr.truck.driver')
-            ->where('company_id', $companyId)
-            ->where('is_delivered', 0)
-            ->where('is_cancelled', 0)
-            ->where('eway_bill_expiry', '<=', now()->addDays(2)->endOfDay())
-            ->orderBy('eway_bill_expiry', 'asc')
-            ->get();
-
-        $dashboardPeriod = $period;
-        $showPeriodFilter = true;
-
-        return view('dashboard', compact(
-            'monthlyStats',
-            'expiredEwayBills',
-            'pendingInvoices',
-            'invoicePaymentStatuses',
-            'bookingStatuses',
-            'chartPayload',
-            'dashboardPeriod',
-            'showPeriodFilter',
-            'periodLabel'
-        ));
+        return $this->companyDashboard('admin', BusinessInsightsService::AUDIENCE_OWNER);
     }
 
-    private function moderatorDashboard()
+    private function moderatorDashboard(): View
     {
-        $now = Carbon::now();
-        $startOfMonth = $now->copy()->startOfMonth();
-        $endOfMonth = $now->copy()->endOfMonth();
-        $companyId = auth()->user()->company_id;
-
-        // Calculate outstanding amount for invoices
-        $allInvoicesForStats = Invoice::where('company_id', $companyId)
-            ->with('payments')
-            ->get();
-
-        $outstandingAmount = 0;
-        foreach ($allInvoicesForStats as $invoice) {
-            $paidAmount = $invoice->paid_amount;
-            $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
-            $remainingAmount = $amountToCollect - $paidAmount;
-            if ($paidAmount < $amountToCollect) {
-                $outstandingAmount += $remainingAmount;
-            }
-        }
-
-        // Calculate Moderator KPIs
-        $today = now()->startOfDay();
-
-        $operationalStats = [
-            'total_bookings' => Booking::whereBetween('freight_bookings.created_at', [$startOfMonth, $endOfMonth])
-                ->where('freight_bookings.company_id', $companyId)
-                ->count(),
-            'active_trips' => Booking::where('is_delivered', false)
-                ->where('is_cancelled', false)
-                ->where('company_id', $companyId)
-                ->count(),
-            'pending_lrs' => LorryReceipt::where('delivery_status', 'Pending')
-                ->where('company_id', $companyId)
-                ->whereNull('deleted_at')
-                ->count(),
-            'delivered_today' => LorryReceipt::where('delivery_status', 'Delivered')
-                ->where('company_id', $companyId)
-                ->whereDate('updated_at', $today)
-                ->whereNull('deleted_at')
-                ->count(),
-            'lrs_pending_invoice' => LorryReceipt::where('invoice_generated', 0)
-                ->where('company_id', $companyId)
-                ->whereNull('deleted_at')
-                ->count(),
-            'eway_bills_expiring_today' => FreightBooking::where('company_id', $companyId)
-                ->where('is_delivered', 0)
-                ->where('is_cancelled', 0)
-                ->whereDate('eway_bill_expiry', $today)
-                ->count(),
-            'expired_eway_bills' => FreightBooking::where('company_id', $companyId)
-                ->where('is_delivered', 0)
-                ->where('is_cancelled', 0)
-                ->where('eway_bill_expiry', '<', $today)
-                ->count(),
-            'outstanding_amount' => $outstandingAmount,
-        ];
-
-        // Moderator-specific stats for new KPI cards
-        $moderatorStats = [
-            'incoming_bookings' => LorryReceipt::where('delivery_status', 'Pending')
-                ->where('company_id', $companyId)
-                ->whereNull('deleted_at')
-                ->count(),
-            'loading_in_progress' => Booking::where('is_delivered', false)
-                ->where('is_cancelled', false)
-                ->where('company_id', $companyId)
-                ->whereHas('lr', function ($q) {
-                    $q->where('delivery_status', 'Pending');
-                })
-                ->count(),
-            'en_route' => Booking::where('is_delivered', false)
-                ->where('is_cancelled', false)
-                ->where('company_id', $companyId)
-                ->whereHas('lr', function ($q) {
-                    $q->where('delivery_status', 'In-Progress');
-                })
-                ->count(),
-            'delayed_trips' => Booking::where('is_delivered', false)
-                ->where('is_cancelled', false)
-                ->where('company_id', $companyId)
-                ->whereHas('lr', function ($q) {
-                    $q->where('delivery_status', '!=', 'Pending');
-                })
-                ->count(),
-        ];
-
-        // Booking status distribution
-        $bookingStatuses = [
-            'delivered' => Booking::where('is_delivered', true)
-                ->where('company_id', $companyId)
-                ->count(),
-            'cancelled' => Booking::where('is_cancelled', true)
-                ->where('company_id', $companyId)
-                ->count(),
-            'in_progress' => Booking::where('is_delivered', false)
-                ->where('is_cancelled', false)
-                ->where('company_id', $companyId)
-                ->count(),
-        ];
-
-        // Recent bookings
-        $recentBookings = Booking::with(['lr.consignor', 'lr.consignee', 'lr.truck'])
-            ->where('company_id', $companyId)
-            ->latest()
-            ->take(10)
-            ->get();
-
-        // Top trucks
-        $topTrucks = Truck::select('trucks.*', DB::raw('(SELECT COUNT(*) FROM lorry_receipts WHERE lorry_receipts.truck_id = trucks.id) as lr_count'))
-            ->whereHas('transporter', function ($q) use ($companyId) {
-                $q->where('company_id', $companyId);
-            })
-            ->orderBy('lr_count', 'desc')
-            ->take(5)
-            ->get();
-
-        // Top transporters
-        $topTransporters = Transporter::with('transporterMaster')
-            ->where('is_owner', 0)
-            ->where('company_id', $companyId)
-            ->withCount('lorryReceipts')
-            ->orderByDesc('lorry_receipts_count')
-            ->take(5)
-            ->get();
-
-        // Expired Eway bills
-        $expiredEwayBills = FreightBooking::with('lr.truck.driver')
-            ->where('company_id', $companyId)
-            ->where('is_delivered', 0)
-            ->where('is_cancelled', 0)
-            ->where('eway_bill_expiry', '<=', now()->addDays(2)->endOfDay())
-            ->orderBy('eway_bill_expiry', 'asc')
-            ->get();
-
-        return view('dashboard', compact(
-            'operationalStats',
-            'moderatorStats',
-            'bookingStatuses',
-            'recentBookings',
-            'topTrucks',
-            'topTransporters',
-            'expiredEwayBills'
-        ));
+        return $this->companyDashboard('moderator', BusinessInsightsService::AUDIENCE_OPERATIONS);
     }
 
-    private function accountantDashboard()
+    private function accountantDashboard(): View
     {
-        $now = Carbon::now();
-        $startOfMonth = $now->copy()->startOfMonth();
-        $endOfMonth = $now->copy()->endOfMonth();
-        $companyId = auth()->user()->company_id;
+        return $this->companyDashboard('accountant', BusinessInsightsService::AUDIENCE_FINANCE);
+    }
 
-        $totalRevenue = $this->sumInvoiceTotalRevenue([$companyId], $startOfMonth, $endOfMonth);
+    private function companyDashboard(string $dashboardView, string $audience): View
+    {
+        $period = DashboardPeriod::fromKey(request('period'));
+        $insights = $this->businessInsights->build([(int) auth()->user()->company_id], $period);
 
-        // Calculate Accountant KPIs
-        $today = now()->startOfDay();
-        $todayEnd = now()->endOfDay();
+        return view('dashboard', [
+            'dashboardView' => $dashboardView,
+            'insights' => $insights,
+            'actions' => $this->businessInsights->actionItems($insights, $audience),
+            'dashboardPeriod' => $period,
+            'chartPayload' => $this->businessChartPayload($insights),
+        ]);
+    }
 
-        // Calculate pending invoices based on payment ledger
-        $allInvoicesForStats = Invoice::where('company_id', $companyId)
-            ->with('payments')
-            ->get();
-
-        $pendingInvoicesCount = 0;
-        $pendingInvoiceAmount = 0;
-        $outstandingAmount = 0;
-        $overdueInvoicesCount = 0;
-
-        foreach ($allInvoicesForStats as $invoice) {
-            $paidAmount = $invoice->paid_amount;
-            $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
-            $remainingAmount = $amountToCollect - $paidAmount;
-
-            if ($paidAmount < $amountToCollect) {
-                $pendingInvoicesCount++;
-                $pendingInvoiceAmount += $remainingAmount;
-                $outstandingAmount += $remainingAmount;
-
-                $invoiceDate = $invoice->generated_date ? Carbon::parse($invoice->generated_date) : $invoice->created_at;
-                if ($invoiceDate->copy()->addDays(30)->isPast()) {
-                    $overdueInvoicesCount++;
-                }
-            }
-        }
-
-        $totalInvoiced = $totalRevenue;
-
-        // Calculate total paid amount (all time)
-        $totalPaid = InvoicePayment::whereHas('invoice', function ($q) use ($companyId) {
-            $q->where('company_id', $companyId);
-        })
-            ->sum('amount');
-
-        $financialStats = [
-            'total_revenue' => $totalRevenue,
-            'total_invoiced' => $totalInvoiced,
-            'pending_payments' => $pendingInvoiceAmount, // Same as pending_invoices_amount
-            'total_paid' => $totalPaid,
-            'invoices_created_today' => Invoice::where('company_id', $companyId)
-                ->whereBetween('created_at', [$today, $todayEnd])
-                ->count(),
-            'pending_invoices_count' => $pendingInvoicesCount,
-            'pending_invoices_amount' => $pendingInvoiceAmount,
-            'payments_received_today' => InvoicePayment::whereBetween('created_at', [$today, $todayEnd])
-                ->whereHas('invoice', function ($q) use ($companyId) {
-                    $q->where('company_id', $companyId);
-                })
-                ->sum('amount'),
-            'outstanding_amount' => $outstandingAmount,
-            'overdue_invoices' => $overdueInvoicesCount,
+    /**
+     * @param  array<string, mixed>  $insights
+     * @return array<string, mixed>
+     */
+    private function businessChartPayload(array $insights): array
+    {
+        return [
+            'monthlyTrend' => $insights['trend'],
+            'profitTrend' => $insights['margin']['daily'],
         ];
-
-        // Revenue chart for the last 6 months — sum of invoice totals
-        $revenueData = Invoice::select(
-            DB::raw('DATE_FORMAT(created_at, "%b %Y") as month'),
-            DB::raw('SUM(total_amount) as total')
-        )
-            ->where('created_at', '>=', now()->subMonths(5)->startOfMonth())
-            ->where('company_id', $companyId)
-            ->groupBy('month')
-            ->orderBy('created_at')
-            ->pluck('total', 'month');
-
-        // Payment ledger of invoices - Priority: Pending/Partial invoices (based on payment ledger)
-        $pendingInvoices = Invoice::where('company_id', $companyId)
-            ->with(['consignee', 'payments'])
-            ->get()
-            ->filter(function ($invoice) {
-                $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
-
-                return $invoice->paid_amount < $amountToCollect;
-            })
-            ->sortByDesc('generated_date')
-            ->take(10)
-            ->values();
-
-        // Recent invoice payments (payment ledger entries)
-        $recentInvoicePayments = InvoicePayment::with('invoice.consignee')
-            ->whereHas('invoice', function ($q) use ($companyId) {
-                $q->where('company_id', $companyId);
-            })
-            ->latest()
-            ->take(10)
-            ->get();
-
-        return view('dashboard', compact(
-            'financialStats',
-            'pendingInvoices',
-            'recentInvoicePayments'
-        ));
     }
 
     private function transporterDashboard()
@@ -676,11 +172,13 @@ class DashboardController extends Controller
                 ->where('payment_status', 'paid')
                 ->sum('amount'),
             'advance_received' => AdvancePayment::whereIn('transporter_id', $transporterIds)->sum('advance_amount'),
-            'expired_eway_bills' => FreightBooking::whereIn('transporter_id', $transporterIds)
-                ->where('is_delivered', 0)
-                ->where('is_cancelled', 0)
-                ->where('eway_bill_expiry', '<', now()->startOfDay())
-                ->count(),
+            'expired_eway_bills' => EwayBill::whereHas('freightBooking', function ($query) use ($transporterIds) {
+            $query->whereIn('transporter_id', $transporterIds)
+            ->where('is_delivered', 0)
+            ->where('is_cancelled', 0);
+          })
+         ->where('eway_bill_expiry', '<', now()->startOfDay())
+         ->count(),
         ];
 
         $recentFreightBookings = FreightBooking::with(['lr.consignor', 'lr.consignee', 'lr.truck'])
@@ -695,13 +193,15 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
 
-        $expiredEwayBills = FreightBooking::with('lr.truck.driver')
-            ->whereIn('transporter_id', $transporterIds)
+       $expiredEwayBills = EwayBill::with('freightBooking.lr.truck.driver')
+      ->whereHas('freightBooking', function ($query) use ($transporterIds) {
+        $query->whereIn('transporter_id', $transporterIds)
             ->where('is_delivered', 0)
-            ->where('is_cancelled', 0)
-            ->where('eway_bill_expiry', '<=', now()->addDays(2)->endOfDay())
-            ->orderBy('eway_bill_expiry', 'asc')
-            ->get();
+            ->where('is_cancelled', 0);
+    })
+    ->where('eway_bill_expiry', '<=', now()->addDays(2)->endOfDay())
+    ->orderBy('eway_bill_expiry', 'asc')
+    ->get();
 
         return view('dashboard', compact(
             'transporterStats',

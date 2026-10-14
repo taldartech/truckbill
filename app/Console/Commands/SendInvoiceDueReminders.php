@@ -79,9 +79,7 @@ class SendInvoiceDueReminders extends Command
                 $invoice->loadMissing(['company', 'consignee', 'payments']);
 
                 // Safety: if due amount already 0, skip
-                $amountToCollect = (float) ($invoice->net_amount ?? $invoice->total_amount ?? 0);
-                $paidAmount = (float) $invoice->payments->sum('amount');
-                if (($amountToCollect - $paidAmount) <= 0.01) {
+                if ($invoice->remaining_amount <= 0.01) {
                     continue;
                 }
 

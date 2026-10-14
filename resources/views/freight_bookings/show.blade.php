@@ -436,7 +436,7 @@
                     <div class="card-body p-0">
                         @if ($payments->count() > 0)
                             <div class="table-responsive">
-                                <table class="table table-sm table-hover align-middle mb-0 fb-compact-table">
+                                <table class="table table-sm table-hover align-middle mb-0 fb-compact-table text-nowrap">
                                     <thead>
                                         <tr>
                                             <th>Voucher</th>
@@ -549,7 +549,7 @@
                                 <strong>₹{{ number_format($tdsAmount, 2) }}</strong>
                             </div>
                             <div class="fb-financial-summary__row">
-                                <span>Negative Adjusted</span>
+                                <span>Negative Adjusted Amount</span>
                                 <strong class="{{ $negativeAdjusted > 0 ? '' : 'text-muted' }}">₹{{ number_format($negativeAdjusted, 2) }}</strong>
                             </div>
                             <div class="fb-financial-summary__row">
@@ -1314,8 +1314,8 @@
                                         <thead>
                                             <tr>
                                                 <th>LR Number</th>
-                                                <th>Shortage</th>
-                                                <th>Damage</th>
+                                                <th>Shortage Amount</th>
+                                                <th>Damage Amount</th>
                                                 <th>Balance</th>
                                                 <th>Allocated</th>
                                             </tr>
@@ -1655,8 +1655,12 @@
                             return data;
                         })
                         .then((data) => {
-                            printButton.classList.add('is-printed');
-                            printButton.setAttribute('title', `Last printed: ${data.voucher_last_printed_at}`);
+                            (data.updated_booking_ids || [printButton.dataset.freightBookingId]).forEach((id) => {
+                                document.querySelectorAll(`.voucher-print-btn[data-freight-booking-id="${id}"]`).forEach((btn) => {
+                                    btn.classList.add('is-printed');
+                                    btn.title = `Last printed: ${data.voucher_last_printed_at}`;
+                                });
+                            });
                         })
                         .catch((error) => {
                             if (typeof Swal !== 'undefined') {

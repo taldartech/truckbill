@@ -101,24 +101,43 @@ class BranchController extends Controller
     /**
      * Generate action buttons for DataTables.
      */
-    private function getActionButtons(Branch $branch): string
-    {
-        $buttons = '<div class="app-index-table-actions">';
+   private function getActionButtons($branch)
+{
+    $buttons = '<div class="app-index-table-actions">';
 
-        $editUrl = route('branches.edit', $branch->id);
-        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-icon btn-action-edit" title="Edit Branch">';
-        $buttons .= '<i class="bi bi-pencil"></i></a>';
+    // Edit Button
+    $editUrl = route('branches.edit', $branch->id);
 
-        $deleteUrl = route('branches.destroy', $branch->id);
-        $buttons .= '<form action="' . $deleteUrl . '" method="POST" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete this branch?\')">';
-        $buttons .= csrf_field() . method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete Branch">';
-        $buttons .= '<i class="bi bi-trash"></i></button></form>';
+    $buttons .= '<a href="'.$editUrl.'"
+        class="btn btn-sm btn-icon btn-action-edit"
+        title="Edit Branch"
+        data-bs-toggle="tooltip">
+        <i class="bi bi-pencil"></i>
+    </a>';
 
-        $buttons .= '</div>';
-        return $buttons;
-    }
+    // Delete Button
+    $deleteUrl = route('branches.destroy', $branch->id);
 
+    $buttons .= '<form action="'.$deleteUrl.'" method="POST" class="branch-delete-form">';
+    $buttons .= csrf_field().method_field('DELETE');
+
+    $buttons .= '<button type="button"
+        class="btn btn-sm btn-icon btn-action-delete branch-delete-btn"
+        title="Delete Branch"
+        data-bs-toggle="modal"
+        data-bs-target="#branchDeleteModal"
+        data-branch-id="'.$branch->id.'"
+        data-branch-name="'.e($branch->branch_name ?? '-').'"
+        data-branch-company="'.e($branch->company?->name ?? '-').'"
+        data-branch-head-office="'.($branch->head_office ? 'Yes' : 'No').'">
+        <i class="bi bi-trash"></i>
+    </button>';
+
+    $buttons .= '</form>';
+    $buttons .= '</div>';
+
+    return $buttons;
+}
     /**
      * Show the form for creating a new resource.
      */
@@ -193,23 +212,22 @@ class BranchController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Branch $branch): RedirectResponse
-    {
-        $user = Auth::user();
+    public function destroy(Request $request, Branch $branch)
+{
+    $request->validate([
+        'delete_remark' => ['required', 'string', 'max:1000'],
+    ]);
 
-        // Check authorization - user can only delete branches from their companies
-        if (!$this->canManageBranch($user, $branch)) {
-            abort(403, 'Unauthorized action.');
-        }
+    $branch->deleted_by = Auth::id();
+    $branch->deleted_remark = $request->input('delete_remark');
+    $branch->save();
 
-        DB::transaction(function () use ($branch) {
-            $branch->delete();
-        });
+    $branch->delete();
 
-        return redirect()
-            ->route('branches.index')
-            ->with('success', 'Branch deleted successfully!');
-    }
+    return redirect()
+        ->route('branches.index')
+        ->with('success', 'Branch deleted successfully!');
+}
 
     /**
      * Check if user can manage (edit/delete) the branch.

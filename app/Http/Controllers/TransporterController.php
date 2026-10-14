@@ -23,6 +23,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use App\Imports\TransporterImport;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Validator;
 
 class TransporterController extends Controller
 {
@@ -41,6 +44,114 @@ class TransporterController extends Controller
 
         return view('transporters.index');
     }
+
+
+    public function bulkUpload(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'file' => [
+                'required',
+                'file',
+                'mimes:xlsx,xls,csv',
+                'max:10240',
+            ],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File validation failed.',
+                'errors' => $validator->errors()->all(),
+            ], 422);
+        }
+
+        try {
+            $import = new \App\Imports\TransporterImport();
+
+            Excel::import(
+                $import,
+                $request->file('file')
+            );
+
+            $total = $import->successCount + count($import->errors);
+
+            if (! empty($import->errors)) {
+                return response()->json([
+                    'success' => $import->successCount > 0,
+                    'partial_success' => $import->successCount > 0,
+                    'message' => $import->successCount > 0
+                        ? $import->successCount . ' transporter(s) imported successfully. Some rows have errors.'
+                        : 'No transporter records were imported.',
+                    'imported' => $import->successCount,
+                    'success_count' => $import->successCount,
+                    'total' => $total,
+                    'errors' => $import->errors,
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $import->successCount . ' transporter(s) imported successfully.',
+                'imported' => $import->successCount,
+                'success_count' => $import->successCount,
+                'total' => $total,
+                'errors' => [],
+            ]);
+
+        } catch (\Throwable $e) {
+            \Log::error('Transporter bulk upload failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to process the file. Please check the file and try again.',
+                'errors' => [$e->getMessage()],
+            ], 500);
+        }
+    }
+
+
+public function bulkUploadTemplate()
+{
+    $headers = [
+        'PAN Number',
+        'Transport Name',
+        'Email',
+        'GST Number',
+        'PAN Active',
+        'Contact Person Name',
+        'Mobile Number',
+        'Country',
+        'State',
+        'City',
+        'Address',
+        'Declaration Given',
+        'TDS Percentage',
+        'TDS Adjustment Remark',
+        'Short Name',
+    ];
+
+    $callback = function () use ($headers) {
+
+        $file = fopen('php://output', 'w');
+
+        fputcsv($file, $headers);
+
+        fclose($file);
+    };
+
+    return response()->streamDownload(
+        $callback,
+        'transporter_template.csv',
+        [
+            'Content-Type' => 'text/csv',
+        ]
+    );
+}
+
+
 
     private function getTransportersData(Request $request)
     {
@@ -118,6 +229,7 @@ class TransporterController extends Controller
                         'actions' => $this->getActionButtons((object) [
                             'id' => $transporter->id,
                             'transporter_name' => $transporter->transporterMaster?->name,
+                            'transporter_pan_number' => $transporter->transporterMaster?->pan_number, 
                         ]),
                     ];
                 });
@@ -167,7 +279,7 @@ class TransporterController extends Controller
 
                     return [
                         'sr_no' => $start + $index + 1,
-                        'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold transporter-name-link" data-id="'.$transporter->id.'" style="cursor: pointer; text-decoration: none;">'.($transporter->transporterMaster?->name ?: '-').'</a>',
+                        'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold transporter-name-link text-nowrap" data-id="'.$transporter->id.'" style="cursor: pointer; text-decoration: none; white-space: nowrap;">'.($transporter->transporterMaster?->name ?: '-').'</a>',
                         'short_name' => $transporter->short_name ?: '-',
                         'beneficiary_id' => $transporter->beneficiary_id ?: '-',
                         'pan_number' => $transporter->transporterMaster?->pan_number ?: '-',
@@ -179,6 +291,11 @@ class TransporterController extends Controller
                         'actions' => $this->getActionButtons((object) [
                             'id' => $transporter->id,
                             'transporter_name' => $transporter->transporterMaster?->name,
+                        ]),
+                        'actions' => $this->getActionButtons((object) [
+                       'id' => $transporter->id,
+                       'transporter_name' => $transporter->transporterMaster?->name,
+                       'transporter_pan_number' => $transporter->transporterMaster?->pan_number,
                         ]),
                     ];
                 })->filter()->values();
@@ -298,7 +415,7 @@ class TransporterController extends Controller
             $data = $transporters->map(function ($transporter, $index) use ($start) {
                 return [
                     'sr_no' => $start + $index + 1,
-                    'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold transporter-name-link" data-id="'.$transporter->id.'" style="cursor: pointer; text-decoration: none;">'.($transporter->transporter_name ?: '-').'</a>',
+                    'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold transporter-name-link text-nowrap" data-id="'.$transporter->id.'" style="cursor: pointer; text-decoration: none; white-space: nowrap;">'.($transporter->transporter_name ?: '-').'</a>',
                     'short_name' => $transporter->short_name ?: '-',
                     'beneficiary_id' => $transporter->beneficiary_id ?: '-',
                     'pan_number' => $transporter->transporter_pan_number ?: '-',
@@ -345,14 +462,22 @@ class TransporterController extends Controller
         $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-action-edit" title="Edit Transporter" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-pencil"></i></a>';
 
-        $deleteUrl = route('transporters.destroy', $transporter->id);
-        $buttons .= '<form action="'.$deleteUrl.'" method="POST" onsubmit="return confirm(\'Delete this transporter?\')">';
-        $buttons .= csrf_field().method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete Transporter" data-bs-toggle="tooltip">';
-        $buttons .= '<i class="bi bi-trash"></i></button></form>';
+       $deleteUrl = route('transporters.destroy', $transporter->id);
 
+       $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" class="transporter-delete-form">';
+       $buttons .= csrf_field().method_field('DELETE');
+
+       $buttons .= '<button type="button"
+      class="btn btn-sm btn-icon btn-action-delete transporter-delete-btn"
+      data-bs-toggle="modal"
+      data-bs-target="#transporterDeleteModal"
+      data-transporter-name="'.e($transporter->transporter_name ?? $transporter->name ?? '-').'" 
+      data-transporter-pan="'.e($transporter->transporter_pan_number ?? $transporter->pan_number ?? '-').'" 
+      title="Delete Transporter">
+     <i class="bi bi-trash"></i>
+     </button>';
+       $buttons .= '</form>';
         $buttons .= '</div>';
-
         return $buttons;
     }
 
@@ -463,14 +588,20 @@ class TransporterController extends Controller
                         'tds_adjustment_remark' => ['TDS adjustment remark is required for dummy PAN.'],
                     ]);
                 }
+            } elseif ($declarationGiven) {
+                $submittedTds = 0.00;
+                $remark = null;
             } else {
                 $remark = abs($submittedTds - round($calculated, 2)) > 0.01
                     ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
                     : null;
             }
             $validated['declaration_given'] = $declarationGiven;
-            $validated['tds_percentage'] = $submittedTds;
-            $validated['tds_adjustment_remark'] = $remark;
+            $validated['declaration_194c6_date'] = $declarationGiven ? ($validated['declaration_194c6_date'] ?? now()->toDateString()) : null;
+            $validated['tds_percentage'] = $isDummyPan ? $submittedTds : ($declarationGiven ? 0.00 : $submittedTds);
+            $validated['tds_adjustment_remark'] = $isDummyPan ? $remark : ($declarationGiven ? null : $remark);
+            $validated['is_msme'] = $request->boolean('is_msme');
+            $validated['msme_reg_no'] = $request->input('msme_reg_no');
             Transporter::create($validated);
 
             return redirect()->route('transporters.index')->with('success', 'Transporter created successfully!');
@@ -478,7 +609,7 @@ class TransporterController extends Controller
 
         $email = TransporterMaster::normalizeEmail($validated['email'] ?? null);
 
-        $onboardingData = DB::transaction(function () use ($validated, $declarationGiven, $email, $dummyPan) {
+        $onboardingData = DB::transaction(function () use ($validated, $declarationGiven, $email, $dummyPan, $request) {
             $masterData = [
                 'name' => $validated['name'],
                 'email' => $email,
@@ -490,6 +621,8 @@ class TransporterController extends Controller
                 'city_id' => $validated['city_id'] ?? null,
                 'state_id' => $validated['state_id'] ?? null,
                 'country_id' => $validated['country_id'] ?? null,
+                'is_msme' => $request->boolean('is_msme'),
+                'msme_reg_no' => $request->input('msme_reg_no'),
             ];
             $master = TransporterMaster::create($masterData);
 
@@ -519,9 +652,12 @@ class TransporterController extends Controller
                 'short_name' => $validated['short_name'] ?? null,
                 'advance_amount' => $validated['advance_amount'] ?? 0,
                 'declaration_given' => $declarationGiven,
+                'declaration_194c6_date' => $declarationGiven ? ($validated['declaration_194c6_date'] ?? now()->toDateString()) : null,
                 'total_trucks' => 0,
-                'tds_percentage' => $submittedTds,
-                'tds_adjustment_remark' => $remark,
+                'tds_percentage' => $isDummyPan ? $submittedTds : ($declarationGiven ? 0.00 : $submittedTds),
+                'tds_adjustment_remark' => $isDummyPan ? $remark : ($declarationGiven ? null : $remark),
+                'is_msme' => $request->boolean('is_msme'),
+                'msme_reg_no' => $request->input('msme_reg_no'),
             ];
             Transporter::create($transporterData);
 
@@ -646,15 +782,19 @@ class TransporterController extends Controller
                 : null;
         }
 
+        $declGiven = (bool) ($validated['declaration_given'] ?? false);
         $updateData = [
             'company_id' => $validated['company_id'],
             'contact_person_name' => $validated['contact_person_name'] ?? null,
             'mobile_number' => $validated['mobile_number'],
             'advance_amount' => $validated['advance_amount'] ?? 0,
-            'declaration_given' => $validated['declaration_given'],
+            'declaration_given' => $declGiven,
+            'declaration_194c6_date' => $declGiven ? ($validated['declaration_194c6_date'] ?? now()->toDateString()) : null,
             'total_trucks' => $validated['total_trucks'] ?? 0,
-            'tds_percentage' => $submittedTds,
-            'tds_adjustment_remark' => $tdsRemark,
+            'tds_percentage' => $isDummyPan ? $submittedTds : ($declGiven ? 0.00 : $submittedTds),
+            'tds_adjustment_remark' => $isDummyPan ? $tdsRemark : ($declGiven ? null : $tdsRemark),
+            'is_msme' => $request->boolean('is_msme'),
+            'msme_reg_no' => $request->input('msme_reg_no'),
         ];
 
         if (auth()->user()->userRole->name === 'super_admin') {
@@ -663,6 +803,13 @@ class TransporterController extends Controller
         }
 
         $transporter->update($updateData);
+
+        if ($master) {
+            $master->update([
+                'is_msme' => $request->boolean('is_msme'),
+                'msme_reg_no' => $request->input('msme_reg_no'),
+            ]);
+        }
 
         if (abs($previousTds - $submittedTds) > 0.01) {
             $this->freightBookingTdsSync->syncForTransporter($transporter, $submittedTds);
@@ -767,15 +914,24 @@ class TransporterController extends Controller
         ]);
     }
 
-    public function destroy(Transporter $transporter)
-    {
-        if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized access to this transporter.');
-        }
-        $transporter->delete();
+    public function destroy(Request $request, $id)
+{
+    $request->validate([
+        'delete_remark' => ['required', 'string', 'max:1000'],
+    ]);
 
-        return redirect()->route('transporters.index')->with('success', 'Transporter deleted successfully!');
-    }
+    $transporter = Transporter::findOrFail($id);
+
+    $transporter->deleted_by = Auth::id();
+    $transporter->deleted_remark = $request->input('delete_remark');
+    $transporter->save();
+
+    $transporter->delete();
+
+    return redirect()
+    ->route('transporters.index')
+    ->with('success', 'Transporter deleted successfully!');
+}
 
     /**
      * Get truck owners for API

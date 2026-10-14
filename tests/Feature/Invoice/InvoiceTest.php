@@ -150,11 +150,11 @@ class InvoiceTest extends TestCase
     public function test_super_admin_forbidden_and_guest_redirected(): void
     {
         $super = $this->makeUser('super_admin');
-        $this->actingAs($super)->get('/invoices')->assertForbidden();
+        $this->actingAs($super)->get('/invoices')->assertRedirect(route('company.index'));
         $this->actingAs($super)
             ->withHeader('X-Requested-With', 'XMLHttpRequest')
             ->get('/invoices')
-            ->assertForbidden();
+            ->assertRedirect(route('company.index'));
 
         $this->post(route('logout'));
         $this->get('/invoices')->assertRedirect(route('login'));
@@ -201,6 +201,61 @@ class InvoiceTest extends TestCase
         ]);
         $this->assertDatabaseHas('lorry_receipts', ['id' => $lr1->id, 'invoice_generated' => 1]);
         $this->assertDatabaseHas('lorry_receipts', ['id' => $lr2->id, 'invoice_generated' => 1]);
+    }
+
+    public function test_admin_can_store_invoice_with_optional_due_date(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+
+        $response = $this->actingAs($admin)->post('/invoices', [
+            'manual_invoice_number' => 'INV-DUE-001',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'due_date' => now()->addDays(15)->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 1000,
+            'memo_ids' => [$lr1->memo_id],
+        ]);
+
+        $response->assertRedirect(route('invoices.index'));
+        $invoice = Invoice::where('manual_invoice_number', 'INV-DUE-001')->firstOrFail();
+        $this->assertSame(now()->addDays(15)->toDateString(), $invoice->effectiveDueDate()->toDateString());
+    }
+
+    public function test_invoice_without_due_date_defaults_to_credit_period(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        $invoice = $this->createInvoice($admin, $customer, 'INV-DUE-DEFAULT');
+
+        $this->assertNull($invoice->due_date);
+        $this->assertSame(
+            now()->addDays(Invoice::DEFAULT_CREDIT_DAYS)->toDateString(),
+            $invoice->effectiveDueDate()->toDateString()
+        );
+    }
+
+    public function test_store_rejects_due_date_before_invoice_date(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+
+        $response = $this->actingAs($admin)->from('/invoices/create')->post('/invoices', [
+            'manual_invoice_number' => 'INV-DUE-002',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'due_date' => now()->subDay()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 1000,
+            'memo_ids' => [$lr1->memo_id],
+        ]);
+
+        $response->assertRedirect('/invoices/create');
+        $response->assertSessionHasErrors('due_date');
+        $this->assertDatabaseMissing('invoices', ['manual_invoice_number' => 'INV-DUE-002']);
     }
 
     public function test_store_rejects_duplicate_manual_invoice_number_within_company(): void
@@ -281,6 +336,94 @@ class InvoiceTest extends TestCase
         $response = $this->actingAs($admin)->post("/invoices/{$invoice->id}/payments", [
             'mode' => 'cash',
             'amount' => 200,
+            'payment_date' => now()->toDateString(),
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertEquals(0, InvoicePayment::where('invoice_id', $invoice->id)->count());
+    }
+
+    public function test_admin_can_add_payment_with_tds_and_deductions_clearing_invoice(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+
+        $invoice = Invoice::create([
+            'manual_invoice_number' => 'INV-M-004B',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 100000,
+            'base_amount' => 100000,
+            'net_amount' => 100000,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'lr_ids' => [$lr1->id],
+        ]);
+
+        $response = $this->actingAs($admin)->post("/invoices/{$invoice->id}/payments", [
+            'mode' => 'Bank Transfer',
+            'amount' => 97000,
+            'tds_amount' => 2000,
+            'deduction_amount' => 1000,
+            'deduction_reason' => 'Quality shortage',
+            'remark' => 'Full settlement with TDS & deductions',
+            'payment_date' => now()->toDateString(),
+        ]);
+
+        $response->assertOk();
+        $response->assertJson(['success' => true]);
+
+        $invoice->refresh();
+        $this->assertDatabaseHas('invoice_payments', [
+            'invoice_id' => $invoice->id,
+            'amount' => 97000,
+            'tds_amount' => 2000,
+            'deduction_amount' => 1000,
+            'deduction_reason' => 'Quality shortage',
+        ]);
+
+        $this->assertEquals(100000, $invoice->paid_amount);
+        $this->assertEquals(0, $invoice->remaining_amount);
+        $this->assertEquals('paid', $invoice->payment_status);
+
+        // Verify accounting voucher was generated
+        $payment = InvoicePayment::where('invoice_id', $invoice->id)->first();
+        $this->assertNotNull($payment);
+        $voucher = \App\Models\AccountingVoucher::where('source_type', InvoicePayment::class)
+            ->where('source_id', $payment->id)
+            ->first();
+        $this->assertNotNull($voucher);
+        $this->assertEquals(100000, $voucher->total_amount);
+        $this->assertTrue($voucher->isBalanced());
+    }
+
+    public function test_store_payment_rejects_overpayment_when_settlement_with_deductions_exceeds_remaining(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+
+        $invoice = Invoice::create([
+            'manual_invoice_number' => 'INV-M-004C',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 5000,
+            'base_amount' => 5000,
+            'net_amount' => 5000,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'lr_ids' => [$lr1->id],
+        ]);
+
+        // Remit 4800 + TDS 200 + Deduction 500 = 5500 > 5000 remaining
+        $response = $this->actingAs($admin)->post("/invoices/{$invoice->id}/payments", [
+            'mode' => 'Bank Transfer',
+            'amount' => 4800,
+            'tds_amount' => 200,
+            'deduction_amount' => 500,
             'payment_date' => now()->toDateString(),
         ]);
 
@@ -537,7 +680,7 @@ class InvoiceTest extends TestCase
             'generated_date' => now()->toDateString(),
         ])->assertRedirect("/invoices/{$invoice->id}/edit")->assertSessionHas('error');
 
-        $this->actingAs($admin)->from('/invoices')->delete("/invoices/{$invoice->id}")
+        $this->actingAs($admin)->from('/invoices')->delete("/invoices/{$invoice->id}", ['delete_remark' => 'Entered by mistake'])
             ->assertRedirect('/invoices')->assertSessionHas('error');
     }
 
@@ -565,7 +708,7 @@ class InvoiceTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->delete("/invoices/{$invoice->id}")
+            ->delete("/invoices/{$invoice->id}", ['delete_remark' => 'Entered by mistake'])
             ->assertRedirect(route('invoices.index'))
             ->assertSessionHas('success');
 
@@ -600,7 +743,7 @@ class InvoiceTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->delete("/invoices/{$invoice->id}")
+            ->delete("/invoices/{$invoice->id}", ['delete_remark' => 'Entered by mistake'])
             ->assertRedirect(route('invoices.index'))
             ->assertSessionHas('success');
 
@@ -682,4 +825,48 @@ class InvoiceTest extends TestCase
             ->assertJsonPath($memoId.'.0.lr_number', 'LR-SLASH-1')
             ->assertJsonPath($memoId.'.0.amount', 250);
     }
+
+    public function test_get_invoices_data_reflects_full_paid_and_zero_remaining_for_invoice_settled_with_tds(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+
+        $invoice = Invoice::create([
+            'manual_invoice_number' => 'INV-TDS-DT-1',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 10000,
+            'base_amount' => 10000,
+            'net_amount' => 10000,
+            'payment_status' => 'paid',
+            'company_id' => $admin->company_id,
+            'lr_ids' => [$lr1->id],
+        ]);
+
+        $invoice->payments()->create([
+            'mode' => 'Bank Transfer',
+            'amount' => 9500,
+            'tds_amount' => 300,
+            'deduction_amount' => 200,
+            'deduction_reason' => 'Transit shortage',
+            'payment_date' => now()->toDateString(),
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/invoices');
+
+        $response->assertOk();
+        $json = $response->json();
+        $this->assertNotEmpty($json['data']);
+        $matched = collect($json['data'])->firstWhere('id', $invoice->id);
+        $this->assertNotNull($matched);
+        $this->assertEquals(10000, (float) $matched['paid_amount_sum']);
+        $this->assertEquals(0, (float) $matched['remaining_amount_value']);
+        $this->assertStringContainsString('10,000.00', $matched['paid_amount_formatted']);
+        $this->assertStringContainsString('0.00', $matched['remaining_amount_formatted']);
+    }
 }
+

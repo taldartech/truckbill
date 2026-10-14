@@ -10,6 +10,16 @@
         background-color: var(--brand-card-bg, #fff);
     }
 
+    .tb-report-customer-select2-form .form-control.form-control-sm,
+    .tb-report-customer-select2-form .form-select.form-select-sm {
+        min-height: 31px;
+        font-size: 0.875rem;
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+        padding-left: 0.5rem;
+        border-radius: 0.375rem;
+    }
+
     .tb-report-customer-select2-form .form-control:focus {
         border-color: var(--brand-primary) !important;
         box-shadow: 0 0 0 0.2rem var(--brand-soft-primary, rgba(47, 179, 111, 0.12)) !important;

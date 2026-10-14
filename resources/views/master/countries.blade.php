@@ -18,9 +18,9 @@
     <div class="card app-index-list-card mb-4">
         <div class="card-header">
             <h3 class="card-title mb-0">Country Management</h3>
-            <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+            <div class="app-index-card-toolbar d-flex flex-nowrap gap-1 gap-sm-2 align-items-center">
                 <button type="button" class="btn app-index-header-btn" disabled aria-label="Create country" title="Country creation is disabled">
-                    <i class="fas fa-plus"></i> Create
+                    <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Create</span>
                 </button>
             </div>
         </div>

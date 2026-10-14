@@ -21,8 +21,12 @@ class AdvancePaymentController extends Controller
             'remark' => 'nullable|string|max:1000',
         ]);
 
+        $companyId = (int) (Auth::user()->userRole?->name === 'super_admin' && session('super_admin_company_id')
+            ? session('super_admin_company_id')
+            : (Auth::user()->company_id ?? \App\Models\Transporter::where('id', $validated['transporter_id'])->value('company_id')));
+
         $advancePayment = $this->transporterAdvanceLedgerService->recordAdvancePayment(
-            companyId: (int) Auth::user()->company_id,
+            companyId: $companyId,
             transporterId: (int) $validated['transporter_id'],
             advanceAmount: (float) $validated['advance_amount'],
             paymentDate: $validated['payment_date'],

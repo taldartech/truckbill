@@ -413,11 +413,12 @@
                         <div style="height: 36px;"></div>
                     @endif
                     <div style="font-size: 10px;">Authorized Signature</div>
-                    <div style="font-size: 7px; margin-top: 2px;">Digitally Managed by TruckBill (www.truckbill.in)</div>
                 </td>
             </tr>
         </table>
-
+    </div>
+    <div style="text-align: right; margin-top: 2px; line-height: 1;">
+        <span style="font-size: 7px;">Digitally Managed by TruckBill (www.truckbill.in)</span>
     </div>
 </body>
 

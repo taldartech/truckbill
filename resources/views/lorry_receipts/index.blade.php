@@ -50,14 +50,31 @@
 
         .lorry-receipts-index .table-responsive {
             max-height: none !important;
-            overflow-x: visible !important;
-            overflow-y: visible !important;
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .lorry-receipts-index .table-responsive::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .lorry-receipts-index .table-responsive::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        .lorry-receipts-index .table-responsive::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .lorry-receipts-index .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
 
         #lorryReceiptsTable {
             width: 100% !important;
-            min-width: 0 !important;
-            table-layout: fixed;
             border-collapse: collapse;
             border-spacing: 0;
         }
@@ -86,27 +103,34 @@
             letter-spacing: 0;
         }
 
-        /* Compact column widths so the row fits without horizontal scroll */
-        #lorryReceiptsTable th:nth-child(1),
-        #lorryReceiptsTable td:nth-child(1) { width: 6.5%; }  /* GR Date */
-        #lorryReceiptsTable th:nth-child(2),
-        #lorryReceiptsTable td:nth-child(2) { width: 9.5%; }  /* LR Details */
-        #lorryReceiptsTable th:nth-child(3),
-        #lorryReceiptsTable td:nth-child(3) { width: 13%; }   /* Customer */
-        #lorryReceiptsTable th:nth-child(4),
-        #lorryReceiptsTable td:nth-child(4) { width: 13%; }   /* Consignor */
-        #lorryReceiptsTable th:nth-child(5),
-        #lorryReceiptsTable td:nth-child(5) { width: 13%; }   /* Consignee */
-        #lorryReceiptsTable th:nth-child(6),
-        #lorryReceiptsTable td:nth-child(6) { width: 9%; }    /* Truck */
-        #lorryReceiptsTable th:nth-child(7),
-        #lorryReceiptsTable td:nth-child(7) { width: 6%; }    /* Weight */
-        #lorryReceiptsTable th:nth-child(8),
-        #lorryReceiptsTable td:nth-child(8) { width: 6%; }    /* Rate */
-        #lorryReceiptsTable th:nth-child(9),
-        #lorryReceiptsTable td:nth-child(9) { width: 8%; }   /* Amount */
-        #lorryReceiptsTable th:nth-child(10),
-        #lorryReceiptsTable td:nth-child(10) { width: 13.5%; } /* Action */
+        /* Large desktop view: fit within 100% */
+        @media (min-width: 1200px) {
+            #lorryReceiptsTable {
+                table-layout: fixed;
+                min-width: 0 !important;
+            }
+
+            #lorryReceiptsTable th:nth-child(1),
+            #lorryReceiptsTable td:nth-child(1) { width: 7%; }   /* GR Date */
+            #lorryReceiptsTable th:nth-child(2),
+            #lorryReceiptsTable td:nth-child(2) { width: 9.5%; } /* LR Details */
+            #lorryReceiptsTable th:nth-child(3),
+            #lorryReceiptsTable td:nth-child(3) { width: 13%; }  /* Customer */
+            #lorryReceiptsTable th:nth-child(4),
+            #lorryReceiptsTable td:nth-child(4) { width: 12.5%; } /* Consignor */
+            #lorryReceiptsTable th:nth-child(5),
+            #lorryReceiptsTable td:nth-child(5) { width: 12.5%; } /* Consignee */
+            #lorryReceiptsTable th:nth-child(6),
+            #lorryReceiptsTable td:nth-child(6) { width: 9%; }   /* Truck */
+            #lorryReceiptsTable th:nth-child(7),
+            #lorryReceiptsTable td:nth-child(7) { width: 6%; }   /* Weight */
+            #lorryReceiptsTable th:nth-child(8),
+            #lorryReceiptsTable td:nth-child(8) { width: 6%; }   /* Rate */
+            #lorryReceiptsTable th:nth-child(9),
+            #lorryReceiptsTable td:nth-child(9) { width: 8.5%; } /* Amount */
+            #lorryReceiptsTable th:nth-child(10),
+            #lorryReceiptsTable td:nth-child(10) { width: 16%; min-width: 140px; } /* Action */
+        }
 
         #lorryReceiptsTable td:nth-child(10),
         #lorryReceiptsTable th:nth-child(10) {
@@ -114,32 +138,49 @@
             text-overflow: clip;
         }
 
-        @media (max-width: 991.98px) {
-            .lorry-receipts-index .table-responsive {
-                overflow-x: auto !important;
-                -webkit-overflow-scrolling: touch;
-            }
+        .lorry-receipts-index .app-index-table-actions {
+            display: inline-flex !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            gap: 4px !important;
+            white-space: nowrap !important;
+            max-width: none !important;
+        }
 
-            .lorry-receipts-index .dataTables_wrapper,
-            .lorry-receipts-index .dataTables_scroll,
-            .lorry-receipts-index .dataTables_scrollHead,
-            .lorry-receipts-index .dataTables_scrollBody {
-                overflow-x: auto !important;
-            }
-
+        /* Mobile & Tablet: smooth internal horizontal scroll without page overflow */
+        @media (max-width: 1199.98px) {
             #lorryReceiptsTable {
                 table-layout: auto !important;
-                min-width: 920px !important;
+                min-width: 960px !important;
+                width: 100% !important;
             }
 
             #lorryReceiptsTable th:nth-child(n),
             #lorryReceiptsTable td:nth-child(n) {
                 width: auto !important;
+                white-space: nowrap !important;
             }
 
-            #lorryReceiptsTable th:nth-child(11),
-            #lorryReceiptsTable td:nth-child(11) {
-                min-width: 118px;
+            #lorryReceiptsTable th:nth-child(10),
+            #lorryReceiptsTable td:nth-child(10) {
+                min-width: 140px !important;
+                width: 140px !important;
+                white-space: nowrap !important;
+                overflow: visible !important;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .lorry-receipts-index .app-index-list-card > .card-header {
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-wrap: nowrap !important;
+            }
+
+            .lorry-receipts-index .app-index-card-toolbar {
+                width: auto !important;
+                margin-left: auto !important;
             }
         }
 
@@ -148,13 +189,120 @@
                 font-size: 9px !important;
             }
 
-            .app-index-list-card > .card-header .d-flex.gap-2 {
-                width: 100%;
-                flex-wrap: wrap;
+            .lorry-receipts-index .app-index-list-card > .card-header {
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-wrap: nowrap !important;
+                gap: 0.4rem !important;
+                padding: 0.45rem 0.65rem !important;
             }
 
-            .app-index-list-card > .card-header .app-index-header-btn {
-                flex: 1 1 auto;
+            .lorry-receipts-index .app-index-list-card > .card-header .card-title {
+                font-size: 0.95rem !important;
+                margin: 0 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                flex-shrink: 1 !important;
+            }
+
+            .lorry-receipts-index .app-index-card-toolbar {
+                width: auto !important;
+                margin-left: auto !important;
+                display: inline-flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                align-items: center !important;
+                gap: 0.35rem !important;
+                flex-shrink: 0 !important;
+            }
+
+            .lorry-receipts-index .app-index-card-toolbar .app-index-header-btn {
+                width: 32px !important;
+                height: 32px !important;
+                min-width: 32px !important;
+                min-height: 32px !important;
+                padding: 0 !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border-radius: 8px !important;
+                font-size: 1rem !important;
+                flex: 0 0 auto !important;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+            }
+
+            #lrDetailsModal .modal-footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.4rem;
+            }
+
+            #lrDetailsModal .modal-footer .btn {
+                width: 100%;
+                margin: 0 !important;
+                text-align: center;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination {
+                padding: 0.4rem 0.5rem !important;
+                gap: 0.35rem !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .dataTables_info {
+                font-size: 0.72rem !important;
+                text-align: center !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .pagination {
+                margin: 0 !important;
+                gap: 0 !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .pagination .page-item {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .pagination .page-link {
+                font-size: 0.72rem !important;
+                padding: 0.22rem 0.5rem !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .pagination .page-item:first-child .page-link {
+                border-top-left-radius: 0.375rem !important;
+                border-bottom-left-radius: 0.375rem !important;
+                border-top-right-radius: 0 !important;
+                border-bottom-right-radius: 0 !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .pagination .page-item:last-child .page-link {
+                border-top-right-radius: 0.375rem !important;
+                border-bottom-right-radius: 0.375rem !important;
+                border-top-left-radius: 0 !important;
+                border-bottom-left-radius: 0 !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .pagination .page-item:not(:first-child):not(:last-child) .page-link {
+                border-radius: 0 !important;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .lorry-receipts-index .app-index-partload-pagination .dataTables_info {
+                font-size: 0.75rem !important;
+                text-align: center !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .pagination {
+                margin: 0 !important;
+                gap: 0 !important;
+            }
+
+            .lorry-receipts-index .app-index-partload-pagination .pagination .page-link {
+                font-size: 0.75rem !important;
+                padding: 0.25rem 0.55rem !important;
             }
         }
 
@@ -169,13 +317,6 @@
 
         .lorry-receipts-index .lr-number-link {
             font-size: 12.5px;
-        }
-
-        .lorry-receipts-index .dataTables_wrapper,
-        .lorry-receipts-index .dataTables_scroll,
-        .lorry-receipts-index .dataTables_scrollHead,
-        .lorry-receipts-index .dataTables_scrollBody {
-            overflow-x: hidden !important;
         }
 
         .lorry-receipts-index .dataTables_scrollBody {
@@ -244,7 +385,7 @@
         }
 
         .lorry-receipts-index .app-index-partload-pagination {
-            padding: 0.4rem 0.75rem !important;
+            padding: 0.4rem 0.75rem;
         }
 
     </style>
@@ -268,14 +409,14 @@
         @endif
 
         <div class="card app-index-list-card mb-2">
-            <div class="card-header">
+            <div class="card-header d-flex align-items-center justify-content-between">
                 <h3 class="card-title mb-0">Good Receipts (Bilty)</h3>
-                <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
-                    <a href="{{ route('lorry_receipts.create') }}" class="btn app-index-header-btn" aria-label="Create good receipt">
-                        <i class="bi bi-plus-circle"></i> Create
+                <div class="app-index-card-toolbar d-flex align-items-center gap-2">
+                    <a href="{{ route('lorry_receipts.create') }}" class="btn app-index-header-btn" title="Create Good Receipt" aria-label="Create good receipt">
+                        <i class="bi bi-plus-circle"></i><span class="d-none d-sm-inline ms-1">Create</span>
                     </a>
-                    <a href="{{ route('lorry_receipts.createLinked') }}" class="btn app-index-header-btn" aria-label="Create linked good receipt">
-                        <i class="bi bi-link-45deg"></i> Linked
+                    <a href="{{ route('lorry_receipts.createLinked') }}" class="btn app-index-header-btn" title="Create Linked Good Receipt" aria-label="Create linked good receipt">
+                        <i class="bi bi-link-45deg"></i><span class="d-none d-sm-inline ms-1">Linked</span>
                     </a>
                 </div>
             </div>
@@ -331,13 +472,22 @@
                                     @endif
                                 </select>
                             </div>
+                            <div class="app-index-filters__field app-index-filters__field--truck">
+                                <label class="app-index-filters__label" for="filterDeliveryStatus">Status</label>
+                                <select id="filterDeliveryStatus" class="form-select form-select-sm">
+                                    <option value="">All Statuses</option>
+                                    @foreach (\App\Http\Controllers\LorryReceiptController::LISTING_STATUSES as $listingStatus)
+                                        <option value="{{ $listingStatus }}" @selected(request('delivery_status') === $listingStatus)>{{ $listingStatus }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                             <div class="app-index-filters__field app-index-filters__field--date">
                                 <label class="app-index-filters__label" for="fromDate">From</label>
-                                <input type="date" class="form-control form-control-sm" id="fromDate">
+                                <input type="date" class="form-control form-control-sm" id="fromDate" value="{{ request('gr_date_from') }}">
                             </div>
                             <div class="app-index-filters__field app-index-filters__field--date">
                                 <label class="app-index-filters__label" for="toDate">To</label>
-                                <input type="date" class="form-control form-control-sm" id="toDate">
+                                <input type="date" class="form-control form-control-sm" id="toDate" value="{{ request('gr_date_to') }}">
                             </div>
                             <div class="app-index-filters__actions">
                                 <button type="button" class="app-index-filters__btn app-index-filters__btn--apply" id="filterBtn" data-tooltip="Filter" aria-label="Filter">
@@ -469,6 +619,96 @@
             </div>
         </div>
     </div>
+        <!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteLrModal" tabindex="-1"
+    aria-labelledby="deleteLrModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteLrModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                    Confirm Delete
+                </h5>
+
+                <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <p>Are you sure you want to delete this record?</p>
+
+              <div class="delete-record-details">
+           <div>
+             <strong>LR Number&nbsp;:&nbsp;</strong>
+             <span id="deleteLrNumber">-</span>
+         </div>
+
+         <div>
+            <strong>Truck&nbsp;:&nbsp;</strong>
+            <span id="deleteTruckNumber">-</span>
+        </div>
+
+        <div>
+           <strong>Customer&nbsp;:&nbsp;</strong>
+           <span id="deleteCustomer">-</span>
+        </div>
+
+        <div>
+           <strong>Consignor&nbsp;:&nbsp;</strong>
+           <span id="deleteConsignor">-</span>
+       </div>
+
+        <div>
+            <strong>Consignee&nbsp;:&nbsp;</strong>
+            <span id="deleteConsignee">-</span>
+        </div>
+     </div>
+
+                <div class="mt-3">
+                    <label for="deleteRemark" class="form-label">
+                        <strong>Remark <span class="text-danger">*</span></strong>
+                    </label>
+
+                    <textarea
+                        class="form-control"
+                        id="deleteRemark"
+                        rows="4"
+                        placeholder="Enter reason for deletion"></textarea>
+
+                    <div id="deleteLrError"
+                        class="text-danger mt-1 d-none">
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                    class="btn btn-outline-secondary"
+                    data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-1"></i>
+                    Cancel
+                </button>
+
+                <button type="button"
+                    class="btn btn-danger"
+                    id="confirmDeleteLrBtn">
+                    <i class="bi bi-trash me-1"></i>
+                    Confirm Delete
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+ </div>
 
     <style>
         /* Modal styles */
@@ -822,7 +1062,7 @@
                         $('#filterLrNumber').val(params.get('lr_number'));
                     }
 
-                    return params.has('gr_date_from') || params.has('gr_date_to') || params.has('lr_number') || params.has('customer_id') || params.has('transporter_id') || params.has('truck_id');
+                    return params.has('gr_date_from') || params.has('gr_date_to') || params.has('lr_number') || params.has('customer_id') || params.has('transporter_id') || params.has('truck_id') || params.has('delivery_status');
                 }
 
                 function syncListingQueryToUrl() {
@@ -833,6 +1073,7 @@
                     const customerId = $('#filterCustomerId').val();
                     const transporterId = $('#filterTransporterId').val();
                     const truckId = $('#filterTruckId').val();
+                    const deliveryStatus = $('#filterDeliveryStatus').val();
 
                     if (fromDate) {
                         params.set('gr_date_from', fromDate);
@@ -851,6 +1092,9 @@
                     }
                     if (truckId) {
                         params.set('truck_id', truckId);
+                    }
+                    if (deliveryStatus) {
+                        params.set('delivery_status', deliveryStatus);
                     }
 
                     const query = params.toString();
@@ -903,6 +1147,7 @@
                             d.customer_id = $('#filterCustomerId').val();
                             d.transporter_id = $('#filterTransporterId').val();
                             d.truck_id = $('#filterTruckId').val();
+                            d.delivery_status = $('#filterDeliveryStatus').val();
                         },
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
@@ -992,6 +1237,98 @@
                     }
                 });
 
+                let deleteLrForm = null;
+
+     $(document).on('click', '.delete-lr-btn', function(e) {
+      e.preventDefault();
+
+      deleteLrForm = $(this).closest('form');
+
+       // Get record details from delete button
+      
+        const lrNumber = $(this).data('lr-number') || '-';
+         const truckNumber = $(this).data('truck-number') || '-';
+         const customer = $(this).data('customer') || '-';
+         const consignor = $(this).data('consignor') || '-';
+         const consignee = $(this).data('consignee') || '-';
+
+        // Show record details in confirmation modal
+        $('#deleteLrNumber').text(lrNumber);
+        $('#deleteTruckNumber').text(truckNumber);
+        $('#deleteCustomer').text(customer);
+        $('#deleteConsignor').text(consignor);
+        $('#deleteConsignee').text(consignee);
+
+        // Reset remark and error
+        $('#deleteRemark').val('');
+        $('#deleteLrError').addClass('d-none').text('');
+
+        // Open confirmation modal
+         $('#deleteLrModal').modal('show');
+         });
+
+          $('#confirmDeleteLrBtn').on('click', function() {
+            const remark = $('#deleteRemark').val().trim();
+
+            // Remark is required
+            if (!remark) {
+              $('#deleteLrError')
+                .removeClass('d-none')
+                .text('Please enter a remark before deleting.');
+              return;
+            }
+
+            if (!deleteLrForm) {
+              return;
+            }
+
+            const $btn = $(this);
+            $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Deleting...');
+            $('#deleteLrError').addClass('d-none').text('');
+
+            // Add remark to delete form
+            deleteLrForm.find('input[name="delete_remark"]').remove();
+            deleteLrForm.append(
+              $('<input>', {
+                type: 'hidden',
+                name: 'delete_remark',
+                value: remark
+              })
+            );
+
+            // Collect all current filter parameters from page inputs and URL
+            const filterMap = {
+              'gr_date_from': $('#fromDate').val(),
+              'gr_date_to': $('#toDate').val(),
+              'lr_number': $('#filterLrNumber').val(),
+              'customer_id': $('#filterCustomerId').val(),
+              'transporter_id': $('#filterTransporterId').val(),
+              'truck_id': $('#filterTruckId').val()
+            };
+
+            const currentParams = new URLSearchParams(window.location.search);
+            currentParams.forEach((val, key) => {
+              if (val && !filterMap[key]) {
+                filterMap[key] = val;
+              }
+            });
+
+            // Append filter parameters as hidden inputs so controller receives them and redirects with them
+            Object.entries(filterMap).forEach(([key, val]) => {
+              if (val) {
+                deleteLrForm.find(`input[name="${key}"]`).remove();
+                deleteLrForm.append($('<input>', {
+                  type: 'hidden',
+                  name: key,
+                  value: val
+                }));
+              }
+            });
+
+            // Submit form: page will refresh and controller will redirect with all filters intact
+            deleteLrForm.submit();
+          });
+
                 $('#filterBtn').on('click', function() {
                     syncListingQueryToUrl();
                     table.ajax.reload();
@@ -1005,7 +1342,7 @@
                     }
                 });
 
-                $('#filterCustomerId, #filterTransporterId, #filterTruckId').on('change', function() {
+                $('#filterCustomerId, #filterTransporterId, #filterTruckId, #filterDeliveryStatus').on('change', function() {
                     syncListingQueryToUrl();
                     table.ajax.reload();
                 });
@@ -1015,6 +1352,7 @@
                     $('#filterCustomerId').val('').trigger('change.select2');
                     $('#filterTransporterId').val('').trigger('change.select2');
                     $('#filterTruckId').val('').trigger('change.select2');
+                    $('#filterDeliveryStatus').val('');
                     setDefaultDates();
                     syncListingQueryToUrl();
                     table.ajax.reload();
@@ -1151,21 +1489,23 @@
                                     <h6 class="mb-0"><i class="bi bi-list"></i> Linked Good Receipts (Bilty)</h6>
                                 </div>
                                 <div class="card-body">
-                                    <table class="table table-bordered">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>LR Number</th>
-                                                <th>Customer</th>
-                                                <th>Consignor</th>
-                                                <th>Consignee</th>
-                                                <th>Goods</th>
-                                                <th>Weight</th>
-                                                <th>Amount</th>
-                                                <th>Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>${lrRows}</tbody>
-                                    </table>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>LR Number</th>
+                                                    <th>Customer</th>
+                                                    <th>Consignor</th>
+                                                    <th>Consignee</th>
+                                                    <th>Goods</th>
+                                                    <th>Weight</th>
+                                                    <th>Amount</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>${lrRows}</tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         `;

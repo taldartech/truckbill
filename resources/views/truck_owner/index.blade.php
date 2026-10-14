@@ -34,16 +34,26 @@
             </div>
         @endif
 
+
+
+
         <div class="card app-index-list-card mb-4">
             <div class="card-header">
                 <h3 class="card-title mb-0">Truck Owner Management</h3>
-                <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
+                <div class="app-index-card-toolbar d-flex flex-nowrap gap-1 gap-sm-2 align-items-center">
                     <a href="{{ route('truck_owners.create') }}" class="btn app-index-header-btn" aria-label="Create truck owner">
-                        <i class="fas fa-plus"></i> Create
+                        <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Create</span>
                     </a>
                     <a href="{{ route('reports.transporter-master-export', ['type' => 'owner']) }}" class="btn app-index-header-btn" aria-label="Export truck owners">
-                        <i class="fas fa-file-excel"></i> Export
+                        <i class="bi bi-file-earmark-excel"></i> <span class="d-none d-sm-inline">Export</span>
                     </a>
+                     <button type="button"
+                     class="btn app-index-header-btn"
+                     data-bs-toggle="modal"
+                     data-bs-target="#bulkUploadModal"
+                     aria-label="Bulk upload truck owners">
+                    <i class="fas fa-upload"></i> Bulk Upload
+                     </button>
                 </div>
             </div>
             <div class="card-body">
@@ -51,14 +61,14 @@
                     <table id="truckOwnersTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
                         <thead class="table-light">
                             <tr>
-                                <th>Name</th>
-                                <th>Short Name</th>
-                                <th>PAN Number</th>
-                                <th>Location</th>
-                                <th>Contact Number</th>
-                                <th>Declaration Given</th>
-                                <th class="text-end">Book Balance</th>
-                                <th class="app-index-actions-cell" style="width: 120px;">Actions</th>
+                                <th class="text-nowrap">Name</th>
+                                <th class="text-nowrap">Short Name</th>
+                                <th class="text-nowrap">PAN Number</th>
+                                <th class="text-nowrap">Location</th>
+                                <th class="text-nowrap">Contact Number</th>
+                                <th class="text-nowrap">Declaration Given</th>
+                                <th class="text-end text-nowrap">Book Balance</th>
+                                <th class="app-index-actions-cell text-nowrap" style="width: 120px;">Actions</th>
                             </tr>
                         </thead>
                     </table>
@@ -98,6 +108,87 @@
             </div>
         </div>
     </div>
+
+    <!-- Truck Owner Delete Confirmation Modal -->
+<div class="modal fade" id="truckOwnerDeleteModal" tabindex="-1"
+    aria-labelledby="truckOwnerDeleteModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="truckOwnerDeleteModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                    Confirm Delete
+                </h5>
+
+                <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <p>Are you sure you want to delete this truck owner?</p>
+
+                <p>
+                    <strong>Truck Owner Name:</strong>
+                    <span id="deleteTruckOwnerName"></span>
+                </p>
+                <p>
+                  <strong>PAN Number:</strong>
+                  <span id="deleteTruckOwnerPan"></span>
+                </p>
+
+                 <p>
+                   <strong>Contact Number:</strong>
+                   <span id="deleteTruckOwnerContact"></span>
+                 </p>
+
+                <div class="mb-3 mt-3">
+                    <label for="deleteTruckOwnerRemark" class="form-label">
+                        <strong>
+                            Remark <span class="text-danger">*</span>
+                        </strong>
+                    </label>
+
+                    <textarea
+                        id="deleteTruckOwnerRemark"
+                        class="form-control"
+                        rows="4"
+                        placeholder="Enter reason for deletion"></textarea>
+                </div>
+
+                <div id="deleteTruckOwnerRemarkError"
+                    class="text-danger small d-none">
+                    Delete remark is required.
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i>
+                    Cancel
+                </button>
+
+                <button type="button"
+                    class="btn btn-danger"
+                    id="confirmTruckOwnerDelete">
+                    <i class="bi bi-trash"></i>
+                    Confirm Delete
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+</div>
 
     <!-- Advance Payment Modal -->
     <div class="modal fade fb-pay-modal" id="advancePaymentModal" tabindex="-1" aria-labelledby="advancePaymentModalLabel"
@@ -285,7 +376,34 @@
             </div>
         </div>
     </div>
+
+    @include('shared.bulk-upload-modal', [
+        'modalId' => 'bulkUploadModal',
+        'title' => 'Bulk Upload Truck Owners',
+        'recordName' => 'truck owners',
+        'uploadUrl' => route('truck_owners.bulk-upload'),
+        'templateUrl' => route('truck_owners.bulk-upload-template'),
+        'columns' => [
+            ['name' => 'Name', 'format' => 'Name', 'required' => true],
+            ['name' => 'PAN Number', 'format' => 'PAN number', 'required' => true],
+            ['name' => 'Mobile Number', 'format' => '10-digit number', 'required' => true],
+            ['name' => 'PAN Active', 'format' => 'Yes / No', 'required' => true],
+            ['name' => 'Country', 'format' => 'Existing country', 'required' => true],
+            ['name' => 'State', 'format' => 'Existing state', 'required' => true],
+            ['name' => 'City', 'format' => 'Existing city', 'required' => true],
+            ['name' => 'Declaration Given', 'format' => 'Yes / No', 'required' => true],
+            ['name' => 'Email', 'format' => 'Email address', 'required' => false],
+            ['name' => 'GST Number', 'format' => 'GST number', 'required' => false],
+            ['name' => 'Contact Person Name', 'format' => 'Name', 'required' => false],
+            ['name' => 'Address', 'format' => 'Existing address / Text', 'required' => false],
+            ['name' => 'Total Trucks', 'format' => 'Number (<= 10)', 'required' => false],
+            ['name' => 'TDS Percentage', 'format' => 'Number (Auto from PAN. If entered manually, remark is required)', 'required' => false],
+            ['name' => 'TDS Adjustment Remark', 'format' => 'Text (Required if TDS Percentage is entered)', 'required' => false],
+            ['name' => 'Short Name', 'format' => 'Short Name', 'required' => false],
+        ],
+    ])
 @endsection
+
 
 @push('scripts')
     <!-- DataTables JS -->
@@ -1086,58 +1204,90 @@
                 });
             });
 
-            // Handle Delete Truck Owner button click
-            $(document).on('click', '.delete-truck-owner-btn', function() {
-                const truckOwnerId = $(this).data('truck-owner-id');
-                const truckOwnerName = $(this).data('truck-owner-name');
+         
+           // Open Truck Owner Delete Confirmation Modal
+$(document).on('click', '.delete-truck-owner-btn', function() {
 
-                if (confirm(
-                        `Are you sure you want to delete truck owner "${truckOwnerName}"? This action cannot be undone.`
-                    )) {
-                    $.ajax({
-                        url: '/truck_owners/' + truckOwnerId,
-                        type: 'POST',
-                        data: {
-                            '_token': $('meta[name="csrf-token"]').attr('content'),
-                            '_method': 'DELETE'
-                        },
-                        success: function(response) {
-                            // Show success message
-                            $('body').prepend(`
-                        <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
-                            <i class="bi bi-check-circle"></i>
-                            <strong>Success!</strong> Truck owner "${truckOwnerName}" has been deleted successfully.
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    `);
+    const button = $(this);
 
-                            // Auto-hide alert after 5 seconds
-                            setTimeout(function() {
-                                $('.alert-success').fadeOut();
-                            }, 5000);
+    const truckOwnerId = button.data('truck-owner-id');
+    const truckOwnerName = button.data('truck-owner-name');
+    const truckOwnerPan = button.data('truck-owner-pan');
+    const truckOwnerContact = button.data('truck-owner-contact');
+    
+    $('#deleteTruckOwnerName').text(truckOwnerName || '-');
+    $('#deleteTruckOwnerPan').text(truckOwnerPan || '-');
+    $('#deleteTruckOwnerContact').text(truckOwnerContact || '-');
+    
 
-                            // Reload DataTable
-                            $('#truckOwnersTable').DataTable().ajax.reload(null, false);
-                        },
-                        error: function(xhr) {
-                            // Show error message
-                            $('body').prepend(`
-                        <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
-                            <i class="bi bi-exclamation-triangle"></i>
-                            <strong>Error!</strong> Unable to delete truck owner "${truckOwnerName}". Please try again.
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    `);
+    $('#deleteTruckOwnerRemark').val('');
+    $('#deleteTruckOwnerRemarkError').addClass('d-none');
 
-                            setTimeout(function() {
-                                $('.alert-danger').fadeOut();
-                            }, 5000);
-                        }
-                    });
-                }
-            });
-        });
+    $('#confirmTruckOwnerDelete')
+        .data('truck-owner-id', truckOwnerId);
 
+    $('#truckOwnerDeleteModal').modal('show');
+});
+
+
+// Confirm Truck Owner Delete
+$(document).on('click', '#confirmTruckOwnerDelete', function() {
+
+    const button = $(this);
+
+    const truckOwnerId = button.data('truck-owner-id');
+    const remark = $('#deleteTruckOwnerRemark').val().trim();
+
+    if (!remark) {
+        $('#deleteTruckOwnerRemarkError')
+            .removeClass('d-none')
+            .text('Please enter a remark before deleting.');
+
+        return;
+    }
+
+    $('#deleteTruckOwnerRemarkError').addClass('d-none');
+
+    button.prop('disabled', true)
+        .html('<i class="bi bi-hourglass-split"></i> Deleting...');
+
+    $.ajax({
+        url: '/truck_owners/' + truckOwnerId,
+        type: 'POST',
+        data: {
+            '_token': $('meta[name="csrf-token"]').attr('content'),
+            '_method': 'DELETE',
+            'delete_remark': remark
+        },
+
+        success: function(response) {
+            $('#truckOwnerDeleteModal').modal('hide');
+            $('#truckOwnersTable').DataTable().ajax.reload(null, false);
+        },
+
+        error: function(xhr) {
+
+            let message = 'Unable to delete truck owner. Please try again.';
+
+            if (xhr.status === 422 &&
+                xhr.responseJSON?.errors?.delete_remark) {
+
+                message = xhr.responseJSON.errors.delete_remark[0];
+            }
+
+            $('#deleteTruckOwnerRemarkError')
+                .removeClass('d-none')
+                .text(message);
+        },
+
+        complete: function() {
+
+            button.prop('disabled', false)
+                .html('<i class="bi bi-trash"></i> Confirm Delete');
+        }
+    });
+});
+}); 
         // Function to view truck details
         function viewTruckDetails(truckId) {
             // You can implement a truck details modal here or redirect to truck details page

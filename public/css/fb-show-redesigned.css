@@ -456,7 +456,17 @@
 }
 
 .fb-compact-table {
+    width: 100%;
     font-size: 0.8rem;
+    border-collapse: collapse;
+}
+
+.fb-compact-table th,
+.fb-compact-table td,
+.fb-compact-table thead th,
+.fb-compact-table tbody td {
+    white-space: nowrap !important;
+    vertical-align: middle;
 }
 
 .fb-compact-table thead th {
@@ -472,7 +482,35 @@
 
 .fb-compact-table tbody td {
     padding: 0.45rem 0.7rem;
-    vertical-align: middle;
+}
+
+.fb-compact-table .fb-info-grid__sub {
+    white-space: nowrap !important;
+}
+
+.fb-detail-page .table-responsive,
+.fb-detail-page .fb-compact-table-wrap {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+.fb-detail-page .table-responsive::-webkit-scrollbar {
+    height: 6px;
+}
+
+.fb-detail-page .table-responsive::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.fb-detail-page .table-responsive::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.fb-detail-page .table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .fb-combined-table th {

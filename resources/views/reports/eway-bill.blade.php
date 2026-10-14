@@ -11,27 +11,25 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.eway-bill') }}" id="searchForm" onsubmit="validateForm(event)">
-                <div class="row mb-2" style="align-items: end;">
-                    <div class="col-md-3">
-                        <label class="form-label">Start Date <span class="text-danger">*</span></label>
-                        <input type="date" name="start_date" class="form-control" value="{{ $startDate }}" required>
+                <div class="row g-2 align-items-end mb-2">
+                    <div class="col-6 col-md-3">
+                        <label class="form-label small mb-1">Start Date <span class="text-danger">*</span></label>
+                        <input type="date" name="start_date" class="form-control form-control-sm" value="{{ $startDate }}" required>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">End Date <span class="text-danger">*</span></label>
-                        <input type="date" name="end_date" class="form-control" value="{{ $endDate }}" required>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label small mb-1">End Date <span class="text-danger">*</span></label>
+                        <input type="date" name="end_date" class="form-control form-control-sm" value="{{ $endDate }}" required>
                     </div>
-               
 
-               <div class="col-md-4 d-flex align-items-end justify-content-end gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-search"></i> Search
+                    <div class="col-12 col-md-6 d-flex align-items-end justify-content-end gap-1 gap-sm-2 mt-2 mt-md-0">
+                        <button type="submit" class="btn btn-brand-primary btn-sm" title="Search">
+                            <i class="bi bi-search"></i><span class="d-none d-sm-inline ms-1">Search</span>
                         </button>
                         <a href="{{ route('reports.eway-bill') }}?date={{ date('Y-m-d') }}"
-                            class="btn btn-secondary">
-                            <i class="bi bi-arrow-clockwise"></i> Reset
+                            class="btn btn-secondary btn-sm" title="Reset">
+                            <i class="bi bi-arrow-clockwise"></i><span class="d-none d-sm-inline ms-1">Reset</span>
                         </a>
-                    
-                     </div>
+                    </div>
                 </div>
             </form>
         </div>
@@ -53,15 +51,16 @@
                         <h3 class="card-title mb-0">Eway Bill Report</h3>
                     </div>
                     <div class="d-flex">
-                        <a class="btn btn-warning ms-2"
+                        <a class="btn btn-warning btn-sm ms-2"
                             href="{{ route('reports.eway-bill-export', ['start_date' => $startDate, 'end_date' => $endDate]) }}">
-                            <i class="bi bi-file-earmark-spreadsheet"></i> Export
+                            <i class="bi bi-file-earmark-spreadsheet"></i> <span class="d-none d-sm-inline ms-1">Export</span>
                         </a>
                     </div>
                 </div>
             </div>
-            <div class="card-body" style="overflow-x: auto;">
-                <table class="table table-bordered table-striped" style="font-size: 12px !important;">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover align-middle mb-0 text-nowrap small">
                     <thead>
                         <tr>
                             <th>Sr No</th>
@@ -81,11 +80,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($frs as $index => $freightBooking)
+                        @foreach ($frs as $index => $item)
                             @php
-                                // Get the first freight booking (or null if none exists)
-                                // $freightBooking = $lr->freightBookings->first();
-                                $lr = $freightBooking->lr;
+                                $freightBooking = $item instanceof \App\Models\EwayBill ? $item->freightBooking : $item;
+                                $ewayBill = $item instanceof \App\Models\EwayBill ? $item : $item->ewayBills?->first();
+                                $lr = $freightBooking?->lr;
+                                $transporter = $freightBooking?->transporter ?? $lr?->transporter;
 
                                 // Initialize payments array with all payment types
                                 $payments = [
@@ -121,24 +121,24 @@
                             @endphp
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td>{{ $lr->lr_number }}</td>
-                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}
-                                </td>
+                                <td>{{ $lr->lr_number ?? 'N/A' }}</td>
+                                <td style="white-space: nowrap;">{{ $lr && $lr->gr_date ? \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') : '—' }}</td>
                                 <td>{{ $lr->truck->truck_number ?? 'N/A' }}</td>
-                                <td>{{ $lr->weight }}</td>
-                                <td>{{ $lr->fr_rate }}</td>
-                                <td>{{ $lr->amount }}</td>
+                                <td>{{ $lr->weight ?? '—' }}</td>
+                                <td>{{ $lr->fr_rate ?? '—' }}</td>
+                                <td>{{ $lr->amount ?? '—' }}</td>
                                 <td>{{ $lr->consignor->name ?? 'N/A' }}</td>
                                 <td>{{ $lr->consignee->name ?? 'N/A' }}</td>
-                                <td>{{ $lr->destination_city }}</td>
-                                <td>{{ $freightBooking->eway_bill_number ?? '0' }}</td>
-                                <td>{{ $freightBooking->eway_bill_expiry ?? '0' }}</td>
-                                <td>{{ $lr->transporter->name ?? 'N/A' }}</td>
-                                <td>{{ $lr->transporter->mobile_number ?? 'N/A' }}</td>
+                                <td>{{ $lr->destination_city ?? '—' }}</td>
+                                <td>{{ $ewayBill?->eway_bill_number ?? ($freightBooking?->eway_bill_number ?? '0') }}</td>
+                                <td>{{ $ewayBill?->eway_bill_expiry ? \Carbon\Carbon::parse($ewayBill->eway_bill_expiry)->format('d-m-Y') : ($freightBooking?->eway_bill_expiry ?? '0') }}</td>
+                                <td>{{ $transporter->name ?? 'N/A' }}</td>
+                                <td>{{ $transporter->mobile_number ?? 'N/A' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
+                </div>
             </div>
             <div class="mt-3 d-flex justify-content-end">
                 {{ $frs->links() }}

@@ -304,4 +304,10 @@
             justify-content: space-between;
         }
     }
+
+    @media (max-width: 575.98px) {
+        .linked-lr-card .lrf-grid--6 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
 </style>
