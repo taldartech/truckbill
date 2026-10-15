@@ -12,9 +12,7 @@ use App\Models\State;
 use App\Models\Transporter;
 use App\Models\TransporterMaster;
 use App\Models\Truck;
-use App\Models\User;
 use App\Services\FreightBookingTdsSync;
-use App\Services\Notifications\TransporterOnboardingNotificationService;
 use App\Services\TransporterTdsCalculator;
 use App\Services\TransporterTdsRefresh;
 use Carbon\Carbon;
@@ -30,7 +28,6 @@ use Illuminate\Support\Facades\Validator;
 class TransporterController extends Controller
 {
     public function __construct(
-        private readonly TransporterOnboardingNotificationService $transporterOnboardingNotificationService,
         private readonly TransporterTdsCalculator $tdsCalculator,
         private readonly FreightBookingTdsSync $freightBookingTdsSync,
         private readonly TransporterTdsRefresh $transporterTdsRefresh,
@@ -610,7 +607,7 @@ public function bulkUploadTemplate()
 
         $email = TransporterMaster::normalizeEmail($validated['email'] ?? null);
 
-        $onboardingData = DB::transaction(function () use ($validated, $declarationGiven, $email, $dummyPan, $request) {
+        DB::transaction(function () use ($validated, $declarationGiven, $email, $dummyPan, $request) {
             $masterData = [
                 'name' => $validated['name'],
                 'email' => $email,
@@ -661,33 +658,9 @@ public function bulkUploadTemplate()
                 'msme_reg_no' => $request->input('msme_reg_no'),
             ];
             Transporter::create($transporterData);
-
-            if ($email !== null) {
-                $transporterRoleId = \DB::table('user_roles')->where('name', 'transporter')->value('id');
-                User::create([
-                    'name' => $master->name,
-                    'email' => $master->email,
-                    'password' => bcrypt($validated['mobile_number']),
-                    'user_role_id' => $transporterRoleId,
-                    'company_id' => null,
-                    'transporter_master_id' => $master->id,
-                ]);
-            }
-
-            return [
-                'email' => $master->email,
-                'name' => $master->name,
-                'notifiable' => $email !== null,
-            ];
         });
 
-        if ($onboardingData['notifiable']) {
-            $this->transporterOnboardingNotificationService->sendAccountCreated($onboardingData['email'], $onboardingData['name']);
-
-            return redirect()->route('transporters.index')->with('success', 'Transporter created successfully! An account notification has been sent to '.$onboardingData['email']);
-        }
-
-        return redirect()->route('transporters.index')->with('success', 'Transporter created successfully. No email was provided, so notifications were not sent.');
+        return redirect()->route('transporters.index')->with('success', 'Transporter created successfully!');
     }
 
     public function edit(Transporter $transporter)

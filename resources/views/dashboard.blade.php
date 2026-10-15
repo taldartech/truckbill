@@ -19,16 +19,8 @@
     @endif
 
     <div class="dashboard-page">
-        @php
-            $userRole = auth()->user()->userRole->name;
-        @endphp
-
         @if (isset($dashboardView) && in_array($dashboardView, ['master_admin', 'super_admin', 'admin', 'moderator', 'accountant'], true))
             @include('dashboard.roles.'.$dashboardView)
-        @elseif ($userRole === 'transporter' && isset($transporterStats))
-            @include('dashboard.roles.transporter')
-        @elseif ($userRole === 'customer' && isset($customerStats))
-            @include('dashboard.roles.customer')
         @else
             <div class="dashboard-panel">
                 <div class="dashboard-panel__body">

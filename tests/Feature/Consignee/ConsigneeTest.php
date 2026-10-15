@@ -10,6 +10,7 @@ use App\Models\State;
 use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class ConsigneeTest extends TestCase
@@ -88,6 +89,39 @@ class ConsigneeTest extends TestCase
             'company_id' => $user->company_id,
             'city_id' => $city->id,
         ]);
+    }
+
+    public function test_store_with_email_creates_no_customer_login_and_sends_no_mail(): void
+    {
+        Mail::fake();
+        $user = $this->makeUser('admin');
+        [$country, $state, $city] = $this->seedGeo();
+        $usersBefore = User::query()->count();
+
+        $this->actingAs($user)->post('/consignees', [
+            'name' => 'Portal-free Ltd',
+            'address' => '123 Street',
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+            'contact_number' => '9876543211',
+            'email' => 'accounts@portalfree.test',
+        ])->assertRedirect(route('consignees.index'))
+            ->assertSessionHas('success', 'Customer created successfully!');
+
+        $this->assertSame($usersBefore, User::query()->count());
+        $this->assertDatabaseMissing('users', ['email' => 'accounts@portalfree.test']);
+        Mail::assertNothingSent();
+        Mail::assertNothingQueued();
+    }
+
+    public function test_portal_routes_no_longer_exist(): void
+    {
+        $user = $this->makeUser('admin');
+
+        foreach (['/transporter/payments', '/transporter/freight-bookings', '/customer/invoices', '/customer/lorry-receipts'] as $uri) {
+            $this->actingAs($user)->get($uri)->assertNotFound();
+        }
     }
 
     public function test_store_enforces_uniqueness_per_company(): void

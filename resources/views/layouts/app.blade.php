@@ -753,47 +753,7 @@
                                 </a>
                             </li>
                         @endif
-                        @if (auth()->check() && auth()->user()->userRole->name === 'transporter')
-                            <li class="nav-header">My Work</li>
-                            <li class="nav-item">
-                                <a href="{{ route('transporter.freight_bookings.index') }}" class="nav-link{{ Request::is('transporter/freight-bookings*') ? ' active' : '' }}">
-                                    <i class="nav-icon fas fa-shipping-fast"></i>
-                                    <p>My Lorry Hires</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('transporter.payments.index') }}" class="nav-link{{ Request::is('transporter/payments*') ? ' active' : '' }}">
-                                    <i class="nav-icon fas fa-indian-rupee-sign"></i>
-                                    <p>My Payments</p>
-                                </a>
-                            </li>
-                        @elseif (auth()->check() && auth()->user()->userRole->name === 'customer')
-                            <li class="nav-header">My Work</li>
-                            <li class="nav-item">
-                                <a href="{{ route('customer.lorry-receipts.index') }}" class="nav-link{{ Request::is('customer/lorry-receipts*') ? ' active' : '' }}">
-                                    <i class="nav-icon fas fa-file-alt"></i>
-                                    <p>My Bilty</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('customer.invoices.index') }}" class="nav-link{{ Request::is('customer/invoices*') ? ' active' : '' }}">
-                                    <i class="nav-icon fas fa-file-invoice-dollar"></i>
-                                    <p>My Invoices</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('customer.payments.index') }}" class="nav-link{{ Request::is('customer/payments*') ? ' active' : '' }}">
-                                    <i class="nav-icon fas fa-wallet"></i>
-                                    <p>Invoice Payments</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('customer.transporters.index') }}" class="nav-link{{ Request::is('customer/transporters*') ? ' active' : '' }}">
-                                    <i class="nav-icon fas fa-building"></i>
-                                    <p>Associated Companies</p>
-                                </a>
-                            </li>
-                        @elseif (auth()->check() && auth()->user()->userRole->name === 'master_admin')
+                        @if (auth()->check() && auth()->user()->userRole->name === 'master_admin')
                             <li class="nav-header">Platform</li>
                             <li class="nav-item">
                                 <a href="/users" class="nav-link{{ Request::is('users*') ? ' active' : '' }}">

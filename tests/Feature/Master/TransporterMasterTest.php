@@ -27,7 +27,6 @@ class TransporterMasterTest extends TestCase
         UserRole::create(['id' => 3, 'name' => 'admin']);
         UserRole::create(['id' => 4, 'name' => 'moderator']);
         UserRole::create(['id' => 5, 'name' => 'accountant']);
-        UserRole::create(['id' => 6, 'name' => 'transporter']);
     }
 
     protected function makeUser(string $role): User
@@ -196,39 +195,5 @@ class TransporterMasterTest extends TestCase
             ->assertSee('Associated Companies')
             ->assertSee('Alpha Transport Co')
             ->assertSee('Beta Logistics');
-    }
-
-    public function test_update_syncs_linked_portal_user(): void
-    {
-        $masterAdmin = $this->makeUser('master_admin');
-        $transporterMaster = TransporterMaster::factory()->create([
-            'name' => 'Portal Transporter',
-            'email' => 'portal@example.com',
-        ]);
-
-        $portalUser = User::factory()->create([
-            'name' => 'Portal Transporter',
-            'email' => 'portal@example.com',
-            'user_role_id' => UserRole::where('name', 'transporter')->value('id'),
-            'company_id' => null,
-            'transporter_master_id' => $transporterMaster->id,
-        ]);
-
-        $this->actingAs($masterAdmin)
-            ->put(route('master.transporter-masters.update', $transporterMaster), [
-                'name' => 'Portal Transporter Updated',
-                'email' => 'portal.updated@example.com',
-                'pan_number' => $transporterMaster->pan_number,
-                'gst_number' => null,
-                'gst_type' => null,
-                'pan_active' => '1',
-                'address' => null,
-            ])
-            ->assertRedirect(route('master.transporter-masters.index'));
-
-        $portalUser->refresh();
-
-        $this->assertSame('Portal Transporter Updated', $portalUser->name);
-        $this->assertSame('portal.updated@example.com', $portalUser->email);
     }
 }

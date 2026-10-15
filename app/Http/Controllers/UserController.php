@@ -346,7 +346,6 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $authUser = Auth::user();
-        $user->loadMissing('consignees');
 
         // Check authorization
         if (!$this->canManageUser($authUser, $user)) {
@@ -509,10 +508,6 @@ class UserController extends Controller
             $companyIds = Company::where('user_id', $authUser->id)->pluck('id')->toArray();
             if ($targetUser->company_id !== null) {
                 return in_array($targetUser->company_id, $companyIds);
-            }
-
-            if ($targetUser->userRole?->name === 'customer') {
-                return $targetUser->consignees()->whereIn('company_id', $companyIds)->exists();
             }
 
             return false;
