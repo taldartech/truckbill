@@ -65,7 +65,7 @@
                         </div>
                         <div class="app-form-section__body">
                             <div class="row g-2 mb-2">
-                                <div class="col-md-4">
+                                <div class="col-12 col-md-4">
                                     <label for="quick_customer_country_id" class="form-label">Country *</label>
                                     <select class="form-select" id="quick_customer_country_id" name="country_id" required>
                                         <option value="">Select Country</option>
@@ -74,25 +74,25 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-6 col-md-4">
                                     <label for="quick_customer_state_id" class="form-label">State *</label>
                                     <div class="input-group">
                                         <select class="form-select" id="quick_customer_state_id" name="state_id" required>
                                             <option value="">Select State</option>
                                         </select>
-                                        <button type="button" class="btn btn-brand-primary" id="openQuickAddStateBtn"
+                                        <button type="button" class="btn btn-brand-primary px-2" id="openQuickAddStateBtn"
                                             title="Add New State">
                                             <i class="bi bi-plus"></i>
                                         </button>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-6 col-md-4">
                                     <label for="quick_customer_city_id" class="form-label">City *</label>
                                     <div class="input-group">
                                         <select class="form-select" id="quick_customer_city_id" name="city_id" required>
                                             <option value="">Select City</option>
                                         </select>
-                                        <button type="button" class="btn btn-brand-primary" id="openQuickAddCityBtn"
+                                        <button type="button" class="btn btn-brand-primary px-2" id="openQuickAddCityBtn"
                                             title="Add New City">
                                             <i class="bi bi-plus"></i>
                                         </button>
@@ -100,7 +100,7 @@
                                 </div>
                             </div>
                             <div class="row g-2">
-                                <div class="col-md-8">
+                                <div class="col-12 col-md-8">
                                     <label for="quick_customer_address" class="form-label">Address</label>
                                     <input type="text" class="form-control" id="quick_customer_address" name="address"
                                         placeholder="Enter Address">

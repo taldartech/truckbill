@@ -45,11 +45,116 @@
         align-items: center;
         white-space: nowrap;
     }
+
+    /* Mobile view adjustments */
+    @media (max-width: 767.98px) {
+        .card-header .card-title,
+        .card-header .h4 {
+            font-size: 0.88rem !important;
+            font-weight: 600 !important;
+        }
+
+        h5, .h5 {
+            font-size: 0.76rem !important;
+            font-weight: 700 !important;
+            margin-bottom: 0.3rem !important;
+        }
+
+        label,
+        .form-label,
+        [class*="col-"] > label {
+            font-size: 0.68rem !important;
+            font-weight: 600 !important;
+            margin-bottom: 0.12rem !important;
+            line-height: 1.25 !important;
+            color: #334155 !important;
+            display: inline-block !important;
+        }
+
+        .form-control, .form-select {
+            font-size: 0.72rem !important;
+            padding: 0.2rem 0.45rem !important;
+            min-height: 29px !important;
+            height: 29px !important;
+            border-radius: 0.35rem !important;
+            line-height: 1.2 !important;
+        }
+
+        .driver-joined-group .select2-container .select2-selection--single {
+            height: 29px !important;
+            min-height: 29px !important;
+            font-size: 0.72rem !important;
+        }
+
+        .driver-joined-group .select2-selection--single .select2-selection__rendered {
+            line-height: 27px !important;
+            font-size: 0.72rem !important;
+            padding-left: 0.45rem !important;
+        }
+
+        .driver-joined-group .btn {
+            height: 29px !important;
+            font-size: 0.70rem !important;
+            padding: 0.2rem 0.5rem !important;
+        }
+
+        .card.bg-light {
+            padding: 0.45rem 0.55rem !important;
+            border-radius: 0.4rem !important;
+        }
+
+        .card-body {
+            padding: 0.5rem 0.55rem !important;
+        }
+
+        .row.mb-3 {
+            margin-bottom: 0.35rem !important;
+        }
+
+        .row.mb-3 > [class*="col-"] {
+            margin-bottom: 0.35rem !important;
+        }
+
+        .btn,
+        .btn-brand-primary,
+        .btn-back,
+        .btn-primary,
+        .btn-secondary {
+            font-size: 0.72rem !important;
+            font-weight: 600 !important;
+            padding: 0.28rem 0.55rem !important;
+            min-height: 29px !important;
+            height: auto !important;
+            line-height: 1.25 !important;
+            border-radius: 0.375rem !important;
+            white-space: nowrap !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.25rem !important;
+        }
+
+        .btn i,
+        .btn-brand-primary i,
+        .btn-back i {
+            font-size: 0.70rem !important;
+            margin: 0 !important;
+        }
+
+        .small, small, .text-muted {
+            font-size: 0.64rem !important;
+        }
+
+        .text-danger, .invalid-feedback {
+            font-size: 0.64rem !important;
+            margin-top: 0.1rem !important;
+        }
+    }
 </style>
 <div class="container-fluid px-2 px-md-3 mt-3 mt-md-4">
     <div class="row justify-content-center">
         <div class="col-12 col-lg-10 col-xl-8">
-            <div class="card card-info card-outline mb-4">
+            <div class="card card-info card-outline mb-4 entity-edit-card">
                 <div class="card-header">
                     <div class="card-title">Edit Truck</div>
                 </div>
@@ -131,11 +236,11 @@
                                 </div>
                             </div>
                             <div class="row g-2">
-                                <div class="col-md-4">
-                                    <button type="submit" class="btn btn-brand-primary w-100 mb-2">💾 Update Truck</button>
+                                <div class="col-6 col-md-4">
+                                    <button type="submit" class="btn btn-brand-primary w-100 mb-0">💾 Update Truck</button>
                                 </div>
-                                <div class="col-md-4">
-                                    <a href="{{ route('trucks.index') }}" class="btn btn-back w-100 mb-2">📄 Back to List</a>
+                                <div class="col-6 col-md-4">
+                                    <a href="{{ route('trucks.index') }}" class="btn btn-back w-100 mb-0">📄 Back to List</a>
                                 </div>
                             </div>
                         </div>

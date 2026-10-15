@@ -80,6 +80,9 @@
         color: #fff;
         font-weight: 600;
         border-radius: 10px;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
     }
 
     #{{ $modalId }} .bulk-template-btn:hover {
@@ -338,16 +341,47 @@
             grid-template-columns: 1fr;
         }
 
+        #{{ $modalId }} .modal-header,
         #{{ $modalId }} .bulk-upload-header {
-            padding: 12px 14px;
+            padding: 10px 12px !important;
+            gap: 8px;
         }
 
-        #{{ $modalId }} .bulk-upload-header .d-flex {
+        #{{ $modalId }} .modal-title,
+        #{{ $modalId }} .bulk-upload-title {
+            font-size: 13.5px !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+
+        #{{ $modalId }} .modal-header .d-flex {
             gap: 6px !important;
+            flex-shrink: 0;
         }
 
         #{{ $modalId }} .bulk-template-btn {
-            font-size: 13px;
+            font-size: 11.5px !important;
+            padding: 4px 8px !important;
+            border-radius: 6px !important;
+            white-space: nowrap !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            line-height: 1.2 !important;
+        }
+
+        #{{ $modalId }} .bulk-template-btn i {
+            font-size: 11px !important;
+            margin-right: 3px !important;
+        }
+
+        #{{ $modalId }} .modal-header .btn-close {
+            font-size: 11px !important;
+            padding: 4px !important;
+            margin: 0 !important;
+            flex-shrink: 0;
         }
     }
 </style>
@@ -367,22 +401,18 @@
                  HEADER
             ============================================================= --}}
 
-      <div class="modal-header px-4 py-3">
+      <div class="modal-header bulk-upload-header px-3 py-2 px-md-4 py-md-3">
 
-    <h4 class="modal-title fw-bold mb-0">
+    <h4 class="modal-title bulk-upload-title fw-bold mb-0">
         <i class="fas fa-upload me-2 text-success"></i>
         {{ \Illuminate\Support\Str::startsWith($title ?? '', 'Bulk Upload') ? ($title ?? '') : 'Bulk Upload ' . ($title ?? '') }}
     </h4>
 
-    <div class="d-flex align-items-center ms-auto gap-3">
+    <div class="d-flex align-items-center ms-auto gap-2 gap-md-3">
 
-      <a href="{{ $templateUrl }}"
-   class="btn bulk-template-btn">
-
-    <i class="fas fa-download me-1"></i>
-    Download Template
-
-</a>
+        <a href="{{ $templateUrl }}" class="btn bulk-template-btn">
+            <i class="fas fa-download me-1"></i>Download Template
+        </a>
 
         <button type="button"
                 class="btn-close"

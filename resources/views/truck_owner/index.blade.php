@@ -860,10 +860,10 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
-                                        <div class="col-md-6">
+                                        <div class="col-6">
                                             <p class="mb-1"><strong>Created:</strong> ${data.created_at}</p>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-6">
                                             <p class="mb-1"><strong>Last Updated:</strong> ${data.updated_at}</p>
                                         </div>
                                     </div>

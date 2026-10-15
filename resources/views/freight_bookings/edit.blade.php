@@ -434,10 +434,21 @@
 
                     <div class="lrf-section__body" id="fbOptionalBody">
                     
-                    <div class="lrf-grid lrf-grid--4">
-                       <div class="lrf-pf" style="grid-column: span 2;">
-    <label class="lrf-pf__lbl">E-Way Bills</label>
-    <div id="ewayBillsContainer">
+                    <div class="lrf-grid lrf-grid--4 fb-optional-grid">
+                        <div class="lrf-pf fb-eway-col" style="grid-column: span 2;">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="lrf-pf__lbl mb-0">E-Way Bills</label>
+                                @if(!$is_delivered)
+                                <button
+                                    type="button"
+                                    id="addEwayBill"
+                                    class="btn btn-outline-primary btn-sm"
+                                >
+                                    <i class="bi bi-plus-lg me-1"></i> Add E-Way Bill
+                                </button>
+                                @endif
+                            </div>
+                            <div id="ewayBillsContainer">
         @forelse($freightBooking->ewayBills as $index => $ewayBill)
             <div class="eway-bill-row d-flex gap-2 mb-2">
                 <input
@@ -445,20 +456,31 @@
                     name="eway_bills[{{ $index }}][id]"
                     value="{{ $ewayBill->id }}"
                 >
-                <input
-                    type="text"
-                    name="eway_bills[{{ $index }}][eway_bill_number]"
-                    class="form-control"
-                    value="{{ old('eway_bills.' . $index . '.eway_bill_number', $ewayBill->eway_bill_number) }}"
-                    placeholder="E-Way Bill Number"
-                    {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
-                    {{ $disabledAttr }}
-                >
+                <div class="input-group">
+                    <input
+                        type="text"
+                        name="eway_bills[{{ $index }}][eway_bill_number]"
+                        class="form-control"
+                        value="{{ old('eway_bills.' . $index . '.eway_bill_number', $ewayBill->eway_bill_number) }}"
+                        placeholder="E-Way Bill Number"
+                        {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
+                        {{ $disabledAttr }}
+                    >
+                    <a 
+                        href="https://ewaybillgst.gov.in/Login.aspx"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn-outline-success eway-portal-btn"
+                        title="Create E-Way Bill"
+                    >
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
                 <input
                     type="date"
                     name="eway_bills[{{ $index }}][eway_bill_expiry]"
-                    class="form-control"
-                   value="{{ old('eway_bills.' . $index . '.eway_bill_expiry', $ewayBill->eway_bill_expiry?->format('Y-m-d')) }}"
+                    class="form-control eway-expiry-input"
+                    value="{{ old('eway_bills.' . $index . '.eway_bill_expiry', $ewayBill->eway_bill_expiry?->format('Y-m-d')) }}"
                     {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
                     {{ $disabledAttr }}
                 >
@@ -466,25 +488,36 @@
                     <button
                         type="button"
                         class="btn btn-outline-danger remove-eway-bill"
-                       >
-                        Remove
+                    >
+                        <i class="bi bi-trash"></i> <span>Remove</span>
                     </button>
                 @endif
             </div>
         @empty
             <div class="eway-bill-row d-flex gap-2 mb-2">
-                <input
-                    type="text"
-                    name="eway_bills[0][eway_bill_number]"
-                    class="form-control"
-                    placeholder="E-Way Bill Number"
-                    {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
-                    {{ $disabledAttr }}
-                >
+                <div class="input-group">
+                    <input
+                        type="text"
+                        name="eway_bills[0][eway_bill_number]"
+                        class="form-control"
+                        placeholder="E-Way Bill Number"
+                        {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
+                        {{ $disabledAttr }}
+                    >
+                    <a 
+                        href="https://ewaybillgst.gov.in/Login.aspx"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn-outline-success eway-portal-btn"
+                        title="Create E-Way Bill"
+                    >
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
                 <input
                     type="date"
                     name="eway_bills[0][eway_bill_expiry]"
-                    class="form-control"
+                    class="form-control eway-expiry-input"
                     {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
                     {{ $disabledAttr }}
                 >
@@ -492,23 +525,14 @@
                     <button
                         type="button"
                         class="btn btn-outline-danger remove-eway-bill"
-                        >
-                        Remove
+                    >
+                        <i class="bi bi-trash"></i> <span>Remove</span>
                     </button>
                 @endif
             </div>
         @endforelse
       </div>
-       @if(!$is_delivered)
-       <button
-            type="button"
-            id="addEwayBill"
-            class="btn btn-outline-primary btn-sm mt-1"
-             >
-            + Add E-Way Bill
-         </button>
-          @endif
-         </div>
+    </div>
                         <div class="lrf-pf" style="grid-column: span 2;">
                             <label for="remark" class="lrf-pf__lbl">Remark</label>
                             <input type="text" name="remark" id="remark"
@@ -1417,24 +1441,35 @@ if (addEwayBillBtn && ewayBillsContainer) {
         row.className = 'eway-bill-row d-flex gap-2 mb-2';
 
         row.innerHTML = `
-            <input
-                type="text"
-                name="eway_bills[${ewayBillIndex}][eway_bill_number]"
-                class="form-control"
-                placeholder="E-Way Bill Number"
-            >
+            <div class="input-group">
+                <input
+                    type="text"
+                    name="eway_bills[${ewayBillIndex}][eway_bill_number]"
+                    class="form-control"
+                    placeholder="E-Way Bill Number"
+                >
+                <a 
+                    href="https://ewaybillgst.gov.in/Login.aspx"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn btn-outline-success eway-portal-btn"
+                    title="Create E-Way Bill"
+                >
+                    <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+            </div>
 
             <input
                 type="date"
                 name="eway_bills[${ewayBillIndex}][eway_bill_expiry]"
-                class="form-control"
+                class="form-control eway-expiry-input"
             >
 
             <button
                 type="button"
                 class="btn btn-outline-danger remove-eway-bill"
             >
-                Remove
+                <i class="bi bi-trash"></i> <span>Remove</span>
             </button>
         `;
 
@@ -1443,7 +1478,7 @@ if (addEwayBillBtn && ewayBillsContainer) {
     });
 
     ewayBillsContainer.addEventListener('click', function (event) {
-        if (event.target.classList.contains('remove-eway-bill')) {
+        if (event.target.closest('.remove-eway-bill')) {
             const row = event.target.closest('.eway-bill-row');
 
             if (!row) {

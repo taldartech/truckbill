@@ -16,11 +16,36 @@
         background-color: #fff3cd !important;
     }
 
+    .linked-lr-form .select2-container .select2-selection--single,
+    .linked-lr-form .select2-container--bootstrap-5 .select2-selection--single {
+        height: 34px !important;
+        min-height: 34px !important;
+        padding: 0.2rem 0.5rem !important;
+        display: flex !important;
+        align-items: center !important;
+        border-radius: 8px !important;
+        border-color: #e2e8f0 !important;
+    }
+
+    .linked-lr-form .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered,
+    .linked-lr-form .select2-container .select2-selection--single .select2-selection__rendered,
     .linked-lr-form .lr-payee-select-wrap .select2-selection--single .select2-selection__rendered {
-        white-space: normal;
-        word-break: break-word;
-        overflow-wrap: anywhere;
-        text-overflow: clip;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        line-height: normal !important;
+        padding-left: 0 !important;
+        padding-right: 1.25rem !important;
+        font-size: 0.78rem !important;
+    }
+
+    .linked-lr-form .select2-container--bootstrap-5 .select2-selection--single .select2-selection__placeholder,
+    .linked-lr-form .select2-container .select2-selection--single .select2-selection__placeholder {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        color: #94a3b8 !important;
+        font-size: 0.76rem !important;
     }
 
     .linked-lr-card {
@@ -292,22 +317,202 @@
 
     @media (max-width: 767.98px) {
         .linked-lr-summary {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 6px !important;
+            padding: 8px 10px !important;
+        }
+
+        .linked-lr-summary > .linked-lr-summary__item:last-child {
+            grid-column: auto !important;
+        }
+
+        .linked-lr-summary__hint {
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            line-height: 1.15 !important;
+            word-break: normal !important;
         }
 
         .linked-lr-card__header {
-            flex-direction: column;
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 0.5rem !important;
+            padding: 6px 10px !important;
+            min-width: 0 !important;
+        }
+
+        .linked-lr-card__title {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.4rem !important;
+            min-width: 0 !important;
+            flex: 1 1 0% !important;
+            overflow: hidden !important;
+        }
+
+        .linked-lr-card__title > .min-w-0,
+        .linked-lr-card__title .min-w-0 {
+            min-width: 0 !important;
+            flex: 1 1 0% !important;
+            overflow: hidden !important;
+            width: 100% !important;
+        }
+
+        .linked-lr-card__title h6 {
+            margin: 0 !important;
+            font-size: 0.78rem !important;
+            font-weight: 700 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            line-height: 1.2 !important;
+        }
+
+        .linked-lr-route-preview {
+            font-size: 0.62rem !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            display: block !important;
+            max-width: 100% !important;
+            line-height: 1.2 !important;
+            margin-top: 1px !important;
         }
 
         .linked-lr-card__meta {
-            width: 100%;
-            justify-content: space-between;
+            width: auto !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 0.35rem !important;
+            flex-shrink: 0 !important;
+            margin-left: auto !important;
+        }
+
+        .linked-lr-amount-badge {
+            font-size: 0.70rem !important;
+            padding: 0.18rem 0.45rem !important;
+            line-height: 1.2 !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+        }
+
+        .remove-lr-item {
+            width: 26px !important;
+            height: 26px !important;
+            min-width: 26px !important;
+            padding: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 0.72rem !important;
+            border-radius: 6px !important;
+            flex-shrink: 0 !important;
+        }
+
+        .linked-lr-card .lrf-grid--7 {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 8px 6px !important;
+        }
+
+        .linked-lr-card .lrf-grid--7 > .lrf-pf:last-child {
+            grid-column: span 2 !important;
         }
     }
 
     @media (max-width: 575.98px) {
-        .linked-lr-card .lrf-grid--6 {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+        .linked-lr-card .lrf-grid--6,
+        .linked-lr-card .lrf-grid--4 {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 8px 6px !important;
+        }
+
+        .linked-lr-card__body {
+            padding: 6px 8px 8px !important;
+        }
+
+        .linked-lr-subsection + .linked-lr-subsection {
+            margin-top: 6px !important;
+            padding-top: 6px !important;
+        }
+
+        .linked-lr-subsection__label {
+            font-size: 0.60rem !important;
+            margin-bottom: 4px !important;
+        }
+
+        .linked-lr-summary__item {
+            padding: 4px 6px !important;
+            min-width: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            text-align: center !important;
+        }
+
+        .linked-lr-summary__label {
+            font-size: 0.54rem !important;
+            margin-bottom: 1px !important;
+            white-space: nowrap !important;
+        }
+
+        .linked-lr-summary__value {
+            font-size: 0.84rem !important;
+            white-space: nowrap !important;
+        }
+
+        .linked-lr-summary__hint {
+            font-size: 0.54rem !important;
+            line-height: 1.15 !important;
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            word-break: normal !important;
+            display: block !important;
+            margin-top: 2px !important;
+            text-align: center !important;
+        }
+
+        .lrf-receipt-card {
+            padding: 8px 10px !important;
+        }
+
+        .lrf-receipt-card__title {
+            font-size: 0.68rem !important;
+            margin-bottom: 6px !important;
+        }
+
+        .linked-lr-form .lrf-pf__lbl,
+        .linked-lr-card .lrf-pf__lbl {
+            font-size: 0.72rem !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+
+        .linked-lr-form .lrf-quick-add {
+            font-size: 0.68rem !important;
+        }
+
+        .linked-lr-form .lrf-pay-pill {
+            font-size: 0.68rem !important;
+            padding: 0 0.2rem !important;
+        }
+
+        .linked-lr-form .form-control,
+        .linked-lr-form .form-select,
+        .linked-lr-form .select2-container .select2-selection--single,
+        .linked-lr-form .select2-container--bootstrap-5 .select2-selection--single {
+            font-size: 0.76rem !important;
+            height: 32px !important;
+            min-height: 32px !important;
+        }
+
+        .linked-lr-page {
+            padding: 8px 6px 16px !important;
         }
     }
 </style>

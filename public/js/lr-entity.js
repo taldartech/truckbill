@@ -154,7 +154,7 @@
         </div>
 
         <div class="lrf-confirm__address">
-          <span class="lrf-confirm__fact-label">Address</span>
+          <span class="lrf-confirm__fact-label">Address:</span>
           <span class="lrf-confirm__fact-value ${isUnset(address) ? 'is-unset' : ''}">${escapeHtml(address)}</span>
         </div>
       </div>
@@ -170,29 +170,30 @@
     style.id = 'lrf-confirm-modal-styles';
     style.textContent = `
       .lrf-swal-popup {
-        border-radius: 16px !important;
+        border-radius: 14px !important;
         padding: 0 !important;
-        width: min(560px, 94vw) !important;
-        box-shadow: 0 18px 50px rgba(15, 23, 42, 0.18) !important;
+        width: min(520px, 94vw) !important;
+        max-width: 95vw !important;
+        box-shadow: 0 16px 45px rgba(15, 23, 42, 0.2) !important;
         overflow: hidden;
       }
       .lrf-swal-title {
         margin: 0 !important;
-        padding: 1rem 1.15rem 0.35rem !important;
-        font-size: 1.05rem !important;
+        padding: 0.75rem 1rem 0.25rem !important;
+        font-size: 0.95rem !important;
         font-weight: 800 !important;
         color: #0f172a !important;
         text-align: left !important;
       }
       .lrf-swal-html {
         margin: 0 !important;
-        padding: 0 1.15rem 0.35rem !important;
+        padding: 0 1rem 0.25rem !important;
         text-align: left !important;
       }
       .lrf-swal-actions {
         margin: 0 !important;
-        padding: 0.85rem 1.15rem 1.1rem !important;
-        gap: 0.55rem !important;
+        padding: 0.55rem 1rem 0.8rem !important;
+        gap: 0.45rem !important;
         width: 100% !important;
         justify-content: stretch !important;
       }
@@ -200,10 +201,10 @@
       .lrf-swal-cancel {
         flex: 1 1 0 !important;
         margin: 0 !important;
-        border-radius: 10px !important;
+        border-radius: 8px !important;
         font-weight: 700 !important;
-        font-size: 0.875rem !important;
-        padding: 0.65rem 0.9rem !important;
+        font-size: 0.82rem !important;
+        padding: 0.5rem 0.75rem !important;
         box-shadow: none !important;
       }
       .lrf-swal-confirm {
@@ -234,47 +235,51 @@
       }
       .lrf-confirm__hero {
         display: flex;
-        gap: 0.75rem;
+        gap: 0.6rem;
         align-items: center;
-        padding: 0.85rem 0.9rem;
-        border-radius: 12px;
+        padding: 0.5rem 0.7rem;
+        border-radius: 10px;
         background: linear-gradient(135deg, rgba(47,179,111,0.12) 0%, rgba(45,140,255,0.06) 55%, #f8fafc 100%);
         border: 1px solid rgba(47,179,111,0.18);
-        margin-bottom: 0.85rem;
+        margin-bottom: 0.45rem;
       }
       .lrf-confirm__avatar {
-        width: 42px;
-        height: 42px;
-        border-radius: 12px;
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
         background: #2fb36f;
         color: #fff;
         font-weight: 800;
-        font-size: 1.05rem;
+        font-size: 0.95rem;
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        box-shadow: 0 2px 8px rgba(47,179,111,0.28);
+        box-shadow: 0 2px 6px rgba(47,179,111,0.25);
+      }
+      .lrf-confirm__hero-text {
+        min-width: 0;
+        flex: 1 1 auto;
       }
       .lrf-confirm__name {
-        font-size: 1rem;
+        font-size: 0.92rem;
         font-weight: 800;
         color: #0f172a;
-        line-height: 1.25;
+        line-height: 1.2;
         word-break: break-word;
       }
       .lrf-confirm__meta {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.35rem;
-        margin-top: 0.35rem;
+        gap: 0.25rem;
+        margin-top: 0.2rem;
       }
       .lrf-confirm__chip {
         display: inline-flex;
         align-items: center;
-        padding: 0.15rem 0.5rem;
+        padding: 0.1rem 0.4rem;
         border-radius: 999px;
-        font-size: 0.68rem;
+        font-size: 0.64rem;
         font-weight: 800;
         letter-spacing: 0.02em;
         background: #e2e8f0;
@@ -293,43 +298,39 @@
         color: #92400e;
       }
       .lrf-confirm__section-label {
-        font-size: 0.68rem;
+        font-size: 0.6rem;
         font-weight: 800;
         letter-spacing: 0.05em;
         text-transform: uppercase;
         color: #94a3b8;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.35rem;
       }
       .lrf-confirm__grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.55rem 0.75rem;
+        gap: 0.35rem 0.65rem;
       }
-      .lrf-confirm__fact,
-      .lrf-confirm__address {
+      .lrf-confirm__fact {
         min-width: 0;
         display: flex;
         flex-direction: column;
-        gap: 0.12rem;
-      }
-      .lrf-confirm__address {
-        margin-top: 0.75rem;
-        padding-top: 0.7rem;
-        border-top: 1px dashed #e2e8f0;
+        gap: 0.04rem;
       }
       .lrf-confirm__fact-label {
-        font-size: 0.62rem;
+        font-size: 0.58rem;
         font-weight: 800;
         letter-spacing: 0.04em;
         text-transform: uppercase;
         color: #94a3b8;
+        line-height: 1.1;
       }
       .lrf-confirm__fact-value {
-        font-size: 0.84rem;
+        font-size: 0.8rem;
         font-weight: 700;
         color: #1e293b;
-        line-height: 1.35;
+        line-height: 1.25;
         word-break: break-word;
+        overflow-wrap: anywhere;
       }
       .lrf-confirm__fact-value.is-unset {
         color: #94a3b8;
@@ -339,9 +340,89 @@
         color: #0f172a;
         font-weight: 800;
       }
+      .lrf-confirm__address {
+        margin-top: 0.35rem;
+        padding-top: 0.35rem;
+        border-top: 1px dashed #e2e8f0;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.35rem;
+        font-size: 0.78rem;
+      }
+      .lrf-confirm__address .lrf-confirm__fact-label {
+        font-size: 0.58rem;
+        flex-shrink: 0;
+      }
+      .lrf-confirm__address .lrf-confirm__fact-value {
+        flex: 1 1 auto;
+        line-height: 1.25;
+      }
       @media (max-width: 520px) {
+        .lrf-swal-popup {
+          width: 95vw !important;
+          border-radius: 12px !important;
+        }
+        .lrf-swal-title {
+          padding: 0.55rem 0.75rem 0.15rem !important;
+          font-size: 0.9rem !important;
+        }
+        .lrf-swal-html {
+          padding: 0 0.75rem 0.15rem !important;
+        }
+        .lrf-swal-actions {
+          padding: 0.4rem 0.75rem 0.65rem !important;
+          gap: 0.4rem !important;
+        }
+        .lrf-swal-confirm,
+        .lrf-swal-cancel {
+          padding: 0.42rem 0.55rem !important;
+          font-size: 0.78rem !important;
+          border-radius: 7px !important;
+        }
+        .lrf-confirm__hero {
+          padding: 0.4rem 0.55rem;
+          margin-bottom: 0.35rem;
+          gap: 0.5rem;
+        }
+        .lrf-confirm__avatar {
+          width: 30px;
+          height: 30px;
+          font-size: 0.85rem;
+        }
+        .lrf-confirm__name {
+          font-size: 0.86rem;
+        }
+        .lrf-confirm__meta {
+          gap: 0.2rem;
+          margin-top: 0.15rem;
+        }
+        .lrf-confirm__chip {
+          padding: 0.08rem 0.35rem;
+          font-size: 0.6rem;
+        }
+        .lrf-confirm__section-label {
+          font-size: 0.56rem;
+          margin-bottom: 0.25rem;
+        }
         .lrf-confirm__grid {
-          grid-template-columns: 1fr;
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          gap: 0.28rem 0.5rem !important;
+        }
+        .lrf-confirm__fact {
+          gap: 0.02rem;
+        }
+        .lrf-confirm__fact-label {
+          font-size: 0.54rem;
+        }
+        .lrf-confirm__fact-value {
+          font-size: 0.75rem;
+          line-height: 1.2;
+        }
+        .lrf-confirm__address {
+          margin-top: 0.3rem;
+          padding-top: 0.25rem;
+          font-size: 0.75rem;
         }
       }
 
@@ -553,44 +634,162 @@
         .lrf-receipt-confirm__facts,
         .lrf-receipt-confirm__facts--3,
         .lrf-receipt-confirm__facts--4 {
-          grid-template-columns: 1fr 1fr;
-        }
-      }
-
-      @media (max-width: 420px) {
-        .lrf-receipt-confirm__facts,
-        .lrf-receipt-confirm__facts--3,
-        .lrf-receipt-confirm__facts--4 {
-          grid-template-columns: 1fr;
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          gap: 0.45rem 0.65rem;
         }
 
-        .lrf-receipt-confirm__total {
-          flex-direction: column;
-          align-items: stretch;
+        .lrf-receipt-confirm__fact--full {
+          grid-column: 1 / -1;
         }
 
-        .lrf-receipt-confirm__total-amount {
-          text-align: left;
+        .lrf-receipt-confirm__label {
+          font-size: 0.56rem;
+          margin-bottom: 0.05rem;
+        }
+
+        .lrf-receipt-confirm__value {
+          font-size: 0.78rem;
+          line-height: 1.25;
+        }
+
+        .lrf-receipt-confirm__head {
+          padding: 0.45rem 0.65rem;
+          font-size: 0.78rem;
+        }
+
+        .lrf-receipt-confirm__body {
+          padding: 0.55rem 0.65rem;
+        }
+
+        .lrf-receipt-confirm__note {
+          padding: 0.45rem 0.65rem;
+          font-size: 0.74rem;
+        }
+
+        .lrf-receipt-confirm__route {
+          padding: 0.4rem 0.55rem;
+          font-size: 0.76rem;
+          margin-top: 0.45rem;
         }
 
         .lrf-swal-actions {
-          flex-direction: column-reverse !important;
+          display: flex !important;
+          flex-direction: row !important;
+          align-items: center !important;
+          justify-content: stretch !important;
+          gap: 0.35rem !important;
+          padding: 0.6rem 0.75rem 0.85rem !important;
+          margin: 0 !important;
+        }
+
+        .lrf-swal-cancel {
+          flex: 0 0 auto !important;
+          width: auto !important;
+          min-width: 58px !important;
+          padding: 0.45rem 0.6rem !important;
+          font-size: 0.72rem !important;
+          white-space: nowrap !important;
         }
 
         .lrf-swal-confirm,
-        .lrf-swal-cancel,
         .lrf-swal-deny {
-          width: 100% !important;
-          flex: 1 1 auto !important;
+          flex: 1 1 0 !important;
+          width: auto !important;
+          min-width: 0 !important;
+          padding: 0.45rem 0.45rem !important;
+          font-size: 0.72rem !important;
+          white-space: nowrap !important;
+          letter-spacing: -0.01em !important;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .lrf-receipt-confirm__facts,
+        .lrf-receipt-confirm__facts--3,
+        .lrf-receipt-confirm__facts--4 {
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          gap: 0.35rem 0.5rem !important;
+        }
+
+        .lrf-receipt-confirm__fact--full {
+          grid-column: 1 / -1 !important;
+        }
+
+        .lrf-receipt-confirm__label {
+          font-size: 0.52rem !important;
+        }
+
+        .lrf-receipt-confirm__value {
+          font-size: 0.74rem !important;
+        }
+
+        .lrf-receipt-confirm__head {
+          padding: 0.4rem 0.55rem !important;
+          font-size: 0.74rem !important;
+        }
+
+        .lrf-receipt-confirm__body {
+          padding: 0.45rem 0.55rem !important;
+        }
+
+        .lrf-receipt-confirm__route {
+          padding: 0.35rem 0.5rem !important;
+          font-size: 0.72rem !important;
+          margin-top: 0.4rem !important;
+        }
+
+        .lrf-receipt-confirm__total {
+          padding: 0.5rem 0.65rem !important;
+          flex-direction: row !important;
+          align-items: center !important;
+          justify-content: space-between !important;
+        }
+
+        .lrf-receipt-confirm__total-amount {
+          text-align: right !important;
+        }
+
+        .lrf-receipt-confirm__total-amount strong {
+          font-size: 1rem !important;
+        }
+
+        .lrf-swal-actions {
+          display: flex !important;
+          flex-direction: row !important;
+          align-items: center !important;
+          justify-content: stretch !important;
+          gap: 0.3rem !important;
+          padding: 0.5rem 0.55rem 0.75rem !important;
+          margin: 0 !important;
+        }
+
+        .lrf-swal-cancel {
+          flex: 0 0 auto !important;
+          width: auto !important;
+          min-width: 50px !important;
+          padding: 0.38rem 0.45rem !important;
+          font-size: 0.67rem !important;
+          white-space: nowrap !important;
+        }
+
+        .lrf-swal-confirm,
+        .lrf-swal-deny {
+          flex: 1 1 0 !important;
+          width: auto !important;
+          min-width: 0 !important;
+          padding: 0.38rem 0.32rem !important;
+          font-size: 0.67rem !important;
+          white-space: nowrap !important;
+          letter-spacing: -0.02em !important;
         }
 
         .lrf-swal-title {
-          font-size: 0.95rem !important;
-          padding: 0.85rem 0.9rem 0.3rem !important;
+          font-size: 0.88rem !important;
+          padding: 0.75rem 0.75rem 0.25rem !important;
         }
 
         .lrf-swal-html {
-          padding: 0 0.9rem 0.3rem !important;
+          padding: 0 0.75rem 0.25rem !important;
         }
       }
     `;
@@ -625,9 +824,13 @@
     if (options.accent && cleaned) {
       classes.push('is-accent');
     }
+    const factClasses = ['lrf-receipt-confirm__fact'];
+    if (options.fullWidth) {
+      factClasses.push('lrf-receipt-confirm__fact--full');
+    }
 
     return `
-      <div class="lrf-receipt-confirm__fact">
+      <div class="${factClasses.join(' ')}">
         <span class="lrf-receipt-confirm__label">${escapeHtml(label)}</span>
         <div class="${classes.join(' ')}" title="${escapeHtml(display)}">${escapeHtml(display)}</div>
       </div>
@@ -666,7 +869,7 @@
             <div class="lrf-receipt-confirm__facts lrf-receipt-confirm__facts--3">
               ${confirmFact('LR Number', details.lrNumber)}
               ${confirmFact('GR Date', details.grDate)}
-              ${confirmFact('Customer', details.customer)}
+              ${confirmFact('Customer', details.customer, { fullWidth: true })}
               ${confirmFact('Invoice', details.invoice)}
               ${confirmFact('Reference By', details.referenceBy)}
               ${details.createdAt ? confirmFact('Created', details.createdAt) : ''}

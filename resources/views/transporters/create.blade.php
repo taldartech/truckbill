@@ -1,5 +1,178 @@
 @extends('layouts.app')
 
+@push('styles')
+<style>
+    @media (max-width: 767.98px) {
+        .card-header .card-title,
+        .card-header .h3,
+        .card-header .h4 {
+            font-size: 0.88rem !important;
+            font-weight: 600 !important;
+        }
+
+        .app-form-section__title,
+        h5, .h5 {
+            font-size: 0.76rem !important;
+            font-weight: 700 !important;
+            margin-bottom: 0.3rem !important;
+        }
+
+        .app-form-section__hint {
+            font-size: 0.66rem !important;
+            margin-bottom: 0.35rem !important;
+        }
+
+        label,
+        .form-label,
+        [class*="col-"] > label {
+            font-size: 0.68rem !important;
+            font-weight: 600 !important;
+            margin-bottom: 0.12rem !important;
+            line-height: 1.25 !important;
+            color: #334155 !important;
+            display: inline-block !important;
+        }
+
+        .form-control, .form-select {
+            font-size: 0.72rem !important;
+            padding: 0.2rem 0.45rem !important;
+            min-height: 29px !important;
+            height: 29px !important;
+            border-radius: 0.35rem !important;
+            line-height: 1.2 !important;
+        }
+
+        .form-control-plaintext {
+            font-size: 0.72rem !important;
+            padding: 0.2rem 0.45rem !important;
+            min-height: 29px !important;
+            height: auto !important;
+            line-height: 1.25 !important;
+            border-radius: 0.35rem !important;
+        }
+
+        textarea.form-control {
+            height: auto !important;
+            min-height: 48px !important;
+            font-size: 0.72rem !important;
+            padding: 0.25rem 0.45rem !important;
+        }
+
+        input[type="date"].form-control {
+            font-size: 0.70rem !important;
+            padding: 0.18rem 0.35rem !important;
+            min-height: 29px !important;
+            height: 29px !important;
+        }
+
+        .form-check-label {
+            font-size: 0.68rem !important;
+        }
+
+        .form-check-input {
+            width: 0.8rem !important;
+            height: 0.8rem !important;
+            margin-top: 0.15rem !important;
+        }
+
+        .form-check-inline {
+            margin-right: 0.6rem !important;
+            margin-bottom: 0.15rem !important;
+        }
+
+        .card.bg-light,
+        .app-form-section__body {
+            padding: 0.45rem 0.55rem !important;
+            border-radius: 0.4rem !important;
+            margin-bottom: 0.45rem !important;
+        }
+
+        .card-body {
+            padding: 0.5rem 0.55rem !important;
+        }
+
+        .btn,
+        .btn-brand-primary,
+        .btn-back,
+        .btn-primary,
+        .btn-secondary,
+        .btn-danger,
+        .btn-info,
+        .btn-warning,
+        .app-index-header-btn {
+            font-size: 0.72rem !important;
+            font-weight: 600 !important;
+            padding: 0.28rem 0.55rem !important;
+            min-height: 29px !important;
+            height: auto !important;
+            line-height: 1.25 !important;
+            border-radius: 0.375rem !important;
+            white-space: nowrap !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.25rem !important;
+        }
+
+        .btn i,
+        .btn-brand-primary i,
+        .btn-back i {
+            font-size: 0.70rem !important;
+            margin: 0 !important;
+        }
+
+        .small, small, .text-muted {
+            font-size: 0.64rem !important;
+        }
+
+        .text-danger {
+            font-size: 0.64rem !important;
+            margin-top: 0.1rem !important;
+        }
+
+        .location-row {
+            --bs-gutter-x: 0.35rem !important;
+        }
+
+        .location-row .form-label {
+            font-size: 0.68rem !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            margin-bottom: 0.12rem !important;
+            display: block !important;
+        }
+
+        .location-row .input-group {
+            flex-wrap: nowrap !important;
+        }
+
+        .location-row .input-group .form-select {
+            font-size: 0.68rem !important;
+            padding-left: 0.25rem !important;
+            padding-right: 1.05rem !important;
+            min-height: 29px !important;
+            height: 29px !important;
+            border-radius: 0.35rem 0 0 0.35rem !important;
+            background-position: right 0.2rem center !important;
+            background-size: 9px 7px !important;
+        }
+
+        .location-row .input-group .btn {
+            padding: 0 0.25rem !important;
+            width: 24px !important;
+            min-width: 24px !important;
+            max-width: 24px !important;
+            font-size: 0.85rem !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 0 0.35rem 0.35rem 0 !important;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container mt-4 pb-5 app-index-page app-create-page">
     <form action="{{ route('transporters.store') }}" method="POST" class="needs-validation" novalidate="">
@@ -184,8 +357,8 @@
                             </div>
 
                             <div id="locationDetailsSection">
-                                <div class="row g-2 mb-2">
-                                    <div class="col-md-4">
+                                <div class="row g-1 g-md-2 mb-2 location-row">
+                                    <div class="col-4">
                                         <label for="country_id" class="form-label">Country *</label>
                                         <div class="input-group">
                                             <select class="form-select" id="country_id" name="country_id" required>
@@ -202,7 +375,7 @@
                                         </div>
                                         @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-4">
                                         <label for="state_id" class="form-label">State *</label>
                                         <div class="input-group">
                                             <select class="form-select" id="state_id" name="state_id" required>
@@ -221,7 +394,7 @@
                                         </div>
                                         @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-4">
                                         <label for="city_id" class="form-label">City *</label>
                                         <div class="input-group">
                                             <select class="form-select" id="city_id" name="city_id" required>

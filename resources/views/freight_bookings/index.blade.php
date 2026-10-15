@@ -234,6 +234,181 @@
         }
 
         @media (max-width: 575.98px) {
+            .header-pill-btn {
+                height: 24px !important;
+                min-height: 24px !important;
+                padding: 0 8px !important;
+                font-size: 0.62rem !important;
+                font-weight: 600 !important;
+                border-radius: 999px !important;
+                gap: 0.2rem !important;
+                white-space: nowrap !important;
+                line-height: 1 !important;
+            }
+
+            .header-pill-btn i {
+                font-size: 0.62rem !important;
+                margin-right: 2px !important;
+            }
+
+            .freight-bookings-index .app-index-filters__title,
+            .app-index-filters__title {
+                font-size: 0.62rem !important;
+                letter-spacing: 0.04em !important;
+                font-weight: 700 !important;
+                margin: 0 !important;
+                line-height: 1.2 !important;
+                white-space: nowrap !important;
+            }
+
+            .freight-bookings-index .app-index-filters {
+                width: 100% !important;
+                flex: 1 1 100% !important;
+            }
+
+            .app-index-filters__toggle {
+                height: 24px !important;
+                min-height: 24px !important;
+                padding: 0 8px !important;
+                font-size: 0.62rem !important;
+                gap: 0.2rem !important;
+                border-radius: 999px !important;
+                line-height: 1 !important;
+                white-space: nowrap !important;
+            }
+
+            .app-index-filters__toggle i {
+                font-size: 0.62rem !important;
+            }
+
+            .app-index-filters__top {
+                gap: 0.35rem !important;
+                align-items: center !important;
+                width: 100% !important;
+                display: flex !important;
+                flex-direction: row !important;
+                justify-content: space-between !important;
+                flex-wrap: wrap !important;
+            }
+
+            .app-index-filters__top-actions {
+                gap: 0.25rem !important;
+                align-items: center !important;
+                width: auto !important;
+                margin-left: auto !important;
+                display: flex !important;
+            }
+
+            .app-index-filters__bulk {
+                gap: 0.25rem !important;
+                align-items: center !important;
+            }
+
+            .freight-bookings-index .app-index-filters__controls {
+                gap: 0.35rem !important;
+            }
+
+            .freight-bookings-index .app-index-filters__field,
+            .freight-bookings-index .app-index-filters__field--lr,
+            .freight-bookings-index .app-index-filters__field--party,
+            .freight-bookings-index .app-index-filters__field--truck,
+            .freight-bookings-index .app-index-filters__field--date {
+                flex: 1 1 calc(50% - 0.2rem) !important;
+                max-width: calc(50% - 0.2rem) !important;
+                width: calc(50% - 0.2rem) !important;
+                min-width: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-filters__controls .app-index-filters__field.app-index-filters__field--search,
+            .freight-bookings-index .app-index-filters__field.app-index-filters__field--search,
+            .freight-bookings-index .app-index-filters__field--search {
+                flex: 1 1 100% !important;
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+
+            .freight-bookings-index .app-index-filters__label {
+                font-size: 0.58rem !important;
+                margin-bottom: 2px !important;
+            }
+
+            .freight-bookings-index .app-index-filters .form-control,
+            .freight-bookings-index .app-index-filters .form-select {
+                height: 2rem !important;
+                min-height: 2rem !important;
+                font-size: 0.76rem !important;
+                padding: 0.2rem 0.45rem !important;
+                border-radius: 0.45rem !important;
+            }
+
+            .freight-bookings-index .app-index-filters .select2-container--bootstrap-5 .select2-selection,
+            .freight-bookings-index .app-index-filters .select2-container--default .select2-selection--single {
+                min-height: 2rem !important;
+                height: 2rem !important;
+                padding: 0.15rem 0.4rem !important;
+                font-size: 0.76rem !important;
+                border-radius: 0.45rem !important;
+            }
+
+            .freight-bookings-index .app-index-filters .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+                line-height: 1.65rem !important;
+                font-size: 0.76rem !important;
+                padding-right: 1.2rem !important;
+            }
+
+            .freight-bookings-index .app-index-filters .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+                height: 1.85rem !important;
+                width: 1.2rem !important;
+            }
+
+            .freight-bookings-index .app-index-filters__chip {
+                width: auto !important;
+                flex: 1 1 auto !important;
+                max-width: calc(100% - 75px) !important;
+                height: 2rem !important;
+                min-height: 2rem !important;
+                padding: 0.2rem 0.5rem !important;
+                margin: 0 !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 0.3rem !important;
+                border-radius: 0.45rem !important;
+                white-space: nowrap !important;
+            }
+
+            .freight-bookings-index .app-index-filters__chip .form-check-input {
+                width: 1rem !important;
+                height: 1rem !important;
+                margin: 0 !important;
+                flex-shrink: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-filters__chip-label {
+                font-size: 0.68rem !important;
+                font-weight: 600 !important;
+                white-space: nowrap !important;
+                line-height: 1 !important;
+            }
+
+            .freight-bookings-index .app-index-filters__actions {
+                width: auto !important;
+                flex: 0 0 auto !important;
+                margin-left: auto !important;
+                margin-top: 0 !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 0.3rem !important;
+                padding-bottom: 0 !important;
+            }
+
+            .freight-bookings-index .app-index-filters__btn {
+                width: 2rem !important;
+                height: 2rem !important;
+                min-width: 2rem !important;
+                min-height: 2rem !important;
+                border-radius: 0.45rem !important;
+            }
+
             .freight-bookings-index .app-index-list-card > .card-header {
                 padding: 0.5rem 0.75rem !important;
             }
@@ -300,6 +475,106 @@
         }
 
         @media (max-width: 767.98px) {
+            .freight-bookings-index .app-index-list-card > .card-header {
+                padding: 0.45rem 0.65rem !important;
+            }
+
+            .freight-bookings-index .app-index-list-card > .card-header .card-title {
+                font-size: 0.92rem !important;
+            }
+
+            .freight-bookings-index .app-index-dt-toolbar:first-of-type {
+                padding: 0.4rem 0.65rem !important;
+            }
+
+            .freight-bookings-index #searchForm .form-control {
+                font-size: 0.78rem !important;
+                height: 32px !important;
+                min-height: 32px !important;
+                padding: 0.25rem 0.5rem !important;
+                border-radius: 6px !important;
+            }
+
+            .freight-bookings-index .input-group-custom {
+                padding: 2px 6px !important;
+                height: 32px !important;
+                border-radius: 6px !important;
+            }
+
+            .freight-bookings-index .input-group-custom span {
+                font-size: 8px !important;
+                margin-right: 3px !important;
+            }
+
+            .freight-bookings-index .input-group-custom input {
+                font-size: 11px !important;
+            }
+
+            .freight-bookings-index .fb-filter-actions-group .form-switch {
+                min-height: 28px !important;
+            }
+
+            .freight-bookings-index .fb-filter-actions-group .form-switch .form-check-label {
+                font-size: 0.75rem !important;
+            }
+
+            .freight-bookings-index .filter-action-btn {
+                width: 28px !important;
+                height: 28px !important;
+                min-width: 28px !important;
+                min-height: 28px !important;
+                border-radius: 6px !important;
+                font-size: 0.78rem !important;
+            }
+
+            .freight-bookings-index .app-index-dt-toolbar {
+                padding: 0.35rem 0.65rem !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+            }
+
+            .freight-bookings-index .dataTables_length {
+                width: auto !important;
+                flex: 0 0 auto !important;
+            }
+
+            .freight-bookings-index .dataTables_length label {
+                width: auto !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+                gap: 0.35rem !important;
+                margin: 0 !important;
+                font-size: 0.75rem !important;
+                color: var(--brand-text-muted);
+            }
+
+            .freight-bookings-index .dataTables_length select {
+                width: auto !important;
+                min-width: 3.5rem !important;
+                height: 28px !important;
+                font-size: 0.75rem !important;
+                padding: 0.2rem 1.4rem 0.2rem 0.4rem !important;
+                border-radius: 6px !important;
+            }
+
+            #freightBookingsTable thead th {
+                font-size: 0.72rem !important;
+                padding: 4px 5px !important;
+            }
+
+            #freightBookingsTable tbody td {
+                font-size: 0.75rem !important;
+                padding: 4px 5px !important;
+            }
+
+            #freightBookingsTable tbody td a,
+            #freightBookingsTable tbody td span:not(.badge),
+            #freightBookingsTable tbody td div {
+                font-size: 0.75rem !important;
+            }
+
             .freight-bookings-index .app-index-partload-pagination .dataTables_info {
                 font-size: 0.75rem !important;
                 text-align: center !important;
@@ -313,6 +588,21 @@
             .freight-bookings-index .app-index-partload-pagination .pagination .page-link {
                 font-size: 0.75rem !important;
                 padding: 0.25rem 0.55rem !important;
+            }
+        }
+
+        @media (min-width: 768px) and (max-width: 991.98px) {
+            .freight-bookings-index .dataTables_length label {
+                width: auto !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 0.35rem !important;
+                font-size: 0.78rem !important;
+            }
+
+            .freight-bookings-index .dataTables_length select {
+                height: 30px !important;
+                font-size: 0.78rem !important;
             }
         }
     </style>
@@ -366,47 +656,52 @@
                 <h3 class="card-title mb-0">Good Hires (Lorry Hire)</h3>
             </div>
 
-            <div class="app-index-dt-toolbar">
-                <div class="app-index-filters" data-app-index-filters>
-                    <div class="app-index-filters__top">
-                        <div class="app-index-filters__intro">
-                            <h6 class="app-index-filters__title">Search &amp; Filters</h6>
-                            <div class="app-index-filters__legend d-none d-md-inline-flex">
-                                <span class="app-index-filters__legend-item">
-                                    <span class="app-index-filters__swatch app-index-filters__swatch--delivered"></span>
-                                    Delivered
-                                </span>
-                                <span class="app-index-filters__legend-item">
-                                    <span class="app-index-filters__swatch app-index-filters__swatch--cancelled"></span>
-                                    Cancelled
-                                </span>
-                                <span class="app-index-filters__legend-item">
-                                    <span class="app-index-filters__swatch app-index-filters__swatch--pending"></span>
-                                    Pending
-                                </span>
-                            </div>
-                        </div>
-                        <div class="app-index-filters__top-actions">
-                            <div class="app-index-filters__bulk">
-                                <button id="bulk-memo-id-btn" class="header-pill-btn btn btn-primary border-0" style="display: none;" data-bs-toggle="modal" data-bs-target="#bulkMemoIdModal">
-                                    <i class="bi bi-clipboard-check"></i> Bulk Memo / POD
-                                </button>
-                                <button id="voucher-payment-btn" class="header-pill-btn btn btn-brand-primary border-0" style="display: none;">
-                                    <i class="bi bi-receipt"></i> Voucher
-                                </button>
-                                <button id="combined-payment-btn" class="header-pill-btn btn btn-warning border-0" style="display: none;">
-                                    <i class="bi bi-collection"></i> Combined
-                                </button>
-                            </div>
-                            <button type="button"
-                                class="app-index-filters__toggle d-md-none"
-                                data-app-index-filters-toggle
-                                aria-expanded="false"
-                                aria-controls="fbIndexFiltersBody">
-                                <i class="bi bi-sliders"></i>
-                                <span>Filters</span>
-                                <i class="bi bi-chevron-down app-index-filters__toggle-chevron"></i>
+            <div class="app-index-dt-toolbar w-100">
+                <div class="app-index-filters w-100" data-app-index-filters>
+                    <div class="app-index-filters__top d-flex flex-wrap flex-md-nowrap align-items-center justify-content-between w-100">
+                        {{-- Bulk Actions (Row 1 on mobile when visible, right-aligned on desktop) --}}
+                        <div class="app-index-filters__bulk order-1 order-md-2 ms-md-auto d-flex flex-wrap align-items-center justify-content-end gap-1 w-100 w-md-auto mb-1 mb-md-0" style="display: none;">
+                            <button id="bulk-memo-id-btn" class="header-pill-btn btn btn-primary border-0" style="display: none;" data-bs-toggle="modal" data-bs-target="#bulkMemoIdModal">
+                                <i class="bi bi-clipboard-check"></i> Bulk Memo / POD
                             </button>
+                            <button id="voucher-payment-btn" class="header-pill-btn btn btn-brand-primary border-0" style="display: none;">
+                                <i class="bi bi-receipt"></i> Voucher
+                            </button>
+                            <button id="combined-payment-btn" class="header-pill-btn btn btn-warning border-0" style="display: none;">
+                                <i class="bi bi-collection"></i> Combined
+                            </button>
+                        </div>
+
+                        {{-- Filters Row on mobile: Search & Filters on extreme left, Filters toggle button on extreme right in the same line --}}
+                        <div class="d-flex align-items-center justify-content-between order-2 order-md-1 w-100 w-md-auto">
+                            <div class="app-index-filters__intro d-flex align-items-center text-nowrap">
+                                <h6 class="app-index-filters__title text-nowrap mb-0">Search &amp; Filters</h6>
+                                <div class="app-index-filters__legend d-none d-md-inline-flex ms-2">
+                                    <span class="app-index-filters__legend-item">
+                                        <span class="app-index-filters__swatch app-index-filters__swatch--delivered"></span>
+                                        Delivered
+                                    </span>
+                                    <span class="app-index-filters__legend-item">
+                                        <span class="app-index-filters__swatch app-index-filters__swatch--cancelled"></span>
+                                        Cancelled
+                                    </span>
+                                    <span class="app-index-filters__legend-item">
+                                        <span class="app-index-filters__swatch app-index-filters__swatch--pending"></span>
+                                        Pending
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="app-index-filters__top-actions ms-auto d-md-none">
+                                <button type="button"
+                                    class="app-index-filters__toggle"
+                                    data-app-index-filters-toggle
+                                    aria-expanded="false"
+                                    aria-controls="fbIndexFiltersBody">
+                                    <i class="bi bi-sliders"></i>
+                                    <span>Filters</span>
+                                    <i class="bi bi-chevron-down app-index-filters__toggle-chevron"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -526,13 +821,13 @@
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" id="combinedPaymentBody">
+                <div class="modal-body p-2 p-sm-3" id="combinedPaymentBody">
                     <!-- Dynamic content will be loaded here -->
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-success" id="combinedPaymentSubmitBtn">
-                        <i class="fas fa-save"></i> Submit Combined Payment
+                <div class="modal-footer py-2 px-3">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success btn-sm" id="combinedPaymentSubmitBtn">
+                        <i class="fas fa-save me-1"></i> Submit Combined Payment
                     </button>
                 </div>
             </div>
@@ -1065,15 +1360,16 @@
 
                     rowsHtml += `
                         <tr>
-                            <td>${lrNo}</td>
-                            <td>${formatCombinedAmount(shortage)}</td>
-                            <td>${formatCombinedAmount(damage)}</td>
-                            <td>${formatCombinedAmount(balance)}</td>
-                            <td>
-                                <input type="number" class="form-control form-control-sm allocated-input"
+                            <td class="py-1 px-2 fw-semibold text-nowrap">${lrNo}</td>
+                            <td class="py-1 px-2 text-end text-nowrap">${formatCombinedAmount(shortage)}</td>
+                            <td class="py-1 px-2 text-end text-nowrap">${formatCombinedAmount(damage)}</td>
+                            <td class="py-1 px-2 text-end text-nowrap fw-bold text-dark">${formatCombinedAmount(balance)}</td>
+                            <td class="py-1 px-2 text-center">
+                                <input type="number" class="form-control form-control-sm allocated-input text-end py-1 px-1 fw-bold"
                                     name="payment_amounts[]" data-fb-id="${fbId}"
                                     data-balance="${balance}"
-                                    step="0.01" min="0" max="${balance}" readonly>
+                                    step="0.01" min="0" max="${balance}" readonly
+                                    style="width: 95px; font-size: 0.78rem; display: inline-block;">
                             </td>
                         </tr>
                     `;
@@ -1082,61 +1378,81 @@
                 const modalContent = `
                     <form id="combinedPaymentForm" method="POST" action="{{ route('freight_bookings.store_combined_payment') }}" data-total-balance="${totalBalance}">
                         @csrf
-                        <div class="alert alert-secondary mb-3">
-                            <h6><i class="fas fa-truck"></i> Transporter Details</h6>
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <strong>Transporter:</strong><br>
-                                    <span>${firstLr.transporter_name || 'N/A'}</span>
+                        <div class="card bg-light border-0 mb-3 shadow-none">
+                            <div class="card-body p-2 p-sm-2.5">
+                                <div class="d-flex align-items-center gap-1 mb-2 text-dark fw-bold" style="font-size: 0.85rem;">
+                                    <i class="fas fa-truck text-secondary me-1"></i> Transporter Details
                                 </div>
-                                <div class="col-md-3">
-                                    <strong>Mobile:</strong><br>
-                                    <span>${firstLr.transporter_mobile || 'N/A'}</span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>Short Name:</strong><br>
-                                    <span>${firstLr.transporter_short_name || 'N/A'}</span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>Beneficiary ID:</strong><br>
-                                    <span>${firstLr.transporter_beneficiary_id || 'N/A'}</span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>TDS %:</strong><br>
-                                    <span>${firstLr.transporter_tds_percentage || 'N/A'}%</span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>Truck:</strong><br>
-                                    <span>${firstLr.truck_number || 'N/A'}</span>
-                                </div>
-                                <div class="col-md-3 text-danger">
-                                    <strong>Advance:</strong><br>
-                                    <span>${firstLr.transporter_advance_amount ?? 'N/A'}</span>
+                                <div class="row g-1.5 g-sm-2">
+                                    <div class="col-6 col-sm-4 col-md-3">
+                                        <div class="bg-white p-1.5 px-2 rounded border border-light-subtle h-100">
+                                            <span class="d-block text-muted text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.02em;">Transporter</span>
+                                            <span class="d-block fw-bold text-dark text-truncate" style="font-size: 0.8rem;" title="${firstLr.transporter_name || 'N/A'}">${firstLr.transporter_name || 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-sm-4 col-md-3">
+                                        <div class="bg-white p-1.5 px-2 rounded border border-light-subtle h-100">
+                                            <span class="d-block text-muted text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.02em;">Mobile</span>
+                                            <span class="d-block fw-bold text-dark text-truncate" style="font-size: 0.8rem;">${firstLr.transporter_mobile || 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-sm-4 col-md-3">
+                                        <div class="bg-white p-1.5 px-2 rounded border border-light-subtle h-100">
+                                            <span class="d-block text-muted text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.02em;">Short Name</span>
+                                            <span class="d-block fw-bold text-dark text-truncate" style="font-size: 0.8rem;">${firstLr.transporter_short_name || 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-sm-4 col-md-3">
+                                        <div class="bg-white p-1.5 px-2 rounded border border-light-subtle h-100">
+                                            <span class="d-block text-muted text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.02em;">Beneficiary ID</span>
+                                            <span class="d-block fw-bold text-dark text-truncate" style="font-size: 0.8rem;">${firstLr.transporter_beneficiary_id || 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-sm-4 col-md-3">
+                                        <div class="bg-white p-1.5 px-2 rounded border border-light-subtle h-100">
+                                            <span class="d-block text-muted text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.02em;">TDS %</span>
+                                            <span class="d-block fw-bold text-dark text-truncate" style="font-size: 0.8rem;">${firstLr.transporter_tds_percentage || 'N/A'}%</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-sm-4 col-md-3">
+                                        <div class="bg-white p-1.5 px-2 rounded border border-light-subtle h-100">
+                                            <span class="d-block text-muted text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.02em;">Truck</span>
+                                            <span class="d-block fw-bold text-dark text-truncate" style="font-size: 0.8rem;">${firstLr.truck_number || 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-sm-4 col-md-3">
+                                        <div class="bg-white p-1.5 px-2 rounded border border-danger-subtle h-100">
+                                            <span class="d-block text-danger text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.02em;">Advance</span>
+                                            <span class="d-block fw-bold text-danger text-truncate" style="font-size: 0.8rem;">${firstLr.transporter_advance_amount ?? 'N/A'}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="col-md-4">
-                                    <strong>Total Balance:</strong>
-                                    <span class="fw-bold text-danger">${formatCombinedAmount(totalBalance)}</span>
+
+                        <div class="p-2 p-sm-2.5 rounded border bg-light mb-3">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                <div class="d-flex align-items-baseline gap-2">
+                                    <span class="text-muted fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.02em;">Total Balance:</span>
+                                    <span class="fw-bold text-danger fs-6">${formatCombinedAmount(totalBalance)}</span>
                                 </div>
-                                <div class="col-md-4 d-flex justify-content-end align-items-center gap-2">
-                                    <label class="form-label mb-0 ms-2">Combined Amount *</label>
-                                    <input type="number" class="form-control" id="combinedAmountInput" name="combined_amount"
-                                        step="0.01" min="0.01" max="${totalBalance}" required style="max-width: 200px;">
+                                <div class="d-flex align-items-center gap-2 ms-auto">
+                                    <label class="form-label mb-0 fw-semibold text-nowrap" for="combinedAmountInput" style="font-size: 0.78rem;">Combined Amount *</label>
+                                    <input type="number" class="form-control form-control-sm text-end fw-bold" id="combinedAmountInput" name="combined_amount"
+                                        step="0.01" min="0.01" max="${totalBalance}" required style="width: 120px; font-size: 0.82rem;">
                                 </div>
                             </div>
                         </div>
-                        <div class="table-responsive mb-3">
-                            <table class="table table-sm table-bordered">
+
+                        <div class="table-responsive mb-3 border rounded">
+                            <table class="table table-sm table-bordered align-middle mb-0" style="font-size: 0.78rem;">
                                 <thead class="table-light">
-                                    <tr>
-                                        <th>LR Number</th>
-                                        <th>Shortage Amount</th>
-                                        <th>Damage Amount</th>
-                                        <th>Balance</th>
-                                        <th>Allocated</th>
+                                    <tr style="font-size: 0.72rem; text-transform: uppercase;">
+                                        <th class="py-1 px-2 text-nowrap">LR Number</th>
+                                        <th class="py-1 px-2 text-nowrap text-end">Shortage Amount</th>
+                                        <th class="py-1 px-2 text-nowrap text-end">Damage Amount</th>
+                                        <th class="py-1 px-2 text-nowrap text-end">Balance</th>
+                                        <th class="py-1 px-2 text-nowrap text-center" style="width: 110px;">Allocated</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1144,48 +1460,49 @@
                                 </tbody>
                             </table>
                         </div>
+
                         ${bookingIds.map(id => `<input type="hidden" name="booking_ids[]" value="${id}">`).join('')}
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label for="combinedPaymentType" class="form-label">Payment Type *</label>
-                                <select class="form-select" id="combinedPaymentType" name="payment_type" required>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 col-md-4">
+                                <label for="combinedPaymentType" class="form-label mb-1 fw-semibold" style="font-size: 0.75rem;">Payment Type *</label>
+                                <select class="form-select form-select-sm" id="combinedPaymentType" name="payment_type" required style="font-size: 0.78rem;">
                                     <option value="">Select Payment Type</option>
                                     ${paymentTypes.map(type => `<option value="${type.id}">${type.name}</option>`).join('')}
                                 </select>
                             </div>
-                            <div class="col-md-4">
-                                <label for="combinedPaymentMode" class="form-label">Payment Mode *</label>
-                                <select class="form-select" id="combinedPaymentMode" name="payment_mode" required>
+                            <div class="col-6 col-md-4">
+                                <label for="combinedPaymentMode" class="form-label mb-1 fw-semibold" style="font-size: 0.75rem;">Payment Mode *</label>
+                                <select class="form-select form-select-sm" id="combinedPaymentMode" name="payment_mode" required style="font-size: 0.78rem;">
                                     <option value="">Select Payment Mode</option>
                                     ${paymentModes.map(mode => `<option value="${mode.id}">${mode.name}</option>`).join('')}
                                 </select>
                             </div>
-                            <div class="col-md-4" id="combinedPumpContainer" style="display: none;">
+                            <div class="col-12 col-md-4" id="combinedPumpContainer" style="display: none;">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <label for="combinedPumpName" class="form-label mb-0">Pump Name *</label>
+                                    <label for="combinedPumpName" class="form-label mb-0 fw-semibold" style="font-size: 0.75rem;">Pump Name *</label>
                                     <a href="javascript:void(0)"
                                         class="lrf-quick-add js-open-quick-add-pump"
-                                        data-pump-select="combinedPumpName">
+                                        data-pump-select="combinedPumpName"
+                                        style="font-size: 0.75rem;">
                                         <i class="bi bi-plus-lg"></i> Add
                                     </a>
                                 </div>
-                                <select class="form-select" id="combinedPumpName" name="pump_id">
+                                <select class="form-select form-select-sm" id="combinedPumpName" name="pump_id" style="font-size: 0.78rem;">
                                     <option value="">Select Pump</option>
                                     @foreach ($pumps as $pump)
                                         <option value="{{ $pump->id }}">{{ $pump->pump_name }} {{ $pump->contact_name ? '('.$pump->contact_name.')' : '' }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label for="combinedPaymentDate" class="form-label">Payment Date</label>
-                                <input type="date" class="form-control" id="combinedPaymentDate" name="payment_date"
-                                    value="{{ date('Y-m-d') }}">
+                            <div class="col-6 col-md-4">
+                                <label for="combinedPaymentDate" class="form-label mb-1 fw-semibold" style="font-size: 0.75rem;">Payment Date</label>
+                                <input type="date" class="form-control form-control-sm" id="combinedPaymentDate" name="payment_date"
+                                    value="{{ date('Y-m-d') }}" style="font-size: 0.78rem;">
                             </div>
-                            <div class="col-md-4">
-                                <label for="combinedNotes" class="form-label">Notes</label>
-                                <input type="text" class="form-control" id="combinedNotes" name="notes" placeholder="Enter notes...">
+                            <div class="col-6 col-md-4">
+                                <label for="combinedNotes" class="form-label mb-1 fw-semibold" style="font-size: 0.75rem;">Notes</label>
+                                <input type="text" class="form-control form-control-sm" id="combinedNotes" name="notes" placeholder="Enter notes..." style="font-size: 0.78rem;">
                             </div>
                         </div>
                     </form>
@@ -1534,6 +1851,7 @@
         function updatePaymentButtonsVisibility() {
             const checkedBoxes = Object.values(selectedRows);
             $('#bulk-memo-id-btn, #voucher-payment-btn, #combined-payment-btn').hide();
+            $('.app-index-filters__bulk').hide();
             if (checkedBoxes.length === 0) {
                 return; // nothing selected
             }
@@ -1550,6 +1868,9 @@
                 const singleMemoId = singleData.memoId;
                 if (!singleMemoId) {
                     $('#bulk-memo-id-btn').show();
+                }
+                if ($('#bulk-memo-id-btn:visible, #voucher-payment-btn:visible, #combined-payment-btn:visible').length > 0) {
+                    $('.app-index-filters__bulk').css('display', 'flex');
                 }
                 return;
             }
@@ -1609,6 +1930,10 @@
             // 3. Combined Payment button → if linked_lr_id same and not empty
             if (allSameLinked && firstLinkedLrId) {
                 $('#combined-payment-btn').show();
+            }
+
+            if ($('#bulk-memo-id-btn:visible, #voucher-payment-btn:visible, #combined-payment-btn:visible').length > 0) {
+                $('.app-index-filters__bulk').css('display', 'flex');
             }
         }
     </script>

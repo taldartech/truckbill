@@ -6,55 +6,227 @@
     <style>
         /* Mobile-responsive adjustments for Create Invoice */
         @media (max-width: 767.98px) {
+            /* Headers and cards */
             .app-create-page .app-index-list-card > .card-header {
-                padding: 0.5rem 0.75rem !important;
+                padding: 0.45rem 0.65rem !important;
             }
 
             .app-create-page .app-index-list-card > .card-header .card-title,
             .app-create-page .card-header h3.card-title {
-                font-size: 0.95rem !important;
+                font-size: 0.875rem !important;
+            }
+
+            .app-create-page .app-index-card-toolbar .btn,
+            .app-create-page .app-index-header-btn {
+                font-size: 0.75rem !important;
+                padding: 0.25rem 0.5rem !important;
             }
 
             .app-create-page .app-form-section__header {
-                padding: 0.45rem 0.75rem !important;
+                padding: 0.35rem 0.65rem !important;
             }
 
             .app-create-page .app-form-section__header h5,
             .app-create-page .app-form-section__header .app-form-section__title {
-                font-size: 0.8125rem !important;
+                font-size: 0.78rem !important;
             }
 
             .app-create-page .app-form-section__body {
-                padding: 0.75rem !important;
+                padding: 0.5rem 0.65rem !important;
             }
 
+            /* Labels and validation feedback */
             .app-create-page .form-label {
+                font-size: 0.72rem !important;
+                font-weight: 600 !important;
+                margin-bottom: 0.15rem !important;
+            }
+
+            .app-create-page .valid-feedback,
+            .app-create-page .invalid-feedback,
+            .app-create-page .text-danger,
+            .app-create-page #manual-invoice-number-feedback {
+                font-size: 0.7rem !important;
+            }
+
+            /* Form inputs, selects & buttons */
+            .app-create-page .form-control,
+            .app-create-page .form-select {
                 font-size: 0.78rem !important;
-                margin-bottom: 0.25rem !important;
+                padding: 0.25rem 0.45rem !important;
+                min-height: 32px !important;
+                height: 32px !important;
+                border-radius: 0.375rem !important;
+                line-height: 1.3 !important;
+            }
+
+            .app-create-page input[type="date"].form-control {
+                font-size: 0.75rem !important;
+                padding: 0.2rem 0.35rem !important;
+            }
+
+            .app-create-page .select2-container .select2-selection--single {
+                font-size: 0.78rem !important;
+                min-height: 32px !important;
+                height: 32px !important;
+                border-radius: 0.375rem !important;
+            }
+
+            .app-create-page .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+                font-size: 0.78rem !important;
+                line-height: 30px !important;
+                padding-left: 0.45rem !important;
+                padding-right: 1.25rem !important;
+            }
+
+            .app-create-page .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+                height: 30px !important;
+                width: 1.5rem !important;
+            }
+
+            #customerMemoRow {
+                align-items: flex-end !important;
             }
 
             #showMemoOptions {
+                font-size: 0.68rem !important;
+                padding: 2px 8px !important;
+                border-radius: 4px !important;
+                height: 26px !important;
+                min-height: 26px !important;
+                line-height: 1 !important;
+                width: auto !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                white-space: nowrap !important;
+            }
+
+            /* Step 1 Memos list */
+            #memoOptionsContainer .app-form-section__title {
+                font-size: 0.75rem !important;
+            }
+
+            #memoCheckboxes .form-check-label {
+                font-size: 0.75rem !important;
+            }
+
+            #memoCheckboxes .form-check-input {
+                width: 0.85rem !important;
+                height: 0.85rem !important;
+            }
+
+            /* Selected Information summary */
+            .app-create-page #selectedInfo {
+                font-size: 0.75rem !important;
+            }
+
+            .app-create-page #selectedInfo strong {
+                font-size: 0.75rem !important;
+            }
+
+            .app-create-page #selectedInfo span {
+                font-size: 0.75rem !important;
+            }
+
+            /* Action buttons bar */
+            .app-create-page .app-form-actions {
+                margin-top: 0.5rem !important;
+            }
+
+            .app-create-page .app-form-actions .card-body {
+                padding: 0.35rem 0.6rem !important;
+            }
+
+            .app-create-page .app-form-actions .btn {
                 font-size: 0.78rem !important;
                 padding: 0.28rem 0.6rem !important;
                 border-radius: 0.375rem !important;
             }
 
-            #memoOptionsContainer .app-form-section__title {
+            /* Selected LR Details container and Table */
+            #lrDetailsContainer .card-title {
+                font-size: 0.8rem !important;
+            }
+
+            #lrDetailsContainer .card-header {
+                padding: 0.35rem 0.6rem !important;
+            }
+
+            #lrDetailsContainer .card-header h5.card-title {
+                font-size: 0.75rem !important;
+            }
+
+            #lrDetailsContainer .table {
+                font-size: 0.72rem !important;
+                margin-bottom: 0 !important;
+            }
+
+            #lrDetailsContainer .table th {
+                font-size: 0.7rem !important;
+                padding: 0.25rem 0.35rem !important;
+                font-weight: 600 !important;
+                white-space: nowrap !important;
+            }
+
+            #lrDetailsContainer .table td {
+                font-size: 0.72rem !important;
+                padding: 0.25rem 0.35rem !important;
+                white-space: nowrap !important;
+            }
+
+            #lrDetailsContainer .card-body p {
+                font-size: 0.72rem !important;
+                margin-bottom: 0.15rem !important;
+            }
+
+            #lrDetailsContainer .card-body h5 {
+                font-size: 0.78rem !important;
+                margin-bottom: 0 !important;
+            }
+        }
+
+        /* Tablet adjustments */
+        @media (min-width: 768px) and (max-width: 991.98px) {
+            .app-create-page .form-label {
                 font-size: 0.78rem !important;
             }
 
-            #memoCheckboxes .form-check-label {
-                font-size: 0.78rem !important;
-            }
-
-            #memoCheckboxes .form-check-input {
-                width: 0.9rem !important;
-                height: 0.9rem !important;
-            }
-
-            .app-create-page .app-form-actions .btn {
+            .app-create-page .form-control,
+            .app-create-page .form-select {
                 font-size: 0.8125rem !important;
-                padding: 0.35rem 0.75rem !important;
+                min-height: 34px !important;
+                height: 34px !important;
+                padding: 0.28rem 0.55rem !important;
+            }
+
+            .app-create-page .select2-container .select2-selection--single {
+                font-size: 0.8125rem !important;
+                min-height: 34px !important;
+                height: 34px !important;
+            }
+
+            .app-create-page .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+                font-size: 0.8125rem !important;
+                line-height: 32px !important;
+            }
+
+            #lrDetailsContainer .table th,
+            #lrDetailsContainer .table td {
+                font-size: 0.78rem !important;
+                padding: 0.3rem 0.45rem !important;
+            }
+        }
+
+        /* Laptop & Desktop adjustments (>= 768px) */
+        @media (min-width: 768px) {
+            #customerMemoRow {
+                align-items: flex-start !important;
+            }
+            #customerMemoRow .form-label {
+                margin-top: 0 !important;
+                margin-bottom: 0.5rem !important;
+                line-height: 1.5 !important;
             }
         }
     </style>
@@ -84,18 +256,18 @@
                             </h5>
                         </div>
                         <div class="app-form-section__body">
-                            <div class="row g-2">
-                                <div class="col-md-6">
+                            <div class="row g-2" id="customerMemoRow">
+                                <div class="col col-md-6">
                                     <label class="form-label">Customer *</label>
                                     <select id="preCustomerSelect" style="width:100%" required>
                                         <option value=""></option>
                                     </select>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Memo ID / POD</label>
-                                    <div class="input-group">
+                                <div class="col-auto col-md-6">
+                                    <label class="form-label d-none d-md-block">Memo ID / POD</label>
+                                    <div>
                                         {{-- <input type="text" id="preMemoId" class="form-control" placeholder="Optional"> --}}
-                                        <button class="btn btn-secondary btn-sm" type="button" id="showMemoOptions">Show Memos / POD</button>
+                                        <button class="btn btn-secondary btn-sm text-nowrap" type="button" id="showMemoOptions">Show Memos / POD</button>
                                     </div>
                                 </div>
                             </div>
@@ -154,17 +326,17 @@
                             <div class="app-form-section__body">
                                 <div id="selectedInfo">
                                     <div class="row g-2">
-                                        <div class="col-md-6">
+                                        <div class="col-6 col-md-6">
                                             <strong>Customer:</strong> <span id="selectedCustomerName"></span>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-6 col-md-6">
                                             <strong>Location:</strong> <span id="selectedLocation" name="location"></span>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-12 col-md-6">
                                             <strong>Memo(s):</strong> <span id="selectedMemoIds"></span>
                                         </div>
                                     </div>
-                                    <div id="selectedLrNumbers" class="mt-3"></div>
+                                    <div id="selectedLrNumbers" class="mt-2"></div>
                                 </div>
                             </div>
                         </div>
@@ -177,7 +349,7 @@
                             </div>
                             <div class="app-form-section__body">
                                 <div class="row g-2">
-                                    <div class="col-md-4">
+                                    <div class="col-12 col-md-4">
                                         <label class="form-label">Reference No (Optional)</label>
                                         <input type="text" placeholder="Invoice Number" id="manual_invoice_number"
                                             name="manual_invoice_number"
@@ -192,7 +364,7 @@
                                         @enderror
                                         <div class="valid-feedback">Looks good!</div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-6 col-md-4">
                                         <label class="form-label">Invoice Type *</label>
                                         <select class="form-select" disabled>
                                             <option value="Forward"
@@ -205,7 +377,7 @@
                                             @if ($company->gst_scheme == 'reverse charge') value="Reverse" @else value="Forward" @endif>
                                     </div>
 
-                                    <div class="col-md-4">
+                                    <div class="col-6 col-md-4">
                                         <label class="form-label">Generated Date *</label>
                                         <input type="date" placeholder="Generated Date" name="generated_date" class="form-control"
                                             required value="{{ date('Y-m-d') }}">
@@ -213,15 +385,6 @@
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
                                         <div class="invalid-feedback">Please select a date.</div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Due Date (Optional)</label>
-                                        <input type="date" name="due_date" class="form-control @error('due_date') is-invalid @enderror"
-                                            value="{{ old('due_date') }}">
-                                        <small class="text-muted">Leave blank to use {{ \App\Models\Invoice::DEFAULT_CREDIT_DAYS }} days from the invoice date.</small>
-                                        @error('due_date')
-                                            <div class="text-danger">{{ $message }}</div>
-                                        @enderror
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Customer *</label>
@@ -242,7 +405,7 @@
                                         @enderror
                                         <div class="invalid-feedback">Please select a customer.</div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-5 col-sm-6 col-md-4">
                                         <label class="form-label">Total Amount *</label>
                                         <input type="number" placeholder="Total Amount" name="total_amount" class="form-control"
                                             step="0.01" min="0" required readonly value="{{ old('total_amount') }}">

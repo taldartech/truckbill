@@ -32,6 +32,106 @@
 .mb-3 {
     margin-bottom: 1rem !important;
 }
+
+/* Mobile view adjustments */
+@media (max-width: 767.98px) {
+    .card-header .card-title,
+    .card-header .h4 {
+        font-size: 0.88rem !important;
+        font-weight: 600 !important;
+    }
+
+    h5, .h5 {
+        font-size: 0.76rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 0.3rem !important;
+    }
+
+    label,
+    .form-label,
+    [class*="col-"] > label {
+        font-size: 0.68rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 0.12rem !important;
+        line-height: 1.25 !important;
+        color: #334155 !important;
+        display: inline-block !important;
+    }
+
+    .form-control, .form-select {
+        font-size: 0.72rem !important;
+        padding: 0.2rem 0.45rem !important;
+        min-height: 29px !important;
+        height: 29px !important;
+        border-radius: 0.35rem !important;
+        line-height: 1.2 !important;
+    }
+
+    .card-body {
+        padding: 0.5rem 0.55rem !important;
+    }
+
+    .card-footer {
+        padding: 0.45rem 0.55rem !important;
+        display: flex !important;
+        gap: 0.45rem !important;
+        align-items: center !important;
+    }
+
+    .row.mb-3 {
+        margin-bottom: 0.35rem !important;
+    }
+
+    .row.mb-3 > [class*="col-"] {
+        margin-bottom: 0.35rem !important;
+    }
+
+    .btn,
+    .btn-success,
+    .btn-secondary,
+    .btn-brand-primary,
+    .btn-back,
+    .btn-primary {
+        font-size: 0.72rem !important;
+        font-weight: 600 !important;
+        padding: 0.28rem 0.55rem !important;
+        min-height: 29px !important;
+        height: auto !important;
+        line-height: 1.25 !important;
+        border-radius: 0.375rem !important;
+        white-space: nowrap !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.25rem !important;
+    }
+
+    .btn i,
+    .btn-success i,
+    .btn-secondary i {
+        font-size: 0.70rem !important;
+        margin: 0 !important;
+    }
+
+    .input-group .btn {
+        width: 24px !important;
+        min-width: 24px !important;
+        max-width: 24px !important;
+        padding: 0 !important;
+        height: 29px !important;
+        min-height: 29px !important;
+        font-size: 0.85rem !important;
+    }
+
+    .small, small, .text-muted {
+        font-size: 0.64rem !important;
+    }
+
+    .text-danger, .invalid-feedback {
+        font-size: 0.64rem !important;
+        margin-top: 0.1rem !important;
+    }
+}
 </style>
 
 @if(session('success'))
@@ -40,7 +140,7 @@
     </div>
 @endif
 
-<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
+<div class="card card-info card-outline mb-4 entity-edit-card" style="max-width: 1000px; margin: 0 auto;">
     <div class="card-header">
         <div class="card-title h4">Edit Consignee/Consignor/Customer</div>
     </div>
