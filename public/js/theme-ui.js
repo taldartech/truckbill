@@ -430,6 +430,126 @@
     return meaningfulCount > 0;
   }
 
+  function purgeDeletedEntityFromDrafts(entityType, id) {
+    if (!id || typeof window === 'undefined') return;
+    const sId = String(id).trim();
+    try { sessionStorage.removeItem('tb_label_' + sId); } catch (e) {}
+    try {
+      if (!window.localStorage) return;
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('tb_draft_')) {
+          const raw = localStorage.getItem(key);
+          if (!raw) continue;
+          const parsed = JSON.parse(raw);
+          if (!parsed || !parsed.data) continue;
+          let changed = false;
+
+          const type = String(entityType || '').toLowerCase();
+          if (type.includes('truck')) {
+            if (String(parsed.data.truck_id) === sId) {
+              delete parsed.data.truck_id;
+              delete parsed.data.transporter_type;
+              delete parsed.data.transporter_id;
+              delete parsed.data.owner_id;
+              changed = true;
+            }
+          } else if (type.includes('consignee') || type.includes('customer')) {
+            ['customer_id', 'consignor_id', 'consignee_id'].forEach(function (f) {
+              if (String(parsed.data[f]) === sId) {
+                delete parsed.data[f];
+                changed = true;
+              }
+            });
+            if (Array.isArray(parsed.data._linked_lrs)) {
+              parsed.data._linked_lrs.forEach(function (lr) {
+                ['customer_id', 'consignor_id', 'consignee_id'].forEach(function (f) {
+                  if (String(lr[f]) === sId) {
+                    delete lr[f];
+                    changed = true;
+                  }
+                });
+              });
+            }
+          } else if (type.includes('transporter') || type.includes('owner')) {
+            if (String(parsed.data.transporter_id) === sId || String(parsed.data.owner_id) === sId) {
+              delete parsed.data.transporter_id;
+              delete parsed.data.owner_id;
+              changed = true;
+            }
+            if (String(parsed.data.reference_by) === sId) {
+              delete parsed.data.reference_by;
+              changed = true;
+            }
+          }
+
+          if (changed) {
+            localStorage.setItem(key, JSON.stringify(parsed));
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  function initMasterDeleteDraftWatcher() {
+    if (typeof window === 'undefined') return;
+
+    // Hook native form submit calls
+    try {
+      const origFormSubmit = HTMLFormElement.prototype.submit;
+      HTMLFormElement.prototype.submit = function () {
+        try {
+          const isDelete = this.querySelector('input[name="_method"][value="DELETE" i]') ||
+            (this.getAttribute('method') || '').toUpperCase() === 'DELETE';
+          if (isDelete) {
+            const action = this.getAttribute('action') || '';
+            const m = action.match(/\/(trucks|consignees|customers|transporters|truck_owners)\/(\d+)/i);
+            if (m && m[1] && m[2]) {
+              purgeDeletedEntityFromDrafts(m[1], m[2]);
+            }
+          }
+        } catch (err) {}
+        return origFormSubmit.apply(this, arguments);
+      };
+    } catch (e) {}
+
+    // Hook submit events
+    document.addEventListener('submit', function (e) {
+      const form = e.target;
+      if (!form || !form.action) return;
+      try {
+        const isDelete = form.querySelector('input[name="_method"][value="DELETE" i]') ||
+          (form.getAttribute('method') || '').toUpperCase() === 'DELETE';
+        if (isDelete) {
+          const action = form.getAttribute('action') || '';
+          const m = action.match(/\/(trucks|consignees|customers|transporters|truck_owners)\/(\d+)/i);
+          if (m && m[1] && m[2]) {
+            purgeDeletedEntityFromDrafts(m[1], m[2]);
+          }
+        }
+      } catch (err) {}
+    }, true);
+
+    // Hook modal confirm delete button clicks
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest('#confirmTruckDelete, #confirmConsigneeDelete, #confirmTransporterDelete, .confirm-delete-btn, .truck-delete-btn, .consignee-delete-btn');
+      if (!btn) return;
+      try {
+        if (btn.id === 'confirmTruckDelete') {
+          const form = window.jQuery ? window.jQuery(btn).data('form') : null;
+          const action = form ? (form.attr('action') || '') : '';
+          const m = action.match(/\/trucks\/(\d+)/i);
+          if (m && m[1]) purgeDeletedEntityFromDrafts('trucks', m[1]);
+        } else if (btn.id === 'confirmConsigneeDelete') {
+          const form = window.jQuery ? window.jQuery(btn).data('form') : null;
+          const action = form ? (form.attr('action') || '') : '';
+          const m = action.match(/\/(consignees|customers)\/(\d+)/i);
+          if (m && m[1]) purgeDeletedEntityFromDrafts('consignees', m[2]);
+        }
+      } catch (err) {}
+    }, true);
+  }
+
   function initFormDrafts() {
     if (typeof window === 'undefined' || !window.localStorage) {
       return;
@@ -445,6 +565,13 @@
           }
         }
       });
+      // Purge legacy un-scoped freight_bookings_create drafts without _lr_ so old drafts from other bilities don't leak
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('tb_draft_') && key.endsWith('_freight_bookings_create')) {
+          localStorage.removeItem(key);
+        }
+      }
     } catch (e) {}
 
     const form = findCreateForm();
@@ -695,8 +822,10 @@
       const search = window.location.search;
       const params = new URLSearchParams(search);
       const suffix = [];
-      if (params.get('lr_id')) suffix.push('lr_' + params.get('lr_id'));
-      if (params.get('freight_booking_id')) suffix.push('fb_' + params.get('freight_booking_id'));
+      const lrId = params.get('lorry_receipt_id') || params.get('lr_id') || form.querySelector('#lr_id, input[name="lr_id"], input[name="lorry_receipt_id"]')?.value;
+      if (lrId) suffix.push('lr_' + String(lrId).trim());
+      const fbId = params.get('freight_booking_id') || params.get('fb_id') || form.querySelector('#freight_booking_id, input[name="freight_booking_id"]')?.value;
+      if (fbId) suffix.push('fb_' + String(fbId).trim());
       return baseKey + (suffix.length ? '_' + suffix.join('_') : '');
     }
     const path = window.location.pathname.replace(/\/+$/, '').toLowerCase();
@@ -721,14 +850,19 @@
     if (path.startsWith('/lorry_receipts/create')) {
       const params = new URLSearchParams(window.location.search);
       const suffix = [];
-      if (params.get('freight_booking_id')) suffix.push('fb_' + params.get('freight_booking_id'));
+      const fbId = params.get('freight_booking_id') || params.get('fb_id');
+      if (fbId) suffix.push('fb_' + String(fbId).trim());
       return 'lorry_receipts_create' + (suffix.length ? '_' + suffix.join('_') : '');
     }
     if (path.startsWith('/freight_bookings/create')) {
       const params = new URLSearchParams(window.location.search);
-      const suffix = [];
-      if (params.get('lr_id')) suffix.push('lr_' + params.get('lr_id'));
-      return 'freight_bookings_create' + (suffix.length ? '_' + suffix.join('_') : '');
+      const lrId = (
+        params.get('lorry_receipt_id') ||
+        params.get('lr_id') ||
+        form.querySelector('#lr_id, input[name="lr_id"], input[name="lorry_receipt_id"]')?.value
+      );
+      const cleanLrId = lrId ? String(lrId).trim() : '';
+      return 'freight_bookings_create' + (cleanLrId ? '_lr_' + cleanLrId : '');
     }
     const cleanPath = path.replace(/^\//, '').replace(/[^a-z0-9_-]/g, '_');
     return cleanPath;
@@ -813,6 +947,34 @@
               } else {
                 data[el.name] = String(val).trim();
               }
+              if (el.name === 'consignor_id' || el.id === 'consignor_id') {
+                const cContact = form.querySelector('#consignor_contact_number, input[name="consignor_contact_number"]')?.value;
+                const cCity = form.querySelector('#source_city, input[name="source_city"]')?.value;
+                const cState = form.querySelector('#source_state, input[name="source_state"]')?.value;
+                if (cContact || cCity || cState) {
+                  try {
+                    sessionStorage.setItem('tb_consignee_data_' + String(val).trim(), JSON.stringify({
+                      contact_number: (cContact || '').trim(),
+                      city: (cCity || '').trim(),
+                      state: (cState || '').trim()
+                    }));
+                  } catch (e) {}
+                }
+              }
+              if (el.name === 'consignee_id' || el.id === 'consignee_id') {
+                const ceContact = form.querySelector('#consignee_contact_number, input[name="consignee_contact_number"]')?.value;
+                const ceCity = form.querySelector('#destination_city, input[name="destination_city"]')?.value;
+                const ceState = form.querySelector('#destination_state, input[name="destination_state"]')?.value;
+                if (ceContact || ceCity || ceState) {
+                  try {
+                    sessionStorage.setItem('tb_consignee_data_' + String(val).trim(), JSON.stringify({
+                      contact_number: (ceContact || '').trim(),
+                      city: (ceCity || '').trim(),
+                      state: (ceState || '').trim()
+                    }));
+                  } catch (e) {}
+                }
+              }
               if (el.name === 'transporter_id' || el.id === 'transporter_id') {
                 data['owner_id'] = String(val).trim();
               }
@@ -885,6 +1047,12 @@
         }
       }
 
+      // Explicitly capture lr_id for Lorry Hire scoping
+      const lrInput = form.querySelector('#lr_id, input[name="lr_id"], input[name="lorry_receipt_id"]');
+      if (lrInput && lrInput.value) {
+        data.lr_id = String(lrInput.value).trim();
+      }
+
       // ONLY save if there is actual, meaningful user-entered data differing from pristine state
       const moduleKey = getDraftModuleKey(form);
       const isLinkedLr = moduleKey && (moduleKey.includes('lorry_receipts_create_linked') || form.classList.contains('linked-lr-form'));
@@ -913,6 +1081,17 @@
       const data = parsed.data;
       const moduleKey = getDraftModuleKey(form);
       const isLinkedLr = moduleKey && (moduleKey.includes('lorry_receipts_create_linked') || form.classList.contains('linked-lr-form'));
+
+      // Strict LR matching for Lorry Hire: only restore if the draft belongs to THIS bilty
+      const currentLrEl = form.querySelector('#lr_id, input[name="lr_id"], input[name="lorry_receipt_id"]');
+      if (currentLrEl && currentLrEl.value) {
+        const curLrId = String(currentLrEl.value).trim();
+        const draftLrId = data.lr_id ? String(data.lr_id).trim() : '';
+        if (curLrId && draftLrId && curLrId !== draftLrId) {
+          // Draft belongs to a different bilty! Do not restore onto this bilty
+          return;
+        }
+      }
 
       // FIRST: Check if the saved draft actually contains real user input differing from pristine render
       if (!hasMeaningfulUserData(data, initialSnapshot, isLinkedLr)) {
@@ -952,6 +1131,242 @@
 
       let appliedCount = 0;
       let actuallyChangedCount = 0;
+
+      function syncLrCardLabelsIfPresent() {
+        const consignorEl = form.querySelector('#consignor_id');
+        const consigneeEl = form.querySelector('#consignee_id');
+        if (!consignorEl && !consigneeEl) return;
+
+        let cContact = form.querySelector('#consignor_contact_number')?.value || '';
+        let sCity = form.querySelector('#source_city')?.value || '';
+        let sState = form.querySelector('#source_state')?.value || '';
+
+        if (consignorEl && consignorEl.value && (!cContact || !sCity || !sState)) {
+          try {
+            const raw = sessionStorage.getItem('tb_consignee_data_' + consignorEl.value);
+            if (raw) {
+              const cd = JSON.parse(raw);
+              if (cd) {
+                if (!cContact && cd.contact_number) {
+                  cContact = cd.contact_number;
+                  const el = form.querySelector('#consignor_contact_number');
+                  if (el) el.value = cContact;
+                }
+                if (!sCity && cd.city) {
+                  sCity = cd.city;
+                  const el = form.querySelector('#source_city');
+                  if (el) el.value = sCity;
+                }
+                if (!sState && cd.state) {
+                  sState = cd.state;
+                  const el = form.querySelector('#source_state');
+                  if (el) el.value = sState;
+                }
+              }
+            }
+          } catch (e) {}
+        }
+
+        let ceContact = form.querySelector('#consignee_contact_number')?.value || '';
+        let dCity = form.querySelector('#destination_city')?.value || '';
+        let dState = form.querySelector('#destination_state')?.value || '';
+
+        if (consigneeEl && consigneeEl.value && (!ceContact || !dCity || !dState)) {
+          try {
+            const raw = sessionStorage.getItem('tb_consignee_data_' + consigneeEl.value);
+            if (raw) {
+              const cd = JSON.parse(raw);
+              if (cd) {
+                if (!ceContact && cd.contact_number) {
+                  ceContact = cd.contact_number;
+                  const el = form.querySelector('#consignee_contact_number');
+                  if (el) el.value = ceContact;
+                }
+                if (!dCity && cd.city) {
+                  dCity = cd.city;
+                  const el = form.querySelector('#destination_city');
+                  if (el) el.value = dCity;
+                }
+                if (!dState && cd.state) {
+                  dState = cd.state;
+                  const el = form.querySelector('#destination_state');
+                  if (el) el.value = dState;
+                }
+              }
+            }
+          } catch (e) {}
+        }
+
+        const setMeta = function (id, val) {
+          const el = form.querySelector('#' + id);
+          if (!el) return;
+          const txt = (val || '').trim();
+          el.textContent = txt || '—';
+          el.classList.toggle('is-empty', !txt);
+        };
+
+        setMeta('consignorContactLabel', cContact);
+        setMeta('sourceCityLabel', sCity);
+        setMeta('sourceStateLabel', sState);
+        setMeta('consigneeContactLabel', ceContact);
+        setMeta('destinationCityLabel', dCity);
+        setMeta('destinationStateLabel', dState);
+
+        const lane = form.querySelector('#lrGoodsLane');
+        const rf = form.querySelector('#lrRouteFlowLabel');
+        const rSub = form.querySelector('#lrRouteFlowSub');
+        const fromCard = form.querySelector('#lrConsignorCard');
+        const toCard = form.querySelector('#lrConsigneeCard');
+
+        const hasFrom = Boolean(consignorEl && consignorEl.value);
+        const hasTo = Boolean(consigneeEl && consigneeEl.value);
+
+        if (fromCard) fromCard.classList.toggle('is-filled', hasFrom);
+        if (toCard) toCard.classList.toggle('is-filled', hasTo);
+
+        if (lane && rf && rSub) {
+          lane.classList.toggle('is-partial', hasFrom !== hasTo || (hasFrom && hasTo && (!sCity || !dCity)));
+          lane.classList.toggle('is-ready', hasFrom && hasTo && Boolean(sCity) && Boolean(dCity));
+
+          if (hasFrom && hasTo && sCity && dCity) {
+            rf.textContent = `${sCity} → ${dCity}`;
+            rSub.textContent = 'Goods moving to consignee';
+          } else if (hasFrom && hasTo) {
+            const fn = sessionStorage.getItem('tb_label_' + consignorEl.value) || '';
+            const tn = sessionStorage.getItem('tb_label_' + consigneeEl.value) || '';
+            rf.textContent = fn && tn ? `${fn.split('(')[0].trim()} → ${tn.split('(')[0].trim()}` : 'Route almost ready';
+            rSub.textContent = 'Loading location details…';
+          } else if (hasFrom) {
+            rf.textContent = sCity ? `From ${sCity}` : 'Consignor selected';
+            rSub.textContent = 'Select consignee (TO)';
+          } else if (hasTo) {
+            rf.textContent = dCity ? `To ${dCity}` : 'Consignee selected';
+            rSub.textContent = 'Select consignor (FROM)';
+          } else {
+            rf.textContent = 'Select parties to start route';
+            rSub.textContent = 'Goods move from consignor → consignee';
+          }
+        }
+      }
+
+      function clearDeletedSelectOption(targetField, optVal, fieldName) {
+        if (!targetField) return;
+        const sVal = String(optVal).trim();
+        try {
+          sessionStorage.removeItem('tb_label_' + sVal);
+          sessionStorage.removeItem('tb_consignee_data_' + sVal);
+        } catch (e) {}
+
+        // Remove from DOM / Select2
+        if (window.jQuery && window.jQuery(targetField).hasClass('select2-hidden-accessible')) {
+          const $tf = window.jQuery(targetField);
+          $tf.find('option[value="' + CSS.escape(sVal) + '"]').remove();
+          if ($tf.val() === sVal) {
+            $tf.val(null).trigger('change.select2').trigger('change');
+          }
+        } else {
+          const o = targetField.querySelector('option[value="' + CSS.escape(sVal) + '"]');
+          if (o) o.remove();
+          if (targetField.value === sVal) {
+            targetField.value = '';
+            targetField.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        }
+
+        // Clean up from stored localStorage draft
+        try {
+          const raw = localStorage.getItem(storageKey);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.data) {
+              if (fieldName && parsed.data[fieldName] !== undefined) {
+                delete parsed.data[fieldName];
+              }
+              if (fieldName === 'consignor_id') {
+                delete parsed.data['consignor_contact_number'];
+                delete parsed.data['source_city'];
+                delete parsed.data['source_state'];
+              }
+              if (fieldName === 'consignee_id') {
+                delete parsed.data['consignee_contact_number'];
+                delete parsed.data['destination_city'];
+                delete parsed.data['destination_state'];
+              }
+              if (fieldName === 'truck_id') {
+                delete parsed.data['transporter_type'];
+                delete parsed.data['transporter_id'];
+                delete parsed.data['owner_id'];
+              }
+              if (fieldName === 'transporter_id') {
+                delete parsed.data['owner_id'];
+              }
+              if (hasMeaningfulUserData(parsed.data, initialSnapshot, isLinkedLr)) {
+                localStorage.setItem(storageKey, JSON.stringify(parsed));
+              } else {
+                localStorage.removeItem(storageKey);
+              }
+            }
+          }
+        } catch (e) {}
+
+        // Reset dependent fields or cards
+        if (targetField.id === 'truck_id' || fieldName === 'truck_id') {
+          const lrPayToField = document.getElementById('lrPayToField');
+          if (lrPayToField) lrPayToField.hidden = true;
+          const lrPayeeRow = document.getElementById('lrPayeeRow');
+          if (lrPayeeRow) lrPayeeRow.hidden = true;
+          const tTypeSelect = form.querySelector('#transporter_type');
+          if (tTypeSelect) {
+            tTypeSelect.value = '';
+            tTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          const payeeSelect = form.querySelector('#transporter_id');
+          if (payeeSelect) {
+            if (window.jQuery && window.jQuery(payeeSelect).hasClass('select2-hidden-accessible')) {
+              window.jQuery(payeeSelect).val(null).trigger('change.select2').trigger('change');
+            } else {
+              payeeSelect.value = '';
+              payeeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          }
+          if (typeof window.syncLrTruckMetaAfterClear === 'function') {
+            window.syncLrTruckMetaAfterClear();
+          }
+          if (typeof window.syncLrPayeeVisibility === 'function') {
+            window.syncLrPayeeVisibility();
+          }
+        } else if (targetField.id === 'consignor_id' || fieldName === 'consignor_id') {
+          const cInput = document.getElementById('consignor_contact_number');
+          if (cInput) cInput.value = '';
+          const scInput = document.getElementById('source_city');
+          if (scInput) scInput.value = '';
+          const ssInput = document.getElementById('source_state');
+          if (ssInput) ssInput.value = '';
+          const cLabel = document.getElementById('consignorContactLabel');
+          if (cLabel) { cLabel.textContent = '—'; cLabel.classList.add('is-empty'); }
+          const scLabel = document.getElementById('sourceCityLabel');
+          if (scLabel) { scLabel.textContent = '—'; scLabel.classList.add('is-empty'); }
+          const ssLabel = document.getElementById('sourceStateLabel');
+          if (ssLabel) { ssLabel.textContent = '—'; ssLabel.classList.add('is-empty'); }
+          const fromCard = document.getElementById('lrConsignorCard');
+          if (fromCard) fromCard.classList.remove('is-filled');
+        } else if (targetField.id === 'consignee_id' || fieldName === 'consignee_id') {
+          const cInput = document.getElementById('consignee_contact_number');
+          if (cInput) cInput.value = '';
+          const dcInput = document.getElementById('destination_city');
+          if (dcInput) dcInput.value = '';
+          const dsInput = document.getElementById('destination_state');
+          if (dsInput) dsInput.value = '';
+          const cLabel = document.getElementById('consigneeContactLabel');
+          if (cLabel) { cLabel.textContent = '—'; cLabel.classList.add('is-empty'); }
+          const dcLabel = document.getElementById('destinationCityLabel');
+          if (dcLabel) { dcLabel.textContent = '—'; dcLabel.classList.add('is-empty'); }
+          const dsLabel = document.getElementById('destinationStateLabel');
+          if (dsLabel) { dsLabel.textContent = '—'; dsLabel.classList.add('is-empty'); }
+          const toCard = document.getElementById('lrConsigneeCard');
+          if (toCard) toCard.classList.remove('is-filled');
+        }
+      }
 
       Object.keys(data).forEach(function (name) {
         if (name === '_linked_lrs' || name === '_s2_meta') return;
@@ -1023,178 +1438,184 @@
                   if (data._s2_meta[name].attrs) Object.assign(attrs, data._s2_meta[name].attrs);
                 }
 
-                if (!text && (field.id === 'transporter_id' || name === 'owner_id' || name === 'transporter_id')) {
-                  const truckOpt = form.querySelector('#truck_id option:checked');
-                  if (truckOpt) {
-                    const tName = (truckOpt.getAttribute('data-transporter-name') || '').trim();
-                    if (tName) {
-                      text = tName;
-                    } else {
-                      const m = (truckOpt.text || '').match(/\(([^)]+)\)$/);
-                      if (m && m[1] && m[1].toLowerCase() !== 'no truck owner') text = m[1].trim();
-                    }
-                  }
-                }
+                const isAjaxEntity = (
+                  field.id === 'customer_id' ||
+                  field.id === 'consignor_id' ||
+                  field.id === 'consignee_id' ||
+                  field.id === 'truck_id' ||
+                  field.id === 'transporter_id' ||
+                  field.id === 'reference_by' ||
+                  name === 'customer_id' ||
+                  name === 'consignor_id' ||
+                  name === 'consignee_id' ||
+                  name === 'truck_id' ||
+                  name === 'transporter_id' ||
+                  name === 'reference_by'
+                );
 
-                let opt = field.querySelector('option[value="' + CSS.escape(val) + '"]');
-                if (!opt && (field.id === 'good_type' || name === 'good_type' || field.id === 'truck_type' || name === 'truck_type')) {
-                  opt = Array.from(field.options).find(function (o) {
-                    return (o.getAttribute('data-id') && String(o.getAttribute('data-id')).trim() === String(val).trim()) || o.value === String(val).trim();
-                  });
-                  if (!opt && (field.id === 'good_type' || name === 'good_type')) {
-                    const allGoodsSelects = document.querySelectorAll('#good_type, .goods-type');
-                    for (let gi = 0; gi < allGoodsSelects.length; gi++) {
-                      const gf = Array.from(allGoodsSelects[gi].options).find(function (o) {
-                        return (o.getAttribute('data-id') && String(o.getAttribute('data-id')).trim() === String(val).trim()) || o.value === String(val).trim();
-                      });
-                      if (gf) {
-                        opt = new Option(gf.text || gf.value, gf.value, true, true);
-                        opt.setAttribute('data-id', String(val).trim());
-                        field.add(opt);
-                        break;
-                      }
+                if (isAjaxEntity) {
+                  // Optimistic instant render (0ms): display saved labels from session cache immediately
+                  const cachedOptLabel = sessionStorage.getItem('tb_label_' + val);
+                  if (cachedOptLabel) {
+                    updateSelect2Option(field, val, cachedOptLabel, attrs);
+                    field.value = val;
+                    appliedCount++;
+                    actuallyChangedCount++;
+                    field.dispatchEvent(new Event('input', { bubbles: true }));
+                    field.dispatchEvent(new Event('change', { bubbles: true }));
+                    if (window.jQuery) {
+                      window.jQuery(field).trigger('change');
                     }
-                  } else if (!opt && (field.id === 'truck_type' || name === 'truck_type')) {
-                    const allTruckTypeSelects = document.querySelectorAll('#truck_type');
-                    for (let ti = 0; ti < allTruckTypeSelects.length; ti++) {
-                      const tf = Array.from(allTruckTypeSelects[ti].options).find(function (o) {
-                        return (o.getAttribute('data-id') && String(o.getAttribute('data-id')).trim() === String(val).trim()) || o.value === String(val).trim();
-                      });
-                      if (tf) {
-                        opt = new Option(tf.text || tf.value, tf.value, true, true);
-                        opt.setAttribute('data-id', String(val).trim());
-                        field.add(opt);
-                        break;
-                      }
+                    if (typeof window.syncLrPayeeVisibility === 'function') {
+                      window.syncLrPayeeVisibility();
                     }
                   }
-                }
-                if (!opt) {
-                  let label = text;
-                  if (!label || label === val || label === ('#' + val)) {
-                    try { label = sessionStorage.getItem('tb_label_' + val) || ''; } catch (e) {}
-                  }
-                  opt = new Option(label, val, true, true);
-                  if (attrs.transporterId) opt.setAttribute('data-transporter-id', attrs.transporterId);
-                  if (attrs.transporterName) opt.setAttribute('data-transporter-name', attrs.transporterName);
-                  if (attrs.driverName) opt.setAttribute('data-driver-name', attrs.driverName);
-                  field.add(opt);
 
-                  if (true) {
-                    if (field.id === 'customer_id' || field.id === 'consignor_id' || field.id === 'consignee_id') {
-                      fetch('/api/consignees/' + encodeURIComponent(val))
-                        .then(function (r) { return r.json(); })
-                        .then(function (d) {
-                          if (d && d.name) {
-                            const label = d.city && d.city !== 'Not provided' ? `${d.name} (${d.city})` : d.name;
-                            updateSelect2Option(field, val, label, attrs);
-                          }
-                        })
-                        .catch(function () {});
-                    } else if (field.id === 'truck_id') {
-                      fetch('/api/trucks/' + encodeURIComponent(val))
-                        .then(function (r) { return r.json(); })
-                        .then(function (d) {
-                          if (d && (d.truck_number || d.name)) {
-                            const num = d.truck_number || d.name;
-                            const driver = d.driver?.name || d.driver_name;
-                            const owner = d.transporter?.name || d.transporter_name;
-                            let label = num;
-                            if (driver) label += ' - Driver: ' + driver;
-                            if (owner) label += ' (' + owner + ')';
-                            const optAttrs = Object.assign({}, attrs);
-                            if (d.transporter_id) optAttrs.transporterId = d.transporter_id;
-                            if (owner) optAttrs.transporterName = owner;
-                            if (driver) optAttrs.driverName = driver;
-                            updateSelect2Option(field, val, label, optAttrs);
-                          }
-                        })
-                        .catch(function () {});
-                    } else if (field.id === 'transporter_id' || field.id === 'reference_by') {
-                      fetch('/api/transporters/' + encodeURIComponent(val))
-                        .then(function (r) { return r.json(); })
-                        .then(function (d) {
-                          if (d) {
-                            const name = String(d.name ?? d.transporterMaster?.name ?? d.transporter_master?.name ?? '').trim();
-                            const shortName = String(d.short_name ?? '').trim();
-                            const fullLabel = shortName ? `${name} (${shortName})` : name;
-                            if (fullLabel) {
-                              updateSelect2Option(field, val, fullLabel, attrs);
+                  // Verify against API before accepting. If entity was deleted from master, leave blank!
+                  if (field.id === 'customer_id' || field.id === 'consignor_id' || field.id === 'consignee_id' || name === 'customer_id' || name === 'consignor_id' || name === 'consignee_id') {
+                    fetch('/api/consignees/' + encodeURIComponent(val))
+                      .then(function (r) {
+                        if (!r.ok) throw new Error('Not found');
+                        return r.json();
+                      })
+                      .then(function (d) {
+                        if (d && d.name && d.name !== 'Not provided') {
+                          try { sessionStorage.setItem('tb_consignee_data_' + val, JSON.stringify(d)); } catch (e) {}
+                          const label = d.city && d.city !== 'Not provided' ? `${d.name} (${d.city})` : d.name;
+                          try { sessionStorage.setItem('tb_label_' + val, label); } catch (e) {}
+                          updateSelect2Option(field, val, label, attrs);
+                          if (!cachedOptLabel) {
+                            field.value = val;
+                            appliedCount++;
+                            actuallyChangedCount++;
+                            field.dispatchEvent(new Event('input', { bubbles: true }));
+                            field.dispatchEvent(new Event('change', { bubbles: true }));
+                            if (window.jQuery) {
+                              window.jQuery(field).trigger('change');
                             }
                           }
-                        })
-                        .catch(function () {});
-                    }
+                        } else {
+                          try {
+                            sessionStorage.removeItem('tb_label_' + val);
+                            sessionStorage.removeItem('tb_consignee_data_' + val);
+                          } catch (e) {}
+                          clearDeletedSelectOption(field, val, name);
+                        }
+                      })
+                      .catch(function () {
+                        try {
+                          sessionStorage.removeItem('tb_label_' + val);
+                          sessionStorage.removeItem('tb_consignee_data_' + val);
+                        } catch (e) {}
+                        clearDeletedSelectOption(field, val, name);
+                      });
+                  } else if (field.id === 'truck_id' || name === 'truck_id') {
+                    fetch('/api/trucks/' + encodeURIComponent(val))
+                      .then(function (r) {
+                        if (!r.ok) throw new Error('Not found');
+                        return r.json();
+                      })
+                      .then(function (d) {
+                        if (d && (d.truck_number || d.name)) {
+                          const num = d.truck_number || d.name;
+                          const driver = d.driver?.name || d.driver_name;
+                          const owner = d.transporter?.name || d.transporter_name;
+                          let label = num;
+                          if (driver) label += ' - Driver: ' + driver;
+                          if (owner) label += ' (' + owner + ')';
+                          try { sessionStorage.setItem('tb_label_' + val, label); } catch (e) {}
+                          const optAttrs = Object.assign({}, attrs);
+                          if (d.transporter_id) optAttrs.transporterId = d.transporter_id;
+                          if (owner) optAttrs.transporterName = owner;
+                          if (driver) optAttrs.driverName = driver;
+                          updateSelect2Option(field, val, label, optAttrs);
+                          if (!cachedOptLabel) {
+                            field.value = val;
+                            appliedCount++;
+                            actuallyChangedCount++;
+                            field.dispatchEvent(new Event('input', { bubbles: true }));
+                            field.dispatchEvent(new Event('change', { bubbles: true }));
+                            if (window.jQuery) {
+                              window.jQuery(field).trigger('change');
+                            }
+                            if (typeof window.syncLrPayeeVisibility === 'function') {
+                              window.syncLrPayeeVisibility();
+                            }
+                          }
+                        } else {
+                          try { sessionStorage.removeItem('tb_label_' + val); } catch (e) {}
+                          clearDeletedSelectOption(field, val, name);
+                        }
+                      })
+                      .catch(function () {
+                        try { sessionStorage.removeItem('tb_label_' + val); } catch (e) {}
+                        clearDeletedSelectOption(field, val, name);
+                      });
+                  } else if (field.id === 'transporter_id' || field.id === 'reference_by' || name === 'transporter_id' || name === 'reference_by') {
+                    fetch('/api/transporters/' + encodeURIComponent(val))
+                      .then(function (r) {
+                        if (!r.ok) throw new Error('Not found');
+                        return r.json();
+                      })
+                      .then(function (d) {
+                        const tName = String(d ? (d.name ?? d.transporterMaster?.name ?? d.transporter_master?.name ?? '') : '').trim();
+                        if (tName) {
+                          const shortName = String(d.short_name ?? '').trim();
+                          const fullLabel = shortName ? `${tName} (${shortName})` : tName;
+                          try { sessionStorage.setItem('tb_label_' + val, fullLabel); } catch (e) {}
+                          updateSelect2Option(field, val, fullLabel, attrs);
+                          if (!cachedOptLabel) {
+                            field.value = val;
+                            appliedCount++;
+                            actuallyChangedCount++;
+                            field.dispatchEvent(new Event('input', { bubbles: true }));
+                            field.dispatchEvent(new Event('change', { bubbles: true }));
+                            if (window.jQuery) {
+                              window.jQuery(field).trigger('change');
+                            }
+                          }
+                        } else {
+                          try { sessionStorage.removeItem('tb_label_' + val); } catch (e) {}
+                          clearDeletedSelectOption(field, val, name);
+                        }
+                      })
+                      .catch(function () {
+                        try { sessionStorage.removeItem('tb_label_' + val); } catch (e) {}
+                        clearDeletedSelectOption(field, val, name);
+                      });
+                  }
+                } else if (field.id === 'state_id' || field.id === 'city_id' || name === 'state_id' || name === 'city_id') {
+                  // Cascading location dropdowns: save target value for cascade loader without wiping
+                  field.dataset.restoreVal = val;
+                  appliedCount++;
+                  if (!isBoilerplateField(name) && String(val).length > 0) {
+                    actuallyChangedCount++;
                   }
                 } else {
-                  let label = text;
-                  if (!label || label === val || label === ('#' + val)) {
-                    try { label = sessionStorage.getItem('tb_label_' + val) || ''; } catch (e) {}
+                  // Non-AJAX static dropdowns: only restore if option genuinely exists in master select
+                  let opt = field.querySelector('option[value="' + CSS.escape(val) + '"]');
+                  if (!opt && (field.id === 'good_type' || name === 'good_type' || field.id === 'truck_type' || name === 'truck_type')) {
+                    opt = Array.from(field.options).find(function (o) {
+                      return (o.getAttribute('data-id') && String(o.getAttribute('data-id')).trim() === String(val).trim()) || o.value === String(val).trim();
+                    });
                   }
-                  if (label && (!opt.text || opt.text === val || opt.text === ('#' + val))) {
-                    opt.text = label;
-                    updateSelect2Option(field, val, label, attrs);
-                  } else if (!label && (!opt.text || opt.text === val || opt.text === ('#' + val))) {
-                    if (field.id === 'transporter_id') {
-                      const truckOpt = form.querySelector('#truck_id option:checked');
-                      let resolvedText = '';
-                      if (truckOpt) {
-                        const tName = (truckOpt.getAttribute('data-transporter-name') || '').trim();
-                        if (tName) resolvedText = tName;
-                        else {
-                          const m = (truckOpt.text || '').match(/\(([^)]+)\)$/);
-                          if (m && m[1] && m[1].toLowerCase() !== 'no truck owner') resolvedText = m[1].trim();
-                        }
-                      }
-                      if (resolvedText) {
-                        opt.text = resolvedText;
-                        updateSelect2Option(field, val, resolvedText, attrs);
-                      } else {
-                        fetch('/api/transporters/' + encodeURIComponent(val))
-                          .then(function (r) { return r.json(); })
-                          .then(function (d) {
-                            if (d) {
-                              const name = String(d.name ?? d.transporterMaster?.name ?? d.transporter_master?.name ?? '').trim();
-                              const shortName = String(d.short_name ?? '').trim();
-                              const fullLabel = shortName ? `${name} (${shortName})` : name;
-                              if (fullLabel) updateSelect2Option(field, val, fullLabel, attrs);
-                            }
-                          })
-                          .catch(function () {});
-                      }
-                    } else if (field.id === 'reference_by') {
-                      fetch('/api/transporters/' + encodeURIComponent(val))
-                        .then(function (r) { return r.json(); })
-                        .then(function (d) {
-                          if (d) {
-                            const name = String(d.name ?? d.transporterMaster?.name ?? d.transporter_master?.name ?? '').trim();
-                            const shortName = String(d.short_name ?? '').trim();
-                            const fullLabel = shortName ? `${name} (${shortName})` : name;
-                            if (fullLabel) updateSelect2Option(field, val, fullLabel, attrs);
-                          }
-                        })
-                        .catch(function () {});
+                  if (opt) {
+                    opt.selected = true;
+                    field.value = opt.value;
+                    appliedCount++;
+                    const oldVal = (initialSnapshot && initialSnapshot[name] !== undefined) ? initialSnapshot[name] : '';
+                    if (!isBoilerplateField(name) && opt.value !== oldVal && opt.value.length > 0 && opt.value !== '0' && opt.value !== '0.00') {
+                      actuallyChangedCount++;
                     }
+                    field.dispatchEvent(new Event('input', { bubbles: true }));
+                    field.dispatchEvent(new Event('change', { bubbles: true }));
+                    if (window.jQuery) {
+                      window.jQuery(field).trigger('change');
+                    }
+                  } else {
+                    // Option does not exist in master list; clear it!
+                    clearDeletedSelectOption(field, val, name);
                   }
-                  if (attrs.transporterId) opt.setAttribute('data-transporter-id', attrs.transporterId);
-                  if (attrs.transporterName) opt.setAttribute('data-transporter-name', attrs.transporterName);
-                  if (attrs.driverName) opt.setAttribute('data-driver-name', attrs.driverName);
-                }
-                const oldVal = (initialSnapshot && initialSnapshot[name] !== undefined) ? initialSnapshot[name] : (field.value || '');
-                const targetVal = opt ? opt.value : val;
-                const newVal = String(targetVal).trim();
-                opt.selected = true;
-                field.value = targetVal;
-                appliedCount++;
-                if (!isBoilerplateField(name) && newVal !== oldVal && newVal.length > 0 && newVal !== '0' && newVal !== '0.00') {
-                  actuallyChangedCount++;
-                }
-
-                field.dispatchEvent(new Event('input', { bubbles: true }));
-                field.dispatchEvent(new Event('change', { bubbles: true }));
-
-                if (window.jQuery) {
-                  window.jQuery(field).trigger('change');
                 }
               }
             } else {
@@ -1213,6 +1634,96 @@
           }
         }
       });
+
+      // Special handling for cascading location dropdowns (country_id -> state_id -> city_id)
+      const countryEl = form.querySelector('#country_id') || form.querySelector('select[name="country_id"]');
+      const stateEl = form.querySelector('#state_id') || form.querySelector('select[name="state_id"]');
+      const cityEl = form.querySelector('#city_id') || form.querySelector('select[name="city_id"]');
+
+      if (countryEl && stateEl) {
+        const targetCountry = data.country_id !== undefined ? (typeof data.country_id === 'object' ? data.country_id.value : data.country_id) : countryEl.value;
+        const targetState = data.state_id !== undefined ? (typeof data.state_id === 'object' ? data.state_id.value : data.state_id) : (stateEl.dataset.restoreVal || '');
+        const targetCity = data.city_id !== undefined ? (typeof data.city_id === 'object' ? data.city_id.value : data.city_id) : (cityEl ? (cityEl.dataset.restoreVal || '') : '');
+
+        if (targetCountry) {
+          countryEl.value = targetCountry;
+
+          if (data._labels) {
+            delete data._labels;
+          }
+
+          // Optimistic instant render (0ms): display saved State and City labels from sessionStorage without waiting for network
+          const targetStateLabel = targetState ? (sessionStorage.getItem('tb_label_' + targetState) || '') : '';
+          if (targetState && targetStateLabel && !stateEl.querySelector(`option[value="${CSS.escape(targetState)}"]`)) {
+            stateEl.innerHTML = '';
+            stateEl.appendChild(new Option('Select State', ''));
+            stateEl.appendChild(new Option(targetStateLabel, targetState, true, true));
+            stateEl.value = targetState;
+          }
+
+          const targetCityLabel = targetCity ? (sessionStorage.getItem('tb_label_' + targetCity) || '') : '';
+          if (cityEl && targetCity && targetCityLabel && !cityEl.querySelector(`option[value="${CSS.escape(targetCity)}"]`)) {
+            cityEl.innerHTML = '';
+            cityEl.appendChild(new Option('Select City', ''));
+            cityEl.appendChild(new Option(targetCityLabel, targetCity, true, true));
+            cityEl.value = targetCity;
+          }
+
+          if (typeof window.DynamicDropdowns?.loadCascade === 'function') {
+            window.DynamicDropdowns.loadCascade(targetCountry, targetState, targetCity);
+          } else {
+            fetch('/api/states/' + encodeURIComponent(targetCountry), {
+              headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            })
+              .then(function (r) { return r.ok ? r.json() : []; })
+              .then(function (states) {
+                stateEl.innerHTML = '<option value="">Select State</option>';
+                states.forEach(function (s) {
+                  const opt = document.createElement('option');
+                  opt.value = s.id;
+                  opt.textContent = s.name;
+                  stateEl.appendChild(opt);
+                });
+                if (targetState) {
+                  const sOpt = stateEl.querySelector('option[value="' + CSS.escape(targetState) + '"]');
+                  if (sOpt) {
+                    stateEl.value = targetState;
+                    delete stateEl.dataset.restoreVal;
+                    stateEl.dispatchEvent(new Event('input', { bubbles: true }));
+                    stateEl.dispatchEvent(new Event('change', { bubbles: true }));
+                    if (window.jQuery) window.jQuery(stateEl).trigger('change');
+
+                    if (cityEl && targetCity) {
+                      fetch('/api/cities/' + encodeURIComponent(targetState), {
+                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                      })
+                        .then(function (cr) { return cr.ok ? cr.json() : []; })
+                        .then(function (cities) {
+                          cityEl.innerHTML = '<option value="">Select City</option>';
+                          cities.forEach(function (c) {
+                            const cOpt = document.createElement('option');
+                            cOpt.value = c.id;
+                            cOpt.textContent = c.name;
+                            cityEl.appendChild(cOpt);
+                          });
+                          const matchedCityOpt = cityEl.querySelector('option[value="' + CSS.escape(targetCity) + '"]');
+                          if (matchedCityOpt) {
+                            cityEl.value = targetCity;
+                            delete cityEl.dataset.restoreVal;
+                            cityEl.dispatchEvent(new Event('input', { bubbles: true }));
+                            cityEl.dispatchEvent(new Event('change', { bubbles: true }));
+                            if (window.jQuery) window.jQuery(cityEl).trigger('change');
+                          }
+                        })
+                        .catch(function () {});
+                    }
+                  }
+                }
+              })
+              .catch(function () {});
+          }
+        }
+      }
 
       // Special handling for Pay To pills (transporter_type)
       if (data.transporter_type) {
@@ -1255,12 +1766,136 @@
                 const cards = container.querySelectorAll('.lr-item');
                 const card = cards[idx];
                 if (card) {
+                  const clearLinkedLrCardSelect = function (card, selectCls, id, isConsignor, isConsignee) {
+                    try {
+                      sessionStorage.removeItem('tb_label_' + id);
+                      sessionStorage.removeItem('tb_consignee_data_' + id);
+                    } catch (e) {}
+                    const sel = card.querySelector('.' + selectCls);
+                    if (sel) {
+                      if (window.jQuery && window.jQuery(sel).hasClass('select2-hidden-accessible')) {
+                        const $s = window.jQuery(sel);
+                        $s.find('option[value="' + CSS.escape(id) + '"]').remove();
+                        $s.val(null).trigger('change.select2').trigger('change');
+                      } else {
+                        let opt = sel.querySelector('option[value="' + CSS.escape(id) + '"]');
+                        if (opt) opt.remove();
+                        sel.value = '';
+                        sel.dispatchEvent(new Event('change', { bubbles: true }));
+                      }
+                    }
+                    if (isConsignor) {
+                      const cInput = card.querySelector('.consignor-contact');
+                      if (cInput) cInput.value = '';
+                      const cText = card.querySelector('.consignor-contact-text');
+                      if (cText) cText.textContent = '';
+                      const scInput = card.querySelector('.source-city');
+                      if (scInput) scInput.value = '';
+                      const scText = card.querySelector('.consignor-city-text');
+                      if (scText) scText.textContent = '';
+                      const ssInput = card.querySelector('.source-state');
+                      if (ssInput) ssInput.value = '';
+                      const ssText = card.querySelector('.consignor-state-text');
+                      if (ssText) ssText.textContent = '';
+                    }
+                    if (isConsignee) {
+                      const cInput = card.querySelector('.consignee-contact');
+                      if (cInput) cInput.value = '';
+                      const cText = card.querySelector('.consignee-contact-text');
+                      if (cText) cText.textContent = '';
+                      const dcInput = card.querySelector('.destination-city');
+                      if (dcInput) dcInput.value = '';
+                      const dcText = card.querySelector('.consignee-city-text');
+                      if (dcText) dcText.textContent = '';
+                      const dsInput = card.querySelector('.destination-state');
+                      if (dsInput) dsInput.value = '';
+                      const dsText = card.querySelector('.consignee-state-text');
+                      if (dsText) dsText.textContent = '';
+                    }
+                    if (window.LinkedLrFormUI) {
+                      window.LinkedLrFormUI.updateRoutePreview(card);
+                      window.LinkedLrFormUI.updateItemMeta(card);
+                    }
+                    saveDraft(form, storageKey);
+                  };
+
                   const fetchAndSetSelect = function (selectCls, id, isConsignor, isConsignee) {
                     if (!id) return;
+                    const cachedLabel = sessionStorage.getItem('tb_label_' + id);
+                    const cachedDataRaw = sessionStorage.getItem('tb_consignee_data_' + id);
+                    let cachedData = null;
+                    if (cachedDataRaw) {
+                      try { cachedData = JSON.parse(cachedDataRaw); } catch (e) {}
+                    }
+                    if (cachedLabel) {
+                      const sel = card.querySelector('.' + selectCls);
+                      if (sel) {
+                        if (window.jQuery && window.jQuery(sel).hasClass('select2-hidden-accessible')) {
+                          const $s = window.jQuery(sel);
+                          $s.find('option[value="' + CSS.escape(id) + '"]').remove();
+                          $s.append(new Option(cachedLabel, id, true, true)).trigger('change.select2');
+                        } else {
+                          let opt = sel.querySelector('option[value="' + CSS.escape(id) + '"]');
+                          if (opt) opt.text = cachedLabel;
+                        }
+                      }
+                      if (cachedData) {
+                        const cityVal = cachedData.city?.name || cachedData.city || '';
+                        const stateVal = cachedData.state?.name || cachedData.state || '';
+                        if (isConsignor) {
+                          if (cachedData.contact_number) {
+                            const cInput = card.querySelector('.consignor-contact');
+                            if (cInput) cInput.value = cachedData.contact_number;
+                            const cText = card.querySelector('.consignor-contact-text');
+                            if (cText) cText.textContent = 'Contact Number: ' + cachedData.contact_number;
+                          }
+                          if (cityVal) {
+                            const scInput = card.querySelector('.source-city');
+                            if (scInput) scInput.value = cityVal;
+                            const scText = card.querySelector('.consignor-city-text');
+                            if (scText) scText.textContent = 'Source City: ' + cityVal;
+                          }
+                          if (stateVal) {
+                            const ssInput = card.querySelector('.source-state');
+                            if (ssInput) ssInput.value = stateVal;
+                            const ssText = card.querySelector('.consignor-state-text');
+                            if (ssText) ssText.textContent = 'Source State: ' + stateVal;
+                          }
+                        }
+                        if (isConsignee) {
+                          if (cachedData.contact_number) {
+                            const cInput = card.querySelector('.consignee-contact');
+                            if (cInput) cInput.value = cachedData.contact_number;
+                            const cText = card.querySelector('.consignee-contact-text');
+                            if (cText) cText.textContent = 'Contact Number: ' + cachedData.contact_number;
+                          }
+                          if (cityVal) {
+                            const dcInput = card.querySelector('.destination-city');
+                            if (dcInput) dcInput.value = cityVal;
+                            const dcText = card.querySelector('.consignee-city-text');
+                            if (dcText) dcText.textContent = 'Destination City: ' + cityVal;
+                          }
+                          if (stateVal) {
+                            const dsInput = card.querySelector('.destination-state');
+                            if (dsInput) dsInput.value = stateVal;
+                            const dsText = card.querySelector('.consignee-state-text');
+                            if (dsText) dsText.textContent = 'Destination State: ' + stateVal;
+                          }
+                        }
+                        if (window.LinkedLrFormUI) {
+                          window.LinkedLrFormUI.updateRoutePreview(card);
+                          window.LinkedLrFormUI.updateItemMeta(card);
+                        }
+                      }
+                    }
+
                     fetch('/api/consignees/' + encodeURIComponent(id))
-                      .then(function (r) { return r.json(); })
+                      .then(function (r) {
+                        if (!r.ok) throw new Error('Not found');
+                        return r.json();
+                      })
                       .then(function (d) {
-                        if (d && d.name) {
+                        if (d && d.name && d.name !== 'Not provided') {
                           const label = d.city && d.city !== 'Not provided' ? `${d.name} (${d.city})` : d.name;
                           const sel = card.querySelector('.' + selectCls);
                           if (sel) {
@@ -1319,33 +1954,14 @@
                             window.LinkedLrFormUI.updateRoutePreview(card);
                             window.LinkedLrFormUI.updateItemMeta(card);
                           }
+                        } else {
+                          clearLinkedLrCardSelect(card, selectCls, id, isConsignor, isConsignee);
                         }
                       })
-                      .catch(function () {});
+                      .catch(function () {
+                        clearLinkedLrCardSelect(card, selectCls, id, isConsignor, isConsignee);
+                      });
                   };
-
-                  const applyCachedLabel = function (selectCls, id) {
-                    if (!id) return;
-                    let cached = '';
-                    try { cached = sessionStorage.getItem('tb_label_' + id); } catch (e) {}
-                    if (cached) {
-                      const sel = card.querySelector('.' + selectCls);
-                      if (sel) {
-                        if (window.jQuery && window.jQuery(sel).hasClass('select2-hidden-accessible')) {
-                          const $s = window.jQuery(sel);
-                          $s.find('option[value="' + CSS.escape(id) + '"]').remove();
-                          $s.append(new Option(cached, id, true, true)).trigger('change.select2');
-                        } else {
-                          let opt = sel.querySelector('option[value="' + CSS.escape(id) + '"]');
-                          if (opt) opt.text = cached;
-                          else sel.add(new Option(cached, id, true, true));
-                        }
-                      }
-                    }
-                  };
-                  if (prefill.customer_id) applyCachedLabel('customer-select', prefill.customer_id);
-                  if (prefill.consignor_id) applyCachedLabel('consignor-select', prefill.consignor_id);
-                  if (prefill.consignee_id) applyCachedLabel('consignee-select', prefill.consignee_id);
 
                   if (prefill.customer_id) fetchAndSetSelect('customer-select', prefill.customer_id, false, false);
                   if (prefill.consignor_id) fetchAndSetSelect('consignor-select', prefill.consignor_id, true, false);
@@ -1392,87 +2008,16 @@
         }
       }
 
-      // Delayed second pass for Select2 widgets that initialize late
+      // Ensure late-initializing Select2 instances and UI badges are fully synced
       setTimeout(function () {
         if (window.jQuery) {
-          Object.keys(data).forEach(function (name) {
-            if (name === '_linked_lrs') return;
-            const field = form.querySelector('select[name="' + name + '"]');
-            if (field) {
-              const val = String(data[name] && typeof data[name] === 'object' ? data[name].value : data[name]).trim();
-              if (val) {
-                if (field.id === 'truck_id') {
-                  fetch('/api/trucks/' + encodeURIComponent(val))
-                    .then(function (r) { return r.json(); })
-                    .then(function (d) {
-                      if (d && (d.truck_number || d.name)) {
-                        const num = d.truck_number || d.name;
-                        const driver = d.driver?.name || d.driver_name;
-                        const owner = d.transporter?.name || d.transporter_name;
-                        let label = num;
-                        if (driver) label += ' - Driver: ' + driver;
-                        if (owner) label += ' (' + owner + ')';
-                        const optAttrs = {};
-                        if (d.transporter_id) optAttrs.transporterId = d.transporter_id;
-                        if (owner) optAttrs.transporterName = owner;
-                        if (driver) optAttrs.driverName = driver;
-                        updateSelect2Option(field, val, label, optAttrs);
-                      }
-                    })
-                    .catch(function () {});
-                } else if (field.id === 'transporter_id') {
-                  const truckOpt = form.querySelector('#truck_id option:checked');
-                  let tName = truckOpt ? (truckOpt.getAttribute('data-transporter-name') || '').trim() : '';
-                  if (!tName && truckOpt) {
-                    const m = (truckOpt.text || '').match(/\(([^)]+)\)$/);
-                    if (m && m[1] && m[1].toLowerCase() !== 'no truck owner') tName = m[1].trim();
-                  }
-                  if (tName) {
-                    updateSelect2Option(field, val, tName);
-                  } else {
-                    fetch('/api/transporters/' + encodeURIComponent(val))
-                      .then(function (r) { return r.json(); })
-                      .then(function (d) {
-                        if (d) {
-                          const name = String(d.name ?? d.transporterMaster?.name ?? d.transporter_master?.name ?? '').trim();
-                          const shortName = String(d.short_name ?? '').trim();
-                          const fullLabel = shortName ? `${name} (${shortName})` : name;
-                          if (fullLabel) updateSelect2Option(field, val, fullLabel);
-                        }
-                      })
-                      .catch(function () {});
-                  }
-                } else if (field.id === 'reference_by') {
-                  fetch('/api/transporters/' + encodeURIComponent(val))
-                    .then(function (r) { return r.json(); })
-                    .then(function (d) {
-                      if (d) {
-                        const name = String(d.name ?? d.transporterMaster?.name ?? d.transporter_master?.name ?? '').trim();
-                        const shortName = String(d.short_name ?? '').trim();
-                        const fullLabel = shortName ? `${name} (${shortName})` : name;
-                        if (fullLabel) updateSelect2Option(field, val, fullLabel);
-                      }
-                    })
-                    .catch(function () {});
-                } else if (field.id === 'customer_id' || field.id === 'consignor_id' || field.id === 'consignee_id') {
-                  fetch('/api/consignees/' + encodeURIComponent(val))
-                    .then(function (r) { return r.json(); })
-                    .then(function (d) {
-                      if (d && d.name) {
-                        const label = d.city && d.city !== 'Not provided' ? `${d.name} (${d.city})` : d.name;
-                        updateSelect2Option(field, val, label);
-                      }
-                    })
-                    .catch(function () {});
-                }
-              }
-              window.jQuery(field).trigger('change.select2').trigger('change');
+          form.querySelectorAll('select.select2-hidden-accessible, #lr-items-container .select2-hidden-accessible').forEach(function (s2) {
+            if (s2.value) {
+              window.jQuery(s2).trigger('change.select2');
             }
           });
-          form.querySelectorAll('#lr-items-container .select2-hidden-accessible').forEach(function (s2) {
-            window.jQuery(s2).trigger('change.select2');
-          });
         }
+        syncLrCardLabelsIfPresent();
         const truckSel = form.querySelector('#truck_id');
         if (truckSel && truckSel.value) {
           truckSel.dispatchEvent(new Event('change', { bubbles: true }));
@@ -1492,7 +2037,7 @@
         if (window.LinkedLrFormUI && typeof window.LinkedLrFormUI.updateSummary === 'function') {
           window.LinkedLrFormUI.updateSummary();
         }
-      }, 350);
+      }, 50);
 
       // ONLY show toast if there were meaningful user changes restored!
       if (actuallyChangedCount > 0) {
@@ -1711,6 +2256,7 @@
     tagModals();
     interceptNativeConfirms();
     initIndexFiltersToggle();
+    initMasterDeleteDraftWatcher();
     initFormDrafts();
   }
 
