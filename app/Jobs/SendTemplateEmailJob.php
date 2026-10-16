@@ -37,6 +37,7 @@ class SendTemplateEmailJob implements ShouldQueue
         try {
             Mail::send('emails.dynamic_content', [
                 'bodyHtml' => $this->renderedBody,
+                'emailSubject' => $this->subject,
             ], function ($message): void {
                 $message->to($this->recipient)->subject($this->subject);
             });
