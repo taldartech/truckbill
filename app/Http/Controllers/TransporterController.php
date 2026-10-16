@@ -128,7 +128,6 @@ public function bulkUploadTemplate()
         'TDS Percentage',
         'TDS Adjustment Remark',
         'Short Name',
-        'Advance Amount',
     ];
 
     $callback = function () use ($headers) {

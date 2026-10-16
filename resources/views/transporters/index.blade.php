@@ -258,14 +258,13 @@
         ['name' => 'State', 'format' => 'Existing state', 'required' => true],
         ['name' => 'City', 'format' => 'Existing city', 'required' => true],
         ['name' => 'Declaration Given', 'format' => 'Yes / No', 'required' => true],
-        ['name' => 'TDS Percentage', 'format' => 'Number', 'required' => true],
         ['name' => 'Email', 'format' => 'Email address', 'required' => false],
         ['name' => 'GST Number', 'format' => 'GST number', 'required' => false],
         ['name' => 'Contact Person Name', 'format' => 'Name', 'required' => false],
         ['name' => 'Address', 'format' => 'Existing address / Text', 'required' => false],
-        ['name' => 'TDS Adjustment Remark', 'format' => 'Text', 'required' => false],
+        ['name' => 'TDS Percentage', 'format' => 'Number (Auto from PAN. If entered manually, remark is required)', 'required' => false],
+        ['name' => 'TDS Adjustment Remark', 'format' => 'Text (Required if TDS Percentage is entered)', 'required' => false],
         ['name' => 'Short Name', 'format' => 'Short Name', 'required' => false],
-        ['name' => 'Advance Amount', 'format' => 'Amount', 'required' => false],
     ],
 ])
 

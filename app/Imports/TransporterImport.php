@@ -154,6 +154,27 @@ class TransporterImport implements
                 }
 
                 /*
+                 * TDS PERCENTAGE RESOLUTION
+                 * If TDS % is not provided, auto-calculate based on PAN, PAN active, and declaration given.
+                 */
+                $tdsPercentage = $data['tds_percentage'];
+                $tdsRemark = $data['tds_adjustment_remark'];
+
+                if ($tdsPercentage === null) {
+                    if ($panNumber === $dummyPan) {
+                        $tdsPercentage = 0.00;
+                    } else {
+                        $declarationGiven = strtolower(trim((string) $data['declaration_given'])) === 'yes';
+                        $panActive = $master ? (bool) $master->pan_active : (strtolower(trim((string) $data['pan_active'])) === 'yes');
+                        $tdsPercentage = app(\App\Services\TransporterTdsCalculator::class)->calculate(
+                            $declarationGiven,
+                            $panNumber,
+                            $panActive
+                        );
+                    }
+                }
+
+                /*
                  * CREATE TRANSPORTER
                  */
                 Transporter::create([
@@ -166,8 +187,8 @@ class TransporterImport implements
                     'total_trucks' => 0,
                     'advance_amount' => (float) ($data['advance_amount'] ?? 0),
                     'short_name' => $data['short_name'] ?: null,
-                    'tds_percentage' => (float) ($data['tds_percentage'] ?? 0),
-                    'tds_adjustment_remark' => $data['tds_adjustment_remark'] ?: null,
+                    'tds_percentage' => (float) $tdsPercentage,
+                    'tds_adjustment_remark' => $tdsRemark ?: null,
                 ]);
 
                 if ($panNumber !== $dummyPan) {
@@ -218,6 +239,13 @@ class TransporterImport implements
         $city = $normalized['city'] ?? null;
         $address = $normalized['address'] ?? null;
 
+        $cleanTds = $tdsPercentage !== null ? trim((string) $tdsPercentage) : '';
+        $cleanTds = rtrim($cleanTds, '%');
+        $cleanTds = trim($cleanTds);
+
+        $parsedTds = $cleanTds !== '' ? (is_numeric($cleanTds) ? (float) $cleanTds : $cleanTds) : null;
+        $parsedRemark = $tdsAdjustmentRemark !== null && trim((string) $tdsAdjustmentRemark) !== '' ? trim((string) $tdsAdjustmentRemark) : null;
+
         return [
             'pan_number' => $panNumber ? strtoupper(trim((string) $panNumber)) : '',
             'transport_name' => $transportName ? trim((string) $transportName) : '',
@@ -231,8 +259,8 @@ class TransporterImport implements
             'city' => $city ? trim((string) $city) : null,
             'address' => $address ? trim((string) $address) : null,
             'declaration_given' => $declarationGiven !== null && trim((string) $declarationGiven) !== '' ? trim((string) $declarationGiven) : null,
-            'tds_percentage' => $tdsPercentage !== null && trim((string) $tdsPercentage) !== '' ? (float) $tdsPercentage : null,
-            'tds_adjustment_remark' => $tdsAdjustmentRemark ? trim((string) $tdsAdjustmentRemark) : null,
+            'tds_percentage' => $parsedTds,
+            'tds_adjustment_remark' => $parsedRemark,
             'short_name' => $shortName ? trim((string) $shortName) : null,
             'advance_amount' => $advanceAmount !== null && trim((string) $advanceAmount) !== '' ? (float) $advanceAmount : 0,
         ];
@@ -240,7 +268,7 @@ class TransporterImport implements
 
     private function validateRow(array $data, ?string $dummyPan): array
     {
-        $validator = Validator::make($data, [
+        $rules = [
             'pan_number' => [
                 'required',
                 'string',
@@ -303,7 +331,6 @@ class TransporterImport implements
                         $state = $stateQuery->first();
                         if (! $state) {
                             $fail("State '{$value}' does not exist in master records.");
-                            return;
                         }
                     }
                 },
@@ -332,7 +359,6 @@ class TransporterImport implements
                         $city = $cityQuery->first();
                         if (! $city) {
                             $fail("City '{$value}' does not exist in master records.");
-                            return;
                         }
                     }
                 },
@@ -347,7 +373,7 @@ class TransporterImport implements
                 },
             ],
             'tds_percentage' => [
-                'required',
+                'nullable',
                 'numeric',
                 'min:0',
                 'max:100',
@@ -380,7 +406,17 @@ class TransporterImport implements
                 'nullable',
                 'numeric',
             ],
-        ], [
+        ];
+
+        if ($data['tds_percentage'] !== null) {
+            $rules['tds_adjustment_remark'] = [
+                'required',
+                'string',
+                'max:1000',
+            ];
+        }
+
+        $validator = Validator::make($data, $rules, [
             'pan_number.required' => 'PAN Number is required.',
             'transport_name.required' => 'Transporter Name is required.',
             'mobile_number.required' => 'Mobile Number is required.',
@@ -390,8 +426,10 @@ class TransporterImport implements
             'state.required' => 'State is required.',
             'city.required' => 'City is required.',
             'declaration_given.required' => 'Declaration Given status is required (Yes / No).',
-            'tds_percentage.required' => 'TDS % is required.',
             'tds_percentage.numeric' => 'TDS % must be a valid number.',
+            'tds_percentage.min' => 'TDS % cannot be less than 0.',
+            'tds_percentage.max' => 'TDS % cannot be greater than 100.',
+            'tds_adjustment_remark.required' => 'TDS Adjustment Remark is required when TDS percentage is provided.',
             'email.email' => 'Email must be a valid email address.',
         ]);
 
@@ -400,24 +438,6 @@ class TransporterImport implements
         }
 
         return [];
-    }
-
-    private function parseBoolean($value): ?bool
-    {
-        if ($value === null || trim((string) $value) === '') {
-            return null;
-        }
-
-        $str = strtolower(trim((string) $value));
-        if ($str === 'yes') {
-            return true;
-        }
-
-        if ($str === 'no') {
-            return false;
-        }
-
-        return null;
     }
 
     public function chunkSize(): int

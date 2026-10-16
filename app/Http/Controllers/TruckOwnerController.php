@@ -135,10 +135,9 @@ class TruckOwnerController extends Controller
             'Address',
             'Declaration Given',
             'Total Trucks',
-            'TDS %',
+            'TDS Percentage',
             'TDS Adjustment Remark',
             'Short Name',
-            'Advance Amount',
         ];
 
         $callback = function () use ($headers) {

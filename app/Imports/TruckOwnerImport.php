@@ -184,6 +184,27 @@ class TruckOwnerImport implements
                     }
 
                     /*
+                     * TDS PERCENTAGE RESOLUTION
+                     * If TDS % is not provided, auto-calculate based on PAN, PAN active, and declaration given.
+                     */
+                    $tdsPercentage = $data['tds_percentage'];
+                    $tdsRemark = $data['tds_adjustment_remark'];
+
+                    if ($tdsPercentage === null) {
+                        if ($panNumber === $dummyPan) {
+                            $tdsPercentage = 0.00;
+                        } else {
+                            $declarationGiven = strtolower(trim((string) $data['declaration_given'])) === 'yes';
+                            $panActive = $master ? (bool) $master->pan_active : (strtolower(trim((string) $data['pan_active'])) === 'yes');
+                            $tdsPercentage = app(\App\Services\TransporterTdsCalculator::class)->calculate(
+                                $declarationGiven,
+                                $panNumber,
+                                $panActive
+                            );
+                        }
+                    }
+
+                    /*
                      * CREATE TRUCK OWNER TRANSPORTER
                      */
                     Transporter::create([
@@ -196,8 +217,8 @@ class TruckOwnerImport implements
                         'declaration_given' => strtolower(trim((string) $data['declaration_given'])) === 'yes',
                         'total_trucks' => (int) ($data['total_trucks'] ?? 0),
                         'advance_amount' => (float) ($data['advance_amount'] ?? 0),
-                        'tds_percentage' => (float) ($data['tds_percentage'] ?? 0),
-                        'tds_adjustment_remark' => $data['tds_adjustment_remark'] ?: null,
+                        'tds_percentage' => (float) $tdsPercentage,
+                        'tds_adjustment_remark' => $tdsRemark ?: null,
                     ]);
                 });
 
@@ -244,7 +265,18 @@ class TruckOwnerImport implements
         $tdsAdjustmentRemark = $normalized['tds_adjustment_remark'] ?? $normalized['tds_remark'] ?? $normalized['remark'] ?? null;
         $shortName = $normalized['short_name'] ?? null;
         $advanceAmount = $normalized['advance_amount'] ?? $normalized['opening_balance'] ?? null;
-        $totalTrucks = $normalized['total_trucks'] ?? null;
+        $totalTrucks = $normalized['total_trucks']
+            ?? $normalized['total_trucks_<=_10']
+            ?? $normalized['total_trucks_<=10']
+            ?? null;
+        if ($totalTrucks === null) {
+            foreach ($normalized as $k => $v) {
+                if (str_starts_with($k, 'total_truck')) {
+                    $totalTrucks = $v;
+                    break;
+                }
+            }
+        }
         $email = $normalized['email'] ?? $normalized['email_address'] ?? null;
         $country = $normalized['country'] ?? null;
         $state = $normalized['state'] ?? null;
@@ -252,6 +284,13 @@ class TruckOwnerImport implements
         $address = $normalized['address'] ?? null;
 
         $finalPan = $panNumber ? strtoupper(trim((string) $panNumber)) : '';
+
+        $cleanTds = $tdsPercentage !== null ? trim((string) $tdsPercentage) : '';
+        $cleanTds = rtrim($cleanTds, '%');
+        $cleanTds = trim($cleanTds);
+
+        $parsedTds = $cleanTds !== '' ? (is_numeric($cleanTds) ? (float) $cleanTds : $cleanTds) : null;
+        $parsedRemark = $tdsAdjustmentRemark !== null && trim((string) $tdsAdjustmentRemark) !== '' ? trim((string) $tdsAdjustmentRemark) : null;
 
         return [
             'pan_number' => $finalPan,
@@ -266,9 +305,9 @@ class TruckOwnerImport implements
             'city' => $city ? trim((string) $city) : null,
             'address' => $address ?: null,
             'declaration_given' => $declarationGiven !== null && trim((string) $declarationGiven) !== '' ? trim((string) $declarationGiven) : null,
-            'total_trucks' => $totalTrucks !== null && $totalTrucks !== '' ? (int) $totalTrucks : 0,
-            'tds_percentage' => $tdsPercentage !== null && trim((string) $tdsPercentage) !== '' ? (float) $tdsPercentage : null,
-            'tds_adjustment_remark' => $tdsAdjustmentRemark ?: null,
+            'total_trucks' => $totalTrucks !== null && $totalTrucks !== '' ? (is_numeric($totalTrucks) ? (int) $totalTrucks : $totalTrucks) : 0,
+            'tds_percentage' => $parsedTds,
+            'tds_adjustment_remark' => $parsedRemark,
             'short_name' => $shortName ?: null,
             'advance_amount' => $advanceAmount !== null && $advanceAmount !== '' ? (float) $advanceAmount : 0,
         ];
@@ -276,7 +315,7 @@ class TruckOwnerImport implements
 
     private function validateRow(array $data, string $dummyPan): array
     {
-        $validator = Validator::make($data, [
+        $rules = [
             'name' => [
                 'required',
                 'string',
@@ -383,7 +422,7 @@ class TruckOwnerImport implements
                 },
             ],
             'tds_percentage' => [
-                'required',
+                'nullable',
                 'numeric',
                 'min:0',
                 'max:100',
@@ -416,12 +455,23 @@ class TruckOwnerImport implements
                 'nullable',
                 'integer',
                 'min:0',
+                'max:10',
             ],
             'advance_amount' => [
                 'nullable',
                 'numeric',
             ],
-        ], [
+        ];
+
+        if ($data['tds_percentage'] !== null) {
+            $rules['tds_adjustment_remark'] = [
+                'required',
+                'string',
+                'max:1000',
+            ];
+        }
+
+        $validator = Validator::make($data, $rules, [
             'name.required' => 'Truck Owner Name is required.',
             'mobile_number.required' => 'Mobile Number is required.',
             'mobile_number.digits' => 'Mobile Number must be exactly 10 digits.',
@@ -430,8 +480,13 @@ class TruckOwnerImport implements
             'state.required' => 'State is required.',
             'city.required' => 'City is required.',
             'declaration_given.required' => 'Declaration Given status is required (Yes / No).',
-            'tds_percentage.required' => 'TDS % is required.',
+            'total_trucks.max' => 'Total Trucks must be less than or equal to 10 (<= 10).',
+            'total_trucks.min' => 'Total Trucks cannot be negative.',
+            'total_trucks.integer' => 'Total Trucks must be a valid integer.',
             'tds_percentage.numeric' => 'TDS % must be a valid number.',
+            'tds_percentage.min' => 'TDS % cannot be less than 0.',
+            'tds_percentage.max' => 'TDS % cannot be greater than 100.',
+            'tds_adjustment_remark.required' => 'TDS Adjustment Remark is required when TDS percentage is provided.',
             'email.email' => 'Email must be a valid email address.',
         ]);
 
@@ -440,24 +495,6 @@ class TruckOwnerImport implements
         }
 
         return [];
-    }
-
-    private function parseBoolean($value): ?bool
-    {
-        if ($value === null || trim((string) $value) === '') {
-            return null;
-        }
-
-        $str = strtolower(trim((string) $value));
-        if ($str === 'yes') {
-            return true;
-        }
-
-        if ($str === 'no') {
-            return false;
-        }
-
-        return null;
     }
 
     public function chunkSize(): int
