@@ -66,6 +66,22 @@
                 font-size: 0.8125rem !important;
                 padding: 0.25rem 0.5rem !important;
             }
+
+            .daily-payments-index #advancedSearchFields .select2-container {
+                width: 100% !important;
+            }
+
+            .daily-payments-index #advancedSearchFields .select2-container .select2-selection--single {
+                height: 31px !important;
+                font-size: 0.8125rem !important;
+            }
+
+            .daily-payments-index #advancedSearchFields .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+                font-size: 0.78rem !important;
+                line-height: 29px !important;
+                padding-left: 0.45rem !important;
+                padding-right: 1.4rem !important;
+            }
         }
 
         .daily-payments-index .dataTables_wrapper {
@@ -138,19 +154,45 @@
 
             .daily-filter-actions {
                 flex-direction: row;
-                flex-wrap: nowrap;
+                justify-content: flex-end;
                 align-items: center;
                 gap: 0.35rem;
                 width: 100%;
             }
 
             .daily-filter-actions .btn {
-                flex: 1 1 0;
-                width: auto;
+                flex: 0 0 auto !important;
+                width: auto !important;
                 min-width: 0;
                 margin: 0 !important;
                 text-align: center;
                 white-space: nowrap;
+                padding: 0.28rem 0.75rem !important;
+                font-size: 0.78rem !important;
+            }
+
+            .daily-date-label {
+                font-size: 0.72rem !important;
+                margin-bottom: 0.2rem !important;
+            }
+
+            .daily-date-input {
+                font-size: 0.75rem !important;
+                padding: 0.25rem 0.4rem !important;
+                height: 31px !important;
+            }
+
+            .daily-selected-box {
+                padding: 0 0.5rem !important;
+                font-size: 0.72rem !important;
+                height: 31px !important;
+                display: flex !important;
+                align-items: center !important;
+            }
+
+            .daily-selected-box .badge {
+                font-size: 0.65rem !important;
+                padding: 0.2rem 0.35rem !important;
             }
         }
     </style>
@@ -180,23 +222,24 @@
 
             <!-- Search and Filter Section -->
             <div class="app-index-dt-toolbar">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                    <h5 class="mb-0 fs-6 fw-bold">Search & Filter</h5>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleAdvancedSearch()">
+                <div class="d-flex justify-content-between align-items-center flex-nowrap gap-2 mb-2">
+                    <h5 class="mb-0 fw-bold" style="font-size: 0.85rem;">Search & Filter</h5>
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 text-nowrap" style="font-size: 0.75rem;" onclick="toggleAdvancedSearch()">
                         <i class="bi bi-funnel"></i> Toggle Filters
                     </button>
                 </div>
                 <div>
                     <form method="GET" action="{{ route('voucher_payments.daily') }}" id="searchForm">
                         <div class="row g-2 align-items-end mb-3">
-                            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                                <label class="form-label mb-1" style="font-size: 0.8125rem; font-weight: 600;">Date <span class="text-danger">*</span></label>
-                                <input type="date" name="date" class="form-control form-control-sm" value="{{ $selectedDate }}" required>
+                            <div class="col-6 col-sm-5 col-md-4 col-lg-3">
+                                <label class="form-label small fw-semibold mb-1 text-truncate d-block daily-date-label">Date <span class="text-danger">*</span></label>
+                                <input type="date" name="date" class="form-control form-control-sm daily-date-input" value="{{ $selectedDate }}" required>
                             </div>
-                            <div class="col-12 col-sm-6 col-md-8 col-lg-9">
-                                <div class="p-2 rounded bg-light border d-inline-flex flex-wrap align-items-center gap-2" style="font-size: 0.8125rem;">
-                                    <span><strong>Selected Date:</strong> {{ \Carbon\Carbon::parse($selectedDate)->format('d M Y') }}</span>
-                                    <span class="badge bg-primary">{{ $payments->count() + ($payments1->count() ?? 0) }} payments</span>
+                            <div class="col-6 col-sm-7 col-md-8 col-lg-9">
+                                <label class="form-label small fw-semibold mb-1 text-muted text-truncate d-block daily-date-label">Summary</label>
+                                <div class="rounded bg-light border d-flex align-items-center justify-content-between gap-1 w-100 px-2 daily-selected-box">
+                                    <span class="text-nowrap text-truncate fw-semibold" title="{{ \Carbon\Carbon::parse($selectedDate)->format('d M Y') }}">{{ \Carbon\Carbon::parse($selectedDate)->format('d M Y') }}</span>
+                                    <span class="badge bg-primary text-nowrap">{{ $payments->count() + ($payments1->count() ?? 0) }} payments</span>
                                 </div>
                             </div>
                         </div>
@@ -204,13 +247,13 @@
                         <!-- Advanced Search Fields (initially hidden) -->
                         <div id="advancedSearchFields" class="d-none">
                             <div class="row g-2 g-md-3">
-                                <div class="col-12 col-sm-6 col-lg-3">
-                                    <label class="form-label mb-1" style="font-size: 0.8125rem; font-weight: 600;">Truck No</label>
+                                <div class="col-6 col-sm-6 col-lg-3">
+                                    <label class="form-label small fw-semibold mb-1 text-truncate d-block">Truck No</label>
                                     <input type="text" name="truck_no" class="form-control form-control-sm"
                                         value="{{ request('truck_no') }}" placeholder="Truck number">
                                 </div>
-                                <div class="col-12 col-sm-6 col-lg-3">
-                                    <label class="form-label mb-1" style="font-size: 0.8125rem; font-weight: 600;">Transporter</label>
+                                <div class="col-6 col-sm-6 col-lg-3">
+                                    <label class="form-label small fw-semibold mb-1 text-truncate d-block">Transporter</label>
                                     <select name="transporter" id="voucherPaymentsDailyTransporterFilter" class="form-select form-select-sm">
                                         <option value="">All Transporters</option>
                                         @if (! empty($selectedVoucherPaymentTransporter))
@@ -218,8 +261,8 @@
                                         @endif
                                     </select>
                                 </div>
-                                <div class="col-12 col-sm-6 col-lg-3">
-                                    <label class="form-label mb-1" style="font-size: 0.8125rem; font-weight: 600;">Source</label>
+                                <div class="col-6 col-sm-6 col-lg-3">
+                                    <label class="form-label small fw-semibold mb-1 text-truncate d-block">Source</label>
                                     <select name="source" id="voucherPaymentsDailySourceCityFilter" class="form-select form-select-sm">
                                         <option value="">All Sources</option>
                                         @if (! empty($selectedVoucherPaymentSourceCity))
@@ -227,8 +270,8 @@
                                         @endif
                                     </select>
                                 </div>
-                                <div class="col-12 col-sm-6 col-lg-3">
-                                    <label class="form-label mb-1" style="font-size: 0.8125rem; font-weight: 600;">Destination</label>
+                                <div class="col-6 col-sm-6 col-lg-3">
+                                    <label class="form-label small fw-semibold mb-1 text-truncate d-block">Destination</label>
                                     <select name="destination" id="voucherPaymentsDailyDestinationCityFilter" class="form-select form-select-sm">
                                         <option value="">All Destinations</option>
                                         @if (! empty($selectedVoucherPaymentDestinationCity))
@@ -236,12 +279,12 @@
                                         @endif
                                     </select>
                                 </div>
-                                <div class="col-12 col-sm-6 col-lg-3">
-                                    <label class="form-label mb-1" style="font-size: 0.8125rem; font-weight: 600;">Good Receipt (Bilty) No</label>
+                                <div class="col-6 col-sm-6 col-lg-3">
+                                    <label class="form-label small fw-semibold mb-1 text-truncate d-block" title="Good Receipt (Bilty) No">GR (Bilty) No</label>
                                     <input type="text" name="lr_no" class="form-control form-control-sm" value="{{ request('lr_no') }}" placeholder="LR number">
                                 </div>
-                                <div class="col-12 col-sm-6 col-lg-3">
-                                    <label class="form-label mb-1" style="font-size: 0.8125rem; font-weight: 600;">Payment Status</label>
+                                <div class="col-6 col-sm-6 col-lg-3">
+                                    <label class="form-label small fw-semibold mb-1 text-truncate d-block">Payment Status</label>
                                     <select name="status" class="form-select form-select-sm">
                                         <option value="">All Statuses</option>
                                         <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
@@ -249,8 +292,8 @@
                                         <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Paid</option>
                                     </select>
                                 </div>
-                                <div class="col-12 col-sm-6 col-lg-3">
-                                    <label class="form-label mb-1" style="font-size: 0.8125rem; font-weight: 600;">Payment Mode</label>
+                                <div class="col-6 col-sm-6 col-lg-3">
+                                    <label class="form-label small fw-semibold mb-1 text-truncate d-block">Payment Mode</label>
                                     <select name="payment_mode" class="form-select form-select-sm">
                                         <option value="">All Payment Modes</option>
                                         @foreach ($paymentModes as $paymentMode)
@@ -261,8 +304,8 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-12 col-sm-6 col-lg-3">
-                                    <label class="form-label mb-1" style="font-size: 0.8125rem; font-weight: 600;">Branch</label>
+                                <div class="col-6 col-sm-6 col-lg-3">
+                                    <label class="form-label small fw-semibold mb-1 text-truncate d-block">Branch</label>
                                     <select name="branch" class="form-select form-select-sm">
                                         <option value="">All Branches</option>
                                         @foreach ($branches as $branch)
@@ -276,12 +319,12 @@
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-end align-items-center gap-2 mt-3 flex-nowrap daily-filter-actions">
-                            <button type="submit" class="btn btn-secondary btn-sm flex-fill flex-sm-grow-0 text-nowrap">
+                        <div class="d-flex justify-content-end align-items-center gap-2 mt-3 daily-filter-actions">
+                            <button type="submit" class="btn btn-secondary btn-sm text-nowrap">
                                 <i class="bi bi-search"></i> Search
                             </button>
                             <a href="{{ route('voucher_payments.daily') }}?date={{ $selectedDate }}"
-                                class="btn btn-outline-secondary btn-sm flex-fill flex-sm-grow-0 text-nowrap">
+                                class="btn btn-outline-secondary btn-sm text-nowrap">
                                 <i class="bi bi-arrow-clockwise"></i> Reset
                             </a>
                         </div>

@@ -16,7 +16,7 @@
             ?? ($lr?->consignee?->city?->name ?? null);
         $canManage = auth()->check() && auth()->user()->canActAsAdmin();
     @endphp
-    <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
+    <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}?v={{ file_exists(public_path('css/fb-show-redesigned.css')) ? filemtime(public_path('css/fb-show-redesigned.css')) : time() }}">
 
     <style>
         .fb-compact-table th,
@@ -32,6 +32,154 @@
             width: 100% !important;
             overflow-x: auto !important;
             -webkit-overflow-scrolling: touch;
+        }
+
+        @media (max-width: 991.98px) {
+            .fb-info-grid {
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 0.45rem 0.65rem !important;
+                padding: 0.65rem 0.75rem !important;
+            }
+
+            .fb-info-grid__item--span-2 {
+                grid-column: span 2 !important;
+            }
+
+            .fb-info-grid__label {
+                font-size: 0.65rem !important;
+                margin-bottom: 2px !important;
+            }
+
+            .fb-info-grid__value {
+                font-size: 0.78rem !important;
+                line-height: 1.25 !important;
+            }
+
+            .fb-route-preview {
+                margin-bottom: 0.55rem !important;
+                padding: 0.45rem 0.65rem !important;
+                font-size: 0.78rem !important;
+                border-radius: 8px !important;
+            }
+
+            .fb-route-facts {
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 0.45rem 0.65rem !important;
+            }
+
+            .fb-detail-page .card-body {
+                padding: 0.65rem 0.75rem !important;
+            }
+
+            .fb-route-header {
+                padding: 0.6rem 0.75rem !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: 0.4rem !important;
+            }
+
+            .fb-route-header strong {
+                font-size: 0.84rem !important;
+            }
+
+            .fb-route-header__totals {
+                font-size: 0.72rem !important;
+                text-align: right;
+            }
+
+            .fb-detail-actions .btn-icon {
+                width: 30px !important;
+                height: 30px !important;
+                font-size: 0.75rem !important;
+                border-radius: 6px !important;
+            }
+
+            /* Financial summary 2 per line on mobile */
+            .fb-financial-summary__stats {
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 0.5rem !important;
+                margin-bottom: 0.65rem !important;
+            }
+
+            .fb-financial-summary__stat {
+                padding: 0.45rem 0.55rem !important;
+                border-radius: 8px !important;
+                margin: 0 !important;
+            }
+
+            .fb-financial-summary__stat--result,
+            .fb-financial-summary__stats > .fb-financial-summary__stat:nth-child(3) {
+                grid-column: span 2 !important;
+            }
+
+            .fb-financial-summary__stat-label {
+                font-size: 0.64rem !important;
+                margin-bottom: 2px !important;
+            }
+
+            .fb-financial-summary__stat-value {
+                font-size: 0.85rem !important;
+            }
+
+            .fb-financial-summary__rows {
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 0.45rem 0.55rem !important;
+            }
+
+            .fb-financial-summary__row {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                justify-content: center !important;
+                background: #fff !important;
+                padding: 0.42rem 0.55rem !important;
+                border-radius: 8px !important;
+                border: 1px solid #d8e9df !important;
+                min-height: 46px !important;
+                margin: 0 !important;
+            }
+
+            .fb-financial-summary__row span {
+                font-size: 0.62rem !important;
+                color: #64748b !important;
+                line-height: 1.2 !important;
+                margin-bottom: 2px !important;
+            }
+
+            .fb-financial-summary__row strong {
+                font-size: 0.82rem !important;
+                color: #0f172a !important;
+                line-height: 1.2 !important;
+            }
+
+            .fb-financial-summary__row--total {
+                grid-column: span 2 !important;
+                flex-direction: row !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%) !important;
+                border: 1px solid #86efac !important;
+                padding: 0.5rem 0.75rem !important;
+                margin-top: 0.2rem !important;
+            }
+
+            .fb-financial-summary__row--total span {
+                font-size: 0.75rem !important;
+                font-weight: 700 !important;
+                color: #166534 !important;
+                margin-bottom: 0 !important;
+            }
+
+            .fb-financial-summary__row--total strong {
+                font-size: 0.95rem !important;
+                font-weight: 800 !important;
+                color: #166534 !important;
+            }
         }
     </style>
     @if (session('success'))

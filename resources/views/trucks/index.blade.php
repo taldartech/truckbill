@@ -137,10 +137,10 @@
                             <div class="invalid-feedback">Please select a driver.</div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">&nbsp;</label>
-                            <div>
-                                <button type="button" class="btn btn-primary" id="showAddDriverForm">
-                                    <i class="bi bi-plus-circle"></i> Add New Driver
+                            <label class="form-label d-none d-md-block">&nbsp;</label>
+                            <div class="mt-1 mt-md-0">
+                                <button type="button" class="btn btn-primary btn-sm" id="showAddDriverForm">
+                                    <i class="bi bi-plus-circle me-1"></i> Add New Driver
                                 </button>
                             </div>
                         </div>
@@ -179,10 +179,10 @@
                                     </div>
                                 </div>
                                 <div class="d-flex gap-2">
-                                    <button type="submit" class="btn btn-primary">
+                                    <button type="submit" class="btn btn-primary btn-sm">
                                         <i class="bi bi-check-circle"></i> Add Driver
                                     </button>
-                                    <button type="button" class="btn btn-secondary" id="cancelAddDriver">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="cancelAddDriver">
                                         <i class="bi bi-x-circle"></i> Cancel
                                     </button>
                                 </div>
@@ -191,8 +191,8 @@
                     </div>
                 </div>
 
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i>
+                <div class="alert alert-info py-2 px-3 mb-3" style="font-size: 0.72rem; line-height: 1.35;">
+                    <i class="bi bi-info-circle me-1"></i>
                     <strong>Note:</strong> You can add a new driver using the form above. The new driver will be automatically selected after creation.
                 </div>
             </div>
@@ -528,10 +528,10 @@ $(document).ready(function() {
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
-                                        <div class="col-md-6">
+                                        <div class="col-6">
                                             <p class="mb-1"><strong>Created:</strong> ${data.created_at}</p>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-6">
                                             <p class="mb-1"><strong>Last Updated:</strong> ${data.updated_at}</p>
                                         </div>
                                     </div>

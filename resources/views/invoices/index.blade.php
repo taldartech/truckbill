@@ -132,6 +132,11 @@
         @media (max-width: 767.98px) {
             .invoice-stats {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.4rem;
+            }
+
+            .invoice-stats > .invoice-stat--amount {
+                grid-column: span 2;
             }
 
             .invoices-index .app-index-list-card > .card-header {
@@ -191,11 +196,106 @@
                 flex: 0 0 auto !important;
                 box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
             }
-        }
 
-        @media (max-width: 420px) {
             .invoice-stats {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 0.35rem !important;
+            }
+
+            .invoice-stats > .invoice-stat--amount {
+                grid-column: span 2 !important;
+            }
+
+            .invoice-stat {
+                padding: 0.35rem 0.45rem !important;
+                gap: 0.4rem !important;
+                border-radius: 0.55rem !important;
+                border-top-width: 2.5px !important;
+                min-height: 42px !important;
+            }
+
+            .invoice-stat__icon {
+                width: 1.5rem !important;
+                height: 1.5rem !important;
+                font-size: 0.72rem !important;
+                border-radius: 0.4rem !important;
+            }
+
+            .invoice-stat__label {
+                font-size: 0.52rem !important;
+                letter-spacing: 0.02em !important;
+                margin-bottom: 0 !important;
+            }
+
+            .invoice-stat__value {
+                font-size: 0.8rem !important;
+                margin-top: 0 !important;
+            }
+
+            .invoice-stat--amount .invoice-stat__value {
+                font-size: 0.88rem !important;
+            }
+
+            /* DataTables toolbar: Show entries & Search on 1 clean row */
+            .invoices-index .dataTables_wrapper > div:first-child {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: 0.35rem !important;
+                padding: 0.35rem 0.5rem !important;
+            }
+
+            .invoices-index .dataTables_length {
+                flex: 0 0 auto !important;
+                width: auto !important;
+            }
+
+            .invoices-index .dataTables_length label {
+                margin: 0 !important;
+                font-size: 0.72rem !important;
+                gap: 0.25rem !important;
+                white-space: nowrap !important;
+                color: var(--brand-text-muted);
+                display: inline-flex !important;
+                align-items: center !important;
+            }
+
+            .invoices-index .dataTables_length select {
+                padding: 0.2rem 1.4rem 0.2rem 0.4rem !important;
+                min-width: 3.5rem !important;
+                font-size: 0.72rem !important;
+                height: 28px !important;
+                border-radius: 6px !important;
+            }
+
+            .invoices-index .dataTables_filter {
+                flex: 1 1 auto !important;
+                width: auto !important;
+                min-width: 0 !important;
+            }
+
+            .invoices-index .dataTables_filter label {
+                margin: 0 !important;
+                width: 100% !important;
+                font-size: 0.72rem !important;
+                gap: 0.25rem !important;
+                justify-content: flex-end !important;
+                color: var(--brand-text-muted);
+                display: inline-flex !important;
+                align-items: center !important;
+            }
+
+            .invoices-index .dataTables_filter input {
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+                width: 100% !important;
+                height: 28px !important;
+                font-size: 0.72rem !important;
+                padding: 0.2rem 0.4rem !important;
+                margin-left: 0.25rem !important;
+                border-radius: 6px !important;
             }
         }
 
@@ -282,60 +382,60 @@
 
                 {{-- Hidden filter form --}}
                 <form method="GET" action="{{ route('invoices.index') }}" id="advanced-search-box"
-                    class="card card-body shadow-sm mb-0 d-none">
+                    class="card card-body shadow-sm p-2 p-md-3 mb-2 d-none">
                     {{-- Filter checkboxes --}}
-                    <div class="row g-2">
-                        <div class="col-md-12">
-                            <label class="form-label fw-bold">Choose Filter Fields:</label>
-                            <div class="form-check form-check-inline">
+                    <div>
+                        <label class="form-label small fw-bold text-secondary d-block mb-1">Choose Filter Fields:</label>
+                        <div class="d-flex flex-wrap align-items-center gap-2 gap-sm-3 small">
+                            <div class="form-check form-check-inline m-0">
                                 <input class="form-check-input" type="checkbox" value="manual_invoice_number" id="filter_invoice"
                                     onchange="toggleField(this)">
-                                <label class="form-check-label" for="filter_invoice">Invoice #</label>
+                                <label class="form-check-label fw-semibold" for="filter_invoice">Invoice #</label>
                             </div>
-                            <div class="form-check form-check-inline">
+                            <div class="form-check form-check-inline m-0">
                                 <input class="form-check-input" type="checkbox" value="customer" id="filter_customer"
                                     onchange="toggleField(this)">
-                                <label class="form-check-label" for="filter_customer">Customer</label>
+                                <label class="form-check-label fw-semibold" for="filter_customer">Customer</label>
                             </div>
-                            <div class="form-check form-check-inline">
+                            <div class="form-check form-check-inline m-0">
                                 <input class="form-check-input" type="checkbox" value="payment_status" id="filter_status"
                                     onchange="toggleField(this)">
-                                <label class="form-check-label" for="filter_status">Status</label>
+                                <label class="form-check-label fw-semibold" for="filter_status">Status</label>
                             </div>
-                            <div class="form-check form-check-inline">
+                            <div class="form-check form-check-inline m-0">
                                 <input class="form-check-input" type="checkbox" value="generated_date" id="filter_date"
                                     onchange="toggleField(this)">
-                                <label class="form-check-label" for="filter_date">Date</label>
+                                <label class="form-check-label fw-semibold" for="filter_date">Date</label>
                             </div>
                         </div>
                     </div>
 
                     {{-- Conditionally visible filter fields --}}
-                    <div class="row g-3 mt-2" id="filter-fields">
-                        <div class="col-md-3 d-none" id="field_generated_date_from">
-                            <label class="form-label">From Date</label>
-                            <input type="date" name="generated_date_from" class="form-control"
+                    <div class="row g-2 mt-1" id="filter-fields">
+                        <div class="col-6 col-md-3 d-none" id="field_generated_date_from">
+                            <label class="form-label small fw-semibold mb-1">From Date</label>
+                            <input type="date" name="generated_date_from" class="form-control form-control-sm"
                                 value="{{ request('generated_date_from') }}">
                         </div>
-                        <div class="col-md-3 d-none" id="field_generated_date_to">
-                            <label class="form-label">To Date</label>
-                            <input type="date" name="generated_date_to" class="form-control"
+                        <div class="col-6 col-md-3 d-none" id="field_generated_date_to">
+                            <label class="form-label small fw-semibold mb-1">To Date</label>
+                            <input type="date" name="generated_date_to" class="form-control form-control-sm"
                                 value="{{ request('generated_date_to') }}">
                         </div>
-                        <div class="col-md-3 d-none" id="field_manual_invoice_number">
-                            <label class="form-label">Invoice #</label>
-                            <input type="text" name="manual_invoice_number" class="form-control"
+                        <div class="col-6 col-md-3 d-none" id="field_manual_invoice_number">
+                            <label class="form-label small fw-semibold mb-1">Invoice #</label>
+                            <input type="text" name="manual_invoice_number" class="form-control form-control-sm"
                                 value="{{ request('manual_invoice_number') }}">
                         </div>
-                        <div class="col-md-3 d-none" id="field_customer">
-                            <label class="form-label">Customer</label>
-                            <select name="customer" id="filter_customer_select" class="form-select">
+                        <div class="col-6 col-md-3 d-none" id="field_customer">
+                            <label class="form-label small fw-semibold mb-1">Customer</label>
+                            <select name="customer" id="filter_customer_select" class="form-select form-select-sm">
                                 <option value="">All</option>
                             </select>
                         </div>
-                        <div class="col-md-3 d-none" id="field_payment_status">
-                            <label class="form-label">Status</label>
-                            <select name="payment_status" class="form-select">
+                        <div class="col-6 col-md-3 d-none" id="field_payment_status">
+                            <label class="form-label small fw-semibold mb-1">Status</label>
+                            <select name="payment_status" class="form-select form-select-sm">
                                 <option value="">All</option>
                                 <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Pending
                                 </option>
@@ -344,19 +444,19 @@
                                 <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
                             </select>
                         </div>
-                        <div class="col-md-3 d-none" id="field_generated_date">
-                            <label class="form-label">Date</label>
-                            <input type="date" name="generated_date" class="form-control"
+                        <div class="col-6 col-md-3 d-none" id="field_generated_date">
+                            <label class="form-label small fw-semibold mb-1">Date</label>
+                            <input type="date" name="generated_date" class="form-control form-control-sm"
                                 value="{{ request('generated_date') }}">
                         </div>
                     </div>
 
                     {{-- Form action buttons --}}
-                    <div class="text-end mt-3">
-                        <button type="submit" class="btn btn-brand-primary">
+                    <div class="d-flex justify-content-end align-items-center gap-2 mt-2">
+                        <button type="submit" class="btn btn-brand-primary btn-sm">
                             <i class="bi bi-search"></i> Search
                         </button>
-                        <a href="{{ route('invoices.index') }}" class="btn btn-back ms-2">
+                        <a href="{{ route('invoices.index') }}" class="btn btn-secondary btn-sm ms-0">
                             <i class="bi bi-arrow-clockwise"></i> Reset
                         </a>
                     </div>

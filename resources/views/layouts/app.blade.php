@@ -634,9 +634,9 @@
             <div class="container-fluid d-flex flex-nowrap align-items-center justify-content-between p-0">
                 <!--begin::Start Navbar Links-->
                 <ul class="navbar-nav d-flex flex-row align-items-center flex-nowrap gap-1 gap-sm-2 mb-0">
-                    <li class="nav-item flex-shrink-0">
-                        <a class="nav-link p-1 p-sm-2 text-secondary border-0 shadow-none" data-lte-toggle="sidebar" href="#" role="button" aria-label="Toggle sidebar" style="outline: none !important; border: 0 !important; box-shadow: none !important;">
-                            <i class="fa-solid fa-bars fs-5"></i>
+                    <li class="nav-item flex-shrink-0 d-inline-flex align-items-center">
+                        <a class="nav-link d-inline-flex align-items-center justify-content-center p-1 p-sm-2 text-secondary border-0 shadow-none" data-lte-toggle="sidebar" href="#" role="button" aria-label="Toggle sidebar" style="outline: none !important; border: 0 !important; box-shadow: none !important; line-height: 1;">
+                            <i class="fa-solid fa-bars fs-5" style="line-height: 1; display: inline-flex; align-items: center;"></i>
                         </a>
                     </li>
                     <li class="nav-item d-none d-md-block flex-shrink-0">

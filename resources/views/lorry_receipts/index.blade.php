@@ -103,6 +103,13 @@
             letter-spacing: 0;
         }
 
+        #lorryReceiptsTable tbody td,
+        #lorryReceiptsTable tbody td a,
+        #lorryReceiptsTable tbody td span:not(.badge),
+        #lorryReceiptsTable tbody td div {
+            font-size: 12px !important;
+        }
+
         /* Large desktop view: fit within 100% */
         @media (min-width: 1200px) {
             #lorryReceiptsTable {
@@ -231,6 +238,259 @@
                 font-size: 1rem !important;
                 flex: 0 0 auto !important;
                 box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+            }
+
+            .lorry-receipts-index .app-index-filters {
+                width: 100% !important;
+                flex: 1 1 100% !important;
+            }
+
+            .lorry-receipts-index .app-index-filters__top {
+                width: 100% !important;
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-wrap: nowrap !important;
+                gap: 0.35rem !important;
+            }
+
+            .lorry-receipts-index .app-index-filters__intro {
+                display: flex !important;
+                align-items: center !important;
+                flex: 0 0 auto !important;
+                min-width: 0 !important;
+            }
+
+            .lorry-receipts-index .app-index-filters__title {
+                font-size: 0.62rem !important;
+                letter-spacing: 0.04em !important;
+                font-weight: 700 !important;
+                margin: 0 !important;
+                line-height: 1.2 !important;
+                white-space: nowrap !important;
+            }
+
+            .lorry-receipts-index .app-index-filters__top-actions {
+                margin-left: auto !important;
+                display: flex !important;
+                align-items: center !important;
+                flex: 0 0 auto !important;
+                gap: 0.25rem !important;
+            }
+
+            .lorry-receipts-index .app-index-filters__toggle {
+                height: 24px !important;
+                min-height: 24px !important;
+                padding: 0 8px !important;
+                font-size: 0.62rem !important;
+                gap: 0.2rem !important;
+                border-radius: 999px !important;
+                line-height: 1 !important;
+                white-space: nowrap !important;
+            }
+
+            .lorry-receipts-index .app-index-filters__toggle i {
+                font-size: 0.62rem !important;
+            }
+
+            .lorry-receipts-index .app-index-filters__controls {
+                gap: 0.35rem !important;
+            }
+
+            .lorry-receipts-index .app-index-filters__field,
+            .lorry-receipts-index .app-index-filters__field--lr,
+            .lorry-receipts-index .app-index-filters__field--party,
+            .lorry-receipts-index .app-index-filters__field--truck,
+            .lorry-receipts-index .app-index-filters__field--date {
+                flex: 1 1 calc(50% - 0.2rem) !important;
+                max-width: calc(50% - 0.2rem) !important;
+                width: calc(50% - 0.2rem) !important;
+                min-width: 0 !important;
+            }
+
+            .lorry-receipts-index .app-index-filters__controls .app-index-filters__field.app-index-filters__field--search,
+            .lorry-receipts-index .app-index-filters__field.app-index-filters__field--search,
+            .lorry-receipts-index .app-index-filters__field--search,
+            .lorry-receipts-index .app-index-filters__controls .app-index-filters__field.app-index-filters__field--status,
+            .lorry-receipts-index .app-index-filters__field.app-index-filters__field--status,
+            .lorry-receipts-index .app-index-filters__field--status,
+            .lorry-receipts-index .app-index-filters__controls .app-index-filters__field:has(#filterDeliveryStatus) {
+                flex: 1 1 100% !important;
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+
+            .lorry-receipts-index .app-index-filters__label {
+                font-size: 0.58rem !important;
+                margin-bottom: 2px !important;
+            }
+
+            .lorry-receipts-index .app-index-filters .form-control,
+            .lorry-receipts-index .app-index-filters .form-select {
+                height: 2rem !important;
+                min-height: 2rem !important;
+                font-size: 0.78rem !important;
+                padding: 0.2rem 0.5rem !important;
+                border-radius: 0.45rem !important;
+            }
+
+            .lorry-receipts-index .app-index-filters .select2-container--bootstrap-5 .select2-selection,
+            .lorry-receipts-index .app-index-filters .select2-container--default .select2-selection--single {
+                min-height: 2rem !important;
+                height: 2rem !important;
+                padding: 0.15rem 0.45rem !important;
+                font-size: 0.78rem !important;
+                border-radius: 0.45rem !important;
+            }
+
+            .lorry-receipts-index .app-index-filters .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+                line-height: 1.6rem !important;
+            }
+
+            .lorry-receipts-index .app-index-filters .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+                height: 1.85rem !important;
+            }
+
+            .lorry-receipts-index .app-index-filters__actions {
+                width: 100% !important;
+                justify-content: flex-end !important;
+                gap: 0.35rem !important;
+                margin-top: 0.15rem !important;
+            }
+
+            .lorry-receipts-index .app-index-filters__btn {
+                width: 2rem !important;
+                height: 2rem !important;
+                border-radius: 0.45rem !important;
+            }
+
+            .lorry-receipts-index .lr-date-filter-bar {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: 0.35rem !important;
+                padding: 0.4rem 0.5rem !important;
+            }
+
+            .lorry-receipts-index .lr-date-filter-inputs {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                flex: 1 1 auto !important;
+                width: auto !important;
+                gap: 0.25rem !important;
+                min-width: 0 !important;
+            }
+
+            .lorry-receipts-index .lr-date-filter-inputs .input-group-custom,
+            .lorry-receipts-index .input-group-custom {
+                flex: 1 1 50% !important;
+                width: 50% !important;
+                min-width: 0 !important;
+                max-width: 50% !important;
+                padding: 2px 4px !important;
+                box-sizing: border-box !important;
+                border-radius: 6px !important;
+            }
+
+            .lorry-receipts-index .input-group-custom span {
+                font-size: 8px !important;
+                margin-right: 2px !important;
+                flex-shrink: 0 !important;
+                letter-spacing: 0.02em !important;
+            }
+
+            .lorry-receipts-index .input-group-custom input {
+                font-size: 10px !important;
+                padding: 1px 0 !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+            }
+
+            .lorry-receipts-index .input-group-custom input::-webkit-calendar-picker-indicator {
+                padding: 0 !important;
+                margin: 0 !important;
+                cursor: pointer;
+                font-size: 11px !important;
+            }
+
+            .lorry-receipts-index .lr-date-filter-actions {
+                width: auto !important;
+                flex: 0 0 auto !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 0.25rem !important;
+            }
+
+            .lorry-receipts-index .filter-action-btn {
+                width: 28px !important;
+                height: 28px !important;
+                min-width: 28px !important;
+                min-height: 28px !important;
+                border-radius: 6px !important;
+                padding: 0 !important;
+                font-size: 0.78rem !important;
+            }
+
+            .lorry-receipts-index .app-index-dt-toolbar:not(.lr-date-filter-bar) {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: 0.4rem !important;
+                padding: 0.35rem 0.5rem !important;
+            }
+
+            .lorry-receipts-index .dataTables_length {
+                flex: 0 0 auto !important;
+                width: auto !important;
+            }
+
+            .lorry-receipts-index .dataTables_length label {
+                margin: 0 !important;
+                font-size: 0.72rem !important;
+                gap: 0.25rem !important;
+                white-space: nowrap !important;
+                color: var(--brand-text-muted);
+            }
+
+            .lorry-receipts-index .dataTables_length select {
+                padding: 0.2rem 1.4rem 0.2rem 0.4rem !important;
+                min-width: 3.5rem !important;
+                font-size: 0.72rem !important;
+                height: 28px !important;
+                border-radius: 6px !important;
+            }
+
+            .lorry-receipts-index .dataTables_filter {
+                flex: 1 1 auto !important;
+                width: auto !important;
+                min-width: 0 !important;
+            }
+
+            .lorry-receipts-index .dataTables_filter label {
+                margin: 0 !important;
+                width: 100% !important;
+                font-size: 0.72rem !important;
+                gap: 0.25rem !important;
+                justify-content: flex-end !important;
+                color: var(--brand-text-muted);
+            }
+
+            .lorry-receipts-index .dataTables_filter input {
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+                width: 100% !important;
+                height: 28px !important;
+                font-size: 0.72rem !important;
+                padding: 0.2rem 0.4rem !important;
+                margin-left: 0.25rem !important;
+                border-radius: 6px !important;
             }
 
             #lrDetailsModal .modal-footer {
@@ -421,13 +681,13 @@
                 </div>
             </div>
 
-            <div class="app-index-dt-toolbar">
-                <div class="app-index-filters" data-app-index-filters>
-                    <div class="app-index-filters__top">
-                        <div class="app-index-filters__intro">
-                            <h6 class="app-index-filters__title">Search &amp; Filters</h6>
+            <div class="app-index-dt-toolbar w-100">
+                <div class="app-index-filters w-100" data-app-index-filters>
+                    <div class="app-index-filters__top d-flex align-items-center justify-content-between w-100">
+                        <div class="app-index-filters__intro d-flex align-items-center text-nowrap">
+                            <h6 class="app-index-filters__title text-nowrap mb-0">Search &amp; Filters</h6>
                         </div>
-                        <div class="app-index-filters__top-actions">
+                        <div class="app-index-filters__top-actions ms-auto">
                             <button type="button"
                                 class="app-index-filters__toggle d-md-none"
                                 data-app-index-filters-toggle
@@ -472,7 +732,7 @@
                                     @endif
                                 </select>
                             </div>
-                            <div class="app-index-filters__field app-index-filters__field--truck">
+                            <div class="app-index-filters__field app-index-filters__field--status">
                                 <label class="app-index-filters__label" for="filterDeliveryStatus">Status</label>
                                 <select id="filterDeliveryStatus" class="form-select form-select-sm">
                                     <option value="">All Statuses</option>

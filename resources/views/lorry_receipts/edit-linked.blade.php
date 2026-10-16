@@ -128,10 +128,10 @@
 
                                 <div class="lrf-pf" id="lrPayToField" @if(! $lrTruckSelected) hidden @endif>
                                     <label class="lrf-pf__lbl" id="transporterTypeLabel">Pay to<span class="lrf-pf__req">*</span></label>
-                                    <div class="lrf-pay-pills" role="group" aria-label="Pay to">
-                                        <button type="button" class="lrf-pay-pill{{ $selectedPayType === 'owner' ? ' is-active' : '' }}"
-                                            data-pay-type="owner" id="lrPayPillOwner">Truck Owner</button>
-                                        <button type="button" class="lrf-pay-pill{{ $selectedPayType === 'agency' ? ' is-active' : '' }}"
+                                    <div class="lrf-pay-pills d-flex flex-nowrap" role="group" aria-label="Pay to">
+                                        <button type="button" class="lrf-pay-pill w-50 text-nowrap{{ $selectedPayType === 'owner' ? ' is-active' : '' }}"
+                                            data-pay-type="owner" id="lrPayPillOwner"><span class="d-none d-sm-inline">Truck </span>Owner</button>
+                                        <button type="button" class="lrf-pay-pill w-50 text-nowrap{{ $selectedPayType === 'agency' ? ' is-active' : '' }}"
                                             data-pay-type="agency" id="lrPayPillAgency">Agency</button>
                                     </div>
                                     <select class="form-select lrf-pay-type-select" id="transporter_type" name="transporter_type"
@@ -1612,7 +1612,7 @@ lrItemsContainer.addEventListener('blur', function(e) {
             // Using Bootstrap's Modal API to show the modal
             const modalElement = document.getElementById('addGoodsTypeModal');
             const goodTypeField = document.getElementById('good_type_field');
-            goodTypeField.value = btn.closest('.input-group').querySelector('.goods-type').dataset.select2Id;
+            goodTypeField.value = btn.closest('.input-group, .lrf-pf').querySelector('.goods-type').dataset.select2Id;
             const modal = new bootstrap.Modal(modalElement);
             modal.show();
         }

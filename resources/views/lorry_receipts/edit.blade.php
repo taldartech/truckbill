@@ -47,7 +47,7 @@
             background-color: #fff3cd !important;
         }
     </style>
-    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
+    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}?v={{ file_exists(public_path('css/lr-form-redesigned.css')) ? filemtime(public_path('css/lr-form-redesigned.css')) : time() }}">
     <div class="lrf-page app-index-page">
         <div class="lrf-page__toolbar">
             <div>
@@ -228,10 +228,10 @@
 
                                 <div class="lrf-pf" id="lrPayToField" @if(! $lrTruckSelected) hidden @endif>
                                     <label class="lrf-pf__lbl" id="transporterTypeLabel">Pay to<span class="lrf-pf__req">*</span></label>
-                                    <div class="lrf-pay-pills" role="group" aria-label="Pay to">
-                                        <button type="button" class="lrf-pay-pill{{ old('transporter_type', $lorry_receipt->transporter_type) === 'owner' ? ' is-active' : '' }}"
-                                            data-pay-type="owner" id="lrPayPillOwner">Truck Owner</button>
-                                        <button type="button" class="lrf-pay-pill{{ old('transporter_type', $lorry_receipt->transporter_type) === 'agency' ? ' is-active' : '' }}"
+                                    <div class="lrf-pay-pills d-flex flex-nowrap" role="group" aria-label="Pay to">
+                                        <button type="button" class="lrf-pay-pill w-50 text-nowrap{{ old('transporter_type', $lorry_receipt->transporter_type) === 'owner' ? ' is-active' : '' }}"
+                                            data-pay-type="owner" id="lrPayPillOwner"><span class="d-none d-sm-inline">Truck </span>Owner</button>
+                                        <button type="button" class="lrf-pay-pill w-50 text-nowrap{{ old('transporter_type', $lorry_receipt->transporter_type) === 'agency' ? ' is-active' : '' }}"
                                             data-pay-type="agency" id="lrPayPillAgency">Agency</button>
                                     </div>
                                     <select class="form-select lrf-pay-type-select" id="transporter_type" name="transporter_type"
@@ -453,22 +453,23 @@
 
                     <div class="lrf-grid lrf-grid--6">
                         <div class="lrf-pf">
-                            <label for="good_type" class="lrf-pf__lbl">Goods Type<span class="lrf-pf__req">*</span></label>
-                            <div class="input-group flex-nowrap">
-                                <select class="form-select" id="good_type" name="good_type" required>
-                                    <option value="">Select Goods Type</option>
-                                    @foreach ($goodsTypes as $goodsType)
-                                        <option value="{{ $goodsType->name }}" data-id="{{ $goodsType->id }}"
-                                            {{ old('good_type', $lorry_receipt->good_type) == $goodsType->name ? 'selected' : '' }}>
-                                            {{ $goodsType->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <button type="button" class="btn btn-success" data-bs-toggle="modal"
+                            <div class="lrf-pf__lbl-row">
+                                <label for="good_type" class="lrf-pf__lbl">Goods Type<span class="lrf-pf__req">*</span></label>
+                                <a href="#" class="lrf-quick-add" data-bs-toggle="modal"
                                     data-bs-target="#addGoodsTypeModal" title="Add New Goods Type">
-                                    <i class="bi bi-plus"></i>
-                                </button>
+                                    <i class="bi bi-plus-lg"></i> Add
+                                </a>
                             </div>
+                            <select class="form-select" id="good_type" name="good_type" required
+                                data-placeholder="Search and select goods type...">
+                                <option value=""></option>
+                                @foreach ($goodsTypes as $goodsType)
+                                    <option value="{{ $goodsType->name }}"
+                                        {{ old('good_type', $lorry_receipt->good_type) == $goodsType->name ? 'selected' : '' }}>
+                                        {{ $goodsType->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                             @error('good_type')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -1201,6 +1202,8 @@
             $('#good_type').select2({
                 theme: 'bootstrap-5',
                 width: '100%',
+                allowClear: true,
+                placeholder: 'Search and select goods type...',
                 minimumResultsForSearch: 0
             });
 
@@ -2143,9 +2146,9 @@ if (grNumberInput) {
                     // Add new option to Goods Type dropdown
                     let select = document.getElementById('good_type');
                     let newOption = new Option(data.goodsType.name, data.goodsType.name, true, true);
-                    newOption.setAttribute('data-id', data.goodsType.id);
                     select.add(newOption);
                     select.value = data.goodsType.name;
+                    $(select).trigger('change');
 
                     // Close modal
                     bootstrap.Modal.getInstance(document.getElementById('addGoodsTypeModal')).hide();
