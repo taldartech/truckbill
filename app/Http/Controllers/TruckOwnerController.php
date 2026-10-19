@@ -385,6 +385,7 @@ class TruckOwnerController extends Controller
         if ($request->filled('transporter_master_id')) {
             $master = TransporterMaster::findOrFail($request->transporter_master_id);
             $validated['transporter_master_id'] = $master->id;
+            $isDummyPan = strtoupper((string) $master->pan_number) === $dummyPan;
             $calculatedTds = $this->tdsCalculator->calculate((bool) $validated['declaration_given'], (string) $master->pan_number, (bool) $master->pan_active);
             $submittedTds = round((float) $validated['tds_percentage'], 2);
 

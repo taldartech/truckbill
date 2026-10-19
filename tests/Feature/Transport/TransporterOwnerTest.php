@@ -251,6 +251,43 @@ class TransporterOwnerTest extends TestCase
         ]);
     }
 
+    public function test_truck_owner_store_with_existing_master_creates_owner(): void
+    {
+        $admin = $this->makeAdmin();
+        [$country, $state, $city] = $this->seedGeo();
+
+        $master = TransporterMaster::factory()->create([
+            'name' => 'Existing Owner Master',
+            'pan_number' => 'ABCPD5678R',
+            'pan_active' => true,
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+        ]);
+
+        $response = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $master->id,
+            'name' => 'Existing Owner Master',
+            'pan_number' => $master->pan_number,
+            'pan_active' => true,
+            'declaration_given' => false,
+            'total_trucks' => 2,
+            'advance_amount' => 0,
+            'mobile_number' => '9876543210',
+            'tds_percentage' => 1,
+        ]);
+
+        $response->assertRedirect(route('truck_owners.index'));
+        $this->assertDatabaseHas('transporters', [
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $master->id,
+            'is_owner' => 1,
+            'mobile_number' => '9876543210',
+            'tds_percentage' => 1.00,
+        ]);
+    }
+
     public function test_truck_owner_update_does_not_change_tds_when_payment_complete(): void
     {
         $admin = $this->makeAdmin();
