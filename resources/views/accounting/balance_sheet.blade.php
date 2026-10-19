@@ -319,10 +319,18 @@
     <!-- Screen View: Balance Sheet 2-Column Main Card (Hidden on Print) -->
     <div class="card app-index-list-card shadow-sm d-print-none">
         <div class="card-header">
-            <h3 class="card-title mb-0">
-                <i class="bi bi-briefcase me-2"></i>Statement of Capital, Liabilities & Assets
+            <h3 class="card-title mb-0" id="bs-card-title">
+                <i class="bi bi-briefcase me-2"></i>Statement of Assets, Liabilities &amp; Capital
             </h3>
-            <div class="app-index-card-toolbar d-flex gap-2">
+            <div class="app-index-card-toolbar d-flex align-items-center gap-2">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Layout toggle">
+                    <button type="button" class="btn btn-secondary btn-sm active" id="btn-view-assets-left" onclick="switchBsLayout('assets-left')" title="Assets &amp; Receivables on Left, Capital &amp; Liabilities on Right">
+                        <i class="bi bi-arrow-left-right me-1"></i> Assets on Left
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-view-tally" onclick="switchBsLayout('tally')" title="Traditional Tally layout: Liabilities on Left, Assets on Right">
+                        <i class="bi bi-journal-text me-1"></i> Tally Format
+                    </button>
+                </div>
                 <button onclick="printBoth()" class="btn app-index-header-btn">
                     <i class="bi bi-printer"></i> Print Statement (Both)
                 </button>
@@ -351,76 +359,14 @@
             </div>
         </div>
         <div class="card-body p-0">
-            <div class="row g-0">
-                <!-- Left: Liabilities & Equity -->
-                <div class="col-md-6 border-end">
+            <div class="row g-0" id="bs-screen-columns">
+                <!-- Assets & Receivables Column -->
+                <div class="col-md-6 border-end d-flex flex-column" id="bs-col-assets">
                     <div class="p-3 border-bottom fw-bold text-uppercase small text-dark d-flex justify-content-between" style="background-color: var(--brand-table-header-bg);">
-                        <span><i class="bi bi-shield-check me-1" style="color: var(--brand-accent-blue);"></i>Capital & Liabilities</span>
+                        <span><i class="bi bi-wallet-fill me-1" style="color: var(--brand-primary);"></i>Assets &amp; Receivables</span>
                         <span>Amount (₹)</span>
                     </div>
-                    <div class="p-3">
-                        @forelse($balanceSheet['liability_groups'] as $pGroup)
-                            <div class="mb-3 border rounded p-2" style="border-color: var(--brand-border) !important; background: #fafbfc;">
-                                <div class="d-flex justify-content-between align-items-center pb-2 border-bottom fw-bold text-dark">
-                                    <span class="fs-6"><i class="bi bi-folder2-open text-warning me-1"></i>{{ $pGroup['name'] }}</span>
-                                    <span class="fw-bold fs-6" style="color: var(--brand-primary-dark);">₹{{ number_format($pGroup['subtotal'], 2) }}</span>
-                                </div>
-
-                                <!-- Direct ledgers in primary group -->
-                                @if(!empty($pGroup['direct_ledgers']))
-                                    <ul class="list-group list-group-flush mb-2 ps-2">
-                                        @foreach($pGroup['direct_ledgers'] as $dl)
-                                        <li class="list-group-item d-flex justify-content-between px-1 py-1 border-0 bg-transparent">
-                                            @if($dl['id'])
-                                                <a href="{{ route('accounting.ledger-statement', $dl['id']) }}" class="text-decoration-none text-dark fw-medium" title="View Statement">
-                                                    <i class="bi bi-file-earmark-text text-muted me-1 small"></i>{{ $dl['name'] }}
-                                                </a>
-                                            @else
-                                                <span class="fw-bold text-dark"><i class="bi bi-pie-chart text-info me-1"></i>{{ $dl['name'] }}</span>
-                                            @endif
-                                            <span class="fw-semibold text-dark">₹{{ number_format($dl['amount'], 2) }}</span>
-                                        </li>
-                                        @endforeach
-                                    </ul>
-                                @endif
-
-                                <!-- Sub groups -->
-                                @foreach($pGroup['sub_groups'] as $subG)
-                                    <div class="mt-2 ms-2 ps-2 border-start border-2" style="border-color: var(--brand-border) !important;">
-                                        <div class="d-flex justify-content-between align-items-center py-1 fw-semibold small text-muted">
-                                            <span><i class="bi bi-diagram-2 me-1"></i>{{ $subG['name'] }}</span>
-                                            <span class="badge bg-light text-dark border">₹{{ number_format($subG['subtotal'], 2) }}</span>
-                                        </div>
-                                        <ul class="list-group list-group-flush ps-2">
-                                            @foreach($subG['ledgers'] as $l)
-                                            <li class="list-group-item d-flex justify-content-between px-1 py-1 border-0 bg-transparent small">
-                                                <a href="{{ route('accounting.ledger-statement', $l['id']) }}" class="text-decoration-none text-dark" title="View Statement">
-                                                    {{ $l['name'] }}
-                                                </a>
-                                                <span class="fw-medium text-dark">₹{{ number_format($l['amount'], 2) }}</span>
-                                            </li>
-                                            @endforeach
-                                        </ul>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @empty
-                            <div class="text-muted small py-4 text-center">No liabilities or equity recorded.</div>
-                        @endforelse
-                    </div>
-                    <div class="p-3 border-top d-flex justify-content-between fw-bold fs-6" style="background-color: var(--brand-table-header-bg);">
-                        <span class="text-uppercase small text-muted">Total Liabilities & Equity:</span>
-                        <span style="color: var(--brand-primary-dark);">₹{{ number_format($balanceSheet['total_liabilities'], 2) }}</span>
-                    </div>
-                </div>
-
-                <!-- Right: Assets -->
-                <div class="col-md-6">
-                    <div class="p-3 border-bottom fw-bold text-uppercase small text-dark d-flex justify-content-between" style="background-color: var(--brand-table-header-bg);">
-                        <span><i class="bi bi-wallet-fill me-1" style="color: var(--brand-primary);"></i>Assets & Receivables</span>
-                        <span>Amount (₹)</span>
-                    </div>
-                    <div class="p-3">
+                    <div class="p-3 flex-grow-1">
                         @forelse($balanceSheet['asset_groups'] as $pGroup)
                             <div class="mb-3 border rounded p-2" style="border-color: var(--brand-border) !important; background: #fafbfc;">
                                 <div class="d-flex justify-content-between align-items-center pb-2 border-bottom fw-bold text-dark">
@@ -484,9 +430,71 @@
                             <div class="text-muted small py-4 text-center">No assets recorded.</div>
                         @endforelse
                     </div>
-                    <div class="p-3 border-top d-flex justify-content-between fw-bold fs-6" style="background-color: var(--brand-table-header-bg);">
+                    <div class="p-3 border-top d-flex justify-content-between align-items-center fw-bold fs-6 mt-auto" style="background-color: var(--brand-table-header-bg); min-height: 56px;">
                         <span class="text-uppercase small text-muted">Total Assets:</span>
                         <span style="color: var(--brand-primary-dark);">₹{{ number_format($balanceSheet['total_assets'], 2) }}</span>
+                    </div>
+                </div>
+
+                <!-- Capital & Liabilities Column -->
+                <div class="col-md-6 d-flex flex-column" id="bs-col-liabilities">
+                    <div class="p-3 border-bottom fw-bold text-uppercase small text-dark d-flex justify-content-between" style="background-color: var(--brand-table-header-bg);">
+                        <span><i class="bi bi-shield-check me-1" style="color: var(--brand-accent-blue);"></i>Capital &amp; Liabilities</span>
+                        <span>Amount (₹)</span>
+                    </div>
+                    <div class="p-3 flex-grow-1">
+                        @forelse($balanceSheet['liability_groups'] as $pGroup)
+                            <div class="mb-3 border rounded p-2" style="border-color: var(--brand-border) !important; background: #fafbfc;">
+                                <div class="d-flex justify-content-between align-items-center pb-2 border-bottom fw-bold text-dark">
+                                    <span class="fs-6"><i class="bi bi-folder2-open text-warning me-1"></i>{{ $pGroup['name'] }}</span>
+                                    <span class="fw-bold fs-6" style="color: var(--brand-primary-dark);">₹{{ number_format($pGroup['subtotal'], 2) }}</span>
+                                </div>
+
+                                <!-- Direct ledgers in primary group -->
+                                @if(!empty($pGroup['direct_ledgers']))
+                                    <ul class="list-group list-group-flush mb-2 ps-2">
+                                        @foreach($pGroup['direct_ledgers'] as $dl)
+                                        <li class="list-group-item d-flex justify-content-between px-1 py-1 border-0 bg-transparent">
+                                            @if($dl['id'])
+                                                <a href="{{ route('accounting.ledger-statement', $dl['id']) }}" class="text-decoration-none text-dark fw-medium" title="View Statement">
+                                                    <i class="bi bi-file-earmark-text text-muted me-1 small"></i>{{ $dl['name'] }}
+                                                </a>
+                                            @else
+                                                <span class="fw-bold text-dark"><i class="bi bi-pie-chart text-info me-1"></i>{{ $dl['name'] }}</span>
+                                            @endif
+                                            <span class="fw-semibold text-dark">₹{{ number_format($dl['amount'], 2) }}</span>
+                                        </li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+
+                                <!-- Sub groups -->
+                                @foreach($pGroup['sub_groups'] as $subG)
+                                    <div class="mt-2 ms-2 ps-2 border-start border-2" style="border-color: var(--brand-border) !important;">
+                                        <div class="d-flex justify-content-between align-items-center py-1 fw-semibold small text-muted">
+                                            <span><i class="bi bi-diagram-2 me-1"></i>{{ $subG['name'] }}</span>
+                                            <span class="badge bg-light text-dark border">₹{{ number_format($subG['subtotal'], 2) }}</span>
+                                        </div>
+                                        <ul class="list-group list-group-flush ps-2">
+                                            @foreach($subG['ledgers'] as $l)
+                                            <li class="list-group-item d-flex justify-content-between px-1 py-1 border-0 bg-transparent small">
+                                                <a href="{{ route('accounting.ledger-statement', $l['id']) }}" class="text-decoration-none text-dark" title="View Statement">
+                                                    {{ $l['name'] }}
+                                                </a>
+                                                <span class="fw-medium text-dark">₹{{ number_format($l['amount'], 2) }}</span>
+                                            </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @empty
+                            <div class="text-muted small py-4 text-center">No liabilities or equity recorded.</div>
+                        @endforelse
+                    </div>
+                    <div class="p-3 border-top d-flex justify-content-between align-items-center fw-bold fs-6 mt-auto" style="background-color: var(--brand-table-header-bg); min-height: 56px;">
+                        <span class="text-uppercase small text-muted">Total Liabilities &amp; Equity:</span>
+                        <span style="color: var(--brand-primary-dark);">₹{{ number_format($balanceSheet['total_liabilities'], 2) }}</span>
                     </div>
                 </div>
             </div>
@@ -1076,6 +1084,56 @@
 </div>
 
 <script>
+    function switchBsLayout(mode) {
+        const row = document.getElementById('bs-screen-columns');
+        const colAssets = document.getElementById('bs-col-assets');
+        const colLiabilities = document.getElementById('bs-col-liabilities');
+        const btnAssets = document.getElementById('btn-view-assets-left');
+        const btnTally = document.getElementById('btn-view-tally');
+        const title = document.getElementById('bs-card-title');
+
+        if (!row || !colAssets || !colLiabilities) return;
+
+        if (mode === 'tally') {
+            row.insertBefore(colLiabilities, colAssets);
+            colLiabilities.classList.add('border-end');
+            colAssets.classList.remove('border-end');
+            if (btnTally) {
+                btnTally.classList.add('active', 'btn-secondary');
+                btnTally.classList.remove('btn-outline-secondary');
+            }
+            if (btnAssets) {
+                btnAssets.classList.remove('active', 'btn-secondary');
+                btnAssets.classList.add('btn-outline-secondary');
+            }
+            if (title) {
+                title.innerHTML = '<i class="bi bi-briefcase me-2"></i>Statement of Capital, Liabilities &amp; Assets (Tally Format)';
+            }
+            localStorage.setItem('tb_bs_layout', 'tally');
+        } else {
+            row.insertBefore(colAssets, colLiabilities);
+            colAssets.classList.add('border-end');
+            colLiabilities.classList.remove('border-end');
+            if (btnAssets) {
+                btnAssets.classList.add('active', 'btn-secondary');
+                btnAssets.classList.remove('btn-outline-secondary');
+            }
+            if (btnTally) {
+                btnTally.classList.remove('active', 'btn-secondary');
+                btnTally.classList.add('btn-outline-secondary');
+            }
+            if (title) {
+                title.innerHTML = '<i class="bi bi-briefcase me-2"></i>Statement of Assets, Liabilities &amp; Capital';
+            }
+            localStorage.setItem('tb_bs_layout', 'assets-left');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedLayout = localStorage.getItem('tb_bs_layout') || 'assets-left';
+        switchBsLayout(savedLayout);
+    });
+
     function printBoth() {
         document.body.classList.remove('print-only-summary', 'print-only-detailed');
         window.print();

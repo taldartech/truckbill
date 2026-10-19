@@ -1433,9 +1433,14 @@ class TallyAccountingTest extends TestCase
         $this->assertStringContainsString('printSummary()', $view);
         $this->assertStringContainsString('printDetailed()', $view);
 
-        // Ensure screen elements are marked d-print-none
+        // Ensure screen elements are marked d-print-none and support layout toggling
         $this->assertStringContainsString('card shadow-sm border-0 mb-3 d-print-none', $view);
         $this->assertStringContainsString('card app-index-list-card shadow-sm d-print-none', $view);
+        $this->assertStringContainsString('bs-col-assets', $view);
+        $this->assertStringContainsString('bs-col-liabilities', $view);
+        $this->assertStringContainsString('switchBsLayout', $view);
+        $this->assertStringContainsString('btn-view-assets-left', $view);
+        $this->assertStringContainsString('btn-view-tally', $view);
         $this->assertStringContainsString('@media print', $view);
     }
 
