@@ -183,5 +183,84 @@ class AccountingReportController extends Controller
 
         return view('accounting.debtors_aging', compact('company', 'report', 'asOfDate'));
     }
+
+    /**
+     * Bank Reconciliation Statement (BRS) view.
+     */
+    public function bankReconciliation(Request $request)
+    {
+        $company = $this->getActiveCompany();
+
+        $bankLedgers = Ledger::where('company_id', $company->id)
+            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->whereHas('accountGroup', function ($g) {
+                    $g->where('name', 'Bank Accounts');
+                })->orWhere('code', 'like', 'BANK%');
+            })
+            ->orderBy('name')
+            ->get();
+
+        $selectedLedgerId = $request->input('ledger_id') ?: $bankLedgers->first()?->id;
+        $fromDate = $request->input('from_date', now()->startOfMonth()->toDateString());
+        $toDate = $request->input('to_date', now()->toDateString());
+        $statusFilter = $request->input('status', 'all');
+
+        $reconciliation = null;
+        if ($selectedLedgerId) {
+            $ledger = Ledger::where('company_id', $company->id)->findOrFail($selectedLedgerId);
+            $reconciliation = $this->reportService->getBankReconciliation($ledger, $fromDate, $toDate, $statusFilter);
+        }
+
+        return view('accounting.bank_reconciliation', compact(
+            'company',
+            'bankLedgers',
+            'selectedLedgerId',
+            'reconciliation',
+            'fromDate',
+            'toDate',
+            'statusFilter'
+        ));
+    }
+
+    /**
+     * Update Bank Reconciliation Dates for voucher items.
+     */
+    public function updateBankReconciliation(Request $request)
+    {
+        $company = $this->getActiveCompany();
+
+        $validated = $request->validate([
+            'ledger_id' => 'required|exists:ledgers,id',
+            'items' => 'required|array',
+            'items.*.id' => 'required|exists:accounting_voucher_items,id',
+            'items.*.reconciliation_date' => 'nullable|date',
+        ]);
+
+        $ledger = Ledger::where('company_id', $company->id)->findOrFail($validated['ledger_id']);
+
+        $updatedCount = 0;
+        foreach ($validated['items'] as $itemData) {
+            $item = \App\Models\AccountingVoucherItem::where('company_id', $company->id)
+                ->where('ledger_id', $ledger->id)
+                ->find($itemData['id']);
+
+            if ($item) {
+                $reconDate = ! empty($itemData['reconciliation_date']) ? $itemData['reconciliation_date'] : null;
+                $item->reconciliation_date = $reconDate;
+                $item->save();
+                $updatedCount++;
+            }
+        }
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Bank reconciliation updated for {$updatedCount} transaction(s).",
+            ]);
+        }
+
+        return back()->with('success', "Bank reconciliation updated for {$updatedCount} transaction(s).");
+    }
 }
 

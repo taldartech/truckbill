@@ -75,7 +75,14 @@
                         @forelse($vouchers as $v)
                         <tr>
                             <td class="ps-3 fw-semibold">{{ $v->voucher_date->format('d-m-Y') }}</td>
-                            <td><span class="badge bg-light text-dark border">{{ $v->voucher_number }}</span></td>
+                            <td>
+                                <span class="badge bg-light text-dark border">{{ $v->voucher_number }}</span>
+                                @if($v->isReversed())
+                                    <span class="badge bg-danger ms-1" style="font-size: 0.65rem;">Reversed</span>
+                                @elseif($v->source_type === \App\Models\AccountingVoucher::class)
+                                    <span class="badge bg-warning text-dark ms-1" style="font-size: 0.65rem;">Reversal</span>
+                                @endif
+                            </td>
                             <td>
                                 @php
                                     $badgeStyle = match(strtolower($v->voucher_type)) {

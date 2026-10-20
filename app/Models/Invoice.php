@@ -33,6 +33,7 @@ class Invoice extends Model implements Auditable
         'cgst',
         'igst',
         'lr_ids',
+        'branch_id',
         'deleted_by',
         'deleted_remark',
     ];
@@ -49,6 +50,11 @@ class Invoice extends Model implements Auditable
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function payments()

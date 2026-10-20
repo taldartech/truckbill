@@ -1286,6 +1286,13 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
+                                        <a href="{{ route('accounting.bank-reconciliation') }}"
+                                            class="nav-link{{ Request::is('accounting/bank-reconciliation*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-university"></i>
+                                            <p>Bank Reconciliation</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
                                         <a href="{{ route('accounting.debtors-aging') }}"
                                             class="nav-link{{ Request::is('accounting/debtors-aging*') ? ' active' : '' }}">
                                             <i class="nav-icon fas fa-hourglass-half"></i>

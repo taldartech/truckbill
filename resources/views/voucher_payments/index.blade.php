@@ -230,6 +230,9 @@
                 <a href="{{ route('voucher_payments.daily') }}" class="btn app-index-header-btn" title="Daily Report" aria-label="Daily report">
                     <i class="bi bi-calendar-day"></i><span class="d-none d-sm-inline ms-1">Daily Report</span>
                 </a>
+                <a href="{{ route('voucher_payments.export_payout', request()->query()) }}" class="btn app-index-header-btn" title="Export Bank Payout File (NEFT/RTGS)" aria-label="Export bank payout file">
+                    <i class="bi bi-download"></i><span class="d-none d-sm-inline ms-1">Bank Payout</span>
+                </a>
             </div>
         </div>
 

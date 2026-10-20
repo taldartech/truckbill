@@ -305,6 +305,14 @@
                 <i class="bi bi-receipt me-2"></i>Accounting Voucher #{{ $voucher->voucher_number }}
             </h3>
             <div class="app-index-card-toolbar d-flex gap-2">
+                @if(!$voucher->isReversed() && $voucher->source_type !== \App\Models\AccountingVoucher::class)
+                    <form method="POST" action="{{ route('accounting.vouchers.reverse', $voucher) }}" onsubmit="return confirm('Are you sure you want to reverse voucher #{{ $voucher->voucher_number }}? This will post an offsetting double-entry Journal Voucher in compliance with accounting audit standards.');" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-danger app-index-header-btn">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reverse Voucher
+                        </button>
+                    </form>
+                @endif
                 <button onclick="window.print()" class="btn app-index-header-btn">
                     <i class="bi bi-printer"></i> Print Voucher
                 </button>
@@ -314,6 +322,28 @@
             </div>
         </div>
         <div class="card-body p-4">
+            @if($voucher->isReversed())
+                @php $reversal = $voucher->reversalVouchers->first(); @endphp
+                <div class="alert alert-danger d-flex align-items-center mb-3">
+                    <i class="bi bi-exclamation-octagon-fill fs-4 me-2"></i>
+                    <div>
+                        <strong>Voucher Reversed:</strong> This voucher was formally reversed by offsetting Journal Voucher
+                        @if($reversal)
+                            <a href="{{ route('accounting.vouchers.show', $reversal->id) }}" class="fw-bold text-danger text-decoration-underline">#{{ $reversal->voucher_number }}</a>
+                            on {{ $reversal->voucher_date->format('d-m-Y') }}.
+                        @endif
+                    </div>
+                </div>
+            @elseif($voucher->source_type === \App\Models\AccountingVoucher::class && $voucher->source_id)
+                <div class="alert alert-warning d-flex align-items-center mb-3">
+                    <i class="bi bi-arrow-counterclockwise fs-4 me-2"></i>
+                    <div>
+                        <strong>Offsetting Reversal Voucher:</strong> This is a formal double-entry reversal entry for Voucher
+                        <a href="{{ route('accounting.vouchers.show', $voucher->source_id) }}" class="fw-bold text-dark text-decoration-underline">#{{ $voucher->reference_number ?: $voucher->source_id }}</a>.
+                    </div>
+                </div>
+            @endif
+
             <!-- Summary Info Row -->
             <div class="row g-3 p-3 rounded mb-4" style="background-color: var(--brand-bg); border: 1px solid var(--brand-border);">
                 <div class="col-md-3 col-sm-6">

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Contracts\Auditable;
+use App\Models\Concerns\HasHybridAuditLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,9 +11,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class AccountingVoucher extends Model
+class AccountingVoucher extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasHybridAuditLog, SoftDeletes;
 
     protected $fillable = [
         'company_id',
@@ -74,6 +76,21 @@ class AccountingVoucher extends Model
         return $this->hasMany(AccountingVoucherItem::class);
     }
 
+    public function reversalVouchers(): HasMany
+    {
+        return $this->hasMany(AccountingVoucher::class, 'source_id')->where('source_type', self::class);
+    }
+
+    public function originalVoucher(): BelongsTo
+    {
+        return $this->belongsTo(AccountingVoucher::class, 'source_id');
+    }
+
+    public function isReversed(): bool
+    {
+        return $this->reversalVouchers()->exists();
+    }
+
     /**
      * Assert if the voucher debits equal credits within 0.01 tolerance.
      */
@@ -83,5 +100,31 @@ class AccountingVoucher extends Model
         $credits = (float) $this->items()->where('type', 'credit')->sum('amount');
 
         return abs($debits - $credits) < 0.01;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function auditTrackedAttributes(): array
+    {
+        return [
+            'voucher_type',
+            'voucher_number',
+            'voucher_date',
+            'reference_number',
+            'narration',
+            'total_amount',
+            'is_posted',
+        ];
+    }
+
+    public function auditSubjectLabel(): string
+    {
+        return (string) ($this->voucher_number ?? 'Voucher #'.$this->id);
+    }
+
+    public function auditSubjectTypeName(): string
+    {
+        return 'Accounting Voucher';
     }
 }

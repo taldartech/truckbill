@@ -1383,4 +1383,108 @@ class FinancialReportService
             ],
         ];
     }
+
+    /**
+     * Get Bank Reconciliation Statement (BRS) data for a bank ledger.
+     *
+     * @return array<string, mixed>
+     */
+    public function getBankReconciliation(Ledger $ledger, ?string $fromDate = null, ?string $toDate = null, string $statusFilter = 'all'): array
+    {
+        $fromDate = $fromDate ?: now()->startOfYear()->toDateString();
+        $toDate = $toDate ?: now()->toDateString();
+
+        // 1. Calculate Balance as per Company Books as of toDate
+        $allPriorItems = AccountingVoucherItem::where('ledger_id', $ledger->id)
+            ->whereHas('accountingVoucher', function (Builder $query) use ($toDate): void {
+                $query->where('is_posted', true)
+                    ->whereDate('voucher_date', '<=', $toDate);
+            })
+            ->get();
+
+        $openingDebit = $ledger->opening_balance_type === 'debit' ? (float) $ledger->opening_balance : 0.0;
+        $openingCredit = $ledger->opening_balance_type === 'credit' ? (float) $ledger->opening_balance : 0.0;
+        $totalBookDebits = $openingDebit + (float) $allPriorItems->where('type', 'debit')->sum('amount');
+        $totalBookCredits = $openingCredit + (float) $allPriorItems->where('type', 'credit')->sum('amount');
+        $bookBalance = round($totalBookDebits - $totalBookCredits, 2);
+
+        // 2. Fetch transactions for reconciliation within range or uncleared
+        $query = AccountingVoucherItem::with(['accountingVoucher.items.ledger', 'costCentre'])
+            ->where('ledger_id', $ledger->id)
+            ->whereHas('accountingVoucher', function (Builder $q) use ($toDate): void {
+                $q->where('is_posted', true)
+                    ->whereDate('voucher_date', '<=', $toDate);
+            });
+
+        if ($statusFilter === 'uncleared') {
+            $query->whereNull('reconciliation_date');
+        } elseif ($statusFilter === 'reconciled') {
+            $query->whereNotNull('reconciliation_date')
+                ->whereDate('reconciliation_date', '>=', $fromDate);
+        } else {
+            $query->where(function (Builder $q) use ($fromDate): void {
+                $q->whereNull('reconciliation_date')
+                    ->orWhereHas('accountingVoucher', function (Builder $sub) use ($fromDate): void {
+                        $sub->whereDate('voucher_date', '>=', $fromDate);
+                    });
+            });
+        }
+
+        $items = $query->join('accounting_vouchers', 'accounting_voucher_items.accounting_voucher_id', '=', 'accounting_vouchers.id')
+            ->orderBy('accounting_vouchers.voucher_date', 'desc')
+            ->orderBy('accounting_vouchers.id', 'desc')
+            ->select('accounting_voucher_items.*')
+            ->get();
+
+        // 3. Calculate Uncleared amounts as of toDate
+        $unclearedDebits = $allPriorItems->filter(function ($item) use ($toDate) {
+            return $item->type === 'debit' && (! $item->reconciliation_date || $item->reconciliation_date->toDateString() > $toDate);
+        })->sum('amount');
+
+        $unclearedCredits = $allPriorItems->filter(function ($item) use ($toDate) {
+            return $item->type === 'credit' && (! $item->reconciliation_date || $item->reconciliation_date->toDateString() > $toDate);
+        })->sum('amount');
+
+        $bankBalance = round($bookBalance + $unclearedCredits - $unclearedDebits, 2);
+
+        $transactions = $items->map(function ($item) {
+            $voucher = $item->accountingVoucher;
+            $opposingItem = $voucher->items->first(fn ($other) => $other->type !== $item->type);
+            $opposingLedgerName = $opposingItem?->ledger?->name ?? 'As per details';
+
+            return [
+                'id' => $item->id,
+                'voucher_id' => $voucher->id,
+                'voucher_number' => $voucher->voucher_number,
+                'voucher_type' => $voucher->voucher_type,
+                'voucher_date' => $voucher->voucher_date ? Carbon::parse($voucher->voucher_date)->format('d-M-Y') : '-',
+                'voucher_date_raw' => $voucher->voucher_date ? Carbon::parse($voucher->voucher_date)->toDateString() : '',
+                'particulars' => $opposingLedgerName,
+                'narration' => $item->particulars_note ?: $voucher->narration,
+                'reference_number' => $voucher->reference_number,
+                'type' => $item->type,
+                'debit_amount' => $item->type === 'debit' ? (float) $item->amount : 0.00,
+                'credit_amount' => $item->type === 'credit' ? (float) $item->amount : 0.00,
+                'reconciliation_date' => $item->reconciliation_date ? $item->reconciliation_date->format('Y-m-d') : null,
+                'is_reconciled' => ! empty($item->reconciliation_date),
+            ];
+        });
+
+        return [
+            'ledger' => $ledger,
+            'from_date' => $fromDate,
+            'to_date' => $toDate,
+            'status_filter' => $statusFilter,
+            'book_balance' => $bookBalance,
+            'uncleared_debits' => round($unclearedDebits, 2),
+            'uncleared_credits' => round($unclearedCredits, 2),
+            'bank_balance' => $bankBalance,
+            'transactions' => $transactions,
+            'totals' => [
+                'total_count' => $transactions->count(),
+                'reconciled_count' => $transactions->where('is_reconciled', true)->count(),
+                'uncleared_count' => $transactions->where('is_reconciled', false)->count(),
+            ],
+        ];
+    }
 }

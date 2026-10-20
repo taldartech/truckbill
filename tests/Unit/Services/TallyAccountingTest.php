@@ -4,6 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Models\AccountGroup;
 use App\Models\AccountingVoucher;
+use App\Models\AccountingVoucherItem;
 use App\Models\AdvancePayment;
 use App\Models\Company;
 use App\Models\Consignee;
@@ -115,6 +116,7 @@ class TallyAccountingTest extends TestCase
             Schema::create('accounting_vouchers', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('company_id');
+                $table->foreignId('branch_id')->nullable();
                 $table->string('voucher_type');
                 $table->string('voucher_number');
                 $table->date('voucher_date');
@@ -146,6 +148,7 @@ class TallyAccountingTest extends TestCase
                 $table->foreignId('cost_centre_id')->nullable();
                 $table->foreignId('invoice_id')->nullable();
                 $table->string('particulars_note')->nullable();
+                $table->date('reconciliation_date')->nullable();
                 $table->timestamps();
             });
         }
@@ -183,11 +186,40 @@ class TallyAccountingTest extends TestCase
                 $table->foreignId('transporter_master_id')->nullable();
                 $table->string('contact_person_name')->nullable();
                 $table->string('mobile_number')->nullable();
+                $table->string('beneficiary_id')->nullable();
                 $table->decimal('tds_percentage', 5, 2)->default(1.0);
                 $table->decimal('advance_amount', 15, 2)->default(0.0);
                 $table->boolean('is_owner')->default(false);
                 $table->boolean('declaration_given')->default(false);
                 $table->date('declaration_194c6_date')->nullable();
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
+
+        if (! Schema::hasTable('branches')) {
+            Schema::create('branches', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('company_id');
+                $table->string('branch_name');
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
+
+        if (! Schema::hasTable('lorry_receipts')) {
+            Schema::create('lorry_receipts', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('company_id');
+                $table->foreignId('branch_id')->nullable();
+                $table->foreignId('customer_id')->nullable();
+                $table->foreignId('transporter_id')->nullable();
+                $table->foreignId('truck_id')->nullable();
+                $table->string('lr_number')->nullable();
+                $table->date('gr_date')->nullable();
+                $table->decimal('amount', 15, 2)->default(0.00);
+                $table->decimal('actual_amount', 15, 2)->nullable();
+                $table->string('delivery_status')->default('Delivered');
                 $table->timestamps();
                 $table->softDeletes();
             });
@@ -247,6 +279,8 @@ class TallyAccountingTest extends TestCase
                 $table->decimal('amount', 15, 2)->default(0.0);
                 $table->string('payment_mode')->nullable();
                 $table->string('payment_type')->nullable();
+                $table->string('payment_status')->default('pending');
+                $table->string('remark')->nullable();
                 $table->string('reference_transaction_id')->nullable();
                 $table->date('date')->nullable();
                 $table->foreignId('bank_ledger_id')->nullable();
@@ -1979,5 +2013,373 @@ class TallyAccountingTest extends TestCase
         $this->assertStringContainsString('handleAmountFocus', $view);
         $this->assertStringContainsString('Circular Entry Warning', $view);
     }
+
+    public function test_bank_reconciliation_calculation_and_view(): void
+    {
+        $company = Company::create([
+            'name' => 'Taldar Tech Logistics Limited',
+            'address' => 'Udaipur',
+            'bank' => 'HDFC Bank',
+            'account_number' => '50100234567890',
+        ]);
+
+        $provisioner = new ChartOfAccountsProvisioner;
+        $provisioner->provisionForCompany($company);
+
+        $bankLedger = Ledger::where('company_id', $company->id)->where('code', 'BANK_PRIMARY')->first();
+        $this->assertNotNull($bankLedger);
+
+        $cashLedger = Ledger::where('company_id', $company->id)->where('code', 'CASH')->first();
+
+        // 1. Post a Receipt: Dr Bank ₹10,000, Cr Cash ₹10,000
+        $receiptVoucher = AccountingVoucher::create([
+            'company_id' => $company->id,
+            'voucher_type' => 'contra',
+            'voucher_number' => 'CNT-001',
+            'voucher_date' => '2026-10-01',
+            'total_amount' => 10000.00,
+            'is_posted' => true,
+        ]);
+        $debitItem = AccountingVoucherItem::create([
+            'company_id' => $company->id,
+            'accounting_voucher_id' => $receiptVoucher->id,
+            'ledger_id' => $bankLedger->id,
+            'type' => 'debit',
+            'amount' => 10000.00,
+            'particulars_note' => 'Cash deposit',
+        ]);
+        AccountingVoucherItem::create([
+            'company_id' => $company->id,
+            'accounting_voucher_id' => $receiptVoucher->id,
+            'ledger_id' => $cashLedger->id,
+            'type' => 'credit',
+            'amount' => 10000.00,
+        ]);
+
+        // 2. Post a Payment: Dr Cash ₹3,000, Cr Bank ₹3,000
+        $paymentVoucher = AccountingVoucher::create([
+            'company_id' => $company->id,
+            'voucher_type' => 'contra',
+            'voucher_number' => 'CNT-002',
+            'voucher_date' => '2026-10-02',
+            'total_amount' => 3000.00,
+            'is_posted' => true,
+        ]);
+        AccountingVoucherItem::create([
+            'company_id' => $company->id,
+            'accounting_voucher_id' => $paymentVoucher->id,
+            'ledger_id' => $cashLedger->id,
+            'type' => 'debit',
+            'amount' => 3000.00,
+        ]);
+        $creditItem = AccountingVoucherItem::create([
+            'company_id' => $company->id,
+            'accounting_voucher_id' => $paymentVoucher->id,
+            'ledger_id' => $bankLedger->id,
+            'type' => 'credit',
+            'amount' => 3000.00,
+            'particulars_note' => 'Cash withdrawal',
+        ]);
+
+        $reportService = new FinancialReportService;
+
+        // When both items are uncleared
+        $brs = $reportService->getBankReconciliation($bankLedger, '2026-10-01', '2026-10-31');
+        $this->assertEquals(7000.00, $brs['book_balance']);
+        $this->assertEquals(10000.00, $brs['uncleared_debits']);
+        $this->assertEquals(3000.00, $brs['uncleared_credits']);
+        // Bank balance = 7000 + 3000 - 10000 = 0
+        $this->assertEquals(0.00, $brs['bank_balance']);
+
+        // Now clear the deposit item with bank date
+        $debitItem->reconciliation_date = '2026-10-03';
+        $debitItem->save();
+
+        $brsAfter = $reportService->getBankReconciliation($bankLedger, '2026-10-01', '2026-10-31');
+        $this->assertEquals(7000.00, $brsAfter['book_balance']);
+        $this->assertEquals(0.00, $brsAfter['uncleared_debits']);
+        $this->assertEquals(3000.00, $brsAfter['uncleared_credits']);
+        // Bank balance = 7000 + 3000 - 0 = 10000
+        $this->assertEquals(10000.00, $brsAfter['bank_balance']);
+
+        // Render blade view
+        $view = view('accounting.bank_reconciliation', [
+            'company' => $company,
+            'bankLedgers' => collect([$bankLedger]),
+            'selectedLedgerId' => $bankLedger->id,
+            'reconciliation' => $brsAfter,
+            'fromDate' => '2026-10-01',
+            'toDate' => '2026-10-31',
+            'statusFilter' => 'all',
+        ])->render();
+
+        $this->assertStringContainsString('Bank Reconciliation Statement (BRS)', $view);
+        $this->assertStringContainsString('Balance as per Books', $view);
+        $this->assertStringContainsString('Balance as per Bank', $view);
+        $this->assertStringContainsString('Uncleared Receipts', $view);
+        $this->assertStringContainsString('Uncleared Payments', $view);
+        $this->assertStringContainsString('CNT-001', $view);
+    }
+
+    public function test_accounting_voucher_reversal_creates_offsetting_journal_and_prevents_duplicate_reversal(): void
+    {
+        $company = Company::create(['name' => 'Reversal Test Company']);
+        $provisioner = new ChartOfAccountsProvisioner;
+        $provisioner->provisionForCompany($company);
+
+        $bankLedger = Ledger::where('company_id', $company->id)->where('code', 'CASH')->first();
+        $expenseLedger = Ledger::where('company_id', $company->id)->where('code', 'FR_EXPENSE')->first();
+
+        $user = \App\Models\User::create([
+            'name' => 'Auditor',
+            'email' => 'auditor_rev@truckbill.test',
+            'password' => bcrypt('secret'),
+            'company_id' => $company->id,
+        ]);
+        $this->actingAs($user);
+
+        // Create original Payment voucher: Dr Expense 5000, Cr Cash 5000
+        $originalVoucher = AccountingVoucher::create([
+            'company_id' => $company->id,
+            'voucher_type' => 'payment',
+            'voucher_number' => 'PAY-20261020-001',
+            'voucher_date' => '2026-10-20',
+            'narration' => 'Office maintenance payment',
+            'total_amount' => 5000.00,
+            'is_posted' => true,
+            'user_id' => $user->id,
+        ]);
+
+        AccountingVoucherItem::create([
+            'company_id' => $company->id,
+            'accounting_voucher_id' => $originalVoucher->id,
+            'ledger_id' => $expenseLedger->id,
+            'type' => 'debit',
+            'amount' => 5000.00,
+            'particulars_note' => 'Debit expense',
+        ]);
+
+        AccountingVoucherItem::create([
+            'company_id' => $company->id,
+            'accounting_voucher_id' => $originalVoucher->id,
+            'ledger_id' => $bankLedger->id,
+            'type' => 'credit',
+            'amount' => 5000.00,
+            'particulars_note' => 'Credit cash',
+        ]);
+
+        $this->assertFalse($originalVoucher->isReversed());
+
+        $controller = new \App\Http\Controllers\AccountingVoucherController;
+
+        // Perform formal double-entry reversal
+        $response = $controller->reverse($originalVoucher);
+        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
+        $this->assertTrue(session()->has('success'));
+
+        // Verify the original voucher is marked as reversed
+        $this->assertTrue($originalVoucher->fresh()->isReversed());
+
+        // Verify the offsetting reversal journal voucher
+        $reversal = AccountingVoucher::where('source_type', AccountingVoucher::class)
+            ->where('source_id', $originalVoucher->id)
+            ->first();
+
+        $this->assertNotNull($reversal);
+        $this->assertEquals('journal', $reversal->voucher_type);
+        $this->assertEquals($originalVoucher->voucher_number, $reversal->reference_number);
+        $this->assertEquals(5000.00, (float) $reversal->total_amount);
+        $this->assertTrue($reversal->isBalanced());
+
+        // Check that debit became credit, and credit became debit
+        $reversalExpenseItem = $reversal->items()->where('ledger_id', $expenseLedger->id)->first();
+        $this->assertNotNull($reversalExpenseItem);
+        $this->assertEquals('credit', $reversalExpenseItem->type);
+        $this->assertEquals(5000.00, (float) $reversalExpenseItem->amount);
+
+        $reversalBankItem = $reversal->items()->where('ledger_id', $bankLedger->id)->first();
+        $this->assertNotNull($reversalBankItem);
+        $this->assertEquals('debit', $reversalBankItem->type);
+        $this->assertEquals(5000.00, (float) $reversalBankItem->amount);
+
+        // Attempt duplicate reversal -> should be disallowed
+        $dupResponse = $controller->reverse($originalVoucher);
+        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $dupResponse);
+        $this->assertTrue(session()->has('error'));
+        $this->assertStringContainsString('has already been reversed', session('error'));
+
+        // Attempt reversing a reversal voucher -> should be disallowed
+        $revOfRevResponse = $controller->reverse($reversal);
+        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $revOfRevResponse);
+        $this->assertTrue(session()->has('error'));
+        $this->assertStringContainsString('Cannot reverse an existing reversal voucher', session('error'));
+    }
+
+    public function test_bank_payout_file_export_generates_correct_csv_stream(): void
+    {
+        $company = Company::create([
+            'name' => 'Payout Corp',
+            'bank' => 'HDFC Bank',
+            'account_number' => '50200012345678',
+        ]);
+
+        $transporterMaster = TransporterMaster::create([
+            'name' => 'Fast Express Transporter',
+            'pan_number' => 'ABCDE1234F',
+        ]);
+
+        $transporter = Transporter::create([
+            'company_id' => $company->id,
+            'transporter_master_id' => $transporterMaster->id,
+            'beneficiary_id' => 'HDFC0001234_ACCT9876',
+            'is_owner' => false,
+        ]);
+
+        $truck = Truck::create([
+            'company_id' => $company->id,
+            'truck_number' => 'MH12AB1234',
+        ]);
+
+        $lr = \App\Models\LorryReceipt::create([
+            'company_id' => $company->id,
+            'lr_number' => 'LR-9988',
+            'truck_id' => $truck->id,
+            'gr_date' => '2026-10-20',
+        ]);
+
+        $fb = FreightBooking::create([
+            'company_id' => $company->id,
+            'transporter_id' => $transporter->id,
+            'truck_id' => $truck->id,
+            'lr_id' => $lr->id,
+            'tr_amount' => 15000.00,
+        ]);
+
+        $payment = VoucherPayment::create([
+            'company_id' => $company->id,
+            'freight_booking_id' => $fb->id,
+            'voucher_number' => 'VP-009988',
+            'amount' => 15000.00,
+            'date' => '2026-10-20',
+            'payment_status' => 'pending',
+            'payment_mode' => 'NEFT',
+        ]);
+
+        $user = \App\Models\User::create([
+            'name' => 'Accountant',
+            'email' => 'acct_payout@truckbill.test',
+            'password' => bcrypt('secret'),
+            'company_id' => $company->id,
+        ]);
+        $this->actingAs($user);
+
+        $notificationService = app(\App\Services\Notifications\VoucherPaymentNotificationService::class);
+        $calcService = app(\App\Services\FreightBookingCalculationService::class);
+        $controller = new \App\Http\Controllers\VoucherPaymentController($notificationService, $calcService);
+
+        $request = new \Illuminate\Http\Request([
+            'payment_status' => 'pending',
+        ]);
+
+        $response = $controller->exportPayoutFile($request);
+        $this->assertInstanceOf(\Symfony\Component\HttpFoundation\StreamedResponse::class, $response);
+        $this->assertStringContainsString('text/csv', $response->headers->get('Content-Type'));
+
+        // Capture CSV content
+        ob_start();
+        $response->sendContent();
+        $csvContent = ob_get_clean();
+
+        $this->assertStringContainsString('Voucher No', $csvContent);
+        $this->assertStringContainsString('Debit Account No', $csvContent);
+        $this->assertStringContainsString('Beneficiary Account / ID', $csvContent);
+        $this->assertStringContainsString('VP-009988', $csvContent);
+        $this->assertStringContainsString('50200012345678', $csvContent);
+        $this->assertStringContainsString('HDFC0001234_ACCT9876', $csvContent);
+        $this->assertStringContainsString('Fast Express Transporter', $csvContent);
+        $this->assertStringContainsString('15000.00', $csvContent);
+        $this->assertStringContainsString('LR-9988', $csvContent);
+    }
+
+    public function test_branch_profitability_report_filtering(): void
+    {
+        $company = Company::create(['name' => 'Branch Corp']);
+
+        $branchA = \App\Models\Branch::create([
+            'company_id' => $company->id,
+            'branch_name' => 'Mumbai North',
+        ]);
+
+        $branchB = \App\Models\Branch::create([
+            'company_id' => $company->id,
+            'branch_name' => 'Pune South',
+        ]);
+
+        $truck = Truck::create([
+            'company_id' => $company->id,
+            'truck_number' => 'MH04XY9999',
+        ]);
+
+        $lr1 = \App\Models\LorryReceipt::create([
+            'company_id' => $company->id,
+            'branch_id' => $branchA->id,
+            'lr_number' => 'LR-BRANCH-A',
+            'gr_date' => '2026-10-20',
+            'amount' => 20000.00,
+            'actual_amount' => 20000.00,
+        ]);
+
+        $lr2 = \App\Models\LorryReceipt::create([
+            'company_id' => $company->id,
+            'branch_id' => $branchB->id,
+            'lr_number' => 'LR-BRANCH-B',
+            'gr_date' => '2026-10-20',
+            'amount' => 30000.00,
+            'actual_amount' => 30000.00,
+        ]);
+
+        $this->assertEquals($branchA->id, $lr1->branch_id);
+        $this->assertEquals($branchB->id, $lr2->branch_id);
+        $this->assertEquals('Mumbai North', $lr1->branch->branch_name);
+        $this->assertEquals('Pune South', $lr2->branch->branch_name);
+
+        // Verify profitability view accepts and renders branches
+        $view = view('reports.profitability', [
+            'lrs' => collect([
+                [
+                    'lr' => $lr1,
+                    'trip' => $lr1->lr_number,
+                    'date' => $lr1->gr_date,
+                    'customer' => '-',
+                    'transporter' => '-',
+                    'vehicle' => $truck->truck_number,
+                    'revenue' => 20000.00,
+                    'cost' => 15000.00,
+                    'profit' => 5000.00,
+                    'margin' => 25.0,
+                    'status' => 'Delivered',
+                ],
+            ]),
+            'rows' => collect(),
+            'startDate' => '2026-10-01',
+            'endDate' => '2026-10-31',
+            'customers' => collect(),
+            'transporters' => collect(),
+            'trucks' => collect([$truck]),
+            'trips' => collect(),
+            'branches' => collect([$branchA, $branchB]),
+            'totalRevenue' => 20000.00,
+            'totalCost' => 15000.00,
+            'totalProfit' => 5000.00,
+            'totalMargin' => 25.0,
+            'customerSummary' => [],
+            'transporterSummary' => [],
+        ])->render();
+
+        $this->assertStringContainsString('Mumbai North', $view);
+        $this->assertStringContainsString('Pune South', $view);
+        $this->assertStringContainsString('LR-BRANCH-A', $view);
+    }
 }
+
 

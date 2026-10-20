@@ -33,7 +33,7 @@ class AccountingVoucherController extends Controller
     public function index(Request $request): View
     {
         $company = $this->getActiveCompany();
-        $query = AccountingVoucher::with(['items.ledger', 'items.costCentre', 'user'])
+        $query = AccountingVoucher::with(['items.ledger', 'items.costCentre', 'user', 'reversalVouchers'])
             ->where('company_id', $company->id)
             ->where('is_posted', true);
 
@@ -282,8 +282,90 @@ class AccountingVoucherController extends Controller
             abort(403);
         }
 
-        $voucher->load(['items.ledger.accountGroup', 'items.costCentre', 'user']);
+        $voucher->load(['items.ledger.accountGroup', 'items.costCentre', 'user', 'reversalVouchers']);
 
         return view('accounting.vouchers.show', compact('company', 'voucher'));
+    }
+
+    /**
+     * Formal accounting reversal: creates an offsetting journal voucher (Dr -> Cr, Cr -> Dr)
+     * adhering to double-entry accounting integrity and GAAP/Tally compliance.
+     */
+    public function reverse(AccountingVoucher $voucher): RedirectResponse|JsonResponse
+    {
+        $company = $this->getActiveCompany();
+        if ($voucher->company_id !== $company->id) {
+            abort(403);
+        }
+
+        if ($voucher->source_type === AccountingVoucher::class) {
+            $msg = 'Cannot reverse an existing reversal voucher.';
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+            return back()->with('error', $msg);
+        }
+
+        if ($voucher->isReversed()) {
+            $existing = $voucher->reversalVouchers()->first();
+            $msg = "Voucher #{$voucher->voucher_number} has already been reversed by Voucher #{$existing->voucher_number}.";
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+            return back()->with('error', $msg);
+        }
+
+        $reversalVoucher = DB::transaction(function () use ($voucher, $company) {
+            $voucher->load('items');
+
+            $prefix = 'JRN';
+            $reversalNumber = $prefix . '-' . now()->format('ymd') . '-' . rand(1000, 9999);
+
+            $reversal = AccountingVoucher::create([
+                'company_id' => $company->id,
+                'branch_id' => $voucher->branch_id,
+                'voucher_type' => 'journal',
+                'voucher_number' => $reversalNumber,
+                'voucher_date' => now()->toDateString(),
+                'reference_number' => $voucher->voucher_number,
+                'reference_date' => $voucher->voucher_date,
+                'narration' => "Reversal of Voucher #{$voucher->voucher_number}" . ($voucher->narration ? " (Original: {$voucher->narration})" : ''),
+                'source_type' => AccountingVoucher::class,
+                'source_id' => $voucher->id,
+                'total_amount' => $voucher->total_amount,
+                'is_posted' => true,
+                'user_id' => Auth::id(),
+            ]);
+
+            foreach ($voucher->items as $item) {
+                AccountingVoucherItem::create([
+                    'company_id' => $company->id,
+                    'accounting_voucher_id' => $reversal->id,
+                    'ledger_id' => $item->ledger_id,
+                    'type' => $item->type === 'debit' ? 'credit' : 'debit',
+                    'amount' => $item->amount,
+                    'cost_centre_id' => $item->cost_centre_id,
+                    'invoice_id' => $item->invoice_id,
+                    'particulars_note' => 'Reversal of ' . ($item->particulars_note ?: $voucher->voucher_number),
+                ]);
+            }
+
+            // Restore any linked invoice payments
+            InvoicePayment::where('remark', 'like', '%via Voucher #' . $voucher->voucher_number . '%')->delete();
+
+            return $reversal;
+        });
+
+        $msg = "Voucher #{$voucher->voucher_number} successfully reversed via Journal Voucher #{$reversalVoucher->voucher_number}.";
+
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'reversal_voucher_id' => $reversalVoucher->id,
+            ]);
+        }
+
+        return redirect()->route('accounting.vouchers.show', $reversalVoucher->id)->with('success', $msg);
     }
 }

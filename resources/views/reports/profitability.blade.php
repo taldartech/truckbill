@@ -229,6 +229,20 @@
                         </select>
                     </div>
 
+                    {{-- Branch --}}
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-1">Branch</label>
+                        <select name="branch_id" class="form-select form-select-sm select2">
+                            <option value="">All Branches</option>
+                            @foreach($branches as $branch)
+                                <option value="{{ $branch->id }}"
+                                    {{ request('branch_id') == $branch->id ? 'selected' : '' }}>
+                                    {{ $branch->branch_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     {{-- Profit / Loss --}}
                     <div class="col-6 col-md-2">
                         <label class="form-label small mb-1">Profit / Loss</label>
@@ -315,6 +329,7 @@
                         <tr>
                             <th> LR / Bilty</th>
                             <th> Date </th>
+                            <th>Branch</th>
                             <th>Customer</th>
                             <th>Transporter</th>
                             <th>Vehicle</th>
@@ -337,6 +352,10 @@
 
                                 <td>
                                     {{ $row['lr']->gr_date ?? '-' }}
+                                </td>
+
+                                <td>
+                                    <span class="badge bg-light text-dark border">{{ $row['lr']->branch?->branch_name ?? '-' }}</span>
                                 </td>
 
                                 <td>
@@ -392,12 +411,14 @@
 
             {{-- Pagination --}}
             <div class="mt-3">
-                {{ $lrs->links() }}
+                @if(method_exists($lrs, 'links'))
+                    {{ $lrs->links() }}
+                @endif
             </div>
 
 
             {{-- Customer-wise Summary --}}
-         @if(!request('customer_id') && $customerSummary->isNotEmpty())
+         @if(!request('customer_id') && collect($customerSummary)->isNotEmpty())
 
                 <div class="mt-5">
 
@@ -466,7 +487,7 @@
 
 
             {{-- Transporter-wise Summary --}}
-           @if(!request('transporter_id') && $transporterSummary->isNotEmpty())
+           @if(!request('transporter_id') && collect($transporterSummary)->isNotEmpty())
 
                 <div class="mt-5">
 

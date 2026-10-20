@@ -260,6 +260,7 @@ Route::middleware(['role:admin,super_admin', 'company.context', 'subscription.ac
     // Admin + Moderator: read-only access (index, show, daily report)
     Route::middleware(['role:admin,moderator,super_admin', 'company.context', 'subscription.active'])->group(function () {
         Route::get('voucher_payments', [VoucherPaymentController::class, 'index'])->name('voucher_payments.index');
+        Route::get('voucher_payments/export-payout', [VoucherPaymentController::class, 'exportPayoutFile'])->name('voucher_payments.export_payout');
         Route::get('voucher_payments/{voucherNumber}', [VoucherPaymentController::class, 'show'])->name('voucher_payments.show');
         Route::get('daily-payments', [VoucherPaymentController::class, 'dailyPayments'])->name('voucher_payments.daily');
     });
@@ -398,6 +399,9 @@ Route::get('/drivers/bulk-upload-template', [DriverController::class, 'bulkUploa
         Route::get('/export-tally-vouchers', [AccountingReportController::class, 'exportTallyVouchers'])->name('export-tally-vouchers');
         Route::get('/gstr1', [AccountingReportController::class, 'gstr1'])->name('gstr1');
         Route::get('/debtors-aging', [AccountingReportController::class, 'debtorsAging'])->name('debtors-aging');
+        Route::get('/bank-reconciliation', [AccountingReportController::class, 'bankReconciliation'])->name('bank-reconciliation');
+        Route::post('/bank-reconciliation', [AccountingReportController::class, 'updateBankReconciliation'])->name('bank-reconciliation.update');
+        Route::post('/vouchers/{voucher}/reverse', [AccountingVoucherController::class, 'reverse'])->name('vouchers.reverse');
         Route::resource('vouchers', AccountingVoucherController::class)->only(['index', 'create', 'store', 'show']);
         Route::get('/ledgers/{ledger}/pending-invoices', [AccountingVoucherController::class, 'getPendingInvoices'])->name('ledgers.pending-invoices');
         Route::resource('ledgers', LedgerController::class)->only(['index', 'store']);

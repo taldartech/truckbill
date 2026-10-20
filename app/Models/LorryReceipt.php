@@ -51,6 +51,7 @@ class LorryReceipt extends Model implements Auditable
         'loading_station',
         'unloading_station',
         'gr_number',
+        'branch_id',
         'deleted_by',
         'deleted_remark',
     ];
@@ -62,6 +63,11 @@ class LorryReceipt extends Model implements Auditable
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function truck()

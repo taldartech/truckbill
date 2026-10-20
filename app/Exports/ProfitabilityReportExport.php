@@ -18,6 +18,7 @@ class ProfitabilityReportExport implements FromCollection, WithHeadings, ShouldA
     private $truckId;
     private $status;
     private $profitLoss;
+    private $branchId;
 
     public function __construct(
         $companyId,
@@ -27,7 +28,8 @@ class ProfitabilityReportExport implements FromCollection, WithHeadings, ShouldA
         $transporterId = null,
         $truckId = null,
         $status = null,
-        $profitLoss = null
+        $profitLoss = null,
+        $branchId = null
     ) {
         $this->companyId = $companyId;
         $this->startDate = $startDate;
@@ -37,6 +39,7 @@ class ProfitabilityReportExport implements FromCollection, WithHeadings, ShouldA
         $this->truckId = $truckId;
         $this->status = $status;
         $this->profitLoss = $profitLoss;
+        $this->branchId = $branchId;
     }
 
     public function collection()
@@ -73,6 +76,11 @@ class ProfitabilityReportExport implements FromCollection, WithHeadings, ShouldA
         // Status filter
         if ($this->status) {
             $query->where('delivery_status', $this->status);
+        }
+
+        // Branch filter
+        if ($this->branchId) {
+            $query->where('branch_id', $this->branchId);
         }
 
         $lrs = $query

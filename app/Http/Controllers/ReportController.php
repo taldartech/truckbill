@@ -1699,6 +1699,7 @@ $lrs = $query
             'transporter.transporterMaster',
             'truck',
             'freightBookings.customAmounts',
+            'branch',
         ])
         ->where('company_id', $companyId)
         ->whereDate('gr_date', '>=', $startDate)
@@ -1750,6 +1751,18 @@ $lrs = $query
         $query->where(
             'truck_id',
             $request->input('truck_id')
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Branch Filter
+    |--------------------------------------------------------------------------
+    */
+    if ($request->filled('branch_id')) {
+        $query->where(
+            'branch_id',
+            $request->input('branch_id')
         );
     }
 
@@ -1973,6 +1986,13 @@ $lrs = $query
             'gr_date',
         ]);
 
+    $branches = Branch::where(
+        'company_id',
+        $companyId
+    )
+        ->orderBy('branch_name')
+        ->get();
+
     return view('reports.profitability', [
         'lrs' => $lrs,
         'rows' => $currentItems,
@@ -1990,6 +2010,7 @@ $lrs = $query
         'transporters' => $transporters,
         'trucks' => $trucks,
         'trips' => $trips,
+        'branches' => $branches,
 
         /*
          * Overall summary
@@ -2022,7 +2043,8 @@ public function profitability_export(Request $request)
             $request->input('transporter_id'),
             $request->input('truck_id'),
             $request->input('status'),
-            $request->input('profit_loss')
+            $request->input('profit_loss'),
+            $request->input('branch_id')
         ),
         'profitability_report.xlsx'
     );

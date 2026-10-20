@@ -1329,4 +1329,125 @@ class VoucherPaymentController extends Controller
 
         return in_array($newStatus, $validTransitions[$currentStatus] ?? [], true);
     }
+
+    /**
+     * Export bank payout file (NEFT / RTGS format) for vendor payments
+     */
+    public function exportPayoutFile(Request $request)
+    {
+        $baseQuery = VoucherPayment::query()
+            ->with([
+                'company',
+                'freight_booking.transporter.transporterMaster',
+                'freight_booking.lr.truck',
+                'bankLedger',
+            ]);
+
+        if (Auth::user()?->company_id) {
+            $baseQuery->where('company_id', Auth::user()->company_id);
+        }
+
+        if ($request->filled('payment_status')) {
+            $baseQuery->where('payment_status', $request->input('payment_status'));
+        }
+
+        if ($request->filled('voucher_number')) {
+            $baseQuery->where('voucher_number', 'like', '%' . $request->input('voucher_number') . '%');
+        }
+
+        if ($request->filled('truck_no')) {
+            $baseQuery->whereHas('freight_booking.lr.truck', function ($q) use ($request) {
+                $q->where('truck_number', 'like', '%' . $request->input('truck_no') . '%');
+            });
+        }
+
+        if ($request->filled('transporter')) {
+            $baseQuery->whereHas('freight_booking.transporter', function ($q) use ($request) {
+                $q->where('id', $request->input('transporter'));
+            });
+        }
+
+        if ($request->filled('lr_no')) {
+            $baseQuery->whereHas('freight_booking.lr', function ($q) use ($request) {
+                $q->where('lr_number', 'like', '%' . $request->input('lr_no') . '%');
+            });
+        }
+
+        if ($request->filled('date_from')) {
+            $baseQuery->whereDate('date', '>=', $request->input('date_from'));
+        }
+
+        if ($request->filled('date_to')) {
+            $baseQuery->whereDate('date', '<=', $request->input('date_to'));
+        }
+
+        $payments = $baseQuery->orderByDesc('date')->orderByDesc('id')->get();
+
+        $filename = 'bank_payout_' . now()->format('Ymd_His') . '.csv';
+
+        $callback = function () use ($payments) {
+            $file = fopen('php://output', 'w');
+            fputs($file, "\xEF\xBB\xBF"); // UTF-8 BOM
+
+            fputcsv($file, [
+                'Voucher No',
+                'Payment Date',
+                'Debit Account No',
+                'Debit Bank',
+                'Beneficiary Name',
+                'Beneficiary Account / ID',
+                'Amount',
+                'Payment Mode',
+                'LR No',
+                'Truck No',
+                'Transporter PAN',
+                'Reference / UTR',
+                'Status',
+                'Narration / Remarks',
+            ]);
+
+            foreach ($payments as $payment) {
+                $company = $payment->company;
+                $fb = $payment->freight_booking;
+                $transporter = $fb?->transporter;
+                $lr = $fb?->lr;
+
+                $beneficiaryName = $transporter?->transporterMaster?->name ?? $transporter?->name ?? 'Vendor';
+                $beneficiaryAcct = $transporter?->beneficiary_id ?? '';
+                $debitAcct = $company?->account_number ?? '';
+                $debitBank = $company?->bank ?? '';
+                $amount = number_format((float) $payment->amount, 2, '.', '');
+                $mode = $payment->payment_mode ?? ($payment->amount >= 200000 ? 'RTGS' : 'NEFT');
+                $lrNo = $lr?->lr_number ?? '-';
+                $truckNo = $lr?->truck?->truck_number ?? '-';
+                $pan = $transporter?->transporterMaster?->pan_number ?? '';
+                $narration = $payment->remark ?: "Freight payout LR {$lrNo} Truck {$truckNo}";
+
+                fputcsv($file, [
+                    $payment->voucher_number,
+                    $payment->date ? \Carbon\Carbon::parse($payment->date)->format('Y-m-d') : '',
+                    $debitAcct,
+                    $debitBank,
+                    $beneficiaryName,
+                    $beneficiaryAcct,
+                    $amount,
+                    $mode,
+                    $lrNo,
+                    $truckNo,
+                    $pan,
+                    $payment->reference_transaction_id ?? '',
+                    $payment->payment_status ?? 'Pending',
+                    $narration,
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->streamDownload($callback, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
 }
+
