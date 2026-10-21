@@ -11,26 +11,24 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.shortage-damage') }}" id="searchForm" onsubmit="validateForm(event)">
-                <div class="row mb-2" style="align-items: end;">
-                    <div class="col-md-3">
-                        <label class="form-label">Start Date <span class="text-danger">*</span></label>
-                        <input type="date" name="start_date" class="form-control" value="{{ $startDate }}" required>
+                <div class="row g-2 align-items-end mb-2">
+                    <div class="col-6 col-md-3">
+                        <label class="form-label small mb-1">Start Date <span class="text-danger">*</span></label>
+                        <input type="date" name="start_date" class="form-control form-control-sm" value="{{ $startDate }}" required>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">End Date <span class="text-danger">*</span></label>
-                        <input type="date" name="end_date" class="form-control" value="{{ $endDate }}" required>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label small mb-1">End Date <span class="text-danger">*</span></label>
+                        <input type="date" name="end_date" class="form-control form-control-sm" value="{{ $endDate }}" required>
                     </div>
-                
 
-                <div class="col-md-4 d-flex align-items-end justify-content-end gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-search"></i> Search
+                    <div class="col-12 col-md-6 d-flex align-items-end justify-content-end gap-1 gap-sm-2 mt-2 mt-md-0">
+                        <button type="submit" class="btn btn-brand-primary btn-sm btn-report-search" title="Search">
+                            <i class="bi bi-search"></i><span class="d-none d-sm-inline ms-1">Search</span>
                         </button>
                         <a href="{{ route('reports.shortage-damage') }}?date={{ date('Y-m-d') }}"
-                            class="btn btn-secondary">
-                            <i class="bi bi-arrow-clockwise"></i> Reset
+                            class="btn btn-secondary btn-sm btn-report-reset" title="Reset">
+                            <i class="bi bi-arrow-clockwise"></i><span class="d-none d-sm-inline ms-1">Reset</span>
                         </a>
-                    
                     </div>
                 </div>
             </form>
@@ -53,15 +51,16 @@
                         <h3 class="card-title mb-0">Shortage Damage Report</h3>
                     </div>
                     <div class="d-flex">
-                        <a class="btn btn-warning ms-2"
+                        <a class="btn btn-warning btn-sm ms-2"
                             href="{{ route('reports.shortage-damage-export', ['start_date' => $startDate, 'end_date' => $endDate]) }}">
-                            <i class="bi bi-file-earmark-spreadsheet"></i> Export
+                            <i class="bi bi-file-earmark-spreadsheet"></i> <span class="d-none d-sm-inline ms-1">Export</span>
                         </a>
                     </div>
                 </div>
             </div>
-            <div class="card-body" style="overflow-x: auto;">
-                <table class="table table-bordered table-striped" style="font-size: 12px !important;">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover align-middle mb-0 text-nowrap small">
                     <thead>
                         <tr>
                             <th>Sr No</th>
@@ -134,6 +133,7 @@
                         @endforeach
                     </tbody>
                 </table>
+                </div>
             </div>
             <div class="mt-3 d-flex justify-content-end">
                 {{ $lrs->links() }}

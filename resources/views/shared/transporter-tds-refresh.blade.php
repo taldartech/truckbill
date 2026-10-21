@@ -1,12 +1,14 @@
 @if ($hasTdsMismatch)
     @if (($part ?? 'both') === 'alert' || ($part ?? 'both') === 'both')
-        <div class="alert alert-warning mt-2 mb-0">
-            <i class="fas fa-exclamation-triangle me-2"></i>
+        <div class="alert alert-warning mt-2 mb-0 transporter-tds-alert" style="font-size: 0.72rem; line-height: 1.35; padding: 0.45rem 0.65rem;">
+            <i class="fas fa-exclamation-triangle me-1"></i>
             The stored TDS % ({{ number_format($storedTdsPercentage, 2) }}%) does not match the current calculated rate
             ({{ number_format($calculatedTdsPercentage, 2) }}%) based on master PAN status and declaration.
-            <button type="button" class="btn btn-sm btn-warning ms-2" data-bs-toggle="modal" data-bs-target="#tdsRefreshModal">
-                Refresh TDS %
-            </button>
+            <div class="mt-2">
+                <button type="button" class="btn btn-sm btn-warning" style="font-size: 0.68rem; font-weight: 600; padding: 0.2rem 0.5rem; min-height: 26px; height: 26px; line-height: 1.2;" data-bs-toggle="modal" data-bs-target="#tdsRefreshModal">
+                    <i class="fas fa-sync-alt me-1"></i> Refresh TDS %
+                </button>
+            </div>
         </div>
     @endif
 

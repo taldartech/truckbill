@@ -185,11 +185,23 @@ class UserController extends Controller
         $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-icon btn-action-edit" title="Edit User">';
         $buttons .= '<i class="bi bi-pencil"></i></a>';
 
-        $deleteUrl = route('users.destroy', $user->id);
-        $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this user?\')">';
-        $buttons .= csrf_field() . method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete User">';
-        $buttons .= '<i class="bi bi-trash"></i></button></form>';
+       $deleteUrl = route('users.destroy', $user->id);
+
+         $buttons .= '<form action="' . e($deleteUrl) . '" method="POST" class="user-delete-form">';
+         $buttons .= csrf_field() . method_field('DELETE');
+
+         $buttons .= '<button type="button"
+        class="btn btn-sm btn-icon btn-action-delete user-delete-btn"
+        data-bs-toggle="modal"
+        data-bs-target="#userDeleteModal"
+        data-user-id="' . e($user->id) . '"
+        data-user-name="' . e($user->name) . '"
+        data-user-email="' . e($user->email) . '"
+       data-user-role="' . e($user->userRole ? ucfirst($user->userRole->name) : '-') . '"
+       data-user-company="' . e($user->company ? $user->company->name : '-') . '"
+        title="Delete User">';
+
+          $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
         if ($this->isMasterAdmin(Auth::user())) {
             if ($user->is_blocked) {
@@ -441,19 +453,28 @@ class UserController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(User $user)
-    {
-        $authUser = Auth::user();
+   public function destroy(Request $request, User $user)
+{
+    $authUser = Auth::user();
 
-        // Check authorization
-        if (!$this->canManageUser($authUser, $user)) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        $user->delete();
-
-        return redirect()->route('users.index')->with('success', 'User deleted successfully!');
+    if (!$this->canManageUser($authUser, $user)) {
+        abort(403, 'Unauthorized action.');
     }
+
+    $request->validate([
+        'delete_remark' => ['required', 'string', 'max:1000'],
+    ]);
+
+    $user->deleted_by = Auth::id();
+    $user->deleted_remark = $request->input('delete_remark');
+    $user->save();
+
+    $user->delete();
+
+    return redirect()
+        ->route('users.index')
+        ->with('success', 'User deleted successfully!');
+}
 
     /**
      * Check if user is master_admin

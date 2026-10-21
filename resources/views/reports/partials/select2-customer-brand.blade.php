@@ -10,6 +10,16 @@
         background-color: var(--brand-card-bg, #fff);
     }
 
+    .tb-report-customer-select2-form .form-control.form-control-sm,
+    .tb-report-customer-select2-form .form-select.form-select-sm {
+        min-height: 31px;
+        font-size: 0.875rem;
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+        padding-left: 0.5rem;
+        border-radius: 0.375rem;
+    }
+
     .tb-report-customer-select2-form .form-control:focus {
         border-color: var(--brand-primary) !important;
         box-shadow: 0 0 0 0.2rem var(--brand-soft-primary, rgba(47, 179, 111, 0.12)) !important;
@@ -96,4 +106,30 @@
         background-color: var(--brand-active-bg, #e9f7f0) !important;
         color: var(--brand-primary-dark, #23965c) !important;
     }
+
+    @media (max-width: 575.98px) {
+        .btn-report-search,
+        .btn-report-reset,
+        .tb-report-customer-select2-form button[type="submit"],
+        .tb-report-customer-select2-form a[title="Reset"],
+        .tb-report-customer-select2-form a.btn-secondary {
+            min-height: 38px !important;
+            min-width: 38px !important;
+            padding: 0.35rem 0.65rem !important;
+            border-radius: 8px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        .btn-report-search i,
+        .btn-report-reset i,
+        .tb-report-customer-select2-form button[type="submit"] i,
+        .tb-report-customer-select2-form a[title="Reset"] i,
+        .tb-report-customer-select2-form a.btn-secondary i {
+            font-size: 1.25rem !important;
+            line-height: 1 !important;
+        }
+    }
 </style>
+

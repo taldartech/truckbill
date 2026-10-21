@@ -90,10 +90,12 @@ class TruckTypeTest extends TestCase
         $admin = $this->makeUser('admin');
         $truckType = TruckType::create(['name' => 'Flatbed']);
 
-        $response = $this->actingAs($admin)->delete(route('master.truck-types.destroy', $truckType));
+        $response = $this->actingAs($admin)->delete(route('master.truck-types.destroy', $truckType), [
+            'delete_remark' => 'No longer used',
+        ]);
 
         $response->assertRedirect(route('master.truck-types.index'));
-        $this->assertDatabaseMissing('truck_types', ['id' => $truckType->id]);
+        $this->assertSoftDeleted('truck_types', ['id' => $truckType->id, 'deleted_remark' => 'No longer used']);
     }
 
     public function test_store_rejects_duplicate_name(): void

@@ -221,9 +221,9 @@ class CompanyEnterExitTest extends TestCase
     {
         $super = $this->makeSuperAdmin();
 
-        $this->actingAs($super)->get('/transporters')->assertForbidden();
-        $this->actingAs($super)->get('/consignees')->assertForbidden();
-        $this->actingAs($super)->get('/invoices')->assertForbidden();
-        $this->actingAs($super)->get('/voucher_payments')->assertForbidden();
+        $this->actingAs($super)->get('/transporters')->assertRedirect(route('company.index'));
+        $this->actingAs($super)->get('/consignees')->assertRedirect(route('company.index'));
+        $this->actingAs($super)->get('/invoices')->assertRedirect(route('company.index'));
+        $this->actingAs($super)->get('/voucher_payments')->assertRedirect(route('company.index'));
     }
 }

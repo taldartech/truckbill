@@ -3,14 +3,281 @@
 @push('styles')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
-@endpush
-
-@section('content')
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
-    <div class="container-fluid mt-4 app-index-page app-index-page--standard">
+    <style>
+        .daily-payments-index .table-responsive {
+            max-height: none !important;
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #paymentsTable {
+            width: 100% !important;
+            border-collapse: collapse;
+        }
+
+        #paymentsTable th,
+        #paymentsTable td {
+            vertical-align: middle;
+            padding: 8px 10px;
+        }
+
+        #paymentsTable thead th {
+            position: sticky;
+            top: 0;
+            background: var(--brand-table-header-bg) !important;
+            z-index: 10;
+            white-space: nowrap !important;
+        }
+
+        @media (max-width: 1199.98px) {
+            #paymentsTable {
+                table-layout: auto !important;
+                min-width: 1150px !important;
+            }
+
+            #paymentsTable th,
+            #paymentsTable td {
+                white-space: nowrap !important;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            #paymentsTable th {
+                font-size: 0.76rem !important;
+                padding: 5px 6px !important;
+            }
+
+            #paymentsTable td {
+                font-size: 0.73rem !important;
+                padding: 5px 6px !important;
+            }
+
+            #paymentsTable td .badge {
+                font-size: 0.68rem !important;
+            }
+
+            #paymentsTable td small {
+                font-size: 0.68rem !important;
+            }
+
+            .daily-payments-index .app-index-dt-toolbar h5 {
+                font-size: 0.8125rem !important;
+            }
+
+            .daily-payments-index #advancedSearchFields .form-label {
+                font-size: 0.75rem !important;
+            }
+
+            .daily-payments-index #advancedSearchFields .form-control-sm,
+            .daily-payments-index #advancedSearchFields .form-select-sm {
+                font-size: 0.8125rem !important;
+                padding: 0.25rem 0.5rem !important;
+            }
+
+            .daily-payments-index #advancedSearchFields .select2-container {
+                width: 100% !important;
+            }
+
+            .daily-payments-index #advancedSearchFields .select2-container .select2-selection--single {
+                height: 31px !important;
+                font-size: 0.8125rem !important;
+            }
+
+            .daily-payments-index #advancedSearchFields .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+                font-size: 0.78rem !important;
+                line-height: 29px !important;
+                padding-left: 0.45rem !important;
+                padding-right: 1.4rem !important;
+            }
+        }
+
+        .daily-payments-index .dataTables_wrapper {
+            width: 100% !important;
+            overflow-x: visible !important;
+        }
+
+        .daily-payments-index .dataTables_wrapper .row {
+            margin: 0 0 0.5rem 0 !important;
+            align-items: center;
+        }
+
+        .daily-payments-index .dataTables_filter {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 0.65rem;
+            margin-bottom: 0.5rem;
+            padding: 0 0.75rem;
+        }
+
+        .daily-payments-index .dataTables_filter label {
+            margin-bottom: 0;
+            font-size: 0.8125rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .daily-payments-index .dataTables_filter input {
+            font-size: 0.8125rem;
+            padding: 0.25rem 0.5rem;
+            border: 1px solid var(--brand-border, #e5e7eb);
+            border-radius: 0.375rem;
+            min-width: 10rem;
+        }
+
+        @media (max-width: 575.98px) {
+            .daily-payments-index .app-index-list-card > .card-header {
+                padding: 0.45rem 0.65rem !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-wrap: nowrap !important;
+                gap: 0.4rem !important;
+            }
+
+            .daily-payments-index .app-index-list-card > .card-header .card-title {
+                font-size: 0.82rem !important;
+                line-height: 1.25 !important;
+                margin: 0 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                flex-shrink: 1 !important;
+            }
+
+            .daily-payments-index .app-index-card-toolbar {
+                width: auto !important;
+                margin-left: auto !important;
+                flex-shrink: 0 !important;
+                display: inline-flex !important;
+                align-items: center !important;
+            }
+
+            .daily-payments-index .app-index-card-toolbar .btn,
+            .daily-payments-index #bulkActionBtn {
+                width: auto !important;
+                padding: 0.22rem 0.55rem !important;
+                font-size: 0.72rem !important;
+                line-height: 1.2 !important;
+                min-height: 28px !important;
+                height: 28px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 0.3rem !important;
+                border-radius: 6px !important;
+                white-space: nowrap !important;
+            }
+
+            .daily-payments-index #bulkActionBtn i {
+                font-size: 0.78rem !important;
+            }
+
+            .daily-payments-index .dataTables_wrapper {
+                padding-top: 0.25rem !important;
+            }
+
+            .daily-payments-index .dataTables_filter {
+                justify-content: stretch;
+                width: 100%;
+                margin-top: 0.65rem !important;
+                margin-bottom: 0.6rem !important;
+                padding: 0 0.65rem !important;
+            }
+
+            .daily-payments-index .dataTables_filter label {
+                width: 100%;
+                display: flex !important;
+                align-items: center !important;
+                gap: 0.45rem !important;
+                font-size: 0.78rem !important;
+                font-weight: 600;
+                margin-bottom: 0 !important;
+            }
+
+            .daily-payments-index .dataTables_filter input {
+                flex: 1 1 auto;
+                width: 100%;
+                min-width: 0;
+                height: 32px !important;
+                font-size: 0.78rem !important;
+                padding: 0.25rem 0.5rem !important;
+                border-radius: 6px !important;
+            }
+
+            #paymentsTable th {
+                font-size: 0.72rem !important;
+                padding: 4px 6px !important;
+            }
+
+            #paymentsTable td {
+                font-size: 0.70rem !important;
+                padding: 4px 6px !important;
+            }
+
+            #paymentsTable td .badge {
+                font-size: 0.64rem !important;
+                padding: 0.15rem 0.35rem !important;
+            }
+
+            #paymentsTable td small {
+                font-size: 0.64rem !important;
+            }
+
+            .daily-filter-actions {
+                flex-direction: row;
+                justify-content: flex-end;
+                align-items: center;
+                gap: 0.35rem;
+                width: 100%;
+            }
+
+            .daily-filter-actions .btn {
+                flex: 0 0 auto !important;
+                width: auto !important;
+                min-width: 0;
+                margin: 0 !important;
+                text-align: center;
+                white-space: nowrap;
+                padding: 0.28rem 0.75rem !important;
+                font-size: 0.78rem !important;
+            }
+
+            .daily-date-label {
+                font-size: 0.72rem !important;
+                margin-bottom: 0.2rem !important;
+            }
+
+            .daily-date-input {
+                font-size: 0.75rem !important;
+                padding: 0.25rem 0.4rem !important;
+                height: 31px !important;
+            }
+
+            .daily-selected-box {
+                padding: 0 0.5rem !important;
+                font-size: 0.72rem !important;
+                height: 31px !important;
+                display: flex !important;
+                align-items: center !important;
+            }
+
+            .daily-selected-box .badge {
+                font-size: 0.65rem !important;
+                padding: 0.2rem 0.35rem !important;
+            }
+        }
+    </style>
+@endpush
+
+@section('content')
+    <div class="container-fluid mt-2 pt-1 app-index-page app-index-page--standard daily-payments-index">
         @if (session('success'))
             <div class="mb-3">
                 <span class="badge text-bg-dark border app-index-flash">
@@ -28,128 +295,125 @@
 
         <div class="card app-index-list-card mb-4">
             <div class="card-header">
-                <h3 class="card-title mb-0">Daily Payments</h3>
+                <h3 class="card-title mb-0 fs-6 fs-md-5">Daily Payments</h3>
             </div>
 
-        <!-- Search and Filter Section -->
-        <div class="app-index-dt-toolbar">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                <h5 class="mb-0" style="font-size: 0.9rem;">Search & Filter</h5>
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleAdvancedSearch()">
-                    <i class="bi bi-funnel"></i> Toggle Filters
-                </button>
-            </div>
-            <div>
-                <form method="GET" action="{{ route('voucher_payments.daily') }}" id="searchForm">
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Date <span class="text-danger">*</span></label>
-                            <input type="date" name="date" class="form-control" value="{{ $selectedDate }}" required>
-                        </div>
-                        <div class="col-md-8 d-flex align-items-end">
-                            <div class="ms-3">
-                                <strong>Selected Date:</strong> {{ \Carbon\Carbon::parse($selectedDate)->format('d M Y') }}
-                                <span class="badge bg-primary ms-2">{{ $payments->count() }} payments</span>
+            <!-- Search and Filter Section -->
+            <div class="app-index-dt-toolbar">
+                <div class="d-flex justify-content-between align-items-center flex-nowrap gap-2 mb-2">
+                    <h5 class="mb-0 fw-bold" style="font-size: 0.85rem;">Search & Filter</h5>
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 text-nowrap" style="font-size: 0.75rem;" onclick="toggleAdvancedSearch()">
+                        <i class="bi bi-funnel"></i> Toggle Filters
+                    </button>
+                </div>
+                <div>
+                    <form method="GET" action="{{ route('voucher_payments.daily') }}" id="searchForm">
+                        <div class="row g-2 align-items-end mb-3">
+                            <div class="col-6 col-sm-5 col-md-4 col-lg-3">
+                                <label class="form-label small fw-semibold mb-1 text-truncate d-block daily-date-label">Date <span class="text-danger">*</span></label>
+                                <input type="date" name="date" class="form-control form-control-sm daily-date-input" value="{{ $selectedDate }}" required>
+                            </div>
+                            <div class="col-6 col-sm-7 col-md-8 col-lg-9">
+                                <label class="form-label small fw-semibold mb-1 text-muted text-truncate d-block daily-date-label">Summary</label>
+                                <div class="rounded bg-light border d-flex align-items-center justify-content-between gap-1 w-100 px-2 daily-selected-box">
+                                    <span class="text-nowrap text-truncate fw-semibold" title="{{ \Carbon\Carbon::parse($selectedDate)->format('d M Y') }}">{{ \Carbon\Carbon::parse($selectedDate)->format('d M Y') }}</span>
+                                    <span class="badge bg-primary text-nowrap">{{ $payments->count() + ($payments1->count() ?? 0) }} payments</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Advanced Search Fields (initially hidden) -->
-                    <div id="advancedSearchFields" class="d-none">
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <label class="form-label">Truck No</label>
-                                <input type="text" name="truck_no" class="form-control"
-                                    value="{{ request('truck_no') }}">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Transporter</label>
-                                <select name="transporter" id="voucherPaymentsDailyTransporterFilter" class="form-select">
-                                    <option value="">All Transporters</option>
-                                    @if (! empty($selectedVoucherPaymentTransporter))
-                                        <option value="{{ $selectedVoucherPaymentTransporter['id'] }}" selected>{{ $selectedVoucherPaymentTransporter['text'] }}</option>
-                                    @endif
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Source</label>
-                                <select name="source" id="voucherPaymentsDailySourceCityFilter" class="form-select">
-                                    <option value="">All Sources</option>
-                                    @if (! empty($selectedVoucherPaymentSourceCity))
-                                        <option value="{{ $selectedVoucherPaymentSourceCity['id'] }}" selected>{{ $selectedVoucherPaymentSourceCity['text'] }}</option>
-                                    @endif
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Destination</label>
-                                <select name="destination" id="voucherPaymentsDailyDestinationCityFilter" class="form-select">
-                                    <option value="">All Destinations</option>
-                                    @if (! empty($selectedVoucherPaymentDestinationCity))
-                                        <option value="{{ $selectedVoucherPaymentDestinationCity['id'] }}" selected>{{ $selectedVoucherPaymentDestinationCity['text'] }}</option>
-                                    @endif
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Good Receipt (Bilty) No</label>
-                                <input type="text" name="lr_no" class="form-control" value="{{ request('lr_no') }}">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Payment Status</label>
-                                <select name="status" class="form-select">
-                                    <option value="">All Statuses</option>
-                                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending
-                                    </option>
-                                    <option value="in-progress" {{ request('status') == 'in-progress' ? 'selected' : '' }}>
-                                        In Progress</option>
-                                    <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Paid
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Payment Mode</label>
-                                <select name="payment_mode" class="form-select">
-                                    <option value="">All Payment Modes</option>
-                                    @foreach ($paymentModes as $paymentMode)
-                                        <option value="{{ $paymentMode->name }}"
-                                            {{ request('payment_mode') == $paymentMode->name ? 'selected' : '' }}>
-                                            {{ $paymentMode->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Branch</label>
-                                <select name="branch" class="form-select">
-                                    <option value="">All Branches</option>
-                                    @foreach ($branches as $branch)
-                                        <option value="{{ $branch->id }}"
-                                            {{ request('branch') == $branch->id ? 'selected' : '' }}>
-                                            {{ $branch->branch_name }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                        <!-- Advanced Search Fields (initially hidden) -->
+                        <div id="advancedSearchFields" class="d-none">
+                            <div class="row g-2 g-md-3">
+                                <div class="col-6 col-sm-6 col-lg-3">
+                                    <label class="form-label small fw-semibold mb-1 text-truncate d-block">Truck No</label>
+                                    <input type="text" name="truck_no" class="form-control form-control-sm"
+                                        value="{{ request('truck_no') }}" placeholder="Truck number">
+                                </div>
+                                <div class="col-6 col-sm-6 col-lg-3">
+                                    <label class="form-label small fw-semibold mb-1 text-truncate d-block">Transporter</label>
+                                    <select name="transporter" id="voucherPaymentsDailyTransporterFilter" class="form-select form-select-sm">
+                                        <option value="">All Transporters</option>
+                                        @if (! empty($selectedVoucherPaymentTransporter))
+                                            <option value="{{ $selectedVoucherPaymentTransporter['id'] }}" selected>{{ $selectedVoucherPaymentTransporter['text'] }}</option>
+                                        @endif
+                                    </select>
+                                </div>
+                                <div class="col-6 col-sm-6 col-lg-3">
+                                    <label class="form-label small fw-semibold mb-1 text-truncate d-block">Source</label>
+                                    <select name="source" id="voucherPaymentsDailySourceCityFilter" class="form-select form-select-sm">
+                                        <option value="">All Sources</option>
+                                        @if (! empty($selectedVoucherPaymentSourceCity))
+                                            <option value="{{ $selectedVoucherPaymentSourceCity['id'] }}" selected>{{ $selectedVoucherPaymentSourceCity['text'] }}</option>
+                                        @endif
+                                    </select>
+                                </div>
+                                <div class="col-6 col-sm-6 col-lg-3">
+                                    <label class="form-label small fw-semibold mb-1 text-truncate d-block">Destination</label>
+                                    <select name="destination" id="voucherPaymentsDailyDestinationCityFilter" class="form-select form-select-sm">
+                                        <option value="">All Destinations</option>
+                                        @if (! empty($selectedVoucherPaymentDestinationCity))
+                                            <option value="{{ $selectedVoucherPaymentDestinationCity['id'] }}" selected>{{ $selectedVoucherPaymentDestinationCity['text'] }}</option>
+                                        @endif
+                                    </select>
+                                </div>
+                                <div class="col-6 col-sm-6 col-lg-3">
+                                    <label class="form-label small fw-semibold mb-1 text-truncate d-block" title="Good Receipt (Bilty) No">GR (Bilty) No</label>
+                                    <input type="text" name="lr_no" class="form-control form-control-sm" value="{{ request('lr_no') }}" placeholder="LR number">
+                                </div>
+                                <div class="col-6 col-sm-6 col-lg-3">
+                                    <label class="form-label small fw-semibold mb-1 text-truncate d-block">Payment Status</label>
+                                    <select name="status" class="form-select form-select-sm">
+                                        <option value="">All Statuses</option>
+                                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                        <option value="in-progress" {{ request('status') == 'in-progress' ? 'selected' : '' }}>In Progress</option>
+                                        <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Paid</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-sm-6 col-lg-3">
+                                    <label class="form-label small fw-semibold mb-1 text-truncate d-block">Payment Mode</label>
+                                    <select name="payment_mode" class="form-select form-select-sm">
+                                        <option value="">All Payment Modes</option>
+                                        @foreach ($paymentModes as $paymentMode)
+                                            <option value="{{ $paymentMode->name }}"
+                                                {{ request('payment_mode') == $paymentMode->name ? 'selected' : '' }}>
+                                                {{ $paymentMode->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-6 col-sm-6 col-lg-3">
+                                    <label class="form-label small fw-semibold mb-1 text-truncate d-block">Branch</label>
+                                    <select name="branch" class="form-select form-select-sm">
+                                        <option value="">All Branches</option>
+                                        @foreach ($branches as $branch)
+                                            <option value="{{ $branch->id }}"
+                                                {{ request('branch') == $branch->id ? 'selected' : '' }}>
+                                                {{ $branch->branch_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="row mt-3">
-                        <div class="col-12 text-end">
-                            <button type="submit" class="btn btn-primary">
+                        <div class="d-flex justify-content-end align-items-center gap-2 mt-3 daily-filter-actions">
+                            <button type="submit" class="btn btn-secondary btn-sm text-nowrap">
                                 <i class="bi bi-search"></i> Search
                             </button>
                             <a href="{{ route('voucher_payments.daily') }}?date={{ $selectedDate }}"
-                                class="btn btn-secondary">
+                                class="btn btn-outline-secondary btn-sm text-nowrap">
                                 <i class="bi bi-arrow-clockwise"></i> Reset
                             </a>
                         </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
 
         <!-- Payments List -->
         <div class="card app-index-list-card mb-4">
-            <div class="card-header">
+            <div class="card-header d-flex align-items-center justify-content-between flex-nowrap">
                 <h3 class="card-title mb-0">Voucher Payments —
                     {{ \Carbon\Carbon::parse($selectedDate)->format('d M Y') }}</h3>
                 @if (auth()->user()->canActAsAdmin())
@@ -160,8 +424,9 @@
                     </div>
                 @endif
             </div>
-            <div class="card-body p-2 table-responsive">
-                <table class="table table-bordered app-index-table" id="paymentsTable">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0 app-index-table w-100" id="paymentsTable">
                     <thead>
                         <tr>
                             @if (auth()->user()->canActAsAdmin())
@@ -439,6 +704,7 @@
                         @endforeach
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
 
@@ -448,7 +714,7 @@
 <!-- Bulk Action Modal -->
 <div class="modal fade fb-pay-modal" id="bulkActionModal" tabindex="-1" aria-labelledby="bulkActionModalLabel"
     aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="bulkActionModalLabel">Update Payment Status</h5>

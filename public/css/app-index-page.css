@@ -181,6 +181,7 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--brand-text-muted, #64748b);
+    white-space: nowrap;
 }
 
 .app-index-filters__toggle {
@@ -523,22 +524,203 @@
 }
 
 @media (max-width: 575.98px) {
+    .app-index-filters__controls {
+        gap: 0.35rem;
+    }
+
     .app-index-filters__field,
-    .app-index-filters__field--search,
     .app-index-filters__field--lr,
     .app-index-filters__field--party,
     .app-index-filters__field--truck,
     .app-index-filters__field--date {
-        flex: 1 1 100%;
+        flex: 1 1 calc(50% - 0.2rem) !important;
+        max-width: calc(50% - 0.2rem) !important;
+        width: calc(50% - 0.2rem) !important;
+        min-width: 0 !important;
+    }
+
+    .app-index-filters__controls .app-index-filters__field.app-index-filters__field--search,
+    .app-index-filters__field.app-index-filters__field--search,
+    .app-index-filters__field--search,
+    .app-index-filters__controls .app-index-filters__field.app-index-filters__field--status,
+    .app-index-filters__field.app-index-filters__field--status,
+    .app-index-filters__field--status {
+        flex: 1 1 100% !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    .app-index-filters__label {
+        font-size: 0.58rem;
+        margin-bottom: 2px;
+    }
+
+    .app-index-filters__control,
+    .app-index-filters .form-control,
+    .app-index-filters .form-select {
+        height: 2rem;
+        min-height: 2rem;
+        font-size: 0.76rem;
+        padding: 0.2rem 0.45rem;
+        border-radius: 0.45rem;
+    }
+
+    .app-index-filters .select2-container--bootstrap-5 .select2-selection,
+    .app-index-filters .select2-container--default .select2-selection--single {
+        min-height: 2rem !important;
+        height: 2rem !important;
+        padding: 0.15rem 0.4rem !important;
+        font-size: 0.76rem !important;
+        border-radius: 0.45rem !important;
+    }
+
+    .app-index-filters .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        line-height: 1.65rem !important;
+        font-size: 0.76rem !important;
+        padding-right: 1.2rem !important;
+    }
+
+    .app-index-filters .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+        height: 1.85rem !important;
+        width: 1.2rem !important;
     }
 
     .app-index-filters__chip {
-        width: 100%;
-        justify-content: space-between;
+        width: auto !important;
+        flex: 1 1 auto !important;
+        max-width: calc(100% - 75px) !important;
+        height: 2rem !important;
+        min-height: 2rem !important;
+        padding: 0.2rem 0.5rem !important;
+        margin: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.3rem !important;
+        border-radius: 0.45rem !important;
+        white-space: nowrap !important;
+    }
+
+    .app-index-filters__chip .form-check-input {
+        width: 1rem !important;
+        height: 1rem !important;
+        margin: 0 !important;
+        flex-shrink: 0 !important;
+    }
+
+    .app-index-filters__chip-label {
+        font-size: 0.68rem !important;
+        font-weight: 600 !important;
+        white-space: nowrap !important;
+        line-height: 1 !important;
+    }
+
+    .app-index-filters__actions {
+        width: auto !important;
+        flex: 0 0 auto !important;
+        margin-left: auto !important;
+        margin-top: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.3rem !important;
+        padding-bottom: 0 !important;
+    }
+
+    .app-index-filters__btn {
+        width: 2rem !important;
+        height: 2rem !important;
+        min-width: 2rem !important;
+        min-height: 2rem !important;
+        border-radius: 0.45rem !important;
+    }
+
+    .app-index-filters {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+
+    .app-index-filters__title {
+        font-size: 0.62rem !important;
+        letter-spacing: 0.04em !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+        line-height: 1.2 !important;
+    }
+
+    .app-index-filters__toggle {
+        height: 24px !important;
+        min-height: 24px !important;
+        padding: 0 8px !important;
+        font-size: 0.62rem !important;
+        gap: 0.2rem !important;
+        border-radius: 999px !important;
+        line-height: 1 !important;
+        white-space: nowrap !important;
+    }
+
+    .app-index-filters__toggle i {
+        font-size: 0.62rem !important;
+    }
+
+    .app-index-filters__top {
+        gap: 0.35rem !important;
+        align-items: center !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        flex-wrap: wrap !important;
+    }
+
+    .app-index-filters__top-actions {
+        gap: 0.25rem !important;
+        align-items: center !important;
+        width: auto !important;
+        margin-left: auto !important;
+        display: flex !important;
+    }
+
+    .app-index-filters__bulk {
+        gap: 0.25rem !important;
+        align-items: center !important;
+    }
+
+    .header-pill-btn {
+        height: 24px !important;
+        min-height: 24px !important;
+        padding: 0 8px !important;
+        font-size: 0.62rem !important;
+        font-weight: 600 !important;
+        border-radius: 999px !important;
+        gap: 0.2rem !important;
+        white-space: nowrap !important;
+        line-height: 1 !important;
+    }
+
+    .header-pill-btn i {
+        font-size: 0.62rem !important;
+        margin-right: 2px !important;
     }
 }
 
+.app-index-dt-toolbar .dataTables_length,
+.dataTables_wrapper .dataTables_length {
+    width: auto !important;
+    flex: 0 0 auto !important;
+}
+
 .app-index-dt-toolbar .dataTables_length label,
+.dataTables_wrapper .dataTables_length label {
+    margin-bottom: 0;
+    font-size: 0.8125rem;
+    color: var(--brand-text-muted);
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 0.35rem !important;
+    width: auto !important;
+    white-space: nowrap !important;
+}
+
 .app-index-dt-toolbar .dataTables_filter label {
     margin-bottom: 0;
     font-size: 0.8125rem;
@@ -557,21 +739,25 @@
     min-width: 14rem;
 }
 
-.app-index-dt-toolbar .dataTables_length select {
+.app-index-dt-toolbar .dataTables_length select,
+.dataTables_wrapper .dataTables_length select {
     border: 1px solid var(--brand-border, #e5e7eb);
     border-radius: 0.5rem;
-    padding: 0.35rem 2rem 0.35rem 0.65rem;
-    min-width: 4.75rem;
+    padding: 0.3rem 1.75rem 0.3rem 0.55rem !important;
+    min-width: 4rem !important;
+    width: auto !important;
+    display: inline-block !important;
     font-size: 0.8125rem;
     line-height: 1.25;
     background-color: #fff;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%234B5563' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 0.55rem center;
-    background-size: 12px 10px;
+    background-size: 11px 9px;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
+    margin: 0 0.15rem !important;
 }
 
 .app-index-dt-toolbar .dt-buttons {
@@ -601,8 +787,85 @@
     padding-top: 0;
 }
 
-.app-index-partload-pagination .paginate_button {
+.app-index-partload-pagination .pagination {
+    margin: 0;
+    gap: 0;
+}
+
+.app-index-partload-pagination .pagination .page-item {
+    margin: 0;
+    padding: 0;
+}
+
+.app-index-partload-pagination .pagination .page-link {
+    font-size: 0.875rem;
+    padding: 0.35rem 0.75rem;
+    line-height: 1.25;
+}
+
+.app-index-partload-pagination .pagination .page-item:first-child .page-link {
+    border-top-left-radius: 0.375rem !important;
+    border-bottom-left-radius: 0.375rem !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.app-index-partload-pagination .pagination .page-item:last-child .page-link {
+    border-top-right-radius: 0.375rem !important;
+    border-bottom-right-radius: 0.375rem !important;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+}
+
+.app-index-partload-pagination .pagination .page-item:not(:first-child):not(:last-child) .page-link {
+    border-radius: 0 !important;
+}
+
+.app-index-partload-pagination .pagination .page-item:only-child .page-link {
     border-radius: 0.375rem !important;
+}
+
+@media (max-width: 575.98px) {
+    .app-index-partload-pagination {
+        padding: 0.4rem 0.5rem !important;
+        gap: 0.35rem !important;
+        justify-content: center !important;
+    }
+
+    .app-index-partload-pagination .dataTables_info {
+        font-size: 0.72rem !important;
+        text-align: center !important;
+        width: 100%;
+    }
+
+    .app-index-partload-pagination .pagination .page-link {
+        font-size: 0.72rem !important;
+        padding: 0.22rem 0.5rem !important;
+    }
+}
+
+/* Select2 responsive containment across all index pages */
+.app-index-page .select2-container,
+.app-index-dt-toolbar .select2-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+}
+
+.app-index-page .select2-container .select2-selection--single,
+.app-index-dt-toolbar .select2-container .select2-selection--single {
+    height: 31px !important;
+    padding: 2px 6px !important;
+    font-size: 0.8125rem !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.app-index-page .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered,
+.app-index-dt-toolbar .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    font-size: 0.8125rem !important;
+    line-height: 27px !important;
+    padding-left: 0 !important;
 }
 
 .app-index-flash {
@@ -859,12 +1122,23 @@
     }
 
     .app-index-list-card > .card-header {
-        align-items: flex-start;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
     }
 
     .app-index-list-card > .card-header .app-index-card-toolbar {
-        width: 100%;
-        margin-left: 0;
+        width: auto;
+        margin-left: auto;
+        display: inline-flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 0.35rem;
+        flex-shrink: 0;
     }
 
     .app-index-dt-toolbar {
@@ -874,15 +1148,32 @@
         padding: 0.65rem 0.75rem;
     }
 
-    .app-index-dt-toolbar .dataTables_filter,
-    .app-index-dt-toolbar .dataTables_length {
+    .app-index-dt-toolbar .dataTables_length,
+    .dataTables_wrapper .dataTables_length {
+        width: auto !important;
+        flex: 0 0 auto !important;
+    }
+
+    .app-index-dt-toolbar .dataTables_length label,
+    .dataTables_wrapper .dataTables_length label {
+        width: auto !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 0.35rem !important;
+        white-space: nowrap !important;
+    }
+
+    .app-index-dt-toolbar .dataTables_filter {
         width: 100%;
     }
 
-    .app-index-dt-toolbar .dataTables_filter label,
-    .app-index-dt-toolbar .dataTables_length label {
+    .app-index-dt-toolbar .dataTables_filter label {
         width: 100%;
+        display: flex;
+        align-items: center;
         justify-content: space-between;
+        gap: 0.5rem;
     }
 
     .app-index-dt-toolbar .dataTables_filter input {
@@ -899,6 +1190,11 @@
         padding: 0.65rem 0.75rem;
     }
 
+    .app-index-partload-pagination .dataTables_info {
+        font-size: 0.75rem;
+        text-align: center;
+    }
+
     .app-index-partload-pagination .dataTables_paginate {
         width: 100%;
         display: flex;
@@ -906,30 +1202,868 @@
         overflow-x: auto;
     }
 
+    .app-index-partload-pagination .pagination {
+        margin: 0;
+        gap: 0;
+    }
+
+    .app-index-partload-pagination .pagination .page-link {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.55rem;
+    }
+
     .app-form-actions .card-body {
-        justify-content: stretch;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        justify-content: stretch !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        padding: 0.5rem 0.65rem !important;
     }
 
     .app-form-actions .btn {
-        flex: 1 1 auto;
+        width: auto !important;
+        flex: 1 1 50% !important;
+        min-width: 0 !important;
+        white-space: nowrap !important;
+        font-size: 0.75rem !important;
+        min-height: 30px !important;
+        padding: 0.3rem 0.5rem !important;
     }
 }
 
 @media (max-width: 575.98px) {
+    .app-index-list-card > .card-header {
+        padding: 0.45rem 0.65rem;
+        gap: 0.35rem;
+    }
+
     .app-index-list-card > .card-header .card-title,
     .app-index-list-card > .card-header h3.card-title {
         font-size: 0.95rem;
         line-height: 1.3;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex-shrink: 1;
     }
 
-    .app-index-table-actions {
-        flex-wrap: wrap;
-        justify-content: flex-start;
-        max-width: 7.5rem;
+    .app-index-list-card > .card-header .app-index-card-toolbar {
+        gap: 0.25rem;
+    }
+
+    .app-index-list-card > .card-header .app-index-card-toolbar .app-index-header-btn,
+    .app-index-list-card > .card-header .app-index-card-toolbar .btn {
+        padding: 0.25rem 0.45rem;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .app-index-table th,
+    .app-index-table td,
+    table.dataTable.app-index-table th,
+    table.dataTable.app-index-table td {
+        font-size: 0.72rem !important;
+        padding: 0.25rem 0.35rem !important;
+        white-space: nowrap;
+    }
+
+    .app-index-table .badge,
+    table.dataTable.app-index-table .badge {
+        font-size: 0.65rem !important;
+        padding: 0.2em 0.35em !important;
+    }
+
+    .app-index-table .btn,
+    table.dataTable.app-index-table .btn {
+        padding: 0.15rem 0.3rem !important;
+        font-size: 0.72rem !important;
+    }
+
+    .table-responsive .app-index-table-actions,
+    .app-index-table .app-index-table-actions {
+        flex-wrap: nowrap !important;
+        white-space: nowrap !important;
+        max-width: none !important;
+    }
+
+    .app-index-partload-pagination {
+        padding: 0.45rem 0.5rem;
+        gap: 0.35rem !important;
+    }
+
+    .app-index-partload-pagination .dataTables_info {
+        font-size: 0.72rem;
+        text-align: center;
+    }
+
+    .app-index-partload-pagination .pagination {
+        margin: 0;
+        gap: 0;
+    }
+
+    .app-index-partload-pagination .pagination .page-item {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .app-index-partload-pagination .pagination .page-link {
+        font-size: 0.72rem;
+        padding: 0.22rem 0.5rem;
+    }
+
+    .app-index-partload-pagination .pagination .page-item:first-child .page-link {
+        border-top-left-radius: 0.375rem !important;
+        border-bottom-left-radius: 0.375rem !important;
+        border-top-right-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+    }
+
+    .app-index-partload-pagination .pagination .page-item:last-child .page-link {
+        border-top-right-radius: 0.375rem !important;
+        border-bottom-right-radius: 0.375rem !important;
+        border-top-left-radius: 0 !important;
+        border-bottom-left-radius: 0 !important;
+    }
+
+    .app-index-partload-pagination .pagination .page-item:not(:first-child):not(:last-child) .page-link {
+        border-radius: 0 !important;
+    }
+
+    .app-index-partload-pagination .pagination .page-item:only-child .page-link {
+        border-radius: 0.375rem !important;
+    }
+
+    .app-form-actions .card-body {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        justify-content: stretch !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        padding: 0.5rem 0.65rem !important;
     }
 
     .app-form-actions .btn {
-        width: 100%;
-        flex: 1 1 100%;
+        width: auto !important;
+        flex: 1 1 50% !important;
+        min-width: 0 !important;
+        white-space: nowrap !important;
+        font-size: 0.75rem !important;
+        min-height: 30px !important;
+        padding: 0.3rem 0.5rem !important;
+    }
+}
+
+/* ==========================================================================
+   Universal Anti-Overlap & Responsive Guards
+   ========================================================================== */
+
+.app-index-dt-toolbar,
+.app-index-toolbar {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.app-index-dt-toolbar form,
+.app-index-dt-toolbar .row,
+.app-index-toolbar form,
+.app-index-toolbar .row {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.app-index-dt-toolbar [class*="col-"],
+.app-index-toolbar [class*="col-"] {
+    min-width: 0;
+}
+
+/* Custom Date Inputs & Field Groups */
+.input-group-custom {
+    background: #fff;
+    border-radius: 8px;
+    padding: 2px 8px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    display: flex;
+    align-items: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    min-width: 0;
+    flex: 1 1 50%;
+    overflow: hidden;
+}
+
+.input-group-custom span {
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--brand-text-muted, #64748b);
+    margin-right: 6px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.input-group-custom input {
+    border: none !important;
+    font-size: 12px !important;
+    padding: 2px 0 !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    min-width: 0;
+    width: 100%;
+}
+
+/* Filter action buttons */
+.filter-action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.filter-action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+}
+
+/* Form switches inside toolbars - prevent clipping or overlap */
+.app-index-dt-toolbar .form-switch,
+.app-index-page .form-switch {
+    min-width: 0;
+    margin-bottom: 0;
+    display: inline-flex;
+    align-items: center;
+}
+
+.app-index-dt-toolbar .form-switch .form-check-input,
+.app-index-page .form-switch .form-check-input {
+    flex-shrink: 0;
+    margin-top: 0;
+    cursor: pointer;
+}
+
+.app-index-dt-toolbar .form-switch .form-check-label,
+.app-index-page .form-switch .form-check-label {
+    white-space: nowrap;
+    margin-bottom: 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--brand-text-muted, #64748b);
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Guarantee responsive table containers */
+.app-index-page .table-responsive {
+    max-height: none !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+.app-index-page .table-responsive::-webkit-scrollbar {
+    height: 6px;
+}
+
+.app-index-page .table-responsive::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.app-index-page .table-responsive::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.app-index-page .table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Responsive Modals & Modal Tables (Details, Payments, Assign, Edit) */
+@media (max-width: 767.98px) {
+    .modal-dialog {
+        margin: 0.5rem auto !important;
+        max-width: calc(100% - 1rem) !important;
+    }
+
+    .modal-header {
+        padding: 0.55rem 0.85rem !important;
+    }
+
+    .modal-header .modal-title {
+        font-size: 0.95rem !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    .modal-body {
+        padding: 0.65rem 0.75rem !important;
+        font-size: 0.8rem !important;
+    }
+
+    .modal-body .card {
+        margin-bottom: 0.65rem !important;
+        border-radius: 8px !important;
+    }
+
+    .modal-body .card-header {
+        padding: 0.4rem 0.65rem !important;
+    }
+
+    .modal-body .card-header h5,
+    .modal-body .card-header h6 {
+        font-size: 0.82rem !important;
+        margin: 0 !important;
+        white-space: nowrap !important;
+    }
+
+    .modal-body .card-body {
+        padding: 0.5rem 0.65rem !important;
+    }
+
+    /* Modal Tables */
+    .modal table,
+    .modal-body table,
+    .modal .table,
+    .modal-body .table {
+        font-size: 0.74rem !important;
+        margin-bottom: 0 !important;
+    }
+
+    .modal table th,
+    .modal table td,
+    .modal-body table th,
+    .modal-body table td,
+    .modal .table th,
+    .modal .table td,
+    .modal-body .table th,
+    .modal-body .table td {
+        padding: 0.25rem 0.35rem !important;
+        font-size: 0.74rem !important;
+        line-height: 1.35 !important;
+        vertical-align: middle !important;
+    }
+
+    .modal table th,
+    .modal-body table th,
+    .modal-body table td.fw-bold,
+    .modal table td.fw-bold {
+        white-space: nowrap !important;
+        font-weight: 600 !important;
+    }
+
+    .modal-body .table-borderless td {
+        padding-top: 0.2rem !important;
+        padding-bottom: 0.2rem !important;
+    }
+
+    .modal-body .badge,
+    .modal .badge {
+        font-size: 0.65rem !important;
+        padding: 0.18em 0.35em !important;
+    }
+
+    /* Modal Form Controls */
+    .modal-body .form-label {
+        font-size: 0.78rem !important;
+        margin-bottom: 0.2rem !important;
+        font-weight: 600 !important;
+    }
+
+    .modal-body .form-control,
+    .modal-body .form-select,
+    .modal-body .input-group-text {
+        font-size: 0.8rem !important;
+        padding: 0.3rem 0.5rem !important;
+        min-height: 32px !important;
+        height: 32px !important;
+    }
+
+    .modal-body textarea.form-control {
+        min-height: 55px !important;
+        height: auto !important;
+    }
+
+    .modal-body small,
+    .modal-body .form-text {
+        font-size: 0.7rem !important;
+        line-height: 1.25 !important;
+    }
+
+    /* Modal Footer & Buttons */
+    .modal-footer {
+        padding: 0.45rem 0.75rem !important;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: flex-end !important;
+        flex-wrap: wrap !important;
+        gap: 0.35rem !important;
+    }
+
+    .modal-footer .btn {
+        padding: 0.28rem 0.65rem !important;
+        font-size: 0.8rem !important;
+        white-space: nowrap !important;
+        flex: 0 0 auto !important;
+        width: auto !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.25rem !important;
+        border-radius: 6px !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .modal-header {
+        padding: 0.45rem 0.65rem !important;
+    }
+
+    .modal-header .modal-title {
+        font-size: 0.9rem !important;
+    }
+
+    .modal-body {
+        padding: 0.5rem !important;
+    }
+
+    .modal-body table th,
+    .modal-body table td,
+    .modal table th,
+    .modal table td {
+        padding: 0.2rem 0.28rem !important;
+        font-size: 0.7rem !important;
+    }
+
+    .modal-footer .btn {
+        font-size: 0.75rem !important;
+        padding: 0.24rem 0.55rem !important;
+        flex: 0 0 auto !important;
+        width: auto !important;
+    }
+
+    /* Actions Cell in table */
+    .app-index-actions-cell,
+    th.app-index-actions-cell,
+    td.app-index-actions-cell {
+        white-space: nowrap !important;
+        width: 1% !important;
+        padding-left: 0.25rem !important;
+        padding-right: 0.25rem !important;
+    }
+}
+
+/* 3-Column Country, State, City on Mobile */
+@media (max-width: 767.98px) {
+    .location-row {
+        --bs-gutter-x: 0.35rem !important;
+    }
+
+    .location-row .form-label {
+        font-size: 0.72rem !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        margin-bottom: 0.15rem !important;
+        display: block !important;
+    }
+
+    .location-row .input-group {
+        flex-wrap: nowrap !important;
+    }
+
+    .location-row .input-group .form-select {
+        font-size: 0.68rem !important;
+        padding-left: 0.25rem !important;
+        padding-right: 1.05rem !important;
+        min-height: 31px !important;
+        height: 31px !important;
+        border-radius: 0.375rem 0 0 0.375rem !important;
+        background-position: right 0.2rem center !important;
+        background-size: 9px 7px !important;
+    }
+
+    .location-row .input-group .btn {
+        padding: 0 0.25rem !important;
+        width: 24px !important;
+        min-width: 24px !important;
+        max-width: 24px !important;
+        font-size: 0.85rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 0 0.375rem 0.375rem 0 !important;
+    }
+}
+
+/* Bulk Upload Modal Download Template Button Global Rules */
+.bulk-template-btn {
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+@media (max-width: 768px) {
+    .bulk-upload-header {
+        padding: 10px 12px !important;
+        gap: 8px !important;
+    }
+
+    .bulk-upload-title {
+        font-size: 13.5px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+    }
+
+    .bulk-template-btn {
+        font-size: 11.5px !important;
+        padding: 4px 8px !important;
+        border-radius: 6px !important;
+        white-space: nowrap !important;
+        line-height: 1.2 !important;
+    }
+
+    .bulk-template-btn i {
+        font-size: 11px !important;
+        margin-right: 3px !important;
+    }
+}
+
+/* Mobile Compact Form Styles for Truck Owner and Transporter Views */
+@media (max-width: 767.98px) {
+    .entity-edit-card .card-header .card-title,
+    .entity-edit-card .card-header .h4,
+    .app-create-page .card-header .card-title,
+    .app-create-page .card-header .h3 {
+        font-size: 0.88rem !important;
+        font-weight: 600 !important;
+    }
+
+    .entity-edit-card h5,
+    .entity-edit-card .h5,
+    .entity-edit-card .card.bg-light h5,
+    .app-create-page .app-form-section__title,
+    .app-create-page h5,
+    .app-create-page .h5 {
+        font-size: 0.76rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 0.3rem !important;
+    }
+
+    .app-create-page .app-form-section__hint {
+        font-size: 0.66rem !important;
+        margin-bottom: 0.35rem !important;
+    }
+
+    .entity-edit-card label,
+    .entity-edit-card .form-label,
+    .entity-edit-card [class*="col-"] > label,
+    .app-create-page label,
+    .app-create-page .form-label,
+    .app-create-page [class*="col-"] > label {
+        font-size: 0.68rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 0.12rem !important;
+        line-height: 1.25 !important;
+        color: #334155 !important;
+        display: inline-block !important;
+    }
+
+    .entity-edit-card .form-control,
+    .entity-edit-card .form-select,
+    .app-create-page .form-control,
+    .app-create-page .form-select {
+        font-size: 0.72rem !important;
+        padding: 0.2rem 0.45rem !important;
+        min-height: 29px !important;
+        height: 29px !important;
+        border-radius: 0.35rem !important;
+        line-height: 1.2 !important;
+    }
+
+    .entity-edit-card .form-control-plaintext,
+    .app-create-page .form-control-plaintext {
+        font-size: 0.72rem !important;
+        padding: 0.2rem 0.45rem !important;
+        min-height: 29px !important;
+        height: auto !important;
+        line-height: 1.25 !important;
+        border-radius: 0.35rem !important;
+    }
+
+    .entity-edit-card textarea.form-control,
+    .app-create-page textarea.form-control {
+        height: auto !important;
+        min-height: 48px !important;
+        font-size: 0.72rem !important;
+        padding: 0.25rem 0.45rem !important;
+        line-height: 1.3 !important;
+    }
+
+    .entity-edit-card input[type="date"].form-control,
+    .app-create-page input[type="date"].form-control {
+        font-size: 0.70rem !important;
+        padding: 0.18rem 0.35rem !important;
+        min-height: 29px !important;
+        height: 29px !important;
+    }
+
+    .entity-edit-card .form-check-label,
+    .app-create-page .form-check-label {
+        font-size: 0.68rem !important;
+    }
+
+    .entity-edit-card .form-check-input,
+    .app-create-page .form-check-input {
+        width: 0.8rem !important;
+        height: 0.8rem !important;
+        margin-top: 0.15rem !important;
+    }
+
+    .entity-edit-card .form-check-inline,
+    .app-create-page .form-check-inline {
+        margin-right: 0.6rem !important;
+        margin-bottom: 0.15rem !important;
+    }
+
+    .entity-edit-card .card.bg-light,
+    .app-create-page .card.bg-light,
+    .app-create-page .app-form-section__body {
+        padding: 0.45rem 0.55rem !important;
+        border-radius: 0.4rem !important;
+        margin-bottom: 0.45rem !important;
+    }
+
+    .entity-edit-card .card-body,
+    .app-create-page .card-body {
+        padding: 0.5rem 0.55rem !important;
+    }
+
+    .entity-edit-card .row.mb-3 {
+        margin-bottom: 0.35rem !important;
+    }
+
+    .entity-edit-card .row.mb-3 > [class*="col-"] {
+        margin-bottom: 0.35rem !important;
+    }
+
+    .entity-edit-card .row.mb-3 > [class*="col-"]:last-child {
+        margin-bottom: 0 !important;
+    }
+
+    .entity-edit-card .btn,
+    .app-create-page .btn,
+    .entity-edit-card .btn-brand-primary,
+    .entity-edit-card .btn-back,
+    .entity-edit-card .btn-primary,
+    .entity-edit-card .btn-success,
+    .entity-edit-card .btn-secondary,
+    .app-create-page .btn-brand-primary,
+    .app-create-page .btn-secondary,
+    .app-create-page .btn-back {
+        font-size: 0.72rem !important;
+        font-weight: 600 !important;
+        padding: 0.28rem 0.55rem !important;
+        min-height: 29px !important;
+        height: auto !important;
+        line-height: 1.25 !important;
+        border-radius: 0.375rem !important;
+        white-space: nowrap !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.25rem !important;
+    }
+
+    .entity-edit-card .driver-joined-group .select2-container .select2-selection--single {
+        height: 29px !important;
+        min-height: 29px !important;
+        font-size: 0.72rem !important;
+    }
+
+    .entity-edit-card .driver-joined-group .select2-selection--single .select2-selection__rendered {
+        line-height: 27px !important;
+        font-size: 0.72rem !important;
+        padding-left: 0.45rem !important;
+    }
+
+    .entity-edit-card .driver-joined-group .btn {
+        height: 29px !important;
+        font-size: 0.70rem !important;
+        padding: 0.2rem 0.5rem !important;
+    }
+
+    .entity-edit-card .card-footer {
+        padding: 0.45rem 0.55rem !important;
+        display: flex !important;
+        gap: 0.45rem !important;
+        align-items: center !important;
+    }
+
+    .app-form-actions {
+        margin-top: 0.65rem !important;
+        border-radius: 10px !important;
+        padding: 0 !important;
+    }
+
+    .app-form-actions .card-body {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        justify-content: stretch !important;
+        align-items: center !important;
+        gap: 0.45rem !important;
+        padding: 0.45rem 0.55rem !important;
+    }
+
+    .app-form-actions .btn,
+    .app-form-actions .card-body .btn {
+        width: 50% !important;
+        flex: 1 1 50% !important;
+        min-width: 0 !important;
+        white-space: nowrap !important;
+        font-size: 0.74rem !important;
+        font-weight: 600 !important;
+        min-height: 29px !important;
+        height: 29px !important;
+        padding: 0.25rem 0.45rem !important;
+        border-radius: 0.375rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.25rem !important;
+    }
+
+    .entity-edit-card .btn i,
+    .app-create-page .btn i {
+        font-size: 0.70rem !important;
+        margin: 0 !important;
+    }
+
+    .entity-edit-card .d-flex.justify-content-between.align-items-center.mt-4 {
+        gap: 0.45rem !important;
+        margin-top: 0.65rem !important;
+    }
+
+    .entity-edit-card .d-flex.justify-content-between.align-items-center.mt-4 .btn {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        padding: 0.28rem 0.45rem !important;
+    }
+
+    .registered-trucks-card .card-header {
+        padding: 0.45rem 0.65rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+
+    .registered-trucks-card .card-title,
+    .registered-trucks-card .card-title.h5 {
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+    }
+
+    .registered-trucks-card .card-tools .btn,
+    #addNewTruckBtn {
+        font-size: 0.68rem !important;
+        padding: 0.2rem 0.45rem !important;
+        min-height: 26px !important;
+        height: 26px !important;
+        white-space: nowrap !important;
+    }
+
+    #addFirstTruckBtn {
+        font-size: 0.72rem !important;
+        padding: 0.28rem 0.6rem !important;
+        min-height: 29px !important;
+        height: 29px !important;
+        white-space: nowrap !important;
+    }
+
+    #trucksTable th,
+    #trucksTable td {
+        font-size: 0.68rem !important;
+        padding: 0.3rem 0.4rem !important;
+        white-space: nowrap !important;
+    }
+
+    #trucksTable .btn-sm {
+        font-size: 0.65rem !important;
+        padding: 0.15rem 0.35rem !important;
+        min-height: 24px !important;
+        height: 24px !important;
+        width: 24px !important;
+    }
+
+    .entity-edit-card .small,
+    .entity-edit-card small,
+    .entity-edit-card .text-muted,
+    .app-create-page .small,
+    .app-create-page small,
+    .app-create-page .text-muted {
+        font-size: 0.64rem !important;
+    }
+
+    .entity-edit-card .text-danger,
+    .app-create-page .text-danger {
+        font-size: 0.64rem !important;
+        margin-top: 0.1rem !important;
+    }
+
+    .transporter-tds-alert {
+        font-size: 0.68rem !important;
+        line-height: 1.3 !important;
+        padding: 0.35rem 0.5rem !important;
+    }
+
+    .transporter-tds-alert .btn {
+        font-size: 0.65rem !important;
+        padding: 0.15rem 0.45rem !important;
+        min-height: 24px !important;
+        height: 24px !important;
+    }
+
+    #showAddDriverForm,
+    #showAddDriverFormModal,
+    #showAddDriverFormTruck {
+        font-size: 0.70rem !important;
+        font-weight: 600 !important;
+        padding: 0.2rem 0.5rem !important;
+        min-height: 26px !important;
+        height: 26px !important;
+        border-radius: 0.375rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.25rem !important;
+        width: auto !important;
+    }
+
+    #showAddDriverForm i,
+    #showAddDriverFormModal i,
+    #showAddDriverFormTruck i {
+        font-size: 0.70rem !important;
+        margin: 0 !important;
+    }
+
+    .profitability-filter-row > [class*="col-"] {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+        width: 50% !important;
     }
 }

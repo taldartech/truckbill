@@ -267,7 +267,7 @@
                             <div class="lrf-pf__hint">Read-only</div>
                         </div>
                         <div class="lrf-pf">
-                            <label for="negative_adjusted_amount_display" class="lrf-pf__lbl">Negative Adjusted</label>
+                            <label for="negative_adjusted_amount_display" class="lrf-pf__lbl">Negative Adjusted Amount</label>
                             <input type="number" step="0.01"
                                 class="form-control is-auto {{ ($freightBooking->negative_adjusted_amount ?? 0) > 0 ? '' : 'text-muted' }}"
                                 id="negative_adjusted_amount_display"
@@ -278,6 +278,16 @@
                             <div class="lrf-pf__hint">System-managed</div>
                         </div>
                     </div>
+
+                    @if (! ($canChangeTds ?? true))
+                        <div class="alert alert-warning py-2 mb-3 small">
+                            <i class="bi bi-lock me-1"></i> TDS already submitted; amount cannot be changed.
+                        </div>
+                    @else
+                        <div class="form-text small text-muted mb-2">
+                            Auto-calculated based on transporter TDS percentage
+                        </div>
+                    @endif
 
                     <input type="hidden" name="tds_amount" id="tds_amount"
                         value="{{ old('tds_amount', $freightBooking->tds_amount) }}">
@@ -424,36 +434,105 @@
 
                     <div class="lrf-section__body" id="fbOptionalBody">
                     
-                    <div class="lrf-grid lrf-grid--4">
-                        <div class="lrf-pf">
-                            <label for="eway_bill_number" class="lrf-pf__lbl">E-Way Bill Number</label>
-                            <div class="input-group flex-nowrap">
-                                <input type="text" class="form-control @error('eway_bill_number') is-invalid @enderror"
-                                    name="eway_bill_number" id="eway_bill_number"
-                                    value="{{ old('eway_bill_number', $freightBooking->eway_bill_number) }}"
-                                    placeholder="Optional"
-                                    {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
-                                    {{ $disabledAttr }}>
-                                <a href="https://ewaybillgst.gov.in/Login.aspx" target="_blank" rel="noopener"
-                                    class="btn btn-outline-secondary" title="Check E-way Bill Status">
-                                    <i class="bi bi-box-arrow-up-right"></i>
-                                </a>
+                    <div class="lrf-grid lrf-grid--4 fb-optional-grid">
+                        <div class="lrf-pf fb-eway-col" style="grid-column: span 2;">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="lrf-pf__lbl mb-0">E-Way Bills</label>
+                                @if(!$is_delivered)
+                                <button
+                                    type="button"
+                                    id="addEwayBill"
+                                    class="btn btn-outline-primary btn-sm"
+                                >
+                                    <i class="bi bi-plus-lg me-1"></i> Add E-Way Bill
+                                </button>
+                                @endif
                             </div>
-                            @error('eway_bill_number')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="lrf-pf">
-                            <label for="eway_bill_expiry" class="lrf-pf__lbl">E-Way Bill Expiry</label>
-                            <input type="date" class="form-control @error('eway_bill_expiry') is-invalid @enderror"
-                                name="eway_bill_expiry" id="eway_bill_expiry"
-                                value="{{ old('eway_bill_expiry', $freightBooking->eway_bill_expiry ?: '') }}"
-                                {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
-                                {{ $disabledAttr }}>
-                            @error('eway_bill_expiry')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
+                            <div id="ewayBillsContainer">
+        @forelse($freightBooking->ewayBills as $index => $ewayBill)
+            <div class="eway-bill-row d-flex gap-2 mb-2">
+                <input
+                    type="hidden"
+                    name="eway_bills[{{ $index }}][id]"
+                    value="{{ $ewayBill->id }}"
+                >
+                <div class="input-group">
+                    <input
+                        type="text"
+                        name="eway_bills[{{ $index }}][eway_bill_number]"
+                        class="form-control"
+                        value="{{ old('eway_bills.' . $index . '.eway_bill_number', $ewayBill->eway_bill_number) }}"
+                        placeholder="E-Way Bill Number"
+                        {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
+                        {{ $disabledAttr }}
+                    >
+                    <a 
+                        href="https://ewaybillgst.gov.in/Login.aspx"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn-outline-success eway-portal-btn"
+                        title="Create E-Way Bill"
+                    >
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
+                <input
+                    type="date"
+                    name="eway_bills[{{ $index }}][eway_bill_expiry]"
+                    class="form-control eway-expiry-input"
+                    value="{{ old('eway_bills.' . $index . '.eway_bill_expiry', $ewayBill->eway_bill_expiry?->format('Y-m-d')) }}"
+                    {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
+                    {{ $disabledAttr }}
+                >
+                @if(!$is_delivered)
+                    <button
+                        type="button"
+                        class="btn btn-outline-danger remove-eway-bill"
+                    >
+                        <i class="bi bi-trash"></i> <span>Remove</span>
+                    </button>
+                @endif
+            </div>
+        @empty
+            <div class="eway-bill-row d-flex gap-2 mb-2">
+                <div class="input-group">
+                    <input
+                        type="text"
+                        name="eway_bills[0][eway_bill_number]"
+                        class="form-control"
+                        placeholder="E-Way Bill Number"
+                        {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
+                        {{ $disabledAttr }}
+                    >
+                    <a 
+                        href="https://ewaybillgst.gov.in/Login.aspx"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn-outline-success eway-portal-btn"
+                        title="Create E-Way Bill"
+                    >
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
+                <input
+                    type="date"
+                    name="eway_bills[0][eway_bill_expiry]"
+                    class="form-control eway-expiry-input"
+                    {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
+                    {{ $disabledAttr }}
+                >
+                @if(!$is_delivered)
+                    <button
+                        type="button"
+                        class="btn btn-outline-danger remove-eway-bill"
+                    >
+                        <i class="bi bi-trash"></i> <span>Remove</span>
+                    </button>
+                @endif
+            </div>
+        @endforelse
+      </div>
+    </div>
                         <div class="lrf-pf" style="grid-column: span 2;">
                             <label for="remark" class="lrf-pf__lbl">Remark</label>
                             <input type="text" name="remark" id="remark"
@@ -491,7 +570,12 @@
                             <label class="form-check-label" for="is_delivered">
                                 Delivered
                                 @if (($freightBooking->is_delivered && $lr) || ($lr && $lr->memo_id))
-                                    <small class="text-muted ms-1">Locked (Memo: {{ $lr->memo_id ?? 'N/A' }})</small>
+                                    <small class="text-muted ms-1">Locked (Memo: {{ $lr->memo_id ?? 'N/A' }})
+                                         @if ($lr->memo_created_at)
+                                    <br>
+                           <span style="display: inline-block; margin-left: 82px;">{{ date('d-m-Y h:i A', strtotime($lr->memo_created_at)) }}</span>
+                             @endif
+                                    </small>
                                 @endif
                             </label>
                         </div>
@@ -768,20 +852,20 @@
                 <div class="modal-header">
                     <h5 class="modal-title" id="askMemoModalLabel">
                         <i class="bi bi-journal-text"></i>
-                        Memo ID Confirmation
+                        Memo ID / POD Confirmation
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="fb-confirm-note mb-0">
                         <i class="bi bi-info-circle"></i>
-                        Do you want to enter a Memo ID for this delivery?
+                        Do you want to enter a Memo ID / POD for this delivery?
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-outline-danger" id="noMemoBtn">No, Continue Without Memo</button>
-                    <button type="button" class="btn btn-brand-primary" id="yesMemoBtn">Yes, Enter Memo ID</button>
+                    <button type="button" class="btn btn-outline-danger" id="noMemoBtn">No, Continue Without Memo / POD</button>
+                    <button type="button" class="btn btn-brand-primary" id="yesMemoBtn">Yes, Enter Memo ID / POD</button>
                 </div>
             </div>
         </div>
@@ -795,27 +879,33 @@
                 <div class="modal-header">
                     <h5 class="modal-title" id="memoIdModalLabel">
                         <i class="bi bi-pencil-square"></i>
-                        Enter Memo ID for Delivery
+                        Enter Memo ID / POD for Delivery
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="fb-confirm-note">
                         <i class="bi bi-info-circle"></i>
-                        A Memo ID is required to mark this good hire as delivered.
+                        A Memo ID / POD is required to mark this good hire as delivered.
                     </div>
                     <div class="fb-pay-panel">
                         <div class="fb-pay-panel__head">
-                            <i class="bi bi-hash"></i> Memo Details
+                            <i class="bi bi-hash"></i> Memo / POD Details
                         </div>
                         <div class="fb-pay-panel__body">
                             <form id="memoIdForm">
                                 <div class="fb-pay-fields" style="grid-template-columns: 1fr;">
                                     <div>
-                                        <label for="deliveryMemoId" class="form-label">Memo ID *</label>
+                                        <label for="deliveryMemoId" class="form-label">Memo ID / POD *</label>
                                         <input type="text" class="form-control" id="deliveryMemoId" name="memo_id"
-                                            required placeholder="Enter memo ID" pattern="[A-Za-z0-9\-\/]+">
+                                            required placeholder="Enter memo ID / POD" pattern="[A-Za-z0-9\-\/]+">
                                         <div class="lrf-pf__hint mt-1">Saved to the good receipt (bilty) record.</div>
+                                    </div>
+                                    <div>
+                                        <label for="deliveryMemoCreatedAt" class="form-label">Memo Date &amp; Time</label>
+                                        <input type="datetime-local" class="form-control" id="deliveryMemoCreatedAt"
+                                            name="memo_created_at" max="{{ now()->format('Y-m-d\TH:i') }}">
+                                        <div class="lrf-pf__hint mt-1">Optional. Leave blank to use the current date &amp; time.</div>
                                     </div>
                                 </div>
                             </form>
@@ -830,7 +920,7 @@
                     <button type="button" class="btn btn-brand-primary" onclick="saveMemoId()" id="saveMemoBtn">
                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"
                             style="display: none;"></span>
-                        Save Memo ID
+                        Save Memo ID / POD
                     </button>
                 </div>
             </div>
@@ -969,6 +1059,7 @@
         // Function to save memo ID for delivery
         window.saveMemoId = function() {
             const memoId = document.getElementById('deliveryMemoId').value.trim();
+            const memoCreatedAt = document.getElementById('deliveryMemoCreatedAt').value;
             const saveBtn = document.getElementById('saveMemoBtn');
             const spinner = saveBtn.querySelector('.spinner-border');
             const errorDiv = document.getElementById('memoModalError');
@@ -988,6 +1079,9 @@
             // Create form data
             const formData = new FormData();
             formData.append('memo_id', memoId);
+            if (memoCreatedAt) {
+                formData.append('memo_created_at', memoCreatedAt);
+            }
             formData.append('lr_ids[]', {{ $freightBooking->lr_id }});
 
             // Send AJAX request to update memo ID
@@ -1009,7 +1103,7 @@
                         document.getElementById('additional-charges-section').style.display = 'block';
 
                         // Show success message
-                        alert('Memo ID saved successfully. Freight booking marked as delivered.');
+                        alert('Memo ID / POD saved successfully. Freight booking marked as delivered.');
 
                         // Optionally reload to reflect changes
                         location.reload();
@@ -1333,7 +1427,86 @@
                 syncCustomAmountsEmptyState();
                 getCustomAmountsTotal();
             }
+            const ewayBillsContainer = document.getElementById('ewayBillsContainer');
+const addEwayBillBtn = document.getElementById('addEwayBill');
 
+let ewayBillIndex = ewayBillsContainer
+    ? ewayBillsContainer.querySelectorAll('.eway-bill-row').length
+    : 0;
+
+if (addEwayBillBtn && ewayBillsContainer) {
+    addEwayBillBtn.addEventListener('click', function () {
+        const row = document.createElement('div');
+
+        row.className = 'eway-bill-row d-flex gap-2 mb-2';
+
+        row.innerHTML = `
+            <div class="input-group">
+                <input
+                    type="text"
+                    name="eway_bills[${ewayBillIndex}][eway_bill_number]"
+                    class="form-control"
+                    placeholder="E-Way Bill Number"
+                >
+                <a 
+                    href="https://ewaybillgst.gov.in/Login.aspx"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn btn-outline-success eway-portal-btn"
+                    title="Create E-Way Bill"
+                >
+                    <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+            </div>
+
+            <input
+                type="date"
+                name="eway_bills[${ewayBillIndex}][eway_bill_expiry]"
+                class="form-control eway-expiry-input"
+            >
+
+            <button
+                type="button"
+                class="btn btn-outline-danger remove-eway-bill"
+            >
+                <i class="bi bi-trash"></i> <span>Remove</span>
+            </button>
+        `;
+
+        ewayBillsContainer.appendChild(row);
+        ewayBillIndex++;
+    });
+
+    ewayBillsContainer.addEventListener('click', function (event) {
+        if (event.target.closest('.remove-eway-bill')) {
+            const row = event.target.closest('.eway-bill-row');
+
+            if (!row) {
+                return;
+            }
+
+            const ewayBillNumber = row.querySelector(
+                'input[name*="[eway_bill_number]"]'
+            )?.value?.trim();
+
+            const ewayBillExpiry = row.querySelector(
+                'input[name*="[eway_bill_expiry]"]'
+            )?.value?.trim();
+
+            if (ewayBillNumber || ewayBillExpiry) {
+                const confirmed = confirm(
+                    'This E-Way Bill has data. Are you sure you want to remove it?'
+                );
+
+                if (!confirmed) {
+                    return;
+                }
+            }
+
+            row.remove();
+        }
+    });
+}
             // Function to calculate TDS and Balance amounts
             function calculateTdsAndBalance() {
                 const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;

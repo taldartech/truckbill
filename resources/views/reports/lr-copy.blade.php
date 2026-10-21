@@ -18,39 +18,39 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.lr-copy') }}" id="searchForm" class="tb-report-customer-select2-form">
-                <div class="row mb-2" style="align-items: end;">
-                    <div class="col-md-3">
-                        <label class="form-label">Customer <span class="text-danger">*</span></label>
-                        <select name="customer_id" id="lr-copy-customer-select" class="form-select" required>
+                <div class="row mb-2 g-2 align-items-end">
+                    <div class="col-6 col-md-4">
+                        <label class="form-label small mb-1">Customer <span class="text-danger">*</span></label>
+                        <select name="customer_id" id="lr-copy-customer-select" class="form-select form-select-sm" required>
                             <option value="">Select Customer</option>
                             @if ($selectedCustomer)
                                 <option value="{{ $selectedCustomer->id }}" selected>{{ $selectedCustomer->name }}</option>
                             @endif
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">LR Number <span class="text-danger">*</span></label>
-                        <select name="lr_id" id="lr-copy-lr-select" class="form-select select2" required>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label small mb-1">LR Number <span class="text-danger">*</span></label>
+                        <select name="lr_id" id="lr-copy-lr-select" class="form-select form-select-sm select2" required>
                             <option value="">Select LR Number</option>
                         </select>
                     </div>
-                    <div class="col-md-2 align-self-end p-2">
-                        <div class="form-check form-switch">
+                    <div class="col-6 col-md-2 align-self-end p-2">
+                        <div class="form-check form-switch mb-0">
                             <input class="form-check-input" type="checkbox" name="show_freight" id="show_freight"
                                 value="1" @if (request()->has('show_freight')) checked @endif>
-                            <label class="form-check-label" for="show_freight">
+                            <label class="form-check-label small" for="show_freight">
                                 Show Freight
                             </label>
                         </div>
                     </div>
-                   
-                    <div class="col-md-3 text-end d-flex align-items-end justify-content-end gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-search"></i> Search
+
+                    <div class="col-6 col-md-3 text-end d-flex align-items-end justify-content-end gap-1 gap-sm-2 mt-2 mt-md-0">
+                        <button type="submit" class="btn btn-brand-primary btn-sm btn-report-search" title="Search">
+                            <i class="bi bi-search"></i><span class="d-none d-sm-inline ms-1">Search</span>
                         </button>
                         <a href="{{ route('reports.lr-copy') }}?date={{ date('Y-m-d') }}"
-                            class="btn btn-secondary">
-                            <i class="bi bi-arrow-clockwise"></i> Reset
+                            class="btn btn-secondary btn-sm btn-report-reset" title="Reset">
+                            <i class="bi bi-arrow-clockwise"></i><span class="d-none d-sm-inline ms-1">Reset</span>
                         </a>
                     </div>
                 </div>
@@ -70,9 +70,9 @@
                         <h3 class="card-title mb-0">Good Receipt (Bilty) Copy</h3>
                     </div>
                     <div class="d-flex">
-                        <a class="btn btn-warning ms-2" target="_blank"
+                        <a class="btn btn-warning btn-sm ms-2" target="_blank"
                             href="{{ route('reports.lr-copy-export', ['lr_id' => $lr_id, 'show_freight' => request()->has('show_freight') ? 1 : 0, 'template' => $template]) }}">
-                            <i class="bi bi-file-earmark-spreadsheet"></i> Export
+                            <i class="bi bi-file-earmark-spreadsheet"></i> <span class="d-none d-sm-inline ms-1">Export</span>
                         </a>
                     </div>
                 </div>

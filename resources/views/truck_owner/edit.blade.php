@@ -15,11 +15,14 @@
     word-wrap: break-word;
 }
 
-/* Ensure consistent column widths */
-.row .col-md-4 {
-    flex: 0 0 33.333333%;
-    max-width: 33.333333%;
+/* Ensure consistent column widths on desktop */
+@media (min-width: 768px) {
+    .row .col-md-4 {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+    }
 }
+
 
 /* Prevent card from expanding */
 .card {
@@ -29,6 +32,198 @@
 /* Consistent spacing for form groups */
 .mb-3 {
     margin-bottom: 1rem !important;
+}
+
+/* Mobile view adjustments */
+@media (max-width: 767.98px) {
+    .card-header .card-title,
+    .card-header .h4 {
+        font-size: 0.88rem !important;
+        font-weight: 600 !important;
+    }
+
+    h5, .h5,
+    .card.bg-light h5 {
+        font-size: 0.76rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 0.3rem !important;
+    }
+
+    label,
+    .form-label,
+    [class*="col-"] > label {
+        font-size: 0.68rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 0.12rem !important;
+        line-height: 1.25 !important;
+        color: #334155 !important;
+        display: inline-block !important;
+    }
+
+    .form-control-plaintext {
+        font-size: 0.72rem !important;
+        padding: 0.2rem 0.45rem !important;
+        min-height: 29px !important;
+        height: auto !important;
+        line-height: 1.25 !important;
+        border-radius: 0.35rem !important;
+    }
+
+    .form-control, .form-select {
+        font-size: 0.72rem !important;
+        padding: 0.2rem 0.45rem !important;
+        min-height: 29px !important;
+        height: 29px !important;
+        border-radius: 0.35rem !important;
+        line-height: 1.2 !important;
+    }
+
+    textarea.form-control {
+        height: auto !important;
+        min-height: 48px !important;
+        font-size: 0.72rem !important;
+        padding: 0.25rem 0.45rem !important;
+    }
+
+    input[type="date"].form-control {
+        font-size: 0.70rem !important;
+        padding: 0.18rem 0.35rem !important;
+        min-height: 29px !important;
+        height: 29px !important;
+    }
+
+    .form-check-label {
+        font-size: 0.68rem !important;
+    }
+
+    .form-check-input {
+        width: 0.8rem !important;
+        height: 0.8rem !important;
+        margin-top: 0.15rem !important;
+    }
+
+    .form-check-inline {
+        margin-right: 0.6rem !important;
+        margin-bottom: 0.15rem !important;
+    }
+
+    .card.bg-light {
+        padding: 0.45rem 0.55rem !important;
+        border-radius: 0.4rem !important;
+        margin-bottom: 0.45rem !important;
+    }
+
+    .card-body {
+        padding: 0.5rem 0.55rem !important;
+    }
+
+    .row.mb-3 {
+        margin-bottom: 0.35rem !important;
+    }
+
+    .row.mb-3 > [class*="col-"] {
+        margin-bottom: 0.35rem !important;
+    }
+
+    .row.mb-3 > [class*="col-"]:last-child {
+        margin-bottom: 0 !important;
+    }
+
+    .btn,
+    .btn-brand-primary,
+    .btn-back,
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger,
+    .btn-info,
+    .btn-warning,
+    .app-index-header-btn {
+        font-size: 0.72rem !important;
+        font-weight: 600 !important;
+        padding: 0.28rem 0.55rem !important;
+        min-height: 29px !important;
+        height: auto !important;
+        line-height: 1.25 !important;
+        border-radius: 0.375rem !important;
+        white-space: nowrap !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.25rem !important;
+    }
+
+    .btn i,
+    .btn-brand-primary i,
+    .btn-back i {
+        font-size: 0.70rem !important;
+        margin: 0 !important;
+    }
+
+    .d-flex.justify-content-between.align-items-center.mt-4 {
+        gap: 0.45rem !important;
+        margin-top: 0.65rem !important;
+    }
+
+    .d-flex.justify-content-between.align-items-center.mt-4 .btn {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        padding: 0.28rem 0.45rem !important;
+    }
+
+    .registered-trucks-card .card-header {
+        padding: 0.45rem 0.65rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+
+    .registered-trucks-card .card-title,
+    .registered-trucks-card .card-title.h5 {
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+    }
+
+    .registered-trucks-card .card-tools .btn,
+    #addNewTruckBtn {
+        font-size: 0.68rem !important;
+        padding: 0.2rem 0.45rem !important;
+        min-height: 26px !important;
+        height: 26px !important;
+        white-space: nowrap !important;
+    }
+
+    #addFirstTruckBtn {
+        font-size: 0.72rem !important;
+        padding: 0.28rem 0.6rem !important;
+        min-height: 29px !important;
+        height: 29px !important;
+        white-space: nowrap !important;
+    }
+
+    #trucksTable th,
+    #trucksTable td {
+        font-size: 0.68rem !important;
+        padding: 0.3rem 0.4rem !important;
+        white-space: nowrap !important;
+    }
+
+    #trucksTable .btn-sm {
+        font-size: 0.65rem !important;
+        padding: 0.15rem 0.35rem !important;
+        min-height: 24px !important;
+        height: 24px !important;
+        width: 24px !important;
+    }
+
+    .small, small, .text-muted {
+        font-size: 0.64rem !important;
+    }
+
+    .text-danger {
+        font-size: 0.64rem !important;
+        margin-top: 0.1rem !important;
+    }
 }
 
 .truck-modal-driver-row .flex-grow-1 {
@@ -45,7 +240,7 @@
     align-items: center;
 }
 </style>
-<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
+<div class="card card-info card-outline mb-4 entity-edit-card" style="max-width: 1000px; margin: 0 auto;">
     <div class="card-header">
         <div class="card-title h4">Edit Truck Owner</div>
     </div>
@@ -67,13 +262,13 @@
         @error('registered_truck_id')
             <div class="text-danger">{{ $message }}</div>
         @enderror
-        <div class="card-body">
+        <div class="card-body p-2 p-md-4">
             <input type="hidden" name="is_owner" value="1">
             <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
             <input type="hidden" name="advance_amount" value="{{ $truck_owner->advance_amount }}">
 
             @php $master = $truck_owner->transporterMaster; @endphp
-            <div class="card mb-4 p-3 bg-light" id="masterDataSection">
+            <div class="card mb-3 mb-md-4 p-2 p-md-3 bg-light" id="masterDataSection">
                 <div class="row"><div class="col"><h5 class="mb-3 text-muted"><i class="fas fa-lock me-2"></i> Master Data (Read-only)</h5></div></div>
                 <div class="row mb-3">
                     <div class="col-md-4">
@@ -142,17 +337,22 @@
                         @endif
                         @error('beneficiary_id') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Declaration Given? *</label><br>
+                    <div class="col-md-5">
+                        <label class="form-label">Declaration u/s 194C(6) Received with PAN? *</label><br>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given', $truck_owner->declaration_given) == 1 ? 'checked' : '' }} required>
-                            <label class="form-check-label" for="decl_yes">Yes</label>
+                            <label class="form-check-label fw-semibold" for="decl_yes">Yes (0.00% TDS)</label>
                         </div>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="declaration_given" id="decl_no" value="0" {{ old('declaration_given', $truck_owner->declaration_given) == 0 ? 'checked' : '' }} required>
                             <label class="form-check-label" for="decl_no">No</label>
                         </div>
                         @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-3" id="declaration_date_col" style="{{ old('declaration_given', $truck_owner->declaration_given) == 1 ? '' : 'display:none;' }}">
+                        <label for="declaration_194c6_date" class="form-label">Declaration Date</label>
+                        <input type="date" class="form-control @error('declaration_194c6_date') is-invalid @enderror" id="declaration_194c6_date" name="declaration_194c6_date" value="{{ old('declaration_194c6_date', $truck_owner->declaration_194c6_date?->format('Y-m-d') ?? date('Y-m-d')) }}">
+                        @error('declaration_194c6_date') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                 </div>
                 <div class="row mb-3">
@@ -186,6 +386,23 @@
                         ])
                     </div>
                 </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-5">
+                        <label class="form-label">MSME Status</label>
+                        <div class="form-check form-switch mt-1">
+                            <input class="form-check-input" type="checkbox" name="is_msme" id="is_msme" value="1" {{ old('is_msme', $truck_owner->is_msme) ? 'checked' : '' }}
+                                   onchange="document.getElementById('truck_owner_msme_reg_col').style.display = this.checked ? 'block' : 'none'">
+                            <label class="form-check-label fw-semibold" for="is_msme">Registered MSME (Micro / Small)</label>
+                        </div>
+                        <small class="text-muted d-block" style="font-size: 0.75rem;">Subject to Sec 43B(h) prompt payment compliance by our company</small>
+                    </div>
+                    <div class="col-md-5" id="truck_owner_msme_reg_col" style="{{ old('is_msme', $truck_owner->is_msme) ? '' : 'display:none;' }}">
+                        <label for="msme_reg_no" class="form-label">Udyam / MSME Registration #</label>
+                        <input type="text" class="form-control @error('msme_reg_no') is-invalid @enderror" id="msme_reg_no" name="msme_reg_no" value="{{ old('msme_reg_no', $truck_owner->msme_reg_no) }}" placeholder="UDYAM-XX-00-0000000">
+                        @error('msme_reg_no') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
             </div>
             <!-- Registered Trucks Section -->
             <!-- Form Actions -->
@@ -211,7 +428,7 @@
 ])
 
 <!-- Registered Trucks Section -->
-<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
+<div class="card card-info card-outline mb-4 entity-edit-card registered-trucks-card" style="max-width: 1000px; margin: 0 auto;">
     <div class="card-header">
         <div class="card-title h5">
             <i class="bi bi-truck"></i> Registered Trucks
@@ -660,10 +877,28 @@
         .catch(() => {});
     }
 
+    function updateTruckOwner194cUi() {
+        const isYes = document.getElementById('decl_yes')?.checked;
+        const dateCol = document.getElementById('declaration_date_col');
+        const tdsInput = document.getElementById('tds_percentage');
+        if (dateCol) {
+            dateCol.style.display = isYes ? '' : 'none';
+        }
+        if (isYes && tdsInput) {
+            tdsInput.value = '0.00';
+            tdsInput.readOnly = true;
+        } else if (tdsInput) {
+            tdsInput.readOnly = false;
+        }
+    }
+    updateTruckOwner194cUi();
+
     document.addEventListener('DOMContentLoaded', function () {
+        updateTruckOwner194cUi();
         document.querySelectorAll('input[name="declaration_given"]').forEach(function (el) {
             el.addEventListener('change', function () {
                 window.__truckOwnerEditTdsUserEdited = false;
+                updateTruckOwner194cUi();
                 refreshTruckOwnerEditTdsBaseline();
             });
         });

@@ -41,6 +41,8 @@ trait ValidatesTransporterMasterFields
             ],
             'gst_type' => ['nullable', 'in:composition,regular'],
             'pan_active' => ['required', 'boolean'],
+            'is_msme' => ['nullable', 'boolean'],
+            'msme_reg_no' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:500'],
             'country_id' => ['nullable', 'exists:countries,id'],
             'state_id' => [
@@ -81,6 +83,8 @@ trait ValidatesTransporterMasterFields
             'gst_number' => ! empty($validated['gst_number']) ? strtoupper($validated['gst_number']) : null,
             'gst_type' => $validated['gst_type'] ?? null,
             'pan_active' => (bool) $validated['pan_active'],
+            'is_msme' => $this->boolean('is_msme'),
+            'msme_reg_no' => ! empty($validated['msme_reg_no']) ? trim($validated['msme_reg_no']) : null,
             'address' => $validated['address'] ?? null,
             'city_id' => $validated['city_id'] ?? null,
             'state_id' => $validated['state_id'] ?? null,

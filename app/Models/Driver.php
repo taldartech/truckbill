@@ -15,6 +15,8 @@ class Driver extends Model
         'license_number',
         'address',
         'company_id',
+        'deleted_by',
+        'deleted_remark',
     ];
     
     protected $dates = ['deleted_at'];

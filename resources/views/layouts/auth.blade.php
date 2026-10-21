@@ -211,6 +211,8 @@
 </head>
 
 <body>
+     {{-- Global Truck Loader --}}
+    @include('components.loading.AppResponseLoader')
     <div class="container d-flex justify-content-center">
         <div class="auth-card">
             <div class="logo-section">
@@ -238,7 +240,20 @@
             }
         }
     </script>
-    @stack('scripts')
+
+    <script>
+    // Show loader when any form is submitted
+    document.addEventListener('submit', function () {
+        showTruckLoader();
+    });
+
+    // Hide loader when browser Back/Forward restores the page
+    window.addEventListener('pageshow', function () {
+        hideTruckLoader();
+    });
+</script>
+
+@stack('scripts')
 </body>
 
 </html>

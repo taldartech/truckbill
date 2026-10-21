@@ -4,6 +4,7 @@ namespace App\Models;
 use App\Contracts\Auditable;
 use App\Models\Concerns\HasHybridAuditLog;
 use App\Models\Traits\TracksUser;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -12,6 +13,8 @@ class Invoice extends Model implements Auditable
 {
     use HasFactory, HasHybridAuditLog, TracksUser, SoftDeletes;
 
+    public const DEFAULT_CREDIT_DAYS = 30;
+
     protected $fillable = [
         'invoice_number',
         'manual_invoice_number',
@@ -19,6 +22,7 @@ class Invoice extends Model implements Auditable
         'invoice_type',
         'custom_invoice',
         'generated_date',
+        'due_date',
         'customer_id',
         'total_amount',
         'base_amount',
@@ -29,6 +33,8 @@ class Invoice extends Model implements Auditable
         'cgst',
         'igst',
         'lr_ids',
+        'deleted_by',
+        'deleted_remark',
     ];
     protected $casts = [
         'memo_ids' => 'array',
@@ -56,15 +62,16 @@ class Invoice extends Model implements Auditable
     }
 
     /**
-     * Get total paid amount
+     * Get total paid/settled amount (including TDS and customer deductions)
      */
     public function getPaidAmountAttribute()
     {
         // Use loaded relationship if available, otherwise query
         if ($this->relationLoaded('payments')) {
-            return $this->payments->sum('amount');
+            return (float) $this->payments->sum(fn ($p) => (float) $p->amount + (float) ($p->tds_amount ?? 0) + (float) ($p->deduction_amount ?? 0));
         }
-        return $this->payments()->sum('amount');
+
+        return (float) ($this->payments()->selectRaw('SUM(amount + COALESCE(tds_amount, 0) + COALESCE(deduction_amount, 0)) as total')->value('total') ?? 0.0);
     }
 
     /**
@@ -75,6 +82,29 @@ class Invoice extends Model implements Auditable
         $amountToCollect = $this->net_amount ?? $this->total_amount;
 
         return max(0, $amountToCollect - $this->paid_amount);
+    }
+
+    /**
+     * Due date used for overdue tracking: the entered due date, or the invoice
+     * date plus the default credit period when no due date was entered.
+     */
+    public function effectiveDueDate(): ?Carbon
+    {
+        if (filled($this->due_date)) {
+            return Carbon::parse($this->due_date)->startOfDay();
+        }
+
+        $invoiceDate = $this->generated_date ?? $this->created_at;
+
+        return $invoiceDate ? Carbon::parse($invoiceDate)->startOfDay()->addDays(self::DEFAULT_CREDIT_DAYS) : null;
+    }
+
+    /**
+     * Check if invoice falls under GTA Reverse Charge Mechanism (RCM)
+     */
+    public function getIsRcmAttribute(): bool
+    {
+        return strtolower((string) ($this->invoice_type ?? '')) === 'reverse';
     }
 
     /**
@@ -92,6 +122,7 @@ class Invoice extends Model implements Auditable
             'payment_status',
             'customer_id',
             'generated_date',
+            'due_date',
             'memo_ids',
             'lr_ids',
             'sgst',
