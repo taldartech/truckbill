@@ -129,6 +129,14 @@
                                     <i class="bi bi-printer"></i>
                                 </a>
                             @endif
+
+                            <a href="{{ route('freight_bookings.settlement', $freightBooking->id) }}"
+                                class="btn btn-sm btn-icon"
+                                style="color: #0284c7; border: 1px solid #bae6fd; background-color: #f0f9ff;"
+                                title="Broker Settlement Statement & Bill Verification"
+                                data-bs-toggle="tooltip">
+                                <i class="bi bi-file-earmark-ruled"></i>
+                            </a>
                         </div>
                     </div>
 

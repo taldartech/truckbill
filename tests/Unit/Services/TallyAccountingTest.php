@@ -255,14 +255,27 @@ class TallyAccountingTest extends TestCase
                 $table->foreignId('truck_id')->nullable();
                 $table->foreignId('lr_id')->nullable();
                 $table->decimal('tr_amount', 15, 2)->default(0.0);
+                $table->decimal('advance_amount', 15, 2)->default(0.0);
+                $table->decimal('balance_amount', 15, 2)->default(0.0);
+                $table->decimal('negative_adjusted_amount', 15, 2)->default(0.0);
                 $table->decimal('detention', 15, 2)->default(0.0);
                 $table->decimal('deviation', 15, 2)->default(0.0);
                 $table->decimal('misc_expense', 15, 2)->default(0.0);
                 $table->decimal('damage_amount', 15, 2)->default(0.0);
+                $table->decimal('damage_qty', 10, 2)->nullable();
+                $table->decimal('damage_rate', 10, 2)->nullable();
                 $table->decimal('shortage_amount', 15, 2)->default(0.0);
+                $table->decimal('shortage_qty', 10, 2)->nullable();
+                $table->decimal('shortage_rate', 10, 2)->nullable();
                 $table->decimal('tds_amount', 15, 2)->default(0.0);
+                $table->decimal('transporter_tds_percentage', 5, 2)->default(1.0);
+                $table->decimal('tr_fr_rate', 10, 2)->nullable();
+                $table->boolean('is_fixed_amount')->default(false);
+                $table->string('good_type')->nullable();
                 $table->string('voucher_number')->nullable();
+                $table->boolean('is_delivered')->default(false);
                 $table->boolean('is_cancelled')->default(false);
+                $table->unsignedBigInteger('linked_lr_id')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
             });
@@ -2380,6 +2393,111 @@ class TallyAccountingTest extends TestCase
         $this->assertStringContainsString('Pune South', $view);
         $this->assertStringContainsString('LR-BRANCH-A', $view);
     }
+
+    public function test_broker_settlement_statement_calculation_and_view(): void
+    {
+        $company = Company::create([
+            'name' => 'Swift Logistics Pvt Ltd',
+            'address' => 'Transport Nagar, Delhi',
+            'gst_number' => '07AAAAA0000A1Z5',
+            'pan_number' => 'AAAAA0000A',
+        ]);
+
+        $transporterMaster = TransporterMaster::create([
+            'name' => 'Royal Roadlines',
+            'pan_number' => 'AABBR1234K',
+        ]);
+
+        $transporter = Transporter::create([
+            'company_id' => $company->id,
+            'transporter_master_id' => $transporterMaster->id,
+            'beneficiary_id' => 'HDFC0004321_ACCT5555',
+            'is_owner' => false,
+            'tds_percentage' => 1.0,
+        ]);
+
+        $truck = Truck::create([
+            'company_id' => $company->id,
+            'truck_number' => 'DL01AB9999',
+        ]);
+
+        $lr = \App\Models\LorryReceipt::create([
+            'company_id' => $company->id,
+            'lr_number' => 'LR-SETL-101',
+            'truck_id' => $truck->id,
+            'transporter_id' => $transporter->id,
+            'gr_date' => '2026-10-15',
+            'delivery_status' => 'Delivered',
+        ]);
+
+        // Freight: 35000 + 2000 (detention) - 10000 (advance) - 1500 (shortage) - 350 (TDS) = 25150
+        $fb = FreightBooking::create([
+            'company_id' => $company->id,
+            'transporter_id' => $transporter->id,
+            'truck_id' => $truck->id,
+            'lr_id' => $lr->id,
+            'tr_amount' => 35000.00,
+            'detention' => 2000.00,
+            'advance_amount' => 10000.00,
+            'shortage_amount' => 1500.00,
+            'tds_amount' => 350.00,
+            'balance_amount' => 10150.00,
+            'is_delivered' => true,
+        ]);
+
+        // A voucher payment already disbursed of 15000
+        $payment = VoucherPayment::create([
+            'company_id' => $company->id,
+            'freight_booking_id' => $fb->id,
+            'voucher_number' => 'VP-DISB-01',
+            'amount' => 15000.00,
+            'date' => '2026-10-18',
+            'payment_status' => 'paid',
+            'payment_mode' => 'bank transfer',
+            'reference_transaction_id' => 'UTR9988776655',
+        ]);
+
+        $user = \App\Models\User::create([
+            'name' => 'Fleet Manager',
+            'email' => 'fleet_manager@truckbill.test',
+            'password' => bcrypt('secret'),
+            'company_id' => $company->id,
+        ]);
+        $this->actingAs($user);
+
+        $lrNotify = app(\App\Services\Notifications\LorryReceiptNotificationService::class);
+        $frNotify = app(\App\Services\Notifications\FreightBookingNotificationService::class);
+        $calcService = app(\App\Services\FreightBookingCalculationService::class);
+        $customService = app(\App\Services\FreightBookingCustomAmountService::class);
+        $guard = app(\App\Services\SubscriptionGuard::class);
+
+        $controller = new \App\Http\Controllers\FreightBookingController($lrNotify, $frNotify, $calcService, $customService, $guard);
+
+        $response = $controller->settlementStatement($fb->id);
+        $this->assertInstanceOf(\Illuminate\View\View::class, $response);
+
+        $data = $response->getData();
+        $this->assertEquals(37000.00, $data['totalEarnings']); // 35000 + 2000
+        $this->assertEquals(11850.00, $data['totalDeductions']); // 10000 + 1500 + 350
+        $this->assertEquals(35150.00, $data['effectivePayable']); // 37000 - 1500 - 350
+        $this->assertEquals(15000.00, $data['totalPaid']);
+        $this->assertEquals(10150.00, $data['balanceDue']); // 35150 - 10000 - 15000
+
+        $rendered = $response->render();
+        $this->assertStringContainsString('Trip Settlement Statement', $rendered);
+        $this->assertStringContainsString('SETTLEMENT SLIP', $rendered);
+        $this->assertStringContainsString('LR-SETL-101', $rendered);
+        $this->assertStringContainsString('DL01AB9999', $rendered);
+        $this->assertStringContainsString('Royal Roadlines', $rendered);
+        $this->assertStringContainsString('HDFC0004321_ACCT5555', $rendered);
+        $this->assertStringContainsString('37,000.00', $rendered);
+        $this->assertStringContainsString('11,850.00', $rendered);
+        $this->assertStringContainsString('35,150.00', $rendered);
+        $this->assertStringContainsString('10,150.00', $rendered);
+        $this->assertStringContainsString('UTR9988776655', $rendered);
+        $this->assertStringContainsString('Settlement Undertaking', $rendered);
+    }
 }
+
 
 

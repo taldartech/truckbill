@@ -210,6 +210,7 @@ Route::middleware(['role:admin,super_admin', 'company.context', 'subscription.ac
         Route::post('/freight_bookings/store_combined_payment', [FreightBookingController::class, 'storeCombinedPayment'])->name('freight_bookings.store_combined_payment');
         Route::get('/freight_bookings/data', [FreightBookingController::class, 'getFreightBookingsData'])->name('freight_bookings.datatable');
         Route::post('/freight_bookings/confirm', [FreightBookingController::class, 'confirm'])->name('freight_bookings.confirm');
+        Route::get('/freight_bookings/{freight_booking}/settlement', [FreightBookingController::class, 'settlementStatement'])->name('freight_bookings.settlement');
         Route::resource('freight_bookings', FreightBookingController::class);
         Route::post('/freight_bookings/voucher-payment', [FreightBookingController::class, 'voucherPayment'])->name('freight_bookings.voucher_payment');
         Route::post('/freight_bookings/bulk-memo-id', [FreightBookingController::class, 'bulkMemoId'])->name('freight_bookings.bulk_memo_id');

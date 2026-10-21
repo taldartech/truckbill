@@ -27,6 +27,11 @@
         @endif
     </div>
     <div class="dashboard-kpi__value text-nowrap">{{ $value }}</div>
+    @if (isset($progressPercent))
+        <div class="dashboard-kpi__progress-track" @if(!empty($progressHint)) title="{{ $progressHint }}" @endif>
+            <div class="dashboard-kpi__progress-fill dashboard-kpi__progress-fill--{{ $progressTone ?? $tone }}" style="width: {{ min(100, max(4, (float)$progressPercent)) }}%;"></div>
+        </div>
+    @endif
     <div class="dashboard-kpi__foot">
         @if ($delta !== null)
             <span class="dashboard-kpi__delta dashboard-kpi__delta--{{ $deltaTone }}" @if ($comparison) title="{{ $comparison }}" @endif>

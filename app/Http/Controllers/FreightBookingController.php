@@ -546,6 +546,8 @@ class FreightBookingController extends Controller
                         $html .= 'title="'.e($printTitle).'" data-bs-toggle="tooltip"><i class="bi bi-file-earmark-text"></i></a>';
                     }
 
+                    $html .= '<a href="'.e(route('freight_bookings.settlement', $booking->id)).'" class="btn btn-sm btn-icon" style="color: #0284c7;" title="Broker Settlement Statement" data-bs-toggle="tooltip"><i class="bi bi-file-earmark-ruled"></i></a>';
+
                     $html .= '</div>';
 
                     return $html;
@@ -1126,6 +1128,129 @@ class FreightBookingController extends Controller
             return $this->redirectToFreightBookingsIndex(request(), 'error', 'Freight booking not found.');
         } catch (\Exception $e) {
             return $this->redirectToFreightBookingsIndex(request(), 'error', 'An error occurred while loading the good hire (lorry hire).');
+        }
+    }
+
+    /**
+     * Generate Broker / Transporter Settlement Statement & Bill Verification Slip
+     */
+    public function settlementStatement($id)
+    {
+        try {
+            $company = auth()->user()->company;
+            $company?->loadMissing('setting');
+
+            $freightBooking = FreightBooking::with([
+                'lr.truck.driver',
+                'lr.transporter.transporterMaster',
+                'lr.consignor.city',
+                'lr.consignee.city',
+                'lr.branch',
+                'company.setting',
+                'customAmounts',
+            ])->findOrFail($id);
+
+            if (Auth::user()->company_id && $freightBooking->company_id !== Auth::user()->company_id) {
+                abort(403, 'Unauthorized access to good hire (lorry hire).');
+            }
+
+            $isCombined = (bool) $freightBooking->linked_lr_id;
+            $linkedFreightBookings = collect();
+            $payments = collect();
+
+            if ($isCombined) {
+                $linkedFreightBookings = FreightBooking::where('linked_lr_id', $freightBooking->linked_lr_id)
+                    ->where('company_id', auth()->user()->company_id)
+                    ->with([
+                        'lr.truck.driver',
+                        'lr.transporter.transporterMaster',
+                        'lr.consignor.city',
+                        'lr.consignee.city',
+                        'lr.branch',
+                        'customAmounts',
+                    ])
+                    ->orderBy('id')
+                    ->get();
+
+                $freightBookingIds = $linkedFreightBookings->pluck('id')->toArray();
+
+                $payments = VoucherLinked::with(['pump', 'company'])
+                    ->whereIn('freight_booking_id', $freightBookingIds)
+                    ->where('company_id', auth()->user()->company_id)
+                    ->orderBy('date', 'asc')
+                    ->orderBy('id', 'asc')
+                    ->get();
+
+                $grossFreight = (float) $linkedFreightBookings->sum('tr_amount');
+                $detention = (float) $linkedFreightBookings->sum('detention');
+                $deviation = (float) $linkedFreightBookings->sum('deviation');
+                $miscExpense = (float) $linkedFreightBookings->sum('misc_expense');
+                $customAdditions = (float) $linkedFreightBookings->sum(fn ($b) => $b->customAmountsTotal());
+
+                $advanceDeduction = (float) $linkedFreightBookings->sum('advance_amount');
+                $shortageDeduction = (float) $linkedFreightBookings->sum('shortage_amount');
+                $damageDeduction = (float) $linkedFreightBookings->sum('damage_amount');
+                $tdsDeduction = (float) $linkedFreightBookings->sum('tds_amount');
+                $negativeAdjusted = (float) $linkedFreightBookings->sum('negative_adjusted_amount');
+
+                $effectivePayable = (float) $linkedFreightBookings->sum(fn ($b) => $b->effectivePayableAmount());
+                $totalPaid = (float) $payments->sum('amount');
+                $balanceDue = (float) $linkedFreightBookings->sum('balance_amount');
+            } else {
+                $payments = VoucherPayment::with(['pump', 'company', 'bankLedger'])
+                    ->where('freight_booking_id', $id)
+                    ->orderBy('date', 'asc')
+                    ->orderBy('id', 'asc')
+                    ->get();
+
+                $grossFreight = (float) ($freightBooking->tr_amount ?? 0);
+                $detention = (float) ($freightBooking->detention ?? 0);
+                $deviation = (float) ($freightBooking->deviation ?? 0);
+                $miscExpense = (float) ($freightBooking->misc_expense ?? 0);
+                $customAdditions = (float) $freightBooking->customAmountsTotal();
+
+                $advanceDeduction = (float) ($freightBooking->advance_amount ?? 0);
+                $shortageDeduction = (float) ($freightBooking->shortage_amount ?? 0);
+                $damageDeduction = (float) ($freightBooking->damage_amount ?? 0);
+                $tdsDeduction = (float) ($freightBooking->tds_amount ?? 0);
+                $negativeAdjusted = (float) ($freightBooking->negative_adjusted_amount ?? 0);
+
+                $effectivePayable = (float) $freightBooking->effectivePayableAmount();
+                $totalPaid = (float) $payments->sum('amount');
+                $balanceDue = (float) ($freightBooking->balance_amount ?? 0);
+            }
+
+            $totalEarnings = $grossFreight + $detention + $deviation + $customAdditions;
+            $transitDeductions = $tdsDeduction + $shortageDeduction + $damageDeduction + $miscExpense + $negativeAdjusted;
+            $totalDeductions = $transitDeductions + $advanceDeduction;
+
+            return view('freight_bookings.settlement', compact(
+                'freightBooking',
+                'linkedFreightBookings',
+                'isCombined',
+                'company',
+                'payments',
+                'grossFreight',
+                'detention',
+                'deviation',
+                'miscExpense',
+                'customAdditions',
+                'totalEarnings',
+                'advanceDeduction',
+                'shortageDeduction',
+                'damageDeduction',
+                'tdsDeduction',
+                'negativeAdjusted',
+                'transitDeductions',
+                'totalDeductions',
+                'effectivePayable',
+                'totalPaid',
+                'balanceDue'
+            ));
+        } catch (ModelNotFoundException $e) {
+            return $this->redirectToFreightBookingsIndex(request(), 'error', 'Freight booking not found.');
+        } catch (\Exception $e) {
+            return $this->redirectToFreightBookingsIndex(request(), 'error', 'An error occurred while generating the settlement statement.');
         }
     }
 

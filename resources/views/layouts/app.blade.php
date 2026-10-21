@@ -647,7 +647,7 @@
                         </span>
                     </li>
                     @auth
-                        @if (Auth::user()->userRole->name === 'super_admin' && session('super_admin_company_id'))
+                        @if (Auth::user()->userRole?->name === 'super_admin' && session('super_admin_company_id'))
                             <li class="nav-item flex-shrink-0">
                                 <a href="{{ route('company.exit') }}" class="nav-link text-warning text-nowrap d-inline-flex align-items-center p-1 p-sm-2" title="Exit company context" style="white-space: nowrap;">
                                     <i class="bi bi-box-arrow-left me-1"></i>Exit Company
@@ -661,7 +661,7 @@
                 <!--begin::End Navbar Links-->
                 <ul class="navbar-nav ms-auto d-flex flex-row align-items-center flex-nowrap gap-1 gap-sm-2 mb-0">
                     @auth
-                        @if (in_array(Auth::user()->user_role_id, [3, 4, 5]) || (Auth::user()->userRole->name === 'super_admin' && Auth::user()->canAccessCompanyPanel()))
+                        @if (in_array(Auth::user()->user_role_id, [3, 4, 5]) || (Auth::user()->userRole?->name === 'super_admin' && Auth::user()->canAccessCompanyPanel()))
                             <li class="nav-item flex-shrink-0">
                                 <div class="credits-container">
                                     <div class="credit-pill credit-pill--expiry" title="Plan Expiry">
@@ -744,7 +744,7 @@
                                 <p>Dashboard</p>
                             </a>
                         </li>
-                        @if (auth()->check() && auth()->user()->userRole->name === 'master_admin')
+                        @if (auth()->check() && auth()->user()->userRole?->name === 'master_admin')
                             <li class="nav-item">
                                 <a href="{{ route('master.summary-dashboard') }}"
                                     class="nav-link{{ Request::is('master/summary-dashboard') ? ' active' : '' }}">
@@ -753,7 +753,7 @@
                                 </a>
                             </li>
                         @endif
-                        @if (auth()->check() && auth()->user()->userRole->name === 'master_admin')
+                        @if (auth()->check() && auth()->user()->userRole?->name === 'master_admin')
                             <li class="nav-header">Platform</li>
                             <li class="nav-item">
                                 <a href="/users" class="nav-link{{ Request::is('users*') ? ' active' : '' }}">
@@ -827,7 +827,7 @@
                             </li>
                         @endif
 
-                        @if (auth()->check() && auth()->user()->userRole->name === 'super_admin' && !session('super_admin_company_id'))
+                        @if (auth()->check() && auth()->user()->userRole?->name === 'super_admin' && !session('super_admin_company_id'))
                             <li class="nav-header">Platform</li>
                             <li class="nav-item">
                                 <a href="{{ route('audit-logs.index') }}"
@@ -1184,7 +1184,7 @@
                                 </ul>
                             </li>
 
-                            @if (in_array(auth()->user()->userRole->name, ['super_admin', 'moderator', 'admin']))
+                            @if (in_array(auth()->user()->userRole?->name, ['super_admin', 'moderator', 'admin']))
                                 <li class="nav-header">Setup</li>
                                 <li class="nav-item">
                                     <a class="nav-link{{ Request::is('master/*') ? ' active' : '' }}" href="#masterMenu">
@@ -1237,7 +1237,7 @@
                         @endif
 
                         {{-- Accounting Section --}}
-                        @if (auth()->check() && (in_array(auth()->user()->userRole->name, ['accountant', 'admin']) || (auth()->user()->userRole->name === 'super_admin' && auth()->user()->canAccessCompanyPanel())))
+                        @if (auth()->check() && (in_array(auth()->user()->userRole?->name, ['accountant', 'admin']) || (auth()->user()->userRole?->name === 'super_admin' && auth()->user()->canAccessCompanyPanel())))
                             <li class="nav-header">Financials & Accounting</li>
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('accounting*') ? ' active' : '' }}" href="#accountingMenu"
@@ -1325,7 +1325,7 @@
                         @endif
 
                         {{-- Reports Section - admin, accountant, moderator, or super_admin in company context --}}
-                        @if (auth()->check() && (in_array(auth()->user()->userRole->name, ['accountant', 'admin', 'moderator']) || (auth()->user()->userRole->name === 'super_admin' && auth()->user()->canAccessCompanyPanel())))
+                        @if (auth()->check() && (in_array(auth()->user()->userRole?->name, ['accountant', 'admin', 'moderator']) || (auth()->user()->userRole?->name === 'super_admin' && auth()->user()->canAccessCompanyPanel())))
                             <li class="nav-header">Insights</li>
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('reports*') ? ' active' : '' }}" href="#reportsMenu"
@@ -1487,7 +1487,7 @@
                     <i class="fas fa-user-circle sidebar-user__avatar" aria-hidden="true"></i>
                     <div class="sidebar-user__info">
                         <span class="sidebar-user__name">{{ auth()->user()->name }}</span>
-                        <span class="sidebar-user__role">{{ str_replace('_', ' ', auth()->user()->userRole->name ?? '') }}</span>
+                        <span class="sidebar-user__role">{{ str_replace('_', ' ', auth()->user()->userRole?->name ?? '') }}</span>
                     </div>
                 </div>
             @endauth

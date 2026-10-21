@@ -89,9 +89,58 @@
                             root.querySelectorAll('[data-dash-pane]').forEach((pane) => {
                                 pane.hidden = pane.getAttribute('data-dash-pane') !== tab;
                             });
+                            setTimeout(() => {
+                                window.dispatchEvent(new Event('resize'));
+                            }, 50);
                         });
                     });
                 });
+            }
+
+            function initMainTabs() {
+                const bar = document.querySelector('[data-dashboard-main-tabs]');
+                const content = document.querySelector('[data-dashboard-main-tabs-content]');
+                if (!bar || !content) return;
+
+                const tabButtons = bar.querySelectorAll('[data-main-tab]');
+                const panes = content.querySelectorAll('[data-main-pane]');
+
+                function activateTab(tabId) {
+                    let found = false;
+                    tabButtons.forEach((btn) => {
+                        const isMatch = btn.getAttribute('data-main-tab') === tabId;
+                        btn.classList.toggle('is-active', isMatch);
+                        if (isMatch) found = true;
+                    });
+                    if (!found && tabButtons.length > 0) {
+                        tabId = tabButtons[0].getAttribute('data-main-tab');
+                        tabButtons[0].classList.add('is-active');
+                    }
+                    panes.forEach((pane) => {
+                        pane.hidden = pane.getAttribute('data-main-pane') !== tabId;
+                    });
+                    try {
+                        localStorage.setItem('tb_dash_active_tab', tabId);
+                    } catch (e) {}
+                    setTimeout(() => {
+                        window.dispatchEvent(new Event('resize'));
+                    }, 60);
+                }
+
+                tabButtons.forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        const tab = btn.getAttribute('data-main-tab');
+                        activateTab(tab);
+                    });
+                });
+
+                let savedTab = null;
+                try {
+                    savedTab = localStorage.getItem('tb_dash_active_tab');
+                } catch (e) {}
+                if (savedTab && bar.querySelector(`[data-main-tab="${savedTab}"]`)) {
+                    activateTab(savedTab);
+                }
             }
 
             const compactRupees = (value) => '₹' + Number(value).toLocaleString('en-IN', { notation: 'compact', maximumFractionDigits: 1 });
@@ -225,6 +274,7 @@
 
             document.addEventListener('DOMContentLoaded', function () {
                 animateCountUps();
+                initMainTabs();
                 initTabs();
                 initCharts();
             });
