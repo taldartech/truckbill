@@ -142,6 +142,20 @@
             padding: 0.3rem 0.4rem !important;
         }
     }
+
+    .profitability-filter-row .btn-profitability-action {
+        min-height: 38px !important;
+        height: 38px !important;
+        padding: 0.35rem 0.65rem !important;
+        border-radius: 8px !important;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+        line-height: 1.25 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex: 1 1 0% !important;
+    }
 </style>
 <div class="container mt-4">
 
@@ -241,12 +255,12 @@
 
                     {{-- Filter Button --}}
                     <div class="col-6 col-md-2 d-flex align-items-end gap-1 gap-sm-2">
-                        <button type="submit" class="btn btn-primary btn-sm flex-fill d-inline-flex align-items-center justify-content-center" style="min-height: 31px;">
+                        <button type="submit" class="btn btn-primary btn-sm flex-fill d-inline-flex align-items-center justify-content-center btn-profitability-action" style="min-height: 38px; height: 38px; border-radius: 8px; padding: 0.35rem 0.65rem;">
                             Filter
                         </button>
                         <a href="{{ route('reports.profitability-export', request()->query()) }}"
-                           class="btn btn-sm flex-fill d-inline-flex align-items-center justify-content-center"
-                           style="background-color: #f9a900; color: #000; white-space: nowrap; min-height: 31px;">
+                           class="btn btn-sm flex-fill d-inline-flex align-items-center justify-content-center btn-profitability-action"
+                           style="background-color: #f9a900; color: #000; white-space: nowrap; min-height: 38px; height: 38px; border-radius: 8px; padding: 0.35rem 0.65rem;">
                             Export
                         </a>
                     </div>

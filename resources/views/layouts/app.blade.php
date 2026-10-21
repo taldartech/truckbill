@@ -461,9 +461,10 @@
             }
             .truckbill-footer-content .footer-col-nav {
                 order: 1;
-                flex-wrap: wrap;
+                flex-wrap: nowrap !important;
+                white-space: nowrap !important;
                 justify-content: center;
-                row-gap: 0.2rem;
+                font-size: 0.74rem !important;
             }
             .truckbill-footer-content .footer-col-brand {
                 order: 2;
@@ -474,7 +475,7 @@
                 justify-content: center;
             }
             .truckbill-footer-content .footer-separator {
-                margin: 0 0.35rem;
+                margin: 0 0.22rem;
             }
             .truckbill-footer-content .footer-version-badge {
                 font-size: 0.70rem !important;
@@ -485,11 +486,78 @@
         /* Extra Small Mobile (< 480px) */
         @media (max-width: 479.98px) {
             .truckbill-footer-content {
-                font-size: 0.76rem !important;
+                font-size: 0.72rem !important;
                 gap: 0.35rem !important;
             }
+            .truckbill-footer-content .footer-col-nav {
+                font-size: 0.67rem !important;
+                flex-wrap: nowrap !important;
+                white-space: nowrap !important;
+            }
             .truckbill-footer-content .footer-separator {
-                margin: 0 0.2rem;
+                margin: 0 0.14rem;
+            }
+        }
+
+        /* Narrow Mobile (< 360px) */
+        @media (max-width: 359.98px) {
+            .truckbill-footer-content .footer-col-nav {
+                font-size: 0.60rem !important;
+            }
+            .truckbill-footer-content .footer-separator {
+                margin: 0 0.08rem;
+            }
+        }
+
+        /* Mobile View: Compact text size and padding for table data across all Reports */
+        @media (max-width: 767.98px) {
+            body.is-reports-page .table th,
+            body.is-reports-page table th {
+                font-size: 0.76rem !important;
+                padding: 0.35rem 0.45rem !important;
+                white-space: nowrap !important;
+            }
+
+            body.is-reports-page .table td,
+            body.is-reports-page table td {
+                font-size: 0.73rem !important;
+                padding: 0.35rem 0.45rem !important;
+                line-height: 1.3 !important;
+            }
+
+            body.is-reports-page .table td .badge,
+            body.is-reports-page table td .badge,
+            body.is-reports-page .table td small,
+            body.is-reports-page table td small,
+            body.is-reports-page .table td span:not(.badge) {
+                font-size: inherit;
+            }
+
+            body.is-reports-page .table td .badge {
+                font-size: 0.68rem !important;
+            }
+
+            body.is-reports-page .table td .btn {
+                font-size: 0.70rem !important;
+                padding: 0.15rem 0.35rem !important;
+            }
+        }
+
+        @media (max-width: 479.98px) {
+            body.is-reports-page .table th,
+            body.is-reports-page table th {
+                font-size: 0.72rem !important;
+                padding: 0.28rem 0.35rem !important;
+            }
+
+            body.is-reports-page .table td,
+            body.is-reports-page table td {
+                font-size: 0.70rem !important;
+                padding: 0.28rem 0.35rem !important;
+            }
+
+            body.is-reports-page .table td .badge {
+                font-size: 0.65rem !important;
             }
         }
 
@@ -624,8 +692,7 @@
     @stack('styles')
 </head>
 
-
-<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+<body class="layout-fixed sidebar-expand-lg bg-body-tertiary {{ (request()->routeIs('reports.*') || request()->is('reports*')) ? 'is-reports-page' : '' }}">
       @include('components.loading.AppResponseLoader')
     <!--begin::App Wrapper-->
     <div class="app-wrapper">

@@ -31,10 +31,21 @@
 
 .lrf-page__toolbar-title {
     margin: 0;
-    font-size: 1.2rem;
+    font-size: 18px;
     font-weight: 750;
     color: #0f172a;
     letter-spacing: -0.01em;
+}
+
+.lrf-toolbar-back-btn {
+    min-height: 30px !important;
+    padding: 0.22rem 0.65rem !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    border-radius: 0.45rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    white-space: nowrap !important;
 }
 
 .lrf-page__toolbar-sub {
@@ -196,6 +207,23 @@
     border-radius: var(--radius);
 }
 
+.lrf-section__head-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.lrf-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.lrf-title-row .lrf-section__title {
+    white-space: nowrap;
+}
+
 .lrf-optional-chip {
     display: inline-flex;
     align-items: center;
@@ -206,6 +234,8 @@
     background: #e2e8f0;
     border-radius: 999px;
     padding: 0.2rem 0.55rem;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .lrf-collapse-arrow {
@@ -213,6 +243,14 @@
     font-size: 0.95rem;
     transition: transform 0.25s ease;
     display: inline-flex;
+}
+
+.lrf-title-row .lrf-collapse-arrow {
+    margin-left: 2px;
+    font-size: 0.85rem;
+    color: #64748b;
+    display: inline-flex;
+    align-items: center;
 }
 
 .lrf-collapse-arrow--open {
@@ -369,19 +407,6 @@
     align-items: stretch;
 }
 
-@media (max-width: 991px) {
-    .lrf-receipt-grid {
-        grid-template-columns: 1fr;
-        grid-template-rows: none;
-    }
-
-    .lrf-receipt-card {
-        display: flex;
-        flex-direction: column;
-        grid-row: auto;
-    }
-}
-
 .lrf-receipt-card {
     display: grid;
     grid-template-rows: subgrid;
@@ -392,6 +417,23 @@
     background: #f8fafc;
     padding: 12px 13px 14px;
     min-width: 0;
+}
+
+@media (max-width: 991px) {
+    .lrf-receipt-grid {
+        grid-template-columns: 1fr !important;
+        grid-template-rows: none !important;
+        height: auto !important;
+    }
+
+    .lrf-receipt-card {
+        display: flex !important;
+        flex-direction: column !important;
+        grid-row: auto !important;
+        grid-template-rows: none !important;
+        height: auto !important;
+        min-height: auto !important;
+    }
 }
 
 .lrf-receipt-card__title {
@@ -692,6 +734,7 @@
     border-radius: 8px;
     border-color: #e2e8f0;
     font-size: var(--fs-input);
+    padding: 0.375rem 0.75rem;
     transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
@@ -781,25 +824,35 @@
 .eway-bill-row .input-group .form-control {
     font-size: var(--fs-input);
     height: var(--input-h);
+    border-color: #cbd5e1 !important;
 }
 
-.eway-bill-row .eway-portal-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 0.65rem;
-    height: var(--input-h);
-    font-size: 0.85rem;
-    color: #16a34a;
-    border-color: #bbf7d0;
-    background: #f0fdf4;
+.eway-bill-row .eway-portal-btn,
+.lrf-pf .input-group a.eway-portal-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 0.75rem !important;
+    min-width: 42px !important;
+    height: var(--input-h) !important;
+    font-size: 0.95rem !important;
+    color: #15803d !important;
+    background: #f0fdf4 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-left: 1px solid #cbd5e1 !important;
+    border-top-right-radius: 8px !important;
+    border-bottom-right-radius: 8px !important;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    box-shadow: none !important;
     transition: all 0.15s ease;
 }
 
-.eway-bill-row .eway-portal-btn:hover {
-    background: #16a34a;
-    color: #fff;
-    border-color: #16a34a;
+.eway-bill-row .eway-portal-btn:hover,
+.lrf-pf .input-group a.eway-portal-btn:hover {
+    background: #16a34a !important;
+    color: #fff !important;
+    border-color: #16a34a !important;
 }
 
 .eway-bill-row .eway-expiry-input {
@@ -2039,6 +2092,56 @@
         margin-top: 0.15rem;
     }
 
+    .lrf-section__head--toggle {
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    .lrf-section__head--toggle .lrf-section__head-left {
+        width: auto !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        gap: 8px !important;
+    }
+
+    .lrf-section__head--toggle .lrf-section__head-text {
+        min-width: 0 !important;
+    }
+
+    .lrf-section__head--toggle .lrf-title-row {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        flex-wrap: nowrap !important;
+    }
+
+    .lrf-section__head--toggle .lrf-section__title {
+        white-space: nowrap !important;
+        font-size: 0.84rem !important;
+    }
+
+    .lrf-section__head--toggle .lrf-optional-chip {
+        white-space: nowrap !important;
+        font-size: 0.65rem !important;
+        padding: 0.12rem 0.45rem !important;
+        flex-shrink: 0 !important;
+    }
+
+    .lrf-section__head--toggle .lrf-title-row .lrf-collapse-arrow {
+        font-size: 0.8rem !important;
+        margin-left: 2px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+    }
+
+    .lrf-section__head--toggle .lrf-section__head-right {
+        width: auto !important;
+        margin-top: 0 !important;
+        flex-shrink: 0 !important;
+        align-self: center !important;
+    }
+
     .lrf-amount-toggle {
         margin-left: 0;
         white-space: normal;
@@ -2082,8 +2185,14 @@
     }
 
     .lrf-page__toolbar-title {
-        font-size: 0.95rem;
+        font-size: 18px !important;
         line-height: 1.25;
+    }
+
+    .lrf-toolbar-back-btn {
+        min-height: 28px !important;
+        padding: 0.2rem 0.55rem !important;
+        font-size: 0.76rem !important;
     }
 
     .lrf-page__toolbar-sub {
@@ -2193,7 +2302,7 @@
     .lrf-actions {
         flex-direction: row;
         flex-wrap: nowrap;
-        justify-content: flex-start;
+        justify-content: center;
         align-items: center;
         gap: 0.4rem;
         width: 100%;
@@ -2228,6 +2337,80 @@
         min-width: 480px;
     }
 
+    /* Vehicle & Payee Card on Mobile:
+       Line 1: Truck (full width)
+       Line 2: Pay to + Agency / Transporter (same line side-by-side)
+       Line 3: Driver / TDS (full width)
+       Laptop/Desktop layout remains unchanged.
+    */
+    .lrf-receipt-card--vehicle,
+    .lrf-receipt-card:has(#lrPayeeRow) {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        grid-template-rows: auto auto auto auto !important;
+        gap: 10px 8px !important;
+        height: auto !important;
+        min-height: auto !important;
+        padding-bottom: 14px !important;
+    }
+
+    .lrf-receipt-card--vehicle > .lrf-receipt-card__title,
+    .lrf-receipt-card:has(#lrPayeeRow) > .lrf-receipt-card__title {
+        grid-row: 1 !important;
+        grid-column: 1 / -1 !important;
+        margin-bottom: 2px !important;
+    }
+
+    .lrf-receipt-card--vehicle > .lrf-receipt-card__row,
+    .lrf-receipt-card:has(#lrPayeeRow) > .lrf-receipt-card__row {
+        display: contents !important;
+    }
+
+    /* 1. Truck: single line (full width) on row 2 */
+    .lrf-receipt-card--vehicle > .lrf-receipt-card__row:not(#lrPayeeRow) > .lrf-pf:first-child,
+    .lrf-receipt-card:has(#lrPayeeRow) > .lrf-receipt-card__row:not(#lrPayeeRow) > .lrf-pf:first-child {
+        grid-row: 2 !important;
+        grid-column: 1 / -1 !important;
+    }
+
+    /* 2. Pay to & Agency: same line side-by-side on row 3 */
+    .lrf-receipt-card--vehicle #lrPayToField,
+    .lrf-receipt-card:has(#lrPayeeRow) #lrPayToField {
+        grid-row: 3 !important;
+        grid-column: 1 / -1 !important;
+    }
+
+    .lrf-receipt-card--vehicle:has(#lrPayeeRow:not([hidden])) #lrPayToField,
+    .lrf-receipt-card:has(#lrPayeeRow:not([hidden])) #lrPayToField {
+        grid-row: 3 !important;
+        grid-column: 1 !important;
+    }
+
+    .lrf-receipt-card--vehicle #lrPayeeRow > .lrf-pf:first-child,
+    .lrf-receipt-card:has(#lrPayeeRow) #lrPayeeRow > .lrf-pf:first-child {
+        grid-row: 3 !important;
+        grid-column: 2 !important;
+    }
+
+    /* 3. Driver / TDS: single line (full width) on row 4 */
+    .lrf-receipt-card--vehicle #lrPayeeRow > .lrf-pay-meta,
+    .lrf-receipt-card:has(#lrPayeeRow) #lrPayeeRow > .lrf-pay-meta {
+        grid-row: 4 !important;
+        grid-column: 1 / -1 !important;
+    }
+
+    /* Protect hidden state with display: contents */
+    .lrf-receipt-card--vehicle #lrPayeeRow[hidden],
+    .lrf-receipt-card:has(#lrPayeeRow) #lrPayeeRow[hidden],
+    .lrf-receipt-card--vehicle #lrPayeeRow[hidden] > *,
+    .lrf-receipt-card:has(#lrPayeeRow) #lrPayeeRow[hidden] > *,
+    .lrf-receipt-card--vehicle #lrPayToField[hidden],
+    .lrf-receipt-card:has(#lrPayeeRow) #lrPayToField[hidden],
+    .lrf-receipt-card--vehicle #lrPayToField[hidden] > *,
+    .lrf-receipt-card:has(#lrPayeeRow) #lrPayToField[hidden] > * {
+        display: none !important;
+    }
+
     /* E-Way Bills & Optional Section on mobile */
     .fb-optional-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -2241,12 +2424,12 @@
     .eway-bill-row {
         display: grid !important;
         grid-template-columns: 1fr auto !important;
-        gap: 6px !important;
-        padding: 8px !important;
+        gap: 8px !important;
+        padding: 10px !important;
         background: #f8fafc !important;
         border: 1px solid #e2e8f0 !important;
         border-radius: 8px !important;
-        margin-bottom: 8px !important;
+        margin-bottom: 10px !important;
     }
 
     .eway-bill-row .input-group {
@@ -2257,19 +2440,23 @@
     .eway-bill-row .input-group .form-control {
         font-size: 0.78rem !important;
         height: 34px !important;
+        padding: 0.35rem 0.75rem !important;
     }
 
     .eway-bill-row .eway-portal-btn {
         height: 34px !important;
-        padding: 0 0.55rem !important;
-        font-size: 0.75rem !important;
+        padding: 0 0.65rem !important;
+        font-size: 0.9rem !important;
+        min-width: 38px !important;
+        border: 1px solid #cbd5e1 !important;
+        border-left: 1px solid #cbd5e1 !important;
     }
 
     .eway-bill-row .eway-expiry-input {
         grid-column: 1 / 2 !important;
         height: 34px !important;
         font-size: 0.76rem !important;
-        padding: 0 0.45rem !important;
+        padding: 0.35rem 0.75rem !important;
         width: 100% !important;
         min-width: 0 !important;
     }
@@ -2304,8 +2491,14 @@
     }
 
     .lrf-page__toolbar-title {
-        font-size: 0.85rem;
-        line-height: 1.2;
+        font-size: 18px !important;
+        line-height: 1.25;
+    }
+
+    .lrf-toolbar-back-btn {
+        min-height: 26px !important;
+        padding: 0.16rem 0.5rem !important;
+        font-size: 0.74rem !important;
     }
 
     .lrf-page__toolbar-sub {
@@ -2390,6 +2583,7 @@
         display: flex;
         flex-direction: row;
         flex-wrap: nowrap;
+        justify-content: center;
         align-items: center;
         gap: 0.3rem;
         padding: 0.2rem 0 0.35rem;
@@ -2441,7 +2635,7 @@
     .lrf-pf .form-control,
     .lrf-pf .form-select {
         font-size: 0.78rem;
-        padding: 0.32rem 0.45rem;
+        padding: 0.35rem 0.75rem !important;
         min-height: 34px;
         height: 34px;
     }
@@ -2450,6 +2644,7 @@
         height: 34px !important;
         min-height: 34px !important;
         max-height: 34px !important;
+        padding: 0.35rem 0.75rem !important;
         border-top-right-radius: 0 !important;
         border-bottom-right-radius: 0 !important;
         border-top-left-radius: 8px !important;
@@ -2583,9 +2778,18 @@
     .eway-bill-row .eway-expiry-input {
         font-size: 0.74rem !important;
         height: 32px !important;
+        padding: 0.3rem 0.65rem !important;
     }
 
-    .eway-bill-row .eway-portal-btn,
+    .eway-bill-row .eway-portal-btn {
+        height: 32px !important;
+        font-size: 0.85rem !important;
+        min-width: 36px !important;
+        padding: 0 0.5rem !important;
+        border: 1px solid #cbd5e1 !important;
+        border-left: 1px solid #cbd5e1 !important;
+    }
+
     .eway-bill-row .remove-eway-bill {
         height: 32px !important;
         font-size: 0.72rem !important;

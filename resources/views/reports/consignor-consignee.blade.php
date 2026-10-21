@@ -48,10 +48,10 @@
                     </div>
 
                     <div class="col-12 col-md-4 d-flex align-items-end justify-content-end gap-1 gap-sm-2 mt-2 mt-md-0">
-                        <button type="submit" class="btn btn-brand-primary btn-sm" title="Search">
+                        <button type="submit" class="btn btn-brand-primary btn-sm btn-report-search" title="Search">
                             <i class="bi bi-search"></i><span class="d-none d-sm-inline ms-1">Search</span>
                         </button>
-                        <a href="{{ route('reports.consignor-consignee') }}" class="btn btn-secondary btn-sm" title="Reset">
+                        <a href="{{ route('reports.consignor-consignee') }}" class="btn btn-secondary btn-sm btn-report-reset" title="Reset">
                             <i class="bi bi-arrow-clockwise"></i><span class="d-none d-sm-inline ms-1">Reset</span>
                         </a>
                     </div>

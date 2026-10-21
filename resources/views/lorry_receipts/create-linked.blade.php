@@ -8,16 +8,18 @@
     @include('lorry_receipts.partials.linked-lr-form-styles')
     <div class="lrf-page app-index-page linked-lr-page">
         <div class="lrf-page__toolbar">
-            <div>
-                <h1 class="lrf-page__toolbar-title">Add Linked Good Receipts (Bilty)</h1>
-                <p class="lrf-page__toolbar-sub">Enter shared transport details once, then add multiple lorry receipts in the same linked group.</p>
+            <div class="lrf-page__toolbar-left">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <h1 class="lrf-page__toolbar-title mb-0">Add Linked Good Receipts (Bilty)</h1>
+                    <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-secondary btn-sm lrf-toolbar-back-btn">
+                        <i class="bi bi-arrow-left me-1"></i> Back
+                    </a>
+                </div>
+                <p class="lrf-page__toolbar-sub mb-0 mt-1">Enter shared transport details once, then add multiple lorry receipts in the same linked group.</p>
             </div>
             <div class="lrf-page__toolbar-actions">
                 <a href="{{ route('consignees.create') }}" class="btn btn-outline-secondary btn-sm" target="_blank">
                     <i class="bi bi-plus-lg me-1"></i> Create Consignee
-                </a>
-                <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-arrow-left me-1"></i> Back
                 </a>
             </div>
         </div>
@@ -86,7 +88,7 @@
                             </div>
                         </div>
 
-                        <div class="lrf-receipt-card">
+                        <div class="lrf-receipt-card lrf-receipt-card--vehicle">
                             <div class="lrf-receipt-card__title">Vehicle &amp; Payee</div>
                             <div class="lrf-receipt-card__row lrf-grid lrf-grid--2">
                                 <div class="lrf-pf">

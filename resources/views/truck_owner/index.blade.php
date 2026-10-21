@@ -44,16 +44,13 @@
                     <a href="{{ route('truck_owners.create') }}" class="btn app-index-header-btn" aria-label="Create truck owner">
                         <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Create</span>
                     </a>
-                    <a href="{{ route('reports.transporter-master-export', ['type' => 'owner']) }}" class="btn app-index-header-btn" aria-label="Export truck owners">
-                        <i class="bi bi-file-earmark-excel"></i> <span class="d-none d-sm-inline">Export</span>
-                    </a>
-                     <button type="button"
-                     class="btn app-index-header-btn"
-                     data-bs-toggle="modal"
-                     data-bs-target="#bulkUploadModal"
-                     aria-label="Bulk upload truck owners">
-                    <i class="fas fa-upload"></i> Bulk Upload
-                     </button>
+                    <button type="button"
+                        class="btn app-index-header-btn"
+                        data-bs-toggle="modal"
+                        data-bs-target="#bulkUploadModal"
+                        aria-label="Bulk upload truck owners">
+                        <i class="fas fa-upload"></i> Bulk Upload
+                    </button>
                 </div>
             </div>
             <div class="card-body">

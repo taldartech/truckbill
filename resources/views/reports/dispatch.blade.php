@@ -20,15 +20,37 @@
                         <label class="form-label small mb-1">End Date <span class="text-danger">*</span></label>
                         <input type="date" name="end_date" class="form-control form-control-sm" value="{{ $endDate }}" required>
                     </div>
-                    <div class="col-6 col-md-3">
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <label class="form-label small mb-1">Customer</label>
+                        <select name="customer_id" class="form-select form-select-sm select2">
+                            <option value="">All Customers</option>
+                            @foreach ($customers as $customer)
+                                <option value="{{ $customer->id }}" {{ (string) ($customerId ?? '') === (string) $customer->id ? 'selected' : '' }}>
+                                    {{ $customer->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <label class="form-label small mb-1">Transporter</label>
+                        <select name="transporter_id" class="form-select form-select-sm select2">
+                            <option value="">All Transporters</option>
+                            @foreach ($transporters as $transporter)
+                                <option value="{{ $transporter->id }}" {{ (string) ($transporterId ?? '') === (string) $transporter->id ? 'selected' : '' }}>
+                                    {{ $transporter->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
                         <label class="form-label small mb-1 text-nowrap">Balance As On Date</label>
                         <input type="date" name="balance_as_on_date" class="form-control form-control-sm" value="{{ $balanceAsOnDate ?? '' }}">
                     </div>
-                    <div class="col-6 col-md-3 d-flex align-items-end justify-content-end gap-1 gap-sm-2">
-                        <button type="submit" class="btn btn-brand-primary btn-sm" title="Search">
+                    <div class="col-6 col-md-4 col-lg-2 d-flex align-items-end justify-content-end gap-1 gap-sm-2">
+                        <button type="submit" class="btn btn-brand-primary btn-sm btn-report-search" title="Search">
                             <i class="bi bi-search"></i> <span class="d-none d-sm-inline ms-1">Search</span>
                         </button>
-                        <a href="{{ route('reports.dispatch') }}?date={{ date('Y-m-d') }}" class="btn btn-secondary btn-sm" title="Reset">
+                        <a href="{{ route('reports.dispatch') }}?date={{ date('Y-m-d') }}" class="btn btn-secondary btn-sm btn-report-reset" title="Reset">
                             <i class="bi bi-arrow-clockwise"></i> <span class="d-none d-sm-inline ms-1">Reset</span>
                         </a>
                     </div>

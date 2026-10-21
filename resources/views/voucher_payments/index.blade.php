@@ -43,10 +43,22 @@
         }
 
         @media (max-width: 767.98px) {
-            #voucherPaymentsTable th,
+            #voucherPaymentsTable th {
+                font-size: 0.76rem !important;
+                padding: 5px 6px !important;
+            }
+
             #voucherPaymentsTable td {
-                font-size: 0.8125rem !important;
-                padding: 6px 8px !important;
+                font-size: 0.73rem !important;
+                padding: 5px 6px !important;
+            }
+
+            #voucherPaymentsTable td .badge {
+                font-size: 0.68rem !important;
+            }
+
+            #voucherPaymentsTable td small {
+                font-size: 0.68rem !important;
             }
         }
 
@@ -153,12 +165,43 @@
             }
 
             .voucher-payments-index .app-index-list-card > .card-header .card-title {
-                font-size: 0.95rem !important;
+                font-size: 0.82rem !important;
                 margin: 0 !important;
                 white-space: nowrap !important;
                 overflow: hidden !important;
                 text-overflow: ellipsis !important;
                 flex-shrink: 1 !important;
+            }
+
+            #voucherPaymentsTable th {
+                font-size: 0.72rem !important;
+                padding: 4px 6px !important;
+            }
+
+            #voucherPaymentsTable td {
+                font-size: 0.70rem !important;
+                padding: 4px 6px !important;
+            }
+
+            #voucherPaymentsTable td .badge {
+                font-size: 0.64rem !important;
+                padding: 0.15rem 0.35rem !important;
+            }
+
+            #voucherPaymentsTable td small {
+                font-size: 0.64rem !important;
+            }
+
+            .voucher-payments-index .dataTables_filter {
+                margin-top: 0.65rem !important;
+                margin-bottom: 0.6rem !important;
+                padding: 0 0.65rem !important;
+            }
+
+            .voucher-payments-index .dataTables_filter input {
+                height: 32px !important;
+                font-size: 0.78rem !important;
+                border-radius: 6px !important;
             }
 
             .voucher-payments-index .app-index-card-toolbar {
@@ -188,15 +231,19 @@
             }
 
             .vp-filter-actions {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 0.4rem;
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 0.5rem !important;
             }
 
             .vp-filter-actions .btn {
-                width: 100%;
+                flex: 1 1 50% !important;
+                width: auto !important;
                 margin: 0 !important;
                 text-align: center;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
             }
         }
     </style>

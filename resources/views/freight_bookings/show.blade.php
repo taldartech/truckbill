@@ -75,7 +75,7 @@
                                 <span class="badge bg-primary ms-1">Combined</span>
                             @endif
                         </strong>
-                        <div class="fb-detail-actions ms-auto">
+                        <div class="fb-detail-actions">
                             <a href="{{ route('freight_bookings.index') }}{{ $listingSuffix }}"
                                 class="btn btn-sm btn-icon btn-action-back"
                                 title="Back to list">
@@ -493,14 +493,16 @@
                 <div class="card fb-financial-summary">
                     <div class="fb-financial-summary__header">
                         <div>
-                            <strong class="fb-financial-summary__title">Financial Summary</strong>
+                            <div class="fb-financial-summary__title-row d-flex align-items-center gap-2 flex-wrap">
+                                <strong class="fb-financial-summary__title">Financial Summary</strong>
+                                <div class="fb-financial-summary__badge {{ $hasBalanceDue ? 'is-due' : 'is-clear' }}">
+                                    {{ $hasBalanceDue ? 'Balance due' : 'Cleared' }}
+                                    ₹{{ number_format(abs($balanceAmount), 2) }}
+                                </div>
+                            </div>
                             <span class="fb-financial-summary__subtitle">
                                 {{ $isCombined ? 'Combined hire vs deductions' : 'Hire vs deductions' }}
                             </span>
-                        </div>
-                        <div class="fb-financial-summary__badge {{ $hasBalanceDue ? 'is-due' : 'is-clear' }}">
-                            {{ $hasBalanceDue ? 'Balance due' : 'Cleared' }}
-                            ₹{{ number_format(abs($balanceAmount), 2) }}
                         </div>
                     </div>
                     <div class="fb-financial-summary__body">

@@ -302,12 +302,12 @@
                         <div class="lrf-step-num lrf-step-num--gray">2</div>
                         <div>
                             <h2 class="lrf-section__title">Optional Details</h2>
-                            <p class="lrf-section__desc">E-way bill, PAN status and remarks</p>
+                            <p class="lrf-section__desc">E-way bill and remarks</p>
                         </div>
                     </div>
-                 
-                   </div>
-              
+                </div>
+
+                <div class="lrf-section__body" id="fbOptionalBody">
                     <div class="lrf-grid lrf-grid--4 fb-optional-grid">
                         <div class="lrf-pf fb-eway-col" style="grid-column: span 2;">
                             <div class="d-flex justify-content-between align-items-center mb-1">
@@ -360,19 +360,17 @@
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
-                        <div class="lrf-pf">
-                            <label for="pan_verified_display" class="lrf-pf__lbl">PAN Verified<span class="lrf-pf__req">*</span></label>
+                        <div class="d-none" style="display: none !important;">
                             <input type="hidden" name="pan_verified" id="pan_verified"
                                 value="{{ isset($preFilled['pan_verified']) ? (int) $preFilled['pan_verified'] : (old('pan_verified') ? 1 : 0) }}"
                                 required>
                             <input type="text" class="form-control is-auto" id="pan_verified_display" readonly
                                 value="{{ isset($preFilled['pan_verified']) && $preFilled['pan_verified'] ? 'Yes' : 'No' }}">
-                            <div class="lrf-pf__hint">From transporter data</div>
                             @error('pan_verified')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
-                        <div class="lrf-pf">
+                        <div class="lrf-pf" style="grid-column: span 2;">
                             <label for="remark" class="lrf-pf__lbl">Remark</label>
                             <input type="text" name="remark" id="remark" class="form-control"
                                 value="{{ old('remark') }}" placeholder="Optional">

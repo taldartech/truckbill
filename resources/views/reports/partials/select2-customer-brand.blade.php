@@ -106,4 +106,30 @@
         background-color: var(--brand-active-bg, #e9f7f0) !important;
         color: var(--brand-primary-dark, #23965c) !important;
     }
+
+    @media (max-width: 575.98px) {
+        .btn-report-search,
+        .btn-report-reset,
+        .tb-report-customer-select2-form button[type="submit"],
+        .tb-report-customer-select2-form a[title="Reset"],
+        .tb-report-customer-select2-form a.btn-secondary {
+            min-height: 38px !important;
+            min-width: 38px !important;
+            padding: 0.35rem 0.65rem !important;
+            border-radius: 8px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        .btn-report-search i,
+        .btn-report-reset i,
+        .tb-report-customer-select2-form button[type="submit"] i,
+        .tb-report-customer-select2-form a[title="Reset"] i,
+        .tb-report-customer-select2-form a.btn-secondary i {
+            font-size: 1.25rem !important;
+            line-height: 1 !important;
+        }
+    }
 </style>
+

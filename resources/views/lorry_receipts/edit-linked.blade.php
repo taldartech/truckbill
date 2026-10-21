@@ -91,7 +91,7 @@
                             </div>
                         </div>
 
-                        <div class="lrf-receipt-card">
+                        <div class="lrf-receipt-card lrf-receipt-card--vehicle">
                             <div class="lrf-receipt-card__title">Vehicle &amp; Payee</div>
                             <div class="lrf-receipt-card__row lrf-grid lrf-grid--2">
                                 <div class="lrf-pf">

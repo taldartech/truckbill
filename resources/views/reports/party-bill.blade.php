@@ -39,10 +39,10 @@
                         </select>
                     </div>
                     <div class="col-12 col-md-3 d-flex justify-content-end gap-1 gap-sm-2">
-                        <button type="submit" class="btn btn-brand-primary btn-sm" title="Search">
+                        <button type="submit" class="btn btn-brand-primary btn-sm btn-report-search" title="Search">
                             <i class="bi bi-search"></i> <span class="d-none d-sm-inline ms-1">Search</span>
                         </button>
-                        <a href="{{ route('reports.party-bill') }}" class="btn btn-secondary btn-sm" title="Reset">
+                        <a href="{{ route('reports.party-bill') }}" class="btn btn-secondary btn-sm btn-report-reset" title="Reset">
                             <i class="bi bi-arrow-clockwise"></i> <span class="d-none d-sm-inline ms-1">Reset</span>
                         </a>
                     </div>
