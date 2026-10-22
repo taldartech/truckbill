@@ -47,10 +47,22 @@
         }
 
         @media (max-width: 767.98px) {
-            #paymentsTable th,
+            #paymentsTable th {
+                font-size: 0.76rem !important;
+                padding: 5px 6px !important;
+            }
+
             #paymentsTable td {
-                font-size: 0.8125rem !important;
-                padding: 6px 8px !important;
+                font-size: 0.73rem !important;
+                padding: 5px 6px !important;
+            }
+
+            #paymentsTable td .badge {
+                font-size: 0.68rem !important;
+            }
+
+            #paymentsTable td small {
+                font-size: 0.68rem !important;
             }
 
             .daily-payments-index .app-index-dt-toolbar h5 {
@@ -98,7 +110,9 @@
             display: flex;
             justify-content: flex-end;
             align-items: center;
+            margin-top: 0.65rem;
             margin-bottom: 0.5rem;
+            padding: 0 0.75rem;
         }
 
         .daily-payments-index .dataTables_filter label {
@@ -119,37 +133,101 @@
 
         @media (max-width: 575.98px) {
             .daily-payments-index .app-index-list-card > .card-header {
-                padding: 0.5rem 0.75rem !important;
-                flex-direction: column;
-                align-items: flex-start !important;
-                gap: 0.5rem;
+                padding: 0.45rem 0.65rem !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-wrap: nowrap !important;
+                gap: 0.4rem !important;
+            }
+
+            .daily-payments-index .app-index-list-card > .card-header .card-title {
+                font-size: 0.82rem !important;
+                line-height: 1.25 !important;
+                margin: 0 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                flex-shrink: 1 !important;
             }
 
             .daily-payments-index .app-index-card-toolbar {
-                width: 100%;
+                width: auto !important;
+                margin-left: auto !important;
+                flex-shrink: 0 !important;
+                display: inline-flex !important;
+                align-items: center !important;
             }
 
-            .daily-payments-index .app-index-card-toolbar .btn {
-                width: 100%;
-                text-align: center;
-                justify-content: center;
-                padding: 0.35rem 0.5rem !important;
-                font-size: 0.75rem !important;
+            .daily-payments-index .app-index-card-toolbar .btn,
+            .daily-payments-index #bulkActionBtn {
+                width: auto !important;
+                padding: 0.22rem 0.55rem !important;
+                font-size: 0.72rem !important;
+                line-height: 1.2 !important;
+                min-height: 28px !important;
+                height: 28px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 0.3rem !important;
+                border-radius: 6px !important;
+                white-space: nowrap !important;
+            }
+
+            .daily-payments-index #bulkActionBtn i {
+                font-size: 0.78rem !important;
+            }
+
+            .daily-payments-index .dataTables_wrapper {
+                padding-top: 0.25rem !important;
             }
 
             .daily-payments-index .dataTables_filter {
                 justify-content: stretch;
                 width: 100%;
+                margin-top: 0.65rem !important;
+                margin-bottom: 0.6rem !important;
+                padding: 0 0.65rem !important;
             }
 
             .daily-payments-index .dataTables_filter label {
                 width: 100%;
+                display: flex !important;
+                align-items: center !important;
+                gap: 0.45rem !important;
+                font-size: 0.78rem !important;
+                font-weight: 600;
+                margin-bottom: 0 !important;
             }
 
             .daily-payments-index .dataTables_filter input {
                 flex: 1 1 auto;
                 width: 100%;
                 min-width: 0;
+                height: 32px !important;
+                font-size: 0.78rem !important;
+                padding: 0.25rem 0.5rem !important;
+                border-radius: 6px !important;
+            }
+
+            #paymentsTable th {
+                font-size: 0.72rem !important;
+                padding: 4px 6px !important;
+            }
+
+            #paymentsTable td {
+                font-size: 0.70rem !important;
+                padding: 4px 6px !important;
+            }
+
+            #paymentsTable td .badge {
+                font-size: 0.64rem !important;
+                padding: 0.15rem 0.35rem !important;
+            }
+
+            #paymentsTable td small {
+                font-size: 0.64rem !important;
             }
 
             .daily-filter-actions {
@@ -335,8 +413,8 @@
 
         <!-- Payments List -->
         <div class="card app-index-list-card mb-4">
-            <div class="card-header">
-                <h3 class="card-title mb-0 fs-6 fs-md-5">Voucher Payments —
+            <div class="card-header d-flex align-items-center justify-content-between flex-nowrap">
+                <h3 class="card-title mb-0">Voucher Payments —
                     {{ \Carbon\Carbon::parse($selectedDate)->format('d M Y') }}</h3>
                 @if (auth()->user()->canActAsAdmin())
                     <div class="app-index-card-toolbar">

@@ -180,6 +180,35 @@
                 font-weight: 800 !important;
                 color: #166534 !important;
             }
+
+            .fb-compact-table {
+                font-size: 0.70rem !important;
+            }
+
+            .fb-compact-table thead th {
+                font-size: 0.62rem !important;
+                padding: 0.3rem 0.45rem !important;
+            }
+
+            .fb-compact-table tbody td {
+                font-size: 0.69rem !important;
+                padding: 0.3rem 0.45rem !important;
+            }
+
+            .fb-compact-table .badge {
+                font-size: 0.62rem !important;
+                padding: 0.15rem 0.35rem !important;
+            }
+
+            .fb-compact-table .fb-info-grid__sub {
+                font-size: 0.62rem !important;
+            }
+
+            .fb-compact-table td .btn-icon {
+                width: 24px !important;
+                height: 24px !important;
+                font-size: 0.68rem !important;
+            }
         }
     </style>
     @if (session('success'))
@@ -433,12 +462,14 @@
                 <div class="card fb-financial-summary">
                     <div class="fb-financial-summary__header">
                         <div>
-                            <strong class="fb-financial-summary__title">Financial Summary</strong>
+                            <div class="fb-financial-summary__title-row d-flex align-items-center gap-2 flex-wrap">
+                                <strong class="fb-financial-summary__title">Financial Summary</strong>
+                                <div class="fb-financial-summary__badge {{ $hasBalanceDue ? 'is-due' : 'is-clear' }}">
+                                    {{ $hasBalanceDue ? 'Balance due' : 'Cleared' }}
+                                    ₹{{ number_format(abs($balanceAmount), 2) }}
+                                </div>
+                            </div>
                             <span class="fb-financial-summary__subtitle">Hire vs payments on this voucher</span>
-                        </div>
-                        <div class="fb-financial-summary__badge {{ $hasBalanceDue ? 'is-due' : 'is-clear' }}">
-                            {{ $hasBalanceDue ? 'Balance due' : 'Cleared' }}
-                            ₹{{ number_format(abs($balanceAmount), 2) }}
                         </div>
                     </div>
                     <div class="fb-financial-summary__body">

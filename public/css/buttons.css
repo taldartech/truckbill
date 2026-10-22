@@ -190,3 +190,46 @@ a.btn-success:hover {
     background-color: #e2e6ea;
     color: var(--brand-text-primary) !important;
 }
+
+/* Mobile screen view: Enlarge Search & Reset button icons in Reports */
+@media (max-width: 575.98px) {
+    .btn-report-search,
+    .btn-report-reset,
+    .is-reports-page #searchForm button[type="submit"],
+    .is-reports-page #searchForm a[title="Reset"],
+    .is-reports-page #searchForm a.btn-secondary,
+    .is-reports-page form.tb-report-customer-select2-form button[type="submit"],
+    .is-reports-page form.tb-report-customer-select2-form a.btn-secondary,
+    form.tb-report-customer-select2-form button[type="submit"],
+    form.tb-report-customer-select2-form a[title="Reset"],
+    form[action*="/reports/"] button[type="submit"]:has(i.bi-search),
+    form[action*="/reports/"] a[title="Reset"],
+    .profitability-filter-row button[type="submit"],
+    .profitability-filter-row a.btn {
+        min-height: 38px !important;
+        min-width: 38px !important;
+        padding: 0.35rem 0.65rem !important;
+        border-radius: 8px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .btn-report-search i,
+    .btn-report-reset i,
+    .is-reports-page #searchForm button[type="submit"] i,
+    .is-reports-page #searchForm a[title="Reset"] i,
+    .is-reports-page #searchForm a.btn-secondary i,
+    .is-reports-page form.tb-report-customer-select2-form button[type="submit"] i,
+    .is-reports-page form.tb-report-customer-select2-form a.btn-secondary i,
+    .is-reports-page form button[type="submit"] i.bi-search,
+    .is-reports-page form a.btn-secondary i.bi-arrow-clockwise,
+    form.tb-report-customer-select2-form button[type="submit"] i,
+    form.tb-report-customer-select2-form a[title="Reset"] i,
+    form[action*="/reports/"] button[type="submit"] i,
+    form[action*="/reports/"] a[title="Reset"] i {
+        font-size: 1.25rem !important;
+        line-height: 1 !important;
+    }
+}
+

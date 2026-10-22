@@ -555,3 +555,56 @@ a.btn-outline-primary:hover {
     z-index: 2;
     border-bottom: 1px solid var(--brand-border);
 }
+
+/* Mobile View: Compact text size and padding for table data across all Reports */
+@media (max-width: 767.98px) {
+    body.is-reports-page .table th,
+    body.is-reports-page table th {
+        font-size: 0.76rem !important;
+        padding: 0.35rem 0.45rem !important;
+        white-space: nowrap !important;
+    }
+
+    body.is-reports-page .table td,
+    body.is-reports-page table td {
+        font-size: 0.73rem !important;
+        padding: 0.35rem 0.45rem !important;
+        line-height: 1.3 !important;
+    }
+
+    body.is-reports-page .table td .badge,
+    body.is-reports-page table td .badge,
+    body.is-reports-page table td small,
+    body.is-reports-page table td small,
+    body.is-reports-page table td span:not(.badge) {
+        font-size: inherit;
+    }
+
+    body.is-reports-page .table td .badge {
+        font-size: 0.68rem !important;
+    }
+
+    body.is-reports-page .table td .btn {
+        font-size: 0.70rem !important;
+        padding: 0.15rem 0.35rem !important;
+    }
+}
+
+@media (max-width: 479.98px) {
+    body.is-reports-page .table th,
+    body.is-reports-page table th {
+        font-size: 0.72rem !important;
+        padding: 0.28rem 0.35rem !important;
+    }
+
+    body.is-reports-page .table td,
+    body.is-reports-page table td {
+        font-size: 0.70rem !important;
+        padding: 0.28rem 0.35rem !important;
+    }
+
+    body.is-reports-page .table td .badge {
+        font-size: 0.65rem !important;
+    }
+}
+

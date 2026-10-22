@@ -52,10 +52,10 @@
                         <input type="date" name="balance_as_on_date" class="form-control form-control-sm" value="{{ $balanceAsOnDate ?? '' }}">
                     </div>
                     <div class="col-6 col-md-4 col-lg-2 d-flex align-items-end justify-content-end gap-1 gap-sm-2">
-                        <button type="submit" class="btn btn-brand-primary btn-sm" title="Search">
+                        <button type="submit" class="btn btn-brand-primary btn-sm btn-report-search" title="Search">
                             <i class="bi bi-search"></i> <span class="d-none d-sm-inline ms-1">Search</span>
                         </button>
-                        <a href="{{ route('reports.dispatch') }}?date={{ date('Y-m-d') }}" class="btn btn-secondary btn-sm" title="Reset">
+                        <a href="{{ route('reports.dispatch') }}?date={{ date('Y-m-d') }}" class="btn btn-secondary btn-sm btn-report-reset" title="Reset">
                             <i class="bi bi-arrow-clockwise"></i> <span class="d-none d-sm-inline ms-1">Reset</span>
                         </a>
                     </div>

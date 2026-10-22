@@ -879,9 +879,9 @@
                                                                 <th>Consignor</th>
                                                                 <th>Consignee</th>
                                                                 <th>GR Date</th>
-                                                                <th class="text-end">Amount</th>
                                                                 <th>Truck Number</th>
                                                                 <th class="text-end">Weight</th>
+                                                                <th class="text-end">Amount</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -894,15 +894,14 @@
                                                                     <td>${lr.consignor || '—'}</td>
                                                                     <td>${lr.consignee || '—'}</td>
                                                                     <td>${lr.gr_date || '—'}</td>
-                                                                    <td class="text-end fw-semibold">${lr.amount || '0.00'}</td>
                                                                     <td>${lr.truck_number || '—'}</td>
                                                                     <td class="text-end">${lr.weight || '—'}</td>
+                                                                    <td class="text-end fw-semibold">${lr.amount || '0.00'}</td>
                                                                 </tr>
                                                             `).join('')}
                                                             <tr class="table-light fw-bold">
-                                                                <td colspan="7" class="text-end">Total Amount:</td>
+                                                                <td colspan="9" class="text-end">Total Amount:</td>
                                                                 <td class="text-end">${totalAmount.toFixed(2)}</td>
-                                                                <td colspan="2"></td>
                                                             </tr>
                                                         </tbody>
                                                     </table>

@@ -92,16 +92,18 @@
     <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}?v={{ file_exists(public_path('css/lr-form-redesigned.css')) ? filemtime(public_path('css/lr-form-redesigned.css')) : time() }}">
     <div class="lrf-page app-index-page">
         <div class="lrf-page__toolbar">
-            <div>
-                <h1 class="lrf-page__toolbar-title">Add New Good Receipt (Bilty)</h1>
-                <p class="lrf-page__toolbar-sub">Complete steps 1–3 to save. Optional details can be added anytime.</p>
+            <div class="lrf-page__toolbar-left">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <h1 class="lrf-page__toolbar-title mb-0">Add New Good Receipt (Bilty)</h1>
+                    <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-secondary btn-sm lrf-toolbar-back-btn">
+                        <i class="bi bi-arrow-left me-1"></i> Back
+                    </a>
+                </div>
+                <p class="lrf-page__toolbar-sub mb-0 mt-1">Complete steps 1–3 to save. Optional details can be added anytime.</p>
             </div>
             <div class="lrf-page__toolbar-actions">
                 <a href="{{ route('consignees.create') }}" class="btn btn-outline-secondary btn-sm" target="_blank">
                     <i class="bi bi-plus-lg me-1"></i> Create Consignee
-                </a>
-                <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-arrow-left me-1"></i> Back
                 </a>
             </div>
         </div>
@@ -187,7 +189,7 @@
                             </div>
                         </div>
 
-                        <div class="lrf-receipt-card">
+                        <div class="lrf-receipt-card lrf-receipt-card--vehicle">
                             <div class="lrf-receipt-card__title">Vehicle &amp; Payee</div>
                             <div class="lrf-receipt-card__row lrf-grid lrf-grid--2">
                                 <div class="lrf-pf">
@@ -562,16 +564,16 @@
                 <button type="button" class="lrf-section__head lrf-section__head--plain lrf-section__head--toggle" id="lrOptionalToggle" aria-expanded="{{ $lrOptionalOpen ? 'true' : 'false' }}" aria-controls="lrOptionalBody">
                     <div class="lrf-section__head-left">
                         <div class="lrf-step-num lrf-step-num--gray">4</div>
-                        <div>
-                            <h2 class="lrf-section__title">Optional Details</h2>
-                            <p class="lrf-section__desc">GR number, invoice, goods value and reference</p>
+                        <div class="lrf-section__head-text">
+                            <div class="lrf-title-row d-flex align-items-center gap-2 flex-nowrap">
+                                <h2 class="lrf-section__title mb-0 text-nowrap">Optional Details</h2>
+                                <span class="lrf-optional-chip text-nowrap"><i class="bi bi-plus-circle"></i> Expand if needed</span>
+                                <span class="lrf-collapse-arrow{{ $lrOptionalOpen ? ' lrf-collapse-arrow--open' : '' }}" aria-hidden="true">
+                                    <i class="bi bi-chevron-down"></i>
+                                </span>
+                            </div>
+                            <p class="lrf-section__desc mb-0">GR number, invoice, goods value and reference</p>
                         </div>
-                    </div>
-                    <div class="lrf-section__head-right">
-                        <span class="lrf-optional-chip"><i class="bi bi-plus-circle"></i> Expand if needed</span>
-                        <span class="lrf-collapse-arrow{{ $lrOptionalOpen ? ' lrf-collapse-arrow--open' : '' }}" aria-hidden="true">
-                            <i class="bi bi-chevron-down"></i>
-                        </span>
                     </div>
                 </button>
 
