@@ -171,27 +171,30 @@ if (! $startInput || ! $endInput) {
             if ($consignorId) {
                 $query->where('consignor_id', $consignorId);
             }
-           $sortBy = $request->input('sort_by', 'gr_date');
-$sortOrder = $request->input('sort_order', 'desc');
+            $sortBy = $request->input('sort_by', 'gr_date');
+            $sortOrder = $request->input('sort_order', 'desc');
 
-$allowedSorts = [
-    'gr_date',
-    'lr_number',
-];
+            $allowedSorts = [
+                'gr_date',
+                'lr_number',
+            ];
 
-if (! in_array($sortBy, $allowedSorts, true)) {
-    $sortBy = 'gr_date';
-}
+            if (! in_array($sortBy, $allowedSorts, true)) {
+                $sortBy = 'gr_date';
+            }
 
-if (! in_array($sortOrder, ['asc', 'desc'], true)) {
-    $sortOrder = 'desc';
-}
+            if (! in_array($sortOrder, ['asc', 'desc'], true)) {
+                $sortOrder = 'desc';
+            }
 
-$query->orderBy($sortBy, $sortOrder);
+            $query->orderBy($sortBy, $sortOrder);
 
-$lrs = $query
-    ->paginate(self::REPORTS_PER_PAGE)
-    ->appends($request->query());
+            $lrs = $query
+                ->paginate(self::REPORTS_PER_PAGE)
+                ->appends($request->query());
+        } else {
+            $lrs = collect();
+        }
 
         return view('reports.consignor-consignee', compact(
             'lrs',
@@ -202,7 +205,6 @@ $lrs = $query
             'presetConsignor',
             'presetConsignee'
         ));
-    }
     }
 
     public function consignor_consignee_export(Request $request)
