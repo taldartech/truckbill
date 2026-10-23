@@ -39,6 +39,9 @@ test.html
 ad.js
 /.cache/
 
+# Coverage reports
+/coverage/
+
 #storage folder
 # /storage/
 # /storage/*

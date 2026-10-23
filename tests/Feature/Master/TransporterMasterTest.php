@@ -231,4 +231,152 @@ class TransporterMasterTest extends TestCase
         $this->assertSame('Portal Transporter Updated', $portalUser->name);
         $this->assertSame('portal.updated@example.com', $portalUser->email);
     }
+public function test_name_is_required_when_creating_transporter_master(): void
+{
+    $masterAdmin = $this->makeUser('master_admin');
+
+    $response = $this->actingAs($masterAdmin)
+        ->post(route('master.transporter-masters.store'), [
+            'name' => '',
+            'pan_number' => 'ABCDE1234F',
+            'pan_active' => '1',
+        ]);
+
+    $response->assertSessionHasErrors('name');
+
+    $this->assertDatabaseMissing('transporter_masters', [
+        'pan_number' => 'ABCDE1234F',
+    ]);
+}
+public function test_invalid_pan_number_is_rejected(): void
+{
+    $masterAdmin = $this->makeUser('master_admin');
+
+    $response = $this->actingAs($masterAdmin)
+        ->post(route('master.transporter-masters.store'), [
+            'name' => 'Test Transporter',
+            'pan_number' => 'INVALID123',
+            'pan_active' => '1',
+        ]);
+
+    $response->assertSessionHasErrors('pan_number');
+
+    $this->assertDatabaseMissing('transporter_masters', [
+        'pan_number' => 'INVALID123',
+    ]);
+}
+
+public function test_duplicate_pan_number_is_rejected(): void
+{
+    $masterAdmin = $this->makeUser('master_admin');
+
+    TransporterMaster::factory()->create([
+        'pan_number' => 'ABCDE1234F',
+    ]);
+
+    $this->actingAs($masterAdmin)
+        ->post(route('master.transporter-masters.store'), [
+            'name' => 'Another Transporter',
+            'pan_number' => 'ABCDE1234F',
+            'pan_active' => '1',
+        ])
+        ->assertSessionHasErrors('pan_number');
+
+    $this->assertDatabaseCount('transporter_masters', 1);
+}
+
+public function test_invalid_email_is_rejected(): void
+{
+    $masterAdmin = $this->makeUser('master_admin');
+
+    $this->actingAs($masterAdmin)
+        ->post(route('master.transporter-masters.store'), [
+            'name' => 'Test Transporter',
+            'email' => 'not-an-email',
+            'pan_number' => 'ABCDE1234F',
+            'pan_active' => '1',
+        ])
+        ->assertSessionHasErrors('email');
+
+    $this->assertDatabaseMissing('transporter_masters', [
+        'pan_number' => 'ABCDE1234F',
+    ]);
+}
+
+public function test_duplicate_email_is_rejected(): void
+{
+    $masterAdmin = $this->makeUser('master_admin');
+
+    TransporterMaster::factory()->create([
+        'email' => 'existing@example.com',
+    ]);
+
+    $this->actingAs($masterAdmin)
+        ->post(route('master.transporter-masters.store'), [
+            'name' => 'Another Transporter',
+            'email' => 'existing@example.com',
+            'pan_number' => 'FGHIJ5678K',
+            'pan_active' => '1',
+        ])
+        ->assertSessionHasErrors('email');
+
+    $this->assertDatabaseMissing('transporter_masters', [
+        'pan_number' => 'FGHIJ5678K',
+    ]);
+}
+
+public function test_invalid_gst_number_is_rejected(): void
+{
+    $masterAdmin = $this->makeUser('master_admin');
+
+    $this->actingAs($masterAdmin)
+        ->post(route('master.transporter-masters.store'), [
+            'name' => 'Test Transporter',
+            'pan_number' => 'ABCDE1234F',
+            'gst_number' => 'INVALID-GST',
+            'pan_active' => '1',
+        ])
+        ->assertSessionHasErrors('gst_number');
+}
+
+public function test_invalid_gst_type_is_rejected(): void
+{
+    $masterAdmin = $this->makeUser('master_admin');
+
+    $this->actingAs($masterAdmin)
+        ->post(route('master.transporter-masters.store'), [
+            'name' => 'Test Transporter',
+            'pan_number' => 'ABCDE1234F',
+            'gst_type' => 'invalid_type',
+            'pan_active' => '1',
+        ])
+        ->assertSessionHasErrors('gst_type');
+}
+
+public function test_pan_active_is_required(): void
+{
+    $masterAdmin = $this->makeUser('master_admin');
+
+    $this->actingAs($masterAdmin)
+        ->post(route('master.transporter-masters.store'), [
+            'name' => 'Test Transporter',
+            'pan_number' => 'ABCDE1234F',
+        ])
+        ->assertSessionHasErrors('pan_active');
+}
+
+public function test_address_longer_than_500_characters_is_rejected(): void
+{
+    $masterAdmin = $this->makeUser('master_admin');
+
+    $this->actingAs($masterAdmin)
+        ->post(route('master.transporter-masters.store'), [
+            'name' => 'Test Transporter',
+            'pan_number' => 'ABCDE1234F',
+            'pan_active' => '1',
+            'address' => str_repeat('A', 501),
+        ])
+        ->assertSessionHasErrors('address');
+}
+
 }

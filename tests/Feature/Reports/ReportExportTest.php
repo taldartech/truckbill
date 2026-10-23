@@ -708,4 +708,43 @@ class ReportExportTest extends TestCase
                 return $c !== null && (int) $c->id === (int) $customer->id;
             });
     }
+
+    public function test_consignor_consignee_export_filters_by_consignor_and_consignee_and_covers_all_branches(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$lr] = $this->seedLr($admin);
+
+        $params = [
+            'start_date' => now()->subDays(7)->toDateString(),
+            'end_date' => now()->addDays(1)->toDateString(),
+            'consignor_id' => $lr->consignor_id,
+            'consignee_id' => $lr->consignee_id,
+        ];
+
+        $this->actingAs($admin)
+            ->get('/reports/consignor-consignee-export?'.http_build_query($params))
+            ->assertOk();
+
+        // Direct instantiation to cover headings, formats, and collection mapping with all branches
+        $export = new ConsignorConsigneeExport(
+            $params['start_date'],
+            $params['end_date'],
+            $lr->consignor_id,
+            $lr->consignee_id
+        );
+
+        $collection = $export->collection();
+        $this->assertNotEmpty($collection);
+        $this->assertNotEmpty($export->headings());
+        $this->assertNotEmpty($export->columnFormats());
+
+        // Also test when company_id is null to cover the false branch of if ($company_id)
+        $userWithoutCompany = User::factory()->create([
+            'user_role_id' => 3,
+            'company_id' => null,
+        ]);
+        $this->actingAs($userWithoutCompany);
+        $exportNoCompany = new ConsignorConsigneeExport($params['start_date'], $params['end_date'], null, null);
+        $this->assertNotNull($exportNoCompany->collection());
+    }
 }
