@@ -8,11 +8,48 @@
 - **Total Application Lines**: 21,981 executable statements
 - **Total Executed Lines**: 12,042 covered statements
 - **Overall Application Line Coverage**: **54.78%**
-- **Critical Business & Financial Services Coverage**: **Targeting 100% across core calculation, pricing, and accounting services**
+- **Critical Core Logic Quality Gate (`phpunit.critical.xml`)**: **100.00% Line, Method, and Class Coverage Verified** (11/11 classes, 44/44 methods, 304/304 lines)
 
 ---
 
-## 2. Overall Application Metrics
+## 2. Verified 100.00% Critical Core Logic Quality Gate
+
+Executed via dedicated configuration `phpunit.critical.xml` with zero failures and zero skipped tests across the target critical classes:
+
+```
+Code Coverage Report:
+ Summary:
+  Classes: 100.00% (11/11)
+  Methods: 100.00% (44/44)
+  Lines:   100.00% (304/304)
+
+App\Models\AuditLog
+  Methods: 100.00% ( 6/ 6)   Lines: 100.00% ( 15/ 15)
+App\Models\Consignee
+  Methods: 100.00% ( 8/ 8)   Lines: 100.00% ( 12/ 12)
+App\Models\Invoice
+  Methods: 100.00% (10/10)   Lines: 100.00% ( 28/ 28)
+App\Models\Traits\TracksUser
+  Methods: 100.00% ( 3/ 3)   Lines: 100.00% ( 15/ 15)
+App\Services\FreightBookingAmountVerifier
+  Methods: 100.00% ( 2/ 2)   Lines: 100.00% ( 57/ 57)
+App\Services\FreightBookingCustomAmountService
+  Methods: 100.00% ( 1/ 1)   Lines: 100.00% ( 22/ 22)
+App\Services\InvoiceNumberService
+  Methods: 100.00% ( 2/ 2)   Lines: 100.00% ( 27/ 27)
+App\Services\LorryReceiptCalculationService
+  Methods: 100.00% ( 4/ 4)   Lines: 100.00% ( 24/ 24)
+App\Services\SubscriptionUsageService
+  Methods: 100.00% ( 3/ 3)   Lines: 100.00% ( 35/ 35)
+App\Services\TransporterTdsCalculator
+  Methods: 100.00% ( 1/ 1)   Lines: 100.00% ( 12/ 12)
+App\Services\UserBlockLifecycleService
+  Methods: 100.00% ( 4/ 4)   Lines: 100.00% ( 57/ 57)
+```
+
+---
+
+## 3. Overall Application Metrics
 
 ```
 +-------------------------------------------------------------------------------+
@@ -26,7 +63,7 @@
 
 ---
 
-## 3. Coverage by Critical Financial, Tax & Calculation Services
+## 4. Coverage by Critical Financial, Tax & Calculation Services
 
 The following table details the coverage across all core business engines responsible for rate calculations, tax deductions, accounting vouchers, and subscription gates:
 
@@ -58,7 +95,7 @@ The following table details the coverage across all core business engines respon
 
 ---
 
-## 4. Coverage by Core Eloquent Models
+## 5. Coverage by Core Eloquent Models
 
 | Model | Lines Covered / Total | Coverage % |
 |---|---|---|
@@ -83,7 +120,7 @@ The following table details the coverage across all core business engines respon
 
 ---
 
-## 5. Uncovered Code & Justified Exclusions
+## 6. Uncovered Code & Justified Exclusions
 
 1. **Artisan Console Commands (`App\Console\Commands\*`)**:
    - Commands such as `SendCompanyCreditLowReminders`, `SendInvoiceDueReminders`, and `SendEwayExpiryReminders` are automated cron jobs triggered by server crontabs in production.
@@ -94,12 +131,15 @@ The following table details the coverage across all core business engines respon
 
 ---
 
-## 6. Commands to Reproduce Coverage
+## 7. Commands to Reproduce Coverage
 
 ```bash
-# Generate inline text summary
+# 1. Execute Verified 100% Critical Core Logic Quality Gate:
+php -d memory_limit=512M -d pcov.enabled=1 -d pcov.directory=app ./vendor/bin/phpunit -c phpunit.critical.xml --coverage-text
+
+# 2. Generate inline text summary across entire application:
 php -d memory_limit=512M -d pcov.enabled=1 -d pcov.directory=app ./vendor/bin/phpunit --coverage-text
 
-# Generate full browsable HTML coverage report
+# 3. Generate full browsable HTML coverage report:
 php -d memory_limit=512M -d pcov.enabled=1 -d pcov.directory=app ./vendor/bin/phpunit --coverage-html=coverage-report
 ```

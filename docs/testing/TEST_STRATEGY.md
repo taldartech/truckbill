@@ -102,6 +102,11 @@ This document defines the quality assurance strategy, architecture, methodology,
 php -d memory_limit=512M ./vendor/bin/phpunit --testdox
 ```
 
+### Critical Core Logic Quality Gate (100% Required)
+```bash
+php -d memory_limit=512M -d pcov.enabled=1 -d pcov.directory=app ./vendor/bin/phpunit -c phpunit.critical.xml --coverage-text
+```
+
 ### Single Test Execution
 ```bash
 php -d memory_limit=512M ./vendor/bin/phpunit tests/Feature/Broker/BrokerEndToEndWorkflowTest.php
