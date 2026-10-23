@@ -205,7 +205,7 @@ class LorryReceiptTest extends TestCase
 
         $response = $this->actingAs($admin)->post('/lorry_receipts', $payload);
 
-        $response->assertRedirect(route('lorry_receipts.index'));
+        $response->assertRedirectContains(route('lorry_receipts.index'));
         $this->assertDatabaseHas('lorry_receipts', [
             'lr_number' => 'LR001',
             'company_id' => $admin->company_id,
@@ -282,7 +282,7 @@ class LorryReceiptTest extends TestCase
         $duplicateInvoicePayload['gr_number'] = 'GR-DUP-INV-001';
 
         $allowedInvoiceResponse = $this->actingAs($admin)->post('/lorry_receipts', $duplicateInvoicePayload);
-        $allowedInvoiceResponse->assertRedirect(route('lorry_receipts.index'));
+        $allowedInvoiceResponse->assertRedirectContains(route('lorry_receipts.index'));
 
         $duplicateGrPayload = $payload;
         $duplicateGrPayload['lr_number'] = 'LR-DUP-GR-001';
@@ -334,7 +334,7 @@ class LorryReceiptTest extends TestCase
 
         $response = $this->actingAs($admin)->post('/lorry_receipts', $payload);
 
-        $response->assertRedirect(route('lorry_receipts.index'));
+        $response->assertRedirectContains(route('lorry_receipts.index'));
         $this->assertDatabaseHas('lorry_receipts', [
             'lr_number' => 'LR-AGENCY-001',
             'truck_id' => $truck->id,
@@ -410,7 +410,7 @@ class LorryReceiptTest extends TestCase
 
         $response = $this->actingAs($admin)->post('/lorry_receipts', $payload);
 
-        $response->assertRedirect(route('lorry_receipts.index'));
+        $response->assertRedirectContains(route('lorry_receipts.index'));
 
         $linkedId = LorryReceipt::max('linked_lr_id');
         $this->assertDatabaseHas('lorry_receipts', ['lr_number' => 'LRB001', 'linked_lr_id' => $linkedId]);
@@ -558,7 +558,7 @@ class LorryReceiptTest extends TestCase
 
         // Admin edit ok
         $this->actingAs($admin)->get("/lorry_receipts/{$lr->id}/edit")->assertOk();
-        $this->actingAs($admin)->put("/lorry_receipts/{$lr->id}", array_merge($payload, ['lr_number' => 'LR001-EDIT']))->assertRedirect(route('lorry_receipts.index'));
+        $this->actingAs($admin)->put("/lorry_receipts/{$lr->id}", array_merge($payload, ['lr_number' => 'LR001-EDIT']))->assertRedirectContains(route('lorry_receipts.index'));
 
         // Moderator forbidden
         $moderator = $this->makeUser('moderator');
@@ -567,7 +567,7 @@ class LorryReceiptTest extends TestCase
         $this->actingAs($moderator)->delete("/lorry_receipts/{$lr->id}")->assertForbidden();
 
         // Admin can delete
-        $this->actingAs($admin)->delete("/lorry_receipts/{$lr->id}")->assertRedirect(route('lorry_receipts.index'));
+        $this->actingAs($admin)->delete("/lorry_receipts/{$lr->id}")->assertRedirectContains(route('lorry_receipts.index'));
     }
 
     public function test_update_blocks_transporter_change_when_tds_submitted(): void
@@ -727,7 +727,7 @@ class LorryReceiptTest extends TestCase
 
         $this->actingAs($admin)
             ->put("/lorry_receipts/{$lr->id}", $payload)
-            ->assertRedirect(route('lorry_receipts.index'));
+            ->assertRedirectContains(route('lorry_receipts.index'));
 
         $lr->refresh();
         $freightBooking->refresh();
@@ -825,7 +825,7 @@ class LorryReceiptTest extends TestCase
 
         $this->actingAs($admin)
             ->put("/lorry_receipts/{$lr->id}", $payload)
-            ->assertRedirect(route('lorry_receipts.index'));
+            ->assertRedirectContains(route('lorry_receipts.index'));
 
         $lr->refresh();
         $freightBooking->refresh();
@@ -952,7 +952,7 @@ class LorryReceiptTest extends TestCase
             ],
         ];
 
-        $this->actingAs($admin)->post('/lorry_receipts', $payload)->assertRedirect(route('lorry_receipts.index'));
+        $this->actingAs($admin)->post('/lorry_receipts', $payload)->assertRedirectContains(route('lorry_receipts.index'));
 
         $linkedId = (int) LorryReceipt::max('linked_lr_id');
         $firstLr = LorryReceipt::query()->where('lr_number', 'LRB101')->firstOrFail();
@@ -1026,7 +1026,7 @@ class LorryReceiptTest extends TestCase
 
         $this->actingAs($admin)
             ->put("/lorry_receipts/{$firstLr->id}", $updatePayload)
-            ->assertRedirect(route('lorry_receipts.index'));
+            ->assertRedirectContains(route('lorry_receipts.index'));
 
         $this->assertDatabaseHas('lorry_receipts', [
             'id' => $firstLr->id,

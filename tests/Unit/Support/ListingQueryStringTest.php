@@ -58,6 +58,7 @@ class ListingQueryStringTest extends TestCase
         $this->assertSame([
             'gr_date_from' => '2026-01-01',
             'gr_date_to' => '2026-01-31',
+            'lr_number' => 'LR-100',
         ], $params);
     }
 
