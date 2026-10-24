@@ -15,9 +15,13 @@ use App\Models\TransporterMaster;
 use App\Exports\TransporterMasterExport;
 use App\Exports\TransporterReportExport;
 use App\Imports\TransporterImport;
+use App\Imports\TruckOwnerImport;
 use App\Models\AdvancePayment;
+use App\Models\Driver;
 use App\Models\PaymentMode;
 use App\Models\Truck;
+use App\Models\TruckType;
+use App\Http\Controllers\TruckOwnerController;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Notifications\TransporterOnboardingNotification;
@@ -1805,6 +1809,107 @@ class TransporterOwnerTest extends TestCase
         $dupRes->assertSessionHasErrors(['beneficiary_id']);
     }
 
+    public function test_truck_owner_bank_account_controller_flow(): void
+    {
+        $admin = $this->makeAdmin();
+        $superAdmin = User::factory()->create([
+            'user_role_id' => 2, // super_admin required
+            'company_id' => $admin->company_id,
+        ]);
+        $company = Company::create([
+            'user_id' => $superAdmin->id,
+            'name' => 'Super Admin Company',
+            'email' => 'sacomp@example.com',
+            'phone' => '9998881111',
+            'address' => 'Company Address',
+        ]);
+
+        $master1 = TransporterMaster::create([
+            'name' => 'Owner Bank Master 1',
+            'pan_number' => 'OBANK1234A',
+            'gst_number' => '24OBANK1234A1Z5',
+            'pan_active' => true,
+        ]);
+        $owner1 = Transporter::create([
+            'company_id' => $company->id,
+            'transporter_master_id' => $master1->id,
+            'is_owner' => 1,
+            'short_name' => 'OB1',
+            'mobile_number' => '9876543210',
+            'beneficiary_id' => 'BEN_OWNER_001',
+        ]);
+
+        $master2 = TransporterMaster::create([
+            'name' => 'Owner Bank Master 2',
+            'pan_number' => 'OBANK5678B',
+            'gst_number' => '24OBANK5678B1Z6',
+            'pan_active' => true,
+        ]);
+        $owner2 = Transporter::create([
+            'company_id' => $company->id,
+            'transporter_master_id' => $master2->id,
+            'is_owner' => 1,
+            'short_name' => 'OB2',
+            'mobile_number' => '9876543211',
+            'beneficiary_id' => 'BEN_OWNER_002',
+        ]);
+
+        // 1. Index without company
+        $resNoCo = $this->actingAs($superAdmin)->get('/truck_owner_bank_accounts/index');
+        $resNoCo->assertOk()->assertViewIs('truck_owner_bank_accounts.index');
+        $this->assertTrue($resNoCo->viewData('truckOwners')->isEmpty());
+
+        // 2. Index with company and no search
+        $resWithCo = $this->actingAs($superAdmin)->get("/truck_owner_bank_accounts/index?company_id={$company->id}");
+        $resWithCo->assertOk()->assertViewIs('truck_owner_bank_accounts.index');
+        $this->assertCount(2, $resWithCo->viewData('truckOwners'));
+
+        // 3. Search branches: name, gst_number, pan_number, beneficiary_id
+        // A. By Name
+        $resSearchName = $this->actingAs($superAdmin)->get("/truck_owner_bank_accounts/index?company_id={$company->id}&search=Master 1");
+        $resSearchName->assertOk();
+        $this->assertCount(1, $resSearchName->viewData('truckOwners'));
+
+        // B. By GST Number
+        $resSearchGst = $this->actingAs($superAdmin)->get("/truck_owner_bank_accounts/index?company_id={$company->id}&search=24OBANK5678B");
+        $resSearchGst->assertOk();
+        $this->assertCount(1, $resSearchGst->viewData('truckOwners'));
+
+        // C. By PAN Number
+        $resSearchPan = $this->actingAs($superAdmin)->get("/truck_owner_bank_accounts/index?company_id={$company->id}&search=OBANK1234A");
+        $resSearchPan->assertOk();
+        $this->assertCount(1, $resSearchPan->viewData('truckOwners'));
+
+        // D. By Beneficiary ID
+        $resSearchBen = $this->actingAs($superAdmin)->get("/truck_owner_bank_accounts/index?company_id={$company->id}&search=BEN_OWNER_002");
+        $resSearchBen->assertOk();
+        $this->assertCount(1, $resSearchBen->viewData('truckOwners'));
+
+        // 4. Update beneficiary ID and short name
+        $updateRes = $this->actingAs($superAdmin)->put("/truck_owner_bank_accounts/{$owner1->id}/beneficiary-id", [
+            'beneficiary_id' => 'BEN_OWNER_UPDATED',
+            'short_name' => 'OB1_UPDATED',
+        ]);
+        $updateRes->assertRedirect()->assertSessionHas('success');
+        $owner1->refresh();
+        $this->assertEquals('BEN_OWNER_UPDATED', $owner1->beneficiary_id);
+        $this->assertEquals('OB1_UPDATED', $owner1->short_name);
+
+        // 5. Validation error on duplicate beneficiary ID
+        $dupBenRes = $this->actingAs($superAdmin)->put("/truck_owner_bank_accounts/{$owner2->id}/beneficiary-id", [
+            'beneficiary_id' => 'BEN_OWNER_UPDATED',
+            'short_name' => 'OB2_DIFF',
+        ]);
+        $dupBenRes->assertSessionHasErrors(['beneficiary_id']);
+
+        // 6. Validation error on duplicate short_name
+        $dupShortRes = $this->actingAs($superAdmin)->put("/truck_owner_bank_accounts/{$owner2->id}/beneficiary-id", [
+            'beneficiary_id' => 'BEN_OWNER_UNIQUE',
+            'short_name' => 'OB1_UPDATED',
+        ]);
+        $dupShortRes->assertSessionHasErrors(['short_name']);
+    }
+
     public function test_merge_transporter_masters_command(): void
     {
         $master1 = TransporterMaster::create([
@@ -2876,6 +2981,1509 @@ class TransporterOwnerTest extends TestCase
         $exportNoCompany = new TransporterReportExport($start, $end, null, null, null);
         $noCompanyData = $exportNoCompany->collection();
         $this->assertNotEmpty($noCompanyData);
+    }
+
+    public function test_truck_owner_ensure_company_context(): void
+    {
+        $superAdmin = User::factory()->create(['user_role_id' => 2, 'company_id' => null]);
+        $this->actingAs($superAdmin);
+
+        $controller = app(TruckOwnerController::class);
+        $method = new \ReflectionMethod(TruckOwnerController::class, 'ensureCompanyContext');
+        $method->setAccessible(true);
+
+        // Without session -> 403
+        try {
+            $method->invoke($controller);
+            $this->fail('Expected 403 exception');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->assertEquals(403, $e->getStatusCode());
+        }
+
+        // With session -> passes
+        session(['super_admin_company_id' => 1]);
+        $method->invoke($controller);
+        $this->assertTrue(true);
+    }
+
+    public function test_truck_owner_index_ajax_datatables_and_searching(): void
+    {
+        $admin = $this->makeAdmin();
+        [$country, $state, $city] = $this->seedGeo();
+        $city2 = City::create(['name' => 'Surat', 'state_id' => $state->id, 'country_id' => $country->id]);
+
+        // Non-AJAX view
+        $this->actingAs($admin)->get('/truck_owners')->assertOk()->assertViewIs('truck_owner.index');
+
+        $master1 = TransporterMaster::create([
+            'name' => 'Alpha Owner',
+            'pan_number' => 'ALPHO1234A',
+            'city_id' => $city->id,
+            'state_id' => $state->id,
+            'country_id' => $country->id,
+            'pan_active' => true,
+        ]);
+        $o1 = Transporter::create([
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $master1->id,
+            'is_owner' => 1,
+            'short_name' => 'ALPHA',
+            'mobile_number' => '9991112221',
+            'declaration_given' => false,
+            'tds_percentage' => 1,
+            'advance_amount' => 100,
+        ]);
+        $truck1 = Truck::create([
+            'transporter_id' => $o1->id,
+            'truck_number' => 'GJ01TR1111',
+            'truck_type' => 'Flatbed',
+        ]);
+
+        $master2 = TransporterMaster::create([
+            'name' => 'Beta Owner',
+            'pan_number' => 'BETAP5678B',
+            'city_id' => $city2->id,
+            'state_id' => $state->id,
+            'country_id' => $country->id,
+            'pan_active' => true,
+        ]);
+        $o2 = Transporter::create([
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $master2->id,
+            'is_owner' => 1,
+            'short_name' => 'BETA',
+            'mobile_number' => '9991112222',
+            'declaration_given' => true,
+            'tds_percentage' => 0,
+            'advance_amount' => 200,
+        ]);
+
+        // 1. Basic AJAX call
+        $res = $this->actingAs($admin)->call('GET', '/truck_owners', [
+            'draw' => 1,
+            'start' => 0,
+            'length' => 10,
+        ], [], [], ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
+        $res->assertOk()->assertJsonStructure(['data', 'recordsTotal', 'recordsFiltered']);
+        $this->assertEquals(2, $res->json('recordsTotal'));
+
+        // 2. Global search
+        $resSearch = $this->actingAs($admin)->call('GET', '/truck_owners', [
+            'draw' => 2,
+            'search' => ['value' => 'Alpha'],
+        ], [], [], ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
+        $resSearch->assertOk();
+        $this->assertEquals(1, $resSearch->json('recordsFiltered'));
+
+        // 3. Individual column searches (0: Name, 1: Short Name, 2: PAN, 3: City, 4: Mobile)
+        foreach ([0 => 'Beta', 1 => 'BETA', 2 => 'BETAP', 3 => 'Ahmedabad', 4 => '9991112222'] as $colIdx => $val) {
+            $resCol = $this->actingAs($admin)->call('GET', '/truck_owners', [
+                'draw' => 10 + $colIdx,
+                'columns' => [
+                    $colIdx => ['search' => ['value' => $val]],
+                ],
+            ], [], [], ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
+            $resCol->assertOk();
+            $this->assertEquals(1, $resCol->json('recordsFiltered'));
+        }
+
+        // 4. Ordering by columns 0 through 6 and default
+        foreach (range(0, 6) as $orderIdx) {
+            $resOrder = $this->actingAs($admin)->call('GET', '/truck_owners', [
+                'draw' => 20 + $orderIdx,
+                'order' => [
+                    0 => ['column' => $orderIdx, 'dir' => 'desc'],
+                ],
+            ], [], [], ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
+            $resOrder->assertOk();
+        }
+        // Fallback order (column 99)
+        $resOrderDefault = $this->actingAs($admin)->call('GET', '/truck_owners', [
+            'draw' => 30,
+            'order' => [
+                0 => ['column' => 99, 'dir' => 'asc'],
+            ],
+        ], [], [], ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
+        $resOrderDefault->assertOk();
+
+        // 5. As non-admin (moderator) to cover !$is_admin branch in getActionButtons
+        $moderator = User::factory()->create([
+            'user_role_id' => 4, // moderator
+            'company_id' => $admin->company_id,
+        ]);
+        $resMod = $this->actingAs($moderator)->call('GET', '/truck_owners', [
+            'draw' => 40,
+        ], [], [], ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
+        $resMod->assertOk();
+        $this->assertStringNotContainsString('advance-payment-btn', $resMod->json('data.0.actions'));
+
+        // 6. User without company_id (covers Auth::user()->company_id being false)
+        $superUser = User::factory()->create(['user_role_id' => 2, 'company_id' => null]);
+        $this->actingAs($superUser)
+            ->withSession(['super_admin_company_id' => $admin->company_id])
+            ->call('GET', '/truck_owners', ['draw' => 50], [], [], ['HTTP_X-Requested-With' => 'XMLHttpRequest'])
+            ->assertOk();
+
+        // 7. Trigger catch block in getTruckOwnersData (lines 290-300)
+        $shouldThrow = true;
+        \DB::listen(function ($query) use (&$shouldThrow) {
+            if ($shouldThrow && stripos($query->sql, 'transporters') !== false && stripos($query->sql, 'is_owner') !== false) {
+                throw new \Exception('Simulated TruckOwner DataTables failure');
+            }
+        });
+        $resErr = $this->actingAs($admin)->call('GET', '/truck_owners', [
+            'draw' => 999,
+        ], [], [], ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
+        $shouldThrow = false;
+        $resErr->assertStatus(500);
+        $this->assertArrayHasKey('error', $resErr->json());
+    }
+
+    public function test_truck_owner_bulk_upload_flow_and_validation(): void
+    {
+        $admin = $this->makeAdmin();
+
+        // 1. Template download & execute stream callback
+        $resTemplate = $this->actingAs($admin)->get('/truck_owners/bulk-upload-template');
+        $resTemplate->assertOk();
+        $this->assertTrue(str_contains($resTemplate->headers->get('content-disposition') ?? '', 'truck_owner_template.csv'));
+        ob_start();
+        $resTemplate->sendContent();
+        $csvContent = ob_get_clean();
+        $this->assertStringContainsString('PAN Number', $csvContent);
+
+        // 2. Empty validation returns 422 json
+        $resEmpty = $this->actingAs($admin)->postJson('/truck_owners/bulk-upload', []);
+        $resEmpty->assertStatus(422)->assertJson(['success' => false]);
+
+        // 3. Real CSV upload with partial success and zero success
+        [$country, $state, $city] = $this->seedGeo();
+        $csvHeader = "Name,PAN Number,Mobile Number,Email,GST Number,PAN Active,Contact Person Name,Country,State,City,Address,Declaration Given,Total Trucks,TDS %,TDS Adjustment Remark,Short Name,Advance Amount\n";
+        $csvRowValid = "Bulk Owner 1,BKPPO1234A,9876543210,owner1@test.com,,Yes,,{$country->name},{$state->name},{$city->name},Address 1,No,5,1,,,0\n";
+        $csvRowInvalid = "Bad Owner,INVALID_PAN,12345,bad@example.com,,Yes,,{$country->name},{$state->name},{$city->name},Addr,No,1,1,,,0\n";
+        $csvContent = $csvHeader . $csvRowValid . $csvRowInvalid;
+
+        $tempFile = UploadedFile::fake()->createWithContent('bulk_partial.csv', $csvContent);
+        $resPartial = $this->actingAs($admin)->post('/truck_owners/bulk-upload', [
+            'file' => $tempFile,
+        ]);
+        $resPartial->assertOk()->assertJson(['success' => true, 'partial_success' => true]);
+
+        // All invalid rows (zero success)
+        $csvZeroContent = $csvHeader . $csvRowInvalid;
+        $tempZeroFile = UploadedFile::fake()->createWithContent('bulk_zero.csv', $csvZeroContent);
+        $resZero = $this->actingAs($admin)->post('/truck_owners/bulk-upload', [
+            'file' => $tempZeroFile,
+        ]);
+        $resZero->assertOk()->assertJson(['success' => false]);
+
+        // All valid row (100% success lines 98-105)
+        $csvValidContent = $csvHeader . "Bulk Owner 2,BKPPO5678B,9876543211,owner2@test.com,,Yes,,{$country->name},{$state->name},{$city->name},Address 2,No,3,1,,,0\n";
+        $tempValidFile = UploadedFile::fake()->createWithContent('bulk_all_valid.csv', $csvValidContent);
+        $resValid = $this->actingAs($admin)->post('/truck_owners/bulk-upload', [
+            'file' => $tempValidFile,
+        ]);
+        $resValid->assertOk()->assertJson(['success' => true, 'errors' => []]);
+
+        // Trigger catch block in bulkUpload (lines 107-118)
+        $shouldThrow = true;
+        \DB::listen(function ($query) use (&$shouldThrow) {
+            if ($shouldThrow && stripos($query->sql, 'transporter') !== false) {
+                throw new \Exception('Simulated Bulk Upload failure');
+            }
+        });
+        $tempErrFile = UploadedFile::fake()->createWithContent('bulk_err.csv', $csvValidContent);
+        $resErr = $this->actingAs($admin)->post('/truck_owners/bulk-upload', [
+            'file' => $tempErrFile,
+        ]);
+        $shouldThrow = false;
+        $resErr->assertStatus(500);
+        $this->assertFalse($resErr->json('success'));
+    }
+
+    public function test_truck_owner_create_and_calculate_tds(): void
+    {
+        $admin = $this->makeAdmin();
+        [$country, $state, $city] = $this->seedGeo();
+
+        // 1. Create view with and without old input
+        $this->actingAs($admin)->get('/truck_owners/create')->assertOk()->assertViewIs('truck_owner.create');
+        $resCreate = $this->actingAs($admin)->withSession([
+            '_old_input' => [
+                'country_id' => $country->id,
+                'state_id' => $state->id,
+            ],
+        ])->get('/truck_owners/create');
+        $resCreate->assertOk()->assertViewIs('truck_owner.create');
+
+        // 2. calculateTruckOwnerTdsPercentage API
+        // Starting with digit -> 0.00 (lines 494-495)
+        $resDigit = $this->actingAs($admin)->postJson('/api/calculate-truck-owner-tds-percentage', [
+            'pan_number' => '1234567890',
+            'pan_active' => true,
+            'declaration_given' => '0',
+        ]);
+        $resDigit->assertOk();
+        $this->assertEquals('0.00', $resDigit->json('tds_percentage'));
+
+        // Normal PAN without declaration -> calculates percentage
+        $resNormal = $this->actingAs($admin)->postJson('/api/calculate-truck-owner-tds-percentage', [
+            'pan_number' => 'ABCPD1234Q',
+            'pan_active' => true,
+            'declaration_given' => '0',
+        ]);
+        $resNormal->assertOk();
+        $this->assertEquals('1.00', $resNormal->json('tds_percentage'));
+
+        // Normal PAN with declaration -> 0.00
+        $resDecl = $this->actingAs($admin)->postJson('/api/calculate-truck-owner-tds-percentage', [
+            'pan_number' => 'ABCPD1234Q',
+            'pan_active' => true,
+            'declaration_given' => '1',
+        ]);
+        $resDecl->assertOk();
+        $this->assertEquals('0.00', $resDecl->json('tds_percentage'));
+    }
+
+    public function test_truck_owner_store_and_update_edge_cases(): void
+    {
+        $admin = $this->makeAdmin();
+        [$country, $state, $city] = $this->seedGeo();
+
+        set_error_handler(function ($errno, $errstr) {
+            if (str_contains($errstr, 'isDummyPan')) {
+                return true;
+            }
+            return false;
+        });
+
+        try {
+
+        // 1. Store with existing transporter_master_id
+        $master = TransporterMaster::create([
+            'name' => 'Existing Master Owner',
+            'pan_number' => 'EXSTO1234M',
+            'pan_active' => true,
+        ]);
+
+        // A. Declaration given = true
+        $resStoreMaster = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $master->id,
+            'contact_person_name' => 'Contact Person',
+            'mobile_number' => '9876543210',
+            'short_name' => 'EMO',
+            'declaration_given' => true,
+            'total_trucks' => 4,
+            'advance_amount' => 500,
+            'tds_percentage' => 0,
+            'is_msme' => true,
+            'msme_reg_no' => 'MSME123',
+        ]);
+        $resStoreMaster->assertRedirect(route('truck_owners.index'));
+        $owner = Transporter::where('company_id', $admin->company_id)->where('is_owner', 1)->first();
+        $this->assertNotNull($owner);
+        $this->assertEquals('EMO', $owner->short_name);
+
+        $dummyPan = Company::dummyTransporterTruckOwnerPanNumber($admin->company_id);
+        $dummyMaster = TransporterMaster::create([
+            'name' => 'Dummy Owner Master',
+            'pan_number' => $dummyPan,
+            'pan_active' => true,
+        ]);
+
+        // C. Store with dummy PAN and remark (lines 408-425)
+        $resDummyRemark = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $dummyMaster->id,
+            'mobile_number' => '9876543212',
+            'declaration_given' => false,
+            'total_trucks' => 2,
+            'advance_amount' => 0,
+            'tds_percentage' => 2.0,
+            'tds_adjustment_remark' => 'Dummy override remark',
+        ]);
+        $resDummyRemark->assertRedirect(route('truck_owners.index'));
+
+        // D. Store with existing transporter_master_id with declaration_given = false and TDS mismatch remark
+        $masterMismatch = TransporterMaster::create([
+            'name' => 'Mismatch Master Owner',
+            'pan_number' => 'MISMO1234M',
+            'pan_active' => true,
+        ]);
+        $resMismatch = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $masterMismatch->id,
+            'mobile_number' => '9876543213',
+            'declaration_given' => false,
+            'total_trucks' => 3,
+            'advance_amount' => 0,
+            'tds_percentage' => 5.0, // Calculated is 2%, override is 5%
+            'tds_adjustment_remark' => 'TDS increased',
+        ]);
+        $resMismatch->assertRedirect(route('truck_owners.index'));
+
+        // Store with existing transporter_master_id with declaration_given = false and matching calculated TDS (no remark)
+        $masterMatch = TransporterMaster::create([
+            'name' => 'Match Master Owner',
+            'pan_number' => 'MTCHP1234A', // P -> 1.0%
+            'pan_active' => true,
+        ]);
+        $resNoMismatchRemark = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $masterMatch->id,
+            'mobile_number' => '9876543233',
+            'declaration_given' => false,
+            'total_trucks' => 3,
+            'advance_amount' => 0,
+            'tds_percentage' => 1.0, // Calculated is 1.0%
+        ]);
+        $resNoMismatchRemark->assertRedirect(route('truck_owners.index'));
+
+        // E. Suffix collision loop (lines 373-378)
+        $controller = app(TruckOwnerController::class);
+        $req1 = new class([
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $masterMismatch->id,
+            'mobile_number' => '9876543214',
+            'short_name' => 'EMO', // already exists as EMO
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'advance_amount' => 0,
+            'tds_percentage' => 2.0,
+        ]) extends \App\Http\Requests\StoreTruckOwnerRequest {
+            public function validated($key = null, $default = null) {
+                return $this->all();
+            }
+        };
+        $controller->store($req1);
+        $this->assertDatabaseHas('transporters', ['short_name' => 'EMO-1', 'is_owner' => 1]);
+
+        $req2 = new class([
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $masterMismatch->id,
+            'mobile_number' => '9876543215',
+            'short_name' => 'EMO', // already exists as EMO and EMO-1 -> generates EMO-2
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'advance_amount' => 0,
+            'tds_percentage' => 2.0,
+        ]) extends \App\Http\Requests\StoreTruckOwnerRequest {
+            public function validated($key = null, $default = null) {
+                return $this->all();
+            }
+        };
+        $controller->store($req2);
+        $this->assertDatabaseHas('transporters', ['short_name' => 'EMO-2', 'is_owner' => 1]);
+
+        // 2. Store with new master (declaration_given = true)
+        $resNewDecl = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'name' => 'New Owner Decl',
+            'pan_number' => 'NEWDO1234D',
+            'pan_active' => true,
+            'mobile_number' => '9876543216',
+            'declaration_given' => true,
+            'total_trucks' => 2,
+            'advance_amount' => 100,
+            'tds_percentage' => 0,
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+        ]);
+        $resNewDecl->assertRedirect(route('truck_owners.index'));
+
+        // Store with new master with dummy PAN without remark -> throws ValidationException (line 440)
+        $reqNewDummyNoRemark = new class([
+            'company_id' => $admin->company_id,
+            'name' => 'New Dummy Owner',
+            'pan_number' => $dummyPan,
+            'pan_active' => true,
+            'mobile_number' => '9876543217',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 2.0,
+            'tds_adjustment_remark' => '',
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+        ]) extends \App\Http\Requests\StoreTruckOwnerRequest {
+            public function validated($key = null, $default = null) {
+                return $this->all();
+            }
+        };
+        try {
+            $controller->store($reqNewDummyNoRemark);
+            $this->fail('Expected ValidationException');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->assertArrayHasKey('tds_adjustment_remark', $e->errors());
+        }
+
+        // Store with new master with dummy PAN and remark (lines 436-451, 467-486)
+        $reqNewDummyWithRemark = new class([
+            'company_id' => $admin->company_id,
+            'name' => 'New Dummy Owner With Remark',
+            'pan_number' => $dummyPan,
+            'pan_active' => true,
+            'mobile_number' => '9876543218',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 2.0,
+            'tds_adjustment_remark' => 'Dummy override note',
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+            'is_msme' => true,
+            'msme_reg_no' => 'MSME-DUMMY',
+        ]) extends \App\Http\Requests\StoreTruckOwnerRequest {
+            public function validated($key = null, $default = null) {
+                return $this->all();
+            }
+        };
+        $resNewDummySuccess = $controller->store($reqNewDummyWithRemark);
+        $this->assertEquals(route('truck_owners.index'), $resNewDummySuccess->getTargetUrl());
+
+        // Store with new master: declaration_given = false with mismatch remark and matching TDS
+        $resNewMismatch = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'name' => 'New Owner Mismatch',
+            'pan_number' => 'NWMPS1234M',
+            'pan_active' => true,
+            'mobile_number' => '9876543219',
+            'declaration_given' => false,
+            'total_trucks' => 2,
+            'advance_amount' => 50,
+            'tds_percentage' => 5.0,
+            'tds_adjustment_remark' => 'Higher TDS rate',
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+        ]);
+        $resNewMismatch->assertRedirect(route('truck_owners.index'));
+
+        // Store with new master: declaration_given = false with matching calculated TDS (no remark)
+        $resNewMatch = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'name' => 'New Owner Matching',
+            'pan_number' => 'NWMCS1234M',
+            'pan_active' => true,
+            'mobile_number' => '9876543220',
+            'declaration_given' => false,
+            'total_trucks' => 2,
+            'advance_amount' => 50,
+            'tds_percentage' => 2.0,
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+        ]);
+        $resNewMatch->assertRedirect(route('truck_owners.index'));
+        } finally {
+            restore_error_handler();
+        }
+    }
+
+    public function test_truck_owner_show_and_cross_company(): void
+    {
+        $admin = $this->makeAdmin();
+        [$country, $state, $city] = $this->seedGeo();
+
+        $master = TransporterMaster::create([
+            'name' => 'Owner Details',
+            'pan_number' => 'OWNPD1234O',
+            'pan_active' => true,
+            'city_id' => $city->id,
+            'state_id' => $state->id,
+            'country_id' => $country->id,
+        ]);
+        $owner = Transporter::create([
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $master->id,
+            'is_owner' => 1,
+            'short_name' => 'OWND',
+            'mobile_number' => '9998887771',
+            'advance_amount' => 1000,
+            'declaration_given' => false,
+            'tds_percentage' => 1,
+        ]);
+
+        // Advance payment 1 with date and remark
+        AdvancePayment::create([
+            'company_id' => $admin->company_id,
+            'transporter_id' => $owner->id,
+            'advance_amount' => 300,
+            'payment_date' => now()->toDateString(),
+            'remark' => 'Diesel advance',
+        ]);
+        // Advance payment 2 without remark
+        AdvancePayment::create([
+            'company_id' => $admin->company_id,
+            'transporter_id' => $owner->id,
+            'advance_amount' => 200,
+            'payment_date' => now()->subDay()->toDateString(),
+            'remark' => null,
+        ]);
+
+        // Truck 1 with driver
+        $driver = Driver::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Driver Ramesh',
+            'mobile' => '9876543201',
+            'license_number' => 'DL123456',
+        ]);
+        Truck::create([
+            'transporter_id' => $owner->id,
+            'truck_number' => 'GJ01TR2222',
+            'truck_type' => 'Container',
+            'driver_id' => $driver->id,
+        ]);
+
+        // Truck 2 without driver
+        Truck::create([
+            'transporter_id' => $owner->id,
+            'truck_number' => 'GJ01TR3333',
+            'truck_type' => 'Trailer',
+            'driver_id' => null,
+        ]);
+
+        // 1. Valid show call
+        $resShow = $this->actingAs($admin)->getJson("/truck_owners/{$owner->id}");
+        $resShow->assertOk();
+        $this->assertEquals('Owner Details', $resShow->json('name'));
+        $this->assertCount(2, $resShow->json('advance_payments'));
+        $this->assertCount(2, $resShow->json('trucks'));
+        $this->assertEquals('Driver Ramesh', $resShow->json('trucks.0.driver_name'));
+        $this->assertEquals('Not assigned', $resShow->json('trucks.1.driver_name'));
+
+        // 2. Cross-company access -> 403
+        $otherCompanyAdmin = $this->makeAdmin();
+        $this->actingAs($otherCompanyAdmin)->getJson("/truck_owners/{$owner->id}")->assertStatus(403);
+
+        // 3. Not a truck owner (is_owner = 0) -> 404
+        $transporter = Transporter::create([
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $master->id,
+            'is_owner' => 0,
+            'mobile_number' => '9998887772',
+            'declaration_given' => false,
+            'tds_percentage' => 2,
+        ]);
+        $this->actingAs($admin)->getJson("/truck_owners/{$transporter->id}")->assertStatus(404);
+    }
+
+    public function test_truck_owner_edit_update_refresh_and_destroy(): void
+    {
+        $admin = $this->makeAdmin();
+        [$country, $state, $city] = $this->seedGeo();
+
+        $master = TransporterMaster::create([
+            'name' => 'Owner CRUD',
+            'pan_number' => 'OWNCR1234C', // 4th letter C -> calculated TDS is 2.0%
+            'pan_active' => true,
+            'city_id' => $city->id,
+            'state_id' => $state->id,
+            'country_id' => $country->id,
+        ]);
+        $owner = Transporter::create([
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $master->id,
+            'is_owner' => 1,
+            'short_name' => 'OCRU',
+            'mobile_number' => '9998887773',
+            'advance_amount' => 500,
+            'declaration_given' => false,
+            'tds_percentage' => 2.0, // Matches calculated 2.0%, so hasMismatch is false initially
+        ]);
+
+        // 1. Edit view
+        $resEdit = $this->actingAs($admin)->get("/truck_owners/{$owner->id}/edit");
+        $resEdit->assertOk()->assertViewIs('truck_owner.edit');
+
+        // Cross company edit -> 403
+        $otherAdmin = $this->makeAdmin();
+        $this->actingAs($otherAdmin)->get("/truck_owners/{$owner->id}/edit")->assertStatus(403);
+
+        // 2. Refresh TDS
+        // A. Cross company refresh -> 403
+        $this->actingAs($otherAdmin)->post("/truck_owners/{$owner->id}/refresh-tds")->assertStatus(403);
+
+        // B. No mismatch (current tds matches calculated 2.0%) -> redirect with error (lines 607-611)
+        $resNoMismatch = $this->actingAs($admin)->post("/truck_owners/{$owner->id}/refresh-tds");
+        $resNoMismatch->assertRedirect(route('truck_owners.edit', $owner))->assertSessionHas('error');
+
+        // C. With mismatch -> redirect with success (lines 613-619)
+        $owner->update(['tds_percentage' => 5.0]);
+        $resMismatch = $this->actingAs($admin)->post("/truck_owners/{$owner->id}/refresh-tds");
+        $resMismatch->assertRedirect(route('truck_owners.edit', $owner))->assertSessionHas('success');
+        $this->assertEquals(2.0, (float) $owner->fresh()->tds_percentage);
+
+        // 3. Update as super_admin (updates short_name and beneficiary_id)
+        $superAdmin = User::factory()->create([
+            'user_role_id' => 2,
+            'company_id' => $admin->company_id,
+        ]);
+        $resUpdate = $this->actingAs($superAdmin)
+            ->withSession(['super_admin_company_id' => $admin->company_id])
+            ->put("/truck_owners/{$owner->id}", [
+                'company_id' => $admin->company_id,
+                'name' => 'Owner CRUD Updated',
+                'short_name' => 'SATO',
+                'beneficiary_id' => 'BENEF999',
+                'mobile_number' => '9998887774',
+                'declaration_given' => false,
+                'total_trucks' => 5,
+                'advance_amount' => 800,
+                'tds_percentage' => 2.0,
+                'is_msme' => true,
+                'msme_reg_no' => 'MSME-UP',
+            ]);
+        $resUpdate->assertRedirect(route('truck_owners.index'));
+        $owner->refresh();
+        $this->assertEquals('SATO', $owner->short_name);
+        $this->assertEquals('BENEF999', $owner->beneficiary_id);
+
+        // Update as normal admin (does not touch super_admin fields, test declaration_given=true and tds sync)
+        $resUpdateAdmin = $this->actingAs($admin)->put("/truck_owners/{$owner->id}", [
+            'company_id' => $admin->company_id,
+            'name' => 'Owner CRUD Updated 2',
+            'short_name' => 'IGNORED_NAME',
+            'mobile_number' => '9998887775',
+            'declaration_given' => true,
+            'total_trucks' => 6,
+            'advance_amount' => 900,
+            'tds_percentage' => 0.0,
+        ]);
+        $resUpdateAdmin->assertRedirect(route('truck_owners.index'));
+
+        // Update with non-dummy PAN TDS mismatch and remark (covers line 650)
+        $resUpdateMismatch = $this->actingAs($admin)->put("/truck_owners/{$owner->id}", [
+            'company_id' => $admin->company_id,
+            'name' => 'Owner CRUD Updated 3',
+            'mobile_number' => '9998887775',
+            'declaration_given' => false,
+            'total_trucks' => 6,
+            'advance_amount' => 900,
+            'tds_percentage' => 5.0, // Calculated is 2.0%
+            'tds_adjustment_remark' => 'Rate updated to 5%',
+        ]);
+        $resUpdateMismatch->assertRedirect(route('truck_owners.index'));
+
+        // Update dummy PAN without remark -> throws ValidationException (line 645)
+        $dummyPan = Company::dummyTransporterTruckOwnerPanNumber($admin->company_id);
+        $dummyMaster = TransporterMaster::create([
+            'name' => 'Dummy Master Update',
+            'pan_number' => $dummyPan,
+            'pan_active' => true,
+        ]);
+        $dummyOwner = Transporter::create([
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $dummyMaster->id,
+            'is_owner' => 1,
+            'mobile_number' => '9998887776',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 2.0,
+        ]);
+        $controller = app(TruckOwnerController::class);
+        $reqDummyUpdateNoRemark = new class([
+            'company_id' => $admin->company_id,
+            'mobile_number' => '9998887776',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 2.0,
+            'tds_adjustment_remark' => '',
+        ]) extends \App\Http\Requests\UpdateTruckOwnerRequest {
+            public function validated($key = null, $default = null) {
+                return $this->all();
+            }
+        };
+        try {
+            $controller->update($reqDummyUpdateNoRemark, $dummyOwner);
+            $this->fail('Expected ValidationException');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->assertArrayHasKey('tds_adjustment_remark', $e->errors());
+        }
+
+        // Update dummy PAN with remark -> success
+        $reqDummyUpdateWithRemark = new class([
+            'company_id' => $admin->company_id,
+            'mobile_number' => '9998887776',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 3.0,
+            'tds_adjustment_remark' => 'Updated remark',
+        ]) extends \App\Http\Requests\UpdateTruckOwnerRequest {
+            public function validated($key = null, $default = null) {
+                return $this->all();
+            }
+        };
+        $resDummyUp = $controller->update($reqDummyUpdateWithRemark, $dummyOwner);
+        $this->assertEquals(route('truck_owners.index'), $resDummyUp->getTargetUrl());
+
+        // Cross company update -> 403
+        $this->actingAs($otherAdmin)->put("/truck_owners/{$owner->id}", [
+            'company_id' => $admin->company_id,
+            'mobile_number' => '9998887774',
+            'declaration_given' => false,
+            'total_trucks' => 5,
+            'tds_percentage' => 2.0,
+        ])->assertStatus(403);
+
+        // 4. Destroy
+        // Cross company destroy -> 403
+        $this->actingAs($otherAdmin)->delete("/truck_owners/{$owner->id}")->assertStatus(403);
+
+        // Missing remark -> 422
+        $resNoRemark = $this->actingAs($admin)->deleteJson("/truck_owners/{$owner->id}", []);
+        $resNoRemark->assertStatus(422);
+
+        // Valid destroy -> 200 JSON
+        $resDestroy = $this->actingAs($admin)->deleteJson("/truck_owners/{$owner->id}", [
+            'delete_remark' => 'Closing business',
+        ]);
+        $resDestroy->assertOk()->assertJson(['success' => true]);
+        $this->assertSoftDeleted('transporters', ['id' => $owner->id]);
+        $this->assertEquals('Closing business', $owner->fresh()->deleted_remark);
+    }
+
+    public function test_store_truck_owner_request_validation_edge_cases(): void
+    {
+        $admin = $this->makeAdmin();
+        [$country1, $state1, $city1] = $this->seedGeo();
+        $country2 = Country::create(['name' => 'USA', 'code' => 'US']);
+        $state2 = State::create(['name' => 'Texas', 'code' => 'TX', 'country_id' => $country2->id]);
+        $city2 = City::create(['name' => 'Houston', 'state_id' => $state2->id, 'country_id' => $country2->id]);
+
+        $dummyPan = Company::dummyTransporterTruckOwnerPanNumber($admin->company_id);
+
+        // 1. Authorization: Master admin cannot access company panel -> 403
+        $masterAdmin = User::factory()->create([
+            'user_role_id' => 1,
+            'company_id' => null,
+        ]);
+        $this->actingAs($masterAdmin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+        ])->assertStatus(403);
+
+        // 2. Dummy PAN creation without remark -> fails validation on tds_adjustment_remark (line 58 & 96-97)
+        $resDummyNoRemark = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'name' => 'Dummy Owner No Remark',
+            'pan_number' => $dummyPan,
+            'pan_active' => true,
+            'mobile_number' => '9998887711',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 0,
+            'tds_adjustment_remark' => '',
+            'country_id' => $country1->id,
+            'state_id' => $state1->id,
+            'city_id' => $city1->id,
+        ]);
+        $resDummyNoRemark->assertSessionHasErrors('tds_adjustment_remark');
+
+        // 3. Existing master with dummy PAN allows multiple truck owners (line 71-73)
+        $dummyMaster = TransporterMaster::create([
+            'name' => 'Existing Dummy Master',
+            'pan_number' => $dummyPan,
+            'pan_active' => true,
+        ]);
+        // First owner for dummy master
+        Transporter::create([
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $dummyMaster->id,
+            'is_owner' => 1,
+            'mobile_number' => '9998887712',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 0,
+        ]);
+        // Second owner with same dummy master passes transporter_master_id validation (line 71-73 return early)
+        $resDummySecond = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $dummyMaster->id,
+            'mobile_number' => '123', // triggers validation error on mobile so controller is not reached
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 0,
+            'tds_adjustment_remark' => 'Second dummy owner allowed',
+        ]);
+        $resDummySecond->assertSessionHasErrors('mobile_number');
+        $resDummySecond->assertSessionDoesntHaveErrors('transporter_master_id');
+
+        // 4. Duplicate truck owner for non-dummy master in same company (line 80)
+        $normalMaster = TransporterMaster::create([
+            'name' => 'Normal Master Co',
+            'pan_number' => 'ABCDE1111O',
+            'pan_active' => true,
+        ]);
+        Transporter::create([
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $normalMaster->id,
+            'is_owner' => 1,
+            'mobile_number' => '9998887714',
+            'short_name' => 'NORM1',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 20,
+        ]);
+        $resDupMaster = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $normalMaster->id,
+            'mobile_number' => '9998887715',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 20,
+        ]);
+        $resDupMaster->assertSessionHasErrors(['transporter_master_id' => 'This PAN is already registered as a truck owner for this company.']);
+
+        // 5. Duplicate mobile_number and short_name trigger custom messages (lines 167-168)
+        $resDupMobileAndShort = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'name' => 'Duplicate Mobile Owner',
+            'pan_number' => 'ABCDE2222O',
+            'pan_active' => true,
+            'mobile_number' => '9998887714',
+            'short_name' => 'NORM1',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 20,
+        ]);
+        $resDupMobileAndShort->assertSessionHasErrors([
+            'mobile_number' => 'This mobile number is already associated with another truck owner in this company.',
+            'short_name' => 'This short name is already associated with another truck owner in this company.',
+        ]);
+
+        // 6. Invalid PAN format (line 100)
+        $resInvalidPan = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'name' => 'Invalid Pan Owner',
+            'pan_number' => '1234567890',
+            'pan_active' => true,
+            'mobile_number' => '9998887716',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 20,
+        ]);
+        $resInvalidPan->assertSessionHasErrors(['pan_number' => 'The PAN number format is invalid.']);
+
+        // 7. State does not belong to selected country (line 120)
+        $resStateCountryMismatch = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'name' => 'Country Mismatch Owner',
+            'pan_number' => 'ABCDE3333O',
+            'pan_active' => true,
+            'country_id' => $country1->id,
+            'state_id' => $state2->id,
+            'mobile_number' => '9998887717',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 20,
+        ]);
+        $resStateCountryMismatch->assertSessionHasErrors(['state_id' => 'The selected state does not belong to the selected country.']);
+
+        // 8. City does not belong to selected state (line 132)
+        $resCityStateMismatch = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'name' => 'City Mismatch Owner',
+            'pan_number' => 'ABCDE4444O',
+            'pan_active' => true,
+            'country_id' => $country1->id,
+            'state_id' => $state1->id,
+            'city_id' => $city2->id,
+            'mobile_number' => '9998887718',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 20,
+        ]);
+        $resCityStateMismatch->assertSessionHasErrors(['city_id' => 'The selected city does not belong to the selected state.']);
+
+        // 9. Non-existent transporter_master_id triggers withValidator early return (line 147)
+        $resNonExistentMaster = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => 999999,
+            'mobile_number' => '9998887719',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 20,
+        ]);
+        $resNonExistentMaster->assertSessionHasErrors('transporter_master_id');
+    }
+
+    public function test_update_truck_owner_request_validation_edge_cases(): void
+    {
+        $admin = $this->makeAdmin();
+
+        $master1 = TransporterMaster::create([
+            'name' => 'Update Truck Owner Master 1',
+            'pan_number' => 'UTOM11234A',
+            'pan_active' => true,
+        ]);
+        $owner1 = Transporter::create([
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $master1->id,
+            'is_owner' => 1,
+            'mobile_number' => '9991112221',
+            'short_name' => 'UTOM1',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 20,
+        ]);
+
+        $master2 = TransporterMaster::create([
+            'name' => 'Update Truck Owner Master 2',
+            'pan_number' => 'UTOM21234B',
+            'pan_active' => true,
+        ]);
+        $owner2 = Transporter::create([
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $master2->id,
+            'is_owner' => 1,
+            'mobile_number' => '9991112222',
+            'short_name' => 'UTOM2',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 20,
+        ]);
+
+        // 1. Authorization: Moderator cannot act as admin -> 403 Forbidden
+        $moderator = User::factory()->create([
+            'user_role_id' => 4, // moderator
+            'company_id' => $admin->company_id,
+        ]);
+        $this->actingAs($moderator)->put("/truck_owners/{$owner1->id}", [
+            'company_id' => $admin->company_id,
+            'mobile_number' => '9991112221',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 20,
+        ])->assertStatus(403);
+
+        // 2. Duplicate mobile number on update triggers custom message (Line 78)
+        $this->actingAs($admin)->put("/truck_owners/{$owner1->id}", [
+            'company_id' => $admin->company_id,
+            'mobile_number' => '9991112222', // already taken by owner2
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 20,
+        ])->assertSessionHasErrors([
+            'mobile_number' => 'This mobile number is already associated with another truck owner in this company.',
+        ]);
+
+        // 3. Super admin updating with duplicate short_name triggers custom message (Lines 43-50, 79)
+        $superAdmin = User::factory()->create([
+            'user_role_id' => 2,
+            'company_id' => $admin->company_id,
+        ]);
+        $this->actingAs($superAdmin)
+            ->withSession(['super_admin_company_id' => $admin->company_id])
+            ->put("/truck_owners/{$owner1->id}", [
+                'company_id' => $admin->company_id,
+                'mobile_number' => '9991112221',
+                'short_name' => 'UTOM2', // already taken by owner2
+                'declaration_given' => false,
+                'total_trucks' => 1,
+                'tds_percentage' => 20,
+            ])->assertSessionHasErrors([
+                'short_name' => 'This short name is already associated with another truck owner in this company.',
+            ]);
+
+        // 4. Line 63: withValidator after-hook early return when $master is null
+        $ownerWithoutMaster = clone $owner1;
+        $ownerWithoutMaster->setRelation('transporterMaster', null);
+
+        $this->app['router']->bind('truck_owner', function () use ($ownerWithoutMaster) {
+            return $ownerWithoutMaster;
+        });
+
+        $this->actingAs($admin)->put("/truck_owners/{$owner1->id}", [
+            'company_id' => $admin->company_id,
+            'mobile_number' => '123',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 20,
+        ])->assertSessionHasErrors('mobile_number');
+
+        // FormRequest direct verification with null master
+        $request = new \App\Http\Requests\UpdateTruckOwnerRequest();
+        $request->setUserResolver(fn () => $admin);
+        $request->setRouteResolver(fn () => new class($ownerWithoutMaster) {
+            public function __construct(private $owner) {}
+            public function parameter($name, $default = null) { return $this->owner; }
+        });
+        $validator = \Illuminate\Support\Facades\Validator::make([
+            'company_id' => $admin->company_id,
+            'mobile_number' => '9991112221',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 20,
+        ], $request->rules());
+        $request->withValidator($validator);
+        $validator->validate();
+        $this->assertFalse($validator->fails());
+    }
+
+    public function test_truck_owner_import_all_edge_cases(): void
+    {
+        $admin = $this->makeAdmin();
+        $this->actingAs($admin);
+
+        Country::creating(function ($country) {
+            if (empty($country->code)) {
+                $country->code = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', (string) $country->name) . 'XX', 0, 2));
+            }
+        });
+
+        $import = new TruckOwnerImport();
+        $ref = new \ReflectionClass(TruckOwnerImport::class);
+
+        // 1. parseBoolean direct testing (covers lines 436-456)
+        $parseBool = $ref->getMethod('parseBoolean');
+        $parseBool->setAccessible(true);
+        $this->assertTrue($parseBool->invoke($import, true));
+        $this->assertNull($parseBool->invoke($import, false));
+        $this->assertNull($parseBool->invoke($import, null));
+        $this->assertNull($parseBool->invoke($import, ''));
+        $this->assertTrue($parseBool->invoke($import, '1'));
+        $this->assertTrue($parseBool->invoke($import, 'yes'));
+        $this->assertTrue($parseBool->invoke($import, 'true'));
+        $this->assertTrue($parseBool->invoke($import, 'y'));
+        $this->assertTrue($parseBool->invoke($import, 'active'));
+        $this->assertFalse($parseBool->invoke($import, '0'));
+        $this->assertFalse($parseBool->invoke($import, 'no'));
+        $this->assertFalse($parseBool->invoke($import, 'false'));
+        $this->assertFalse($parseBool->invoke($import, 'n'));
+        $this->assertFalse($parseBool->invoke($import, 'inactive'));
+        $this->assertNull($parseBool->invoke($import, 'invalid_boolean_string'));
+
+        // 2. chunkSize
+        $this->assertEquals(500, $import->chunkSize());
+
+        // 3. normalizeRow direct testing covering all aliases (covers lines 267-323)
+        $dummyPan = Company::dummyTransporterTruckOwnerPanNumber((int) $admin->company_id);
+        $normMethod = $ref->getMethod('normalizeRow');
+        $normMethod->setAccessible(true);
+
+        $resNorm1 = $normMethod->invoke($import, [
+            'pan_no' => 'ABCDE1234F',
+            'truck_owner_name' => 'Owner Name 1',
+            'mobile_no' => '9876543210',
+            'contact_person' => 'Person 1',
+            'gst_no' => '24ABCDE1234F1Z5',
+            'pan_status' => 'yes',
+            'declaration' => 'yes',
+            'tds_%' => '2',
+            'tds_remark' => 'Remark 1',
+            'opening_balance' => '500',
+            'total_trucks' => '3',
+            'email_address' => 'test1@example.com',
+            'country' => 'India',
+            'state' => 'Gujarat',
+            'city' => 'Ahmedabad',
+            'address' => 'Addr 1',
+            'short_name' => 'SN1',
+        ], $dummyPan);
+        $this->assertEquals('ABCDE1234F', $resNorm1['pan_number']);
+        $this->assertEquals('Owner Name 1', $resNorm1['name']);
+
+        $resNorm2 = $normMethod->invoke($import, [
+            'pan' => '',
+            'owner_name' => 'Owner Name 2',
+            'contact_number' => '9876543211',
+            'contact_name' => 'Person 2',
+            'gst' => '24ABCDE1234F1Z6',
+            'tds' => '0',
+            'remark' => 'Remark 2',
+        ], $dummyPan);
+        $this->assertEquals($dummyPan, $resNorm2['pan_number']);
+        $this->assertEquals('Owner Name 2', $resNorm2['name']);
+
+        $resNorm3 = $normMethod->invoke($import, [
+            'transporter_name' => 'Transporter Name 3',
+            'contact_no' => '9876543212',
+            'mobile' => '9876543213',
+        ], $dummyPan);
+        $this->assertEquals('Transporter Name 3', $resNorm3['name']);
+
+        // 4. validateRow direct testing (covers lines 325-434)
+        $valMethod = $ref->getMethod('validateRow');
+        $valMethod->setAccessible(true);
+
+        // Dummy PAN validation bypass (line 344)
+        $dummyErrors = $valMethod->invoke($import, [
+            'name' => 'Owner Dummy',
+            'mobile_number' => '9876543210',
+            'pan_number' => $dummyPan,
+            'pan_active' => true,
+            'country' => 'India',
+            'state' => 'Gujarat',
+            'city' => 'Ahmedabad',
+            'declaration_given' => true,
+            'tds_percentage' => 0,
+        ], $dummyPan);
+        $this->assertEmpty($dummyErrors);
+
+        // All validation error messages
+        $allErrors = $valMethod->invoke($import, [
+            'name' => '',
+            'mobile_number' => '123',
+            'pan_number' => '1234567890',
+            'pan_active' => null,
+            'country' => '',
+            'state' => '',
+            'city' => '',
+            'declaration_given' => null,
+            'tds_percentage' => 'invalid_num',
+            'email' => 'not-an-email',
+        ], $dummyPan);
+        $this->assertContains('Truck Owner Name is required.', $allErrors);
+        $this->assertContains('Mobile Number must be exactly 10 digits.', $allErrors);
+        $this->assertContains('The PAN number format is invalid (e.g. ABCDE1234F).', $allErrors);
+        $this->assertContains('PAN Active status is required (Yes / No).', $allErrors);
+        $this->assertContains('Country is required.', $allErrors);
+        $this->assertContains('State is required.', $allErrors);
+        $this->assertContains('City is required.', $allErrors);
+        $this->assertContains('Declaration Given status is required (Yes / No).', $allErrors);
+        $this->assertContains('TDS % must be a valid number.', $allErrors);
+        $this->assertContains('Email must be a valid email address.', $allErrors);
+
+        // 5. User without company_id (covers lines 39-47)
+        $userWithoutCompany = User::factory()->create(['company_id' => null]);
+        $this->actingAs($userWithoutCompany);
+        $importNoComp = new TruckOwnerImport();
+        $importNoComp->collection(collect([
+            collect(['name' => 'No Comp', 'pan_number' => 'ABCDE1111A', 'mobile_number' => '9999999999']),
+        ]));
+        $this->assertNotEmpty($importNoComp->errors);
+        $this->assertEquals('Company could not be identified for the current user.', $importNoComp->errors[0]['errors'][0]);
+
+        // 6. Pre-seed DB records for duplicates, master reuse, and short name suffixes
+        $this->actingAs($admin);
+        $existingMaster = TransporterMaster::create([
+            'name' => 'Existing Company Master',
+            'pan_number' => 'ABCDE7777K',
+            'pan_active' => true,
+        ]);
+        Transporter::create([
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $existingMaster->id,
+            'is_owner' => 1,
+            'mobile_number' => '9876599999',
+            'short_name' => 'SHORT',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 20,
+        ]);
+        Transporter::create([
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $existingMaster->id,
+            'is_owner' => 1,
+            'mobile_number' => '9876599998',
+            'short_name' => 'SHORT-1',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 20,
+        ]);
+
+        $reuseMaster = TransporterMaster::create([
+            'name' => 'Other Master To Reuse',
+            'pan_number' => 'ABCDE8888M',
+            'pan_active' => true,
+        ]);
+
+        $otherCountry = Country::create(['name' => 'Otherland', 'code' => 'OL']);
+        $diffState = State::create(['name' => 'DiffState', 'country_id' => $otherCountry->id]);
+        $diffCity = City::create(['name' => 'DiffCity', 'state_id' => $diffState->id, 'country_id' => $otherCountry->id]);
+        $targetCountry = Country::create(['name' => 'Targetland', 'code' => 'TL']);
+
+        // 7. Full collection flow with all branches
+        $importRows = collect([
+            // Row 1: Valid row with new non-dummy PAN, new master, short_name candidate loop (SHORT -> SHORT-1 -> SHORT-2)
+            collect([
+                'name' => 'Imported Owner New Master',
+                'pan_number' => 'ABCDE1111N',
+                'pan_active' => '1',
+                'mobile_number' => '9876511111',
+                'country' => 'AutocreatedCountry',
+                'state' => 'AutocreatedState',
+                'city' => 'AutocreatedCity',
+                'declaration_given' => 'Yes',
+                'tds_percentage' => '2',
+                'email' => 'importowner1@example.com',
+                'gst_number' => '24ABCDE1111N1Z5',
+                'address' => 'Sample Address',
+                'short_name' => 'SHORT', // already exists: SHORT and SHORT-1 exist, so becomes SHORT-2
+                'advance_amount' => '1500',
+                'total_trucks' => '4',
+                'tds_adjustment_remark' => 'Remark 1',
+            ]),
+            // Row 2: Reusing existing master ($reuseMaster: lines 190-192), new mobile
+            collect([
+                'name' => 'Imported With Reused Master',
+                'pan_number' => 'ABCDE8888M',
+                'pan_active' => 'Yes',
+                'mobile_number' => '9876522222',
+                'country' => 'AutocreatedCountry',
+                'state' => 'AutocreatedState',
+                'city' => 'AutocreatedCity',
+                'declaration_given' => 'Yes',
+                'tds_percentage' => '2',
+                'total_trucks' => '2',
+            ]),
+            // Row 3: Duplicate PAN in file (lines 72-78)
+            collect([
+                'name' => 'Dup PAN in File',
+                'pan_number' => 'ABCDE1111N', // same as row 1
+                'pan_active' => 'Yes',
+                'mobile_number' => '9876533333',
+                'country' => 'AutocreatedCountry',
+                'state' => 'AutocreatedState',
+                'city' => 'AutocreatedCity',
+                'declaration_given' => 'Yes',
+                'tds_percentage' => '0',
+            ]),
+            // Row 4: Duplicate mobile in file (lines 80-86)
+            collect([
+                'name' => 'Dup Mobile in File',
+                'pan_number' => 'ABCDE2222M',
+                'pan_active' => 'Yes',
+                'mobile_number' => '9876511111', // same as row 1
+                'country' => 'AutocreatedCountry',
+                'state' => 'AutocreatedState',
+                'city' => 'AutocreatedCity',
+                'declaration_given' => 'Yes',
+                'tds_percentage' => '0',
+            ]),
+            // Row 5: PAN already exists for this company in DB (lines 91-106)
+            collect([
+                'name' => 'PAN Already in Company',
+                'pan_number' => 'ABCDE7777K', // already in company
+                'pan_active' => 'Yes',
+                'mobile_number' => '9876544444',
+                'country' => 'AutocreatedCountry',
+                'state' => 'AutocreatedState',
+                'city' => 'AutocreatedCity',
+                'declaration_given' => 'Yes',
+                'tds_percentage' => '0',
+            ]),
+            // Row 6: Mobile already exists for this company in DB (lines 108-119)
+            collect([
+                'name' => 'Mobile Already in Company',
+                'pan_number' => 'ABCDE3333X',
+                'pan_active' => 'Yes',
+                'mobile_number' => '9876599999', // already in company
+                'country' => 'AutocreatedCountry',
+                'state' => 'AutocreatedState',
+                'city' => 'AutocreatedCity',
+                'declaration_given' => 'Yes',
+                'tds_percentage' => '0',
+            ]),
+            // Row 7: Validation error in row (lines 58-64)
+            collect([
+                'name' => 'Invalid Row',
+                'pan_number' => '1234567890',
+                'pan_active' => 'invalid',
+                'mobile_number' => '12',
+                'country' => '',
+                'state' => '',
+                'city' => '',
+                'declaration_given' => '',
+                'tds_percentage' => 'abc',
+            ]),
+            // Row 8: Dummy PAN row (covers lines 49, 72, 91, 190, 251)
+            collect([
+                'name' => 'Dummy PAN Truck Owner 1',
+                'pan_number' => $dummyPan,
+                'pan_active' => 'Yes',
+                'mobile_number' => '9876555555',
+                'country' => 'AutocreatedCountry',
+                'state' => 'AutocreatedState',
+                'city' => 'AutocreatedCity',
+                'declaration_given' => 'No',
+                'tds_percentage' => '0',
+            ]),
+            // Row 9: Second Dummy PAN row with Targetland and mismatched state/city queries
+            collect([
+                'name' => 'Dummy PAN Truck Owner 2',
+                'pan_number' => $dummyPan,
+                'pan_active' => '0',
+                'mobile_number' => '9876566666',
+                'country' => 'Targetland',
+                'state' => 'DiffState', // state in Otherland -> triggers ?? $stateQuery->first()
+                'city' => 'DiffCity',   // city in DiffState -> triggers ?? $cityQuery->first()
+                'declaration_given' => 'No',
+                'tds_percentage' => '0',
+            ]),
+        ]);
+
+        $importMain = new TruckOwnerImport();
+        $importMain->collection($importRows);
+
+        $this->assertGreaterThanOrEqual(4, $importMain->successCount);
+        $this->assertGreaterThanOrEqual(4, $importMain->imported);
+        $this->assertNotEmpty($importMain->errors);
+
+        // Verify short name candidate became SHORT-2
+        $this->assertDatabaseHas('transporters', [
+            'company_id' => $admin->company_id,
+            'mobile_number' => '9876511111',
+            'short_name' => 'SHORT-2',
+        ]);
+
+        // 8. Trigger catch block (\Throwable $e) at lines 258-263
+        $dispatcher = Transporter::getEventDispatcher();
+        try {
+            Transporter::saving(function ($model) {
+                if ($model->mobile_number === '9876500000') {
+                    throw new \Exception('Forced truck owner create error');
+                }
+            });
+
+            $importError = new TruckOwnerImport();
+            $importError->collection(collect([
+                collect([
+                    'name' => 'Error Owner',
+                    'pan_number' => 'ABCDE5555Y',
+                    'pan_active' => 'Yes',
+                    'mobile_number' => '9876500000',
+                    'country' => 'India',
+                    'state' => 'Gujarat',
+                    'city' => 'Ahmedabad',
+                    'declaration_given' => 'Yes',
+                    'tds_percentage' => '0',
+                ]),
+            ]));
+
+            $this->assertStringContainsString('Unable to create truck owner: Forced truck owner create error', $importError->errors[0]['errors'][0]);
+        } finally {
+            Transporter::setEventDispatcher($dispatcher);
+        }
+
+        // 9. Test fallback location branches: lines 147, 154-156, 170, 178-183
+        $stateOnlyCountry = Country::create(['name' => 'StateOnlyCountry', 'code' => 'SO']);
+        $stateOnly = State::create(['name' => 'StateOnly', 'country_id' => $stateOnlyCountry->id]);
+
+        $cityOnlyCountry = Country::create(['name' => 'CityOnlyCountry', 'code' => 'CO']);
+        $cityOnlyState = State::create(['name' => 'CityOnlyState', 'country_id' => $cityOnlyCountry->id]);
+        $cityOnly = City::create(['name' => 'CityOnly', 'state_id' => $cityOnlyState->id, 'country_id' => $cityOnlyCountry->id]);
+
+        $realValidator = \Illuminate\Support\Facades\Validator::getFacadeRoot();
+        try {
+            $validatorFactory = \Mockery::mock(\Illuminate\Validation\Factory::class);
+            $mockValidator = \Mockery::mock(\Illuminate\Validation\Validator::class);
+            $mockValidator->shouldReceive('fails')->andReturn(false);
+            $validatorFactory->shouldReceive('make')->andReturn($mockValidator);
+            \Illuminate\Support\Facades\Validator::swap($validatorFactory);
+
+            $importFallback = new TruckOwnerImport();
+            $importFallback->collection(collect([
+                // Row with no country, only state -> triggers lines 147, 154-156
+                collect([
+                    'name' => 'Fallback State Owner',
+                    'pan_number' => 'ABCDE6666Z',
+                    'pan_active' => true,
+                    'mobile_number' => '9876577777',
+                    'country' => '',
+                    'state' => 'StateOnly',
+                    'city' => '',
+                    'declaration_given' => true,
+                    'tds_percentage' => 0,
+                ]),
+                // Row with no country and no state, only city -> triggers lines 170, 178-183
+                collect([
+                    'name' => 'Fallback City Owner',
+                    'pan_number' => 'ABCDE7777W',
+                    'pan_active' => true,
+                    'mobile_number' => '9876588888',
+                    'country' => '',
+                    'state' => '',
+                    'city' => 'CityOnly',
+                    'declaration_given' => true,
+                    'tds_percentage' => 0,
+                ]),
+            ]));
+            $this->assertGreaterThanOrEqual(2, $importFallback->successCount);
+        } finally {
+            \Illuminate\Support\Facades\Validator::swap($realValidator);
+        }
+    }
+
+    public function test_truck_owner_rbac_roles(): void
+    {
+        $admin = $this->makeAdmin();
+        [$country, $state, $city] = $this->seedGeo();
+
+        $master = TransporterMaster::create([
+            'name' => 'RBAC Owner Master',
+            'pan_number' => 'RBACO1234A',
+            'pan_active' => true,
+        ]);
+        $owner = Transporter::create([
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $master->id,
+            'is_owner' => 1,
+            'mobile_number' => '9998881234',
+            'declaration_given' => false,
+            'tds_percentage' => 20,
+        ]);
+
+        // 1. Moderator role (Role 4)
+        $moderator = User::factory()->create([
+            'user_role_id' => 4, // moderator
+            'company_id' => $admin->company_id,
+        ]);
+
+        // Moderator can access index, create, show, and bulk-upload-template
+        $this->actingAs($moderator)->get('/truck_owners')->assertOk();
+        $this->actingAs($moderator)->get('/truck_owners/create')->assertOk();
+        $this->actingAs($moderator)->get("/truck_owners/{$owner->id}")->assertOk();
+        $this->actingAs($moderator)->get('/truck_owners/bulk-upload-template')->assertOk();
+
+        // Moderator is forbidden (403) on edit, update, destroy, refresh-tds
+        $this->actingAs($moderator)->get("/truck_owners/{$owner->id}/edit")->assertStatus(403);
+        $this->actingAs($moderator)->put("/truck_owners/{$owner->id}", [
+            'company_id' => $admin->company_id,
+            'mobile_number' => '9998881234',
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'tds_percentage' => 20,
+        ])->assertStatus(403);
+        $this->actingAs($moderator)->deleteJson("/truck_owners/{$owner->id}", [
+            'delete_remark' => 'Moderator cannot delete',
+        ])->assertStatus(403);
+        $this->actingAs($moderator)->post("/truck_owners/{$owner->id}/refresh-tds")->assertStatus(403);
+
+        // 2. Master Admin role (Role 1) - forbidden on company truck owner management (403)
+        $masterAdmin = User::factory()->create([
+            'user_role_id' => 1,
+            'company_id' => null,
+        ]);
+        $this->actingAs($masterAdmin)->get('/truck_owners')->assertStatus(403);
+        $this->actingAs($masterAdmin)->get('/truck_owners/create')->assertStatus(403);
+        $this->actingAs($masterAdmin)->get("/truck_owners/{$owner->id}")->assertStatus(403);
+        $this->actingAs($masterAdmin)->get("/truck_owners/{$owner->id}/edit")->assertStatus(403);
+        $this->actingAs($masterAdmin)->put("/truck_owners/{$owner->id}", [])->assertStatus(403);
+        $this->actingAs($masterAdmin)->deleteJson("/truck_owners/{$owner->id}", [])->assertStatus(403);
+        $this->actingAs($masterAdmin)->post("/truck_owners/{$owner->id}/refresh-tds")->assertStatus(403);
+        $this->actingAs($masterAdmin)->get('/truck_owners/bulk-upload-template')->assertStatus(403);
+
+        // 3. Transporter portal role (Role 6) - forbidden on company truck owner management (403)
+        $transporterRole = UserRole::firstOrCreate(['id' => 6, 'name' => 'transporter']);
+        $transporterUser = User::factory()->create([
+            'user_role_id' => $transporterRole->id,
+            'company_id' => $admin->company_id,
+        ]);
+        $this->actingAs($transporterUser)->get('/truck_owners')->assertStatus(403);
+        $this->actingAs($transporterUser)->get('/truck_owners/create')->assertStatus(403);
+        $this->actingAs($transporterUser)->get("/truck_owners/{$owner->id}")->assertStatus(403);
+        $this->actingAs($transporterUser)->get("/truck_owners/{$owner->id}/edit")->assertStatus(403);
+        $this->actingAs($transporterUser)->deleteJson("/truck_owners/{$owner->id}", [])->assertStatus(403);
+        $this->actingAs($transporterUser)->post("/truck_owners/{$owner->id}/refresh-tds")->assertStatus(403);
+
+        // 4. Guest / Unauthenticated user - redirected to login
+        auth()->logout();
+        $this->get('/truck_owners')->assertRedirect(route('login'));
+        $this->get('/truck_owners/create')->assertRedirect(route('login'));
+        $this->get("/truck_owners/{$owner->id}/edit")->assertRedirect(route('login'));
     }
 }
 
