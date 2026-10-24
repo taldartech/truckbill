@@ -7,6 +7,9 @@ use App\Models\Transporter;
 use App\Models\TransporterMaster;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Models\City;
+use App\Models\Country;
+use App\Models\State;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -365,18 +368,122 @@ public function test_pan_active_is_required(): void
         ->assertSessionHasErrors('pan_active');
 }
 
-public function test_address_longer_than_500_characters_is_rejected(): void
-{
-    $masterAdmin = $this->makeUser('master_admin');
+    public function test_address_longer_than_500_characters_is_rejected(): void
+    {
+        $masterAdmin = $this->makeUser('master_admin');
 
-    $this->actingAs($masterAdmin)
-        ->post(route('master.transporter-masters.store'), [
-            'name' => 'Test Transporter',
-            'pan_number' => 'ABCDE1234F',
-            'pan_active' => '1',
-            'address' => str_repeat('A', 501),
-        ])
-        ->assertSessionHasErrors('address');
+        $this->actingAs($masterAdmin)
+            ->post(route('master.transporter-masters.store'), [
+                'name' => 'Test Transporter',
+                'pan_number' => 'ABCDE1234F',
+                'pan_active' => '1',
+                'address' => str_repeat('A', 501),
+            ])
+            ->assertSessionHasErrors('address');
+    }
+
+    public function test_master_admin_can_view_transporter_master_create_form(): void
+    {
+        $masterAdmin = $this->makeUser('master_admin');
+        Country::create(['name' => 'India', 'code' => 'IN']);
+
+        $response = $this->actingAs($masterAdmin)
+            ->get(route('master.transporter-masters.create'));
+
+        $response->assertOk();
+        $response->assertViewIs('master.transporter-masters-form');
+        $response->assertViewHas('transporterMaster', null);
+        $this->assertTrue($response->viewData('associatedCompanies')->isEmpty());
+        $this->assertNotEmpty($response->viewData('countries'));
+    }
+
+    public function test_transporter_masters_datatable_ajax_search_ordering_and_formatting(): void
+    {
+        $masterAdmin = $this->makeUser('master_admin');
+
+        $country = Country::create(['name' => 'India', 'code' => 'IN']);
+        $state = State::create(['name' => 'Maharashtra', 'code' => 'MH', 'country_id' => $country->id]);
+        $city = City::create(['name' => 'Mumbai', 'state_id' => $state->id, 'country_id' => $country->id]);
+
+        $master1 = TransporterMaster::create([
+            'name' => 'Alpha Express',
+            'email' => 'alpha@express.com',
+            'pan_number' => 'ABCDE1111A',
+            'gst_number' => '27ABCDE1111A1Z5',
+            'pan_active' => true,
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+        ]);
+
+        $master2 = TransporterMaster::create([
+            'name' => 'Beta Logistics',
+            'email' => null,
+            'pan_number' => 'BCDEF2222B',
+            'gst_number' => null,
+            'pan_active' => false,
+            'country_id' => null,
+            'state_id' => null,
+            'city_id' => null,
+        ]);
+
+        // 1. Basic AJAX call without search or order (covers default ordering, location, null formatting, action buttons)
+        $resDefault = $this->actingAs($masterAdmin)->getJson(
+            route('master.transporter-masters.index', ['draw' => 1, 'start' => 0, 'length' => 10]),
+            ['X-Requested-With' => 'XMLHttpRequest']
+        );
+        $resDefault->assertOk();
+        $resDefault->assertJsonPath('recordsTotal', 2);
+        $resDefault->assertJsonPath('recordsFiltered', 2);
+        $data = $resDefault->json('data');
+        $this->assertCount(2, $data);
+        $this->assertStringContainsString('Mumbai, Maharashtra, India', $data[1]['location']);
+        $this->assertEquals('-', $data[0]['location']);
+        $this->assertEquals('-', $data[0]['email']);
+        $this->assertEquals('-', $data[0]['gst_number']);
+        $this->assertEquals('No', $data[0]['pan_active']);
+        $this->assertEquals('Yes', $data[1]['pan_active']);
+        $this->assertStringContainsString('btn-action-edit', $data[0]['actions']);
+        $this->assertStringContainsString('btn-action-delete', $data[0]['actions']);
+
+        // 2. Search filtering
+        $resSearch = $this->actingAs($masterAdmin)->getJson(
+            route('master.transporter-masters.index', [
+                'draw' => 2,
+                'search' => ['value' => 'Alpha'],
+            ]),
+            ['X-Requested-With' => 'XMLHttpRequest']
+        );
+        $resSearch->assertOk();
+        $resSearch->assertJsonPath('recordsFiltered', 1);
+        $this->assertEquals('Alpha Express', $resSearch->json('data.0.name'));
+
+        // 3. Ordering by valid column (column 1 = name, asc)
+        $resOrder = $this->actingAs($masterAdmin)->getJson(
+            route('master.transporter-masters.index', [
+                'draw' => 3,
+                'order' => [
+                    ['column' => 1, 'dir' => 'asc'],
+                ],
+            ]),
+            ['X-Requested-With' => 'XMLHttpRequest']
+        );
+        $resOrder->assertOk();
+        $this->assertEquals('Alpha Express', $resOrder->json('data.0.name'));
+        $this->assertEquals('Beta Logistics', $resOrder->json('data.1.name'));
+
+        // 4. Ordering with fallback column index (column 99)
+        $resFallback = $this->actingAs($masterAdmin)->getJson(
+            route('master.transporter-masters.index', [
+                'draw' => 4,
+                'order' => [
+                    ['column' => 99, 'dir' => 'desc'],
+                ],
+            ]),
+            ['X-Requested-With' => 'XMLHttpRequest']
+        );
+        $resFallback->assertOk();
+        $this->assertEquals($master2->id, $resFallback->json('data.0.id'));
+    }
 }
 
-}

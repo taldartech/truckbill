@@ -405,9 +405,7 @@ public function bulkUploadTemplate()
             }
 
             // Skip expensive joined count when no filters are applied.
-            $filteredRecords = ($hasGlobalSearch || $hasColumnSearch)
-                ? (clone $query)->reorder()->count('transporters.id')
-                : $totalRecords;
+            $filteredRecords = ($hasGlobalSearch || $hasColumnSearch) ? (clone $query)->reorder()->count('transporters.id') : $totalRecords;
 
             // Handle pagination
             $transporters = $query->offset($start)->limit($length)->get();
