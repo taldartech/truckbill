@@ -357,4 +357,137 @@ class CustomInvoiceTest extends TestCase
         $response->assertSee('11.5', false);
         $response->assertSee('2.25', false);
     }
+
+    public function test_create_renders_when_user_has_no_company(): void
+    {
+        $userNoCo = \App\Models\User::factory()->create([
+            'user_role_id' => 3,
+            'company_id' => null,
+        ]);
+        $response = $this->actingAs($userNoCo)->get(route('custom-invoices.create'));
+        $response->assertOk();
+    }
+
+    public function test_lr_by_number_with_freight_booking_damages(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsigneeWithState($admin);
+        $lr = $this->seedLr($admin, $customer);
+        $lr->update([
+            'destination_city' => 'Jaipur',
+            'weight' => 1500,
+            'invoice_number' => 'INV-009',
+            'gr_date' => now()->toDateString(),
+        ]);
+
+        \App\Models\FreightBooking::create([
+            'company_id' => $admin->company_id,
+            'lr_id' => $lr->id,
+            'tr_fr_rate' => 100.00,
+            'tr_amount' => 5000,
+            'advance_amount' => 1000,
+            'balance_amount' => 4000,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('custom-invoices.lr-by-number', ['lr_number' => $lr->lr_number]));
+        $response->assertOk();
+        $response->assertJsonPath('lr_details.truck_number', '');
+        $response->assertJsonPath('lr_details.destination_city', 'Jaipur');
+    }
+
+    public function test_store_handles_shortage_damage_and_forward_tax_variations(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsigneeWithState($admin);
+        $lr = $this->seedLr($admin, $customer);
+
+        // Forward invoice with shortage_damage
+        $payload = [
+            'custom_invoice' => 'shortage_damage',
+            'manual_invoice_number' => 'CINV-SHORT-01',
+            'invoice_type' => 'Forward',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 1000,
+            'lr_number' => $lr->lr_number,
+            'amount' => 1000,
+            'damage_qty' => 2,
+            'damage_rate' => 200,
+            'shortage_qty' => 1,
+            'remark' => 'Shortage damage invoice',
+        ];
+
+        $response = $this->actingAs($admin)->post(route('custom-invoices.store'), $payload);
+        $response->assertRedirect(route('invoices.index'));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('invoices', [
+            'company_id' => $admin->company_id,
+            'manual_invoice_number' => 'CINV-SHORT-01',
+            'custom_invoice' => 'shortage_damage',
+            'invoice_type' => 'Forward',
+        ]);
+
+        $this->assertDatabaseHas('custom_invoice_details', [
+            'lr_id' => $lr->id,
+            'damage_qty' => 2,
+            'damage_rate' => 200,
+            'shortage_qty' => 1,
+        ]);
+    }
+
+    public function test_store_handles_forward_intrastate_and_generic_exception(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsigneeWithState($admin);
+        $lr = $this->seedLr($admin, $customer);
+
+        // Match company state with customer state for intrastate Forward
+        $company = \App\Models\Company::find($admin->company_id);
+        $company->state_id = $customer->state_id;
+        $company->save();
+
+        $payload = [
+            'custom_invoice' => 'rate_difference',
+            'manual_invoice_number' => '',
+            'invoice_type' => 'Forward',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 2000,
+            'lr_number' => $lr->lr_number,
+            'amount' => 2000,
+            'portal_rate' => 50,
+            'diff' => 10,
+        ];
+
+        $response = $this->actingAs($admin)->post(route('custom-invoices.store'), $payload);
+        $response->assertRedirect(route('invoices.index'));
+
+        // Test exception branch directly on controller with mock
+        $mockNumberService = \Mockery::mock(\App\Services\InvoiceNumberService::class);
+        $mockNumberService->shouldReceive('generate')->andThrow(new \Exception('Mocked generate failure'));
+
+        $controller = new \App\Http\Controllers\CustomInvoiceController($mockNumberService);
+
+        $request = \Illuminate\Http\Request::create(route('custom-invoices.store'), 'POST', [
+            'custom_invoice' => 'rate_difference',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 1000,
+            'lr_number' => $lr->lr_number,
+            'amount' => 1000,
+            'portal_rate' => 10,
+            'diff' => 2,
+        ]);
+        $request->setUserResolver(fn () => $admin);
+
+        $this->actingAs($admin);
+        $responseFail = $controller->store($request);
+
+        $this->assertTrue($responseFail->isRedirection());
+        $this->assertArrayHasKey('save', session('errors')->getMessages());
+    }
 }
+
+

@@ -2,12 +2,14 @@
 
 namespace Tests\Feature\Company;
 
+use App\Http\Controllers\BranchController;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Country;
 use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Tests\TestCase;
 
 class CompanyBranchTest extends TestCase
@@ -407,4 +409,168 @@ class CompanyBranchTest extends TestCase
             'head_office' => true,
         ]);
     }
+
+    public function test_branch_index_datatables_ajax_search_and_sorting(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($super, ['name' => 'Zeta Freight']);
+        $branch1 = Branch::create([
+            'company_id' => $company->id,
+            'branch_name' => 'Alpha Branch',
+            'branch_contact_number' => '1111111111',
+            'branch_address' => '100 Alpha Road',
+            'head_office' => true,
+        ]);
+        $branch2 = Branch::create([
+            'company_id' => $company->id,
+            'branch_name' => 'Beta Branch',
+            'branch_contact_number' => '2222222222',
+            'branch_address' => '200 Beta Street',
+            'head_office' => false,
+        ]);
+
+        // 1. Basic AJAX call
+        $response = $this->actingAs($super)
+            ->getJson('/branches', ['X-Requested-With' => 'XMLHttpRequest']);
+        $response->assertOk()
+            ->assertJsonStructure(['draw', 'recordsTotal', 'recordsFiltered', 'data']);
+        $this->assertCount(2, $response->json('data'));
+        $this->assertStringContainsString('btn-action-edit', $response->json('data.0.action'));
+        $this->assertStringContainsString('btn-action-delete', $response->json('data.0.action'));
+
+        // 2. Search query matching Alpha
+        $searchResponse = $this->actingAs($super)->getJson('/branches?' . http_build_query([
+            'search' => ['value' => 'Alpha'],
+        ]), ['X-Requested-With' => 'XMLHttpRequest']);
+        $searchResponse->assertOk();
+        $this->assertCount(1, $searchResponse->json('data'));
+
+        // Search matching contact number
+        $searchPhone = $this->actingAs($super)->getJson('/branches?' . http_build_query([
+            'search' => ['value' => '222222'],
+        ]), ['X-Requested-With' => 'XMLHttpRequest']);
+        $searchPhone->assertOk();
+        $this->assertCount(1, $searchPhone->json('data'));
+
+        // Search matching address
+        $searchAddr = $this->actingAs($super)->getJson('/branches?' . http_build_query([
+            'search' => ['value' => 'Beta Street'],
+        ]), ['X-Requested-With' => 'XMLHttpRequest']);
+        $searchAddr->assertOk();
+        $this->assertCount(1, $searchAddr->json('data'));
+
+        // Search matching company name
+        $searchComp = $this->actingAs($super)->getJson('/branches?' . http_build_query([
+            'search' => ['value' => 'Zeta Freight'],
+        ]), ['X-Requested-With' => 'XMLHttpRequest']);
+        $searchComp->assertOk();
+        $this->assertCount(2, $searchComp->json('data'));
+
+        // 3. Sorting on columns 1, 2, 3, 4, and default
+        foreach ([1, 2, 3, 4, 99] as $col) {
+            $sortRequest = Request::create('/branches', 'GET');
+            $sortRequest->headers->set('X-Requested-With', 'XMLHttpRequest');
+            $sortRequest->merge([
+                'order' => [['column' => $col, 'dir' => 'asc']],
+            ]);
+            $this->actingAs($super);
+            $sortResponse = app(BranchController::class)->index($sortRequest);
+            $this->assertSame(200, $sortResponse->getStatusCode());
+        }
+    }
+
+    public function test_branch_edit_forbidden_for_other_company(): void
+    {
+        $super1 = $this->makeSuperAdmin();
+        $super2 = $this->makeSuperAdmin();
+        $company2 = $this->createCompanyFor($super2);
+        $branch = Branch::create([
+            'company_id' => $company2->id,
+            'branch_name' => 'Foreign Branch',
+            'head_office' => false,
+        ]);
+
+        $response = $this->actingAs($super1)->get(route('branches.edit', $branch));
+        $response->assertForbidden();
+    }
+
+    public function test_branch_constraints_validation_store_and_update(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($super);
+
+        $branch1 = Branch::create([
+            'company_id' => $company->id,
+            'branch_name' => 'Main Office',
+            'head_office' => true,
+        ]);
+
+        // Duplicate branch name on create
+        $respDuplicateName = $this->actingAs($super)->post('/branches', [
+            'company_id' => $company->id,
+            'branch_name' => 'Main Office',
+            'head_office' => false,
+        ]);
+        $respDuplicateName->assertSessionHasErrors(['branch_name']);
+
+        // Duplicate head office on create
+        $respDuplicateHO = $this->actingAs($super)->post('/branches', [
+            'company_id' => $company->id,
+            'branch_name' => 'Second Office',
+            'head_office' => true,
+        ]);
+        $respDuplicateHO->assertSessionHasErrors(['head_office']);
+
+        // Create second branch without head office
+        $branch2 = Branch::create([
+            'company_id' => $company->id,
+            'branch_name' => 'Second Office',
+            'head_office' => false,
+        ]);
+
+        // Update branch2 with branch1 name
+        $respUpdateDuplicate = $this->actingAs($super)->put("/branches/{$branch2->id}", [
+            'company_id' => $company->id,
+            'branch_name' => 'Main Office',
+            'head_office' => false,
+        ]);
+        $respUpdateDuplicate->assertSessionHasErrors(['branch_name']);
+
+        // Update branch2 to head office when branch1 is already head office
+        $respUpdateHO = $this->actingAs($super)->put("/branches/{$branch2->id}", [
+            'company_id' => $company->id,
+            'branch_name' => 'Second Office',
+            'head_office' => true,
+        ]);
+        $respUpdateHO->assertSessionHasErrors(['head_office']);
+    }
+
+    public function test_branch_destroy_requires_remark_and_soft_deletes(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($super);
+        $branch = Branch::create([
+            'company_id' => $company->id,
+            'branch_name' => 'Closing Branch',
+            'head_office' => false,
+        ]);
+
+        // 1. Missing delete remark
+        $failResp = $this->actingAs($super)->delete("/branches/{$branch->id}", []);
+        $failResp->assertSessionHasErrors(['delete_remark']);
+
+        // 2. Valid delete remark
+        $successResp = $this->actingAs($super)->delete("/branches/{$branch->id}", [
+            'delete_remark' => 'Branch operations closed',
+        ]);
+        $successResp->assertRedirect(route('branches.index'));
+        $successResp->assertSessionHas('success');
+
+        $this->assertSoftDeleted('branches', [
+            'id' => $branch->id,
+            'deleted_by' => $super->id,
+            'deleted_remark' => 'Branch operations closed',
+        ]);
+    }
 }
+

@@ -131,4 +131,40 @@ class CompanySettingsTest extends TestCase
             'freight_challan_template' => 'classic',
         ])->assertForbidden();
     }
+
+    public function test_update_validates_voucher_header_constraints(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $company = $super->company;
+
+        $controller = app(\App\Http\Controllers\CompanySettingsController::class);
+
+        $mockRequest1 = \Mockery::mock(\App\Http\Requests\UpdateCompanySettingsRequest::class);
+        $mockRequest1->shouldReceive('validated')->andReturn([
+            'template_name' => '   ',
+            'template_address' => 'Valid Address',
+        ]);
+
+        $this->actingAs($super);
+        try {
+            $controller->update($mockRequest1, $company);
+            $this->fail('ValidationException expected for empty template_name');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->assertArrayHasKey('template_name', $e->errors());
+        }
+
+        $mockRequest2 = \Mockery::mock(\App\Http\Requests\UpdateCompanySettingsRequest::class);
+        $mockRequest2->shouldReceive('validated')->andReturn([
+            'template_name' => 'Valid Name',
+            'template_address' => '   ',
+        ]);
+
+        try {
+            $controller->update($mockRequest2, $company);
+            $this->fail('ValidationException expected for empty template_address');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->assertArrayHasKey('template_address', $e->errors());
+        }
+    }
 }
+

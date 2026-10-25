@@ -370,4 +370,107 @@ class CustomerAndTransporterPortalTest extends TestCase
         $response = $this->actingAs($userA)->get(route('transporter.freight_bookings.show', $bookingB));
         $response->assertStatus(403);
     }
+
+    public function test_customer_portal_filters_and_unauthorized_access(): void
+    {
+        $company = $this->createCompany();
+        $customerRole = UserRole::where('name', 'customer')->first();
+
+        $customer1 = Consignee::create([
+            'company_id' => $company->id,
+            'name' => 'Customer 1 Corp',
+            'address' => 'Mumbai',
+        ]);
+        $customer2 = Consignee::create([
+            'company_id' => $company->id,
+            'name' => 'Customer 2 Corp',
+            'address' => 'Delhi',
+        ]);
+
+        $customerUser = User::factory()->create([
+            'user_role_id' => $customerRole->id,
+            'company_id' => $company->id,
+        ]);
+        $customerUser->consignees()->attach($customer1->id);
+
+        $truck = Truck::create([
+            'company_id' => $company->id,
+            'truck_number' => 'MH04AB1234',
+            'truck_type' => 'Open',
+        ]);
+
+        $lr1 = $this->createDummyLr($company, $customer1, $truck, 'LR-PORTAL-101');
+        $lr2 = $this->createDummyLr($company, $customer2, $truck, 'LR-PORTAL-102');
+
+        $invoice1 = Invoice::create([
+            'company_id' => $company->id,
+            'customer_id' => $customer1->id,
+            'invoice_number' => 'INV-PORTAL-101',
+            'invoice_type' => 'regular',
+            'generated_date' => now()->toDateString(),
+            'total_amount' => 10000,
+            'net_amount' => 10000,
+            'payment_status' => 'paid',
+        ]);
+
+        $invoice2 = Invoice::create([
+            'company_id' => $company->id,
+            'customer_id' => $customer2->id,
+            'invoice_number' => 'INV-PORTAL-102',
+            'invoice_type' => 'regular',
+            'generated_date' => now()->toDateString(),
+            'total_amount' => 12000,
+            'net_amount' => 12000,
+            'payment_status' => 'pending',
+        ]);
+
+        InvoicePayment::create([
+            'invoice_id' => $invoice1->id,
+            'amount' => 10000,
+            'payment_date' => now()->toDateString(),
+            'mode' => 'bank',
+            'created_by' => $company->user_id,
+        ]);
+
+        // 1. LR index with company_id and date filters
+        $lrResponse = $this->actingAs($customerUser)->get(route('customer.lorry-receipts.index', [
+            'company_id' => $company->id,
+            'start_date' => now()->subDays(5)->toDateString(),
+            'end_date' => now()->addDays(5)->toDateString(),
+        ]));
+        $lrResponse->assertOk();
+        $lrResponse->assertSee('LR-PORTAL-101');
+
+        // 2. Show LR: unauthorized customer
+        $this->actingAs($customerUser)
+            ->get(route('customer.lorry-receipts.show', $lr2))
+            ->assertForbidden();
+
+        // 3. Invoice index with company_id and payment_status filters
+        $invResponse = $this->actingAs($customerUser)->get(route('customer.invoices.index', [
+            'company_id' => $company->id,
+            'payment_status' => 'paid',
+        ]));
+        $invResponse->assertOk();
+        $invResponse->assertSee('INV-PORTAL-101');
+
+        // 4. Show Invoice: unauthorized customer
+        $this->actingAs($customerUser)
+            ->get(route('customer.invoices.show', $invoice2))
+            ->assertForbidden();
+
+        // 5. Payments index with company_id filter
+        $payResponse = $this->actingAs($customerUser)->get(route('customer.payments.index', [
+            'company_id' => $company->id,
+        ]));
+        $payResponse->assertOk();
+
+        // 6. Transporters index with company_id filter
+        $transResponse = $this->actingAs($customerUser)->get(route('customer.transporters.index', [
+            'company_id' => $company->id,
+        ]));
+        $transResponse->assertOk();
+        $transResponse->assertViewIs('customer.transporters.index');
+    }
 }
+

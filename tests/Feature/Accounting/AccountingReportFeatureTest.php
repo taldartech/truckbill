@@ -219,4 +219,16 @@ class AccountingReportFeatureTest extends TestCase
         $response = $this->actingAs($moderator)->get(route('accounting.day-book'));
         $response->assertStatus(403);
     }
+
+    public function test_super_admin_with_session_company_can_view_reports(): void
+    {
+        [$user, $company] = $this->setupCompanyAndUser('super_admin');
+
+        $response = $this->actingAs($user)
+            ->withSession(['super_admin_company_id' => $company->id])
+            ->get(route('accounting.day-book'));
+
+        $response->assertStatus(200);
+        $response->assertViewHas('company', fn ($c) => $c->id === $company->id);
+    }
 }

@@ -118,5 +118,94 @@ class AdvancePaymentTest extends TestCase
             'advance_amount' => 2500,
         ]);
     }
+
+    public function test_store_redirects_on_non_ajax_request(): void
+    {
+        $this->app['router']->get('/advance-payments-index', fn () => 'index')->name('advance-payments.index');
+        $this->app['router']->getRoutes()->refreshNameLookups();
+
+        $admin = $this->makeAdmin();
+        [, , $city] = $this->seedGeo();
+        $transporter = $this->makeTransporter($admin, $city);
+
+        $response = $this->actingAs($admin)
+            ->post('/advance-payments', [
+                'transporter_id' => $transporter->id,
+                'advance_amount' => 1200,
+                'payment_date' => now()->toDateString(),
+            ]);
+
+        $response->assertRedirect(route('advance-payments.index'));
+        $response->assertSessionHas('success', 'Advance Payment created successfully.');
+    }
+
+    public function test_store_resolves_super_admin_session_company_and_fallback(): void
+    {
+        [, , $city] = $this->seedGeo();
+        $targetCompany = Company::create([
+            'name' => 'Target Co',
+            'gst_slab' => config('payments.gst_slabs')[0],
+            'is_blocked' => false,
+        ]);
+
+        $superAdmin = User::factory()->create([
+            'user_role_id' => 2,
+            'company_id' => null,
+        ]);
+
+        $master = \App\Models\TransporterMaster::factory()
+            ->withLocation($city->id, $city->state_id, $city->country_id)
+            ->create(['name' => 'Super Logistics', 'pan_number' => 'ZZZZZ1234F']);
+
+        $transporter = Transporter::factory()
+            ->forCompany($targetCompany->id)
+            ->create([
+                'transporter_master_id' => $master->id,
+                'mobile_number' => '8888888888',
+                'declaration_given' => false,
+                'tds_percentage' => 20,
+                'total_trucks' => 0,
+                'advance_amount' => 0,
+            ]);
+
+        // Case 1: super_admin with session('super_admin_company_id')
+        $response = $this->actingAs($superAdmin)
+            ->withSession(['super_admin_company_id' => $targetCompany->id])
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->post('/advance-payments', [
+                'transporter_id' => $transporter->id,
+                'advance_amount' => 3000,
+                'payment_date' => now()->toDateString(),
+            ]);
+
+        $response->assertOk();
+        $this->assertDatabaseHas('advance_payments', [
+            'transporter_id' => $transporter->id,
+            'company_id' => $targetCompany->id,
+            'advance_amount' => 3000,
+        ]);
+
+        // Case 2: User with no company_id and no session (falls back to transporter->company_id)
+        $noCompanyUser = User::factory()->create([
+            'user_role_id' => 3,
+            'company_id' => null,
+        ]);
+
+        $response2 = $this->actingAs($noCompanyUser)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->post('/advance-payments', [
+                'transporter_id' => $transporter->id,
+                'advance_amount' => 1500,
+                'payment_date' => now()->toDateString(),
+            ]);
+
+        $response2->assertOk();
+        $this->assertDatabaseHas('advance_payments', [
+            'transporter_id' => $transporter->id,
+            'company_id' => $targetCompany->id,
+            'advance_amount' => 1500,
+        ]);
+    }
 }
+
 
