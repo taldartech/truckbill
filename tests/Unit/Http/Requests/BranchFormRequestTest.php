@@ -161,7 +161,10 @@ class BranchFormRequestTest extends TestCase
         ]);
         $this->actingAs($owner);
         $request->setRouteResolver(function () use ($branch, $request) {
-            return (new Route('PUT', '/branches/{branch}', []))->bind($request)->setParameter('branch', $branch);
+            $route = (new Route('PUT', '/branches/{branch}', []))->bind($request);
+            $route->setParameter('branch', $branch);
+
+            return $route;
         });
 
         $this->assertTrue($request->authorize());

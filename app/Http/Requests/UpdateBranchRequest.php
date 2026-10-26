@@ -26,6 +26,14 @@ class UpdateBranchRequest extends FormRequest
             return false;
         }
 
+        if (! $branch instanceof \App\Models\Branch) {
+            $branch = \App\Models\Branch::find($branch);
+        }
+
+        if (!$branch) {
+            return false;
+        }
+
         // User must own the company that owns the branch
         $company = Company::find($branch->company_id);
 

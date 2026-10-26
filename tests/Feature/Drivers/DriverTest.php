@@ -376,7 +376,7 @@ class DriverTest extends TestCase
         $response = $this->actingAs($admin)->get('/drivers/bulk-upload-template');
 
         $response->assertOk();
-        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+        $response->assertHeader('Content-Type', 'text/csv; charset=utf-8');
         $content = $response->streamedContent();
         $this->assertStringContainsString('Name,Mobile,"License Number",Address', $content);
     }

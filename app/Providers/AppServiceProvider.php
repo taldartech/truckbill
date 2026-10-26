@@ -27,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(Storage::class, PulseDatabaseStorage::class);
+        $this->app->bind('datatables.request', fn () => new \Yajra\DataTables\Utilities\Request);
     }
 
     /**

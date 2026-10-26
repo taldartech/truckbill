@@ -606,7 +606,7 @@ class BrokerCalculationAndPricingUnitTest extends TestCase
         $guard->decrementLrCredits($company, 5);
         $this->assertNull($company->fresh()->subscription);
 
-        CompanySubscription::create([
+        $subscription = CompanySubscription::create([
             'company_id' => $company->id,
             'status' => 'active',
             'starts_on' => now()->subDay(),

@@ -731,9 +731,9 @@ return $buttons;
                     }
 
                     $data = [
-                        'lr_number' => $item['lr_number'],
-                        'gr_number' => $item['gr_number'],
-                        'invoice_number' => $item['invoice_number'],
+                        'lr_number' => $item['lr_number'] ?? null,
+                        'gr_number' => $item['gr_number'] ?? null,
+                        'invoice_number' => $item['invoice_number'] ?? null,
                         'customer_id' => $item['customer_id'],
                         'consignor_id' => $item['consignor_id'],
                         'consignor_contact_number' => $item['consignor_contact_number'] ?? null,
@@ -853,7 +853,7 @@ return $buttons;
         $validated['shortage_amount'] = 0;
 
         // Check if lr_number already exists
-        if ($validated['gr_number'] == null) {
+        if (empty($validated['gr_number'])) {
             // Remove "LR" prefix, then trim leading zeros
             $validated['gr_number'] = ltrim(str_ireplace('LR', '', $validated['lr_number']), '0');
         }
@@ -1488,6 +1488,7 @@ return $buttons;
 
     public function update(Request $request, LorryReceipt $lorry_receipt): RedirectResponse
     {
+        $oldDeliveryStatus = $lorry_receipt->delivery_status;
         $companyId = $this->getCurrentCompanyId();
         $company = Auth::user()->company;
         $company?->loadMissing('subscription');
@@ -1575,7 +1576,7 @@ return $buttons;
             'is_fixed_amount' => 'nullable|boolean',
             'actual_amount' => 'required|numeric|min:0',
             'transporter_type' => 'nullable|in:owner,agency',
-
+            'delivery_status' => 'nullable|string|in:Pending,Delivered,Cancelled,In-Progress',
         ]);
         $this->validateLorryReceiptUniquenessUpdate($validated, $lorry_receipt->id, $companyId);
         // Check if consignor and consignee are the same
@@ -1585,7 +1586,7 @@ return $buttons;
                 'consignee_id' => 'Consignor and Consignee cannot be the same.',
             ])->withInput();
         }
-        if ($validated['gr_number'] == null) {
+        if (empty($validated['gr_number'])) {
             // Remove "LR" prefix, then trim leading zeros
             $validated['gr_number'] = ltrim(str_ireplace('LR', '', $validated['lr_number']), '0');
         }

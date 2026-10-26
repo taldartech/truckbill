@@ -300,10 +300,10 @@ class AuthRBACTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_login_blocked_company_includes_block_reason_in_error(): void
+    public function test_login_blocked_user_includes_block_reason_in_error(): void
     {
-        $user = $this->createUserWithRole('admin', true);
-        $user->company->update(['block_reason' => 'Non-payment']);
+        $user = $this->createUserWithRole('admin', false);
+        $user->update(['is_blocked' => true, 'block_reason' => 'Non-payment']);
 
         $response = $this->from('/login')->post('/login', [
             'email' => $user->email,

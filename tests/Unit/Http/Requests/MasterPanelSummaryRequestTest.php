@@ -78,8 +78,10 @@ class MasterPanelSummaryRequestTest extends TestCase
 
     public function test_with_validator_returns_early_when_user_is_missing(): void
     {
+        $existing = User::factory()->create();
+
         $request = MasterPanelSummaryRequest::create('/master/summary', 'GET', [
-            'super_admin_user_id' => 99,
+            'super_admin_user_id' => $existing->id,
         ]);
         $request->setUserResolver(fn () => null);
 

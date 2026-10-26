@@ -35,9 +35,9 @@ class CompanySubscription extends Model
     protected function casts(): array
     {
         return [
-            'starts_on' => 'date',
-            'ends_on' => 'date',
-            'trial_ends_on' => 'date',
+            'starts_on' => 'date:Y-m-d',
+            'ends_on' => 'date:Y-m-d',
+            'trial_ends_on' => 'date:Y-m-d',
             'last_renewed_at' => 'datetime',
         ];
     }
