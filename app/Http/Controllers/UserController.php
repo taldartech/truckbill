@@ -136,7 +136,7 @@ class UserController extends Controller
     private function applySorting($query, Request $request): void
     {
         if ($request->has('order')) {
-            $orderColumn = $request->order[0]['column'];
+            $orderColumn = (int) $request->order[0]['column'];
             $orderDirection = $request->order[0]['dir'];
 
             match ($orderColumn) {

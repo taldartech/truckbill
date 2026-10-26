@@ -2,11 +2,13 @@
 
 namespace Tests\Feature\Company;
 
+use App\Http\Requests\UpdateCompanySettingsRequest;
 use App\Models\Company;
 use App\Models\CompanySetting;
 use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Routing\Route;
 use Tests\TestCase;
 
 class CompanySettingsTest extends TestCase
@@ -130,6 +132,25 @@ class CompanySettingsTest extends TestCase
             'lr_copy_template' => 'classic',
             'freight_challan_template' => 'classic',
         ])->assertForbidden();
+    }
+
+    public function test_update_company_settings_request_authorize_false_for_guest(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $company = $super->company;
+
+        $request = UpdateCompanySettingsRequest::create('/company_settings/'.$company->id, 'PUT', [
+            'template_name' => 'Guest Co',
+            'template_address' => 'Nowhere',
+            'invoice_template' => 'classic',
+            'lr_copy_template' => 'classic',
+            'freight_challan_template' => 'classic',
+        ]);
+        $request->setRouteResolver(function () use ($company, $request) {
+            return (new Route('PUT', '/company_settings/{company}', []))->bind($request)->setParameter('company', $company);
+        });
+
+        $this->assertFalse($request->authorize());
     }
 
     public function test_update_validates_voucher_header_constraints(): void

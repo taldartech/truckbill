@@ -118,7 +118,6 @@ class TruckOwnerController extends Controller
         }
     }
 
-
     public function bulkUploadTemplate()
     {
         $headers = [
@@ -388,6 +387,7 @@ class TruckOwnerController extends Controller
             $validated['transporter_master_id'] = $master->id;
             $calculatedTds = $this->tdsCalculator->calculate((bool) $validated['declaration_given'], (string) $master->pan_number, (bool) $master->pan_active);
             $submittedTds = round((float) $validated['tds_percentage'], 2);
+            $isDummyPan = strtoupper((string) $master->pan_number) === $dummyPan;
 
             if ($isDummyPan) {
                 // Default UI baseline is 0%; keep the user-submitted value and always require a remark.

@@ -8,9 +8,14 @@ use App\Models\Consignee;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
 use App\Models\LorryReceipt;
+use App\Models\Country;
+use App\Models\State;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Http\Middleware\EnsureActiveSubscription;
+use App\Services\AccountingPostingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class InvoiceTest extends TestCase
@@ -110,6 +115,19 @@ class InvoiceTest extends TestCase
         ]);
 
         return [$lr1, $lr2];
+    }
+
+    protected function setSubscriptionReadOnly(User $user): void
+    {
+        Cache::put('subscription.settings', [
+            'grace_period_days' => 15,
+            'gst_rate_percent' => 18.0,
+        ], now()->addDay());
+
+        $user->company->subscription->update([
+            'status' => 'active',
+            'ends_on' => now()->subDay()->toDateString(),
+        ]);
     }
 
     protected function createInvoice(User $user, Consignee $customer, string $number): Invoice
@@ -1038,6 +1056,82 @@ class InvoiceTest extends TestCase
         $this->assertNotContains($pending->id, $ids);
     }
 
+    public function test_index_ajax_datatables_column_search_filters_invoice_consignee_and_amounts(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customerA = $this->seedConsignees($admin);
+        $customerA->update(['name' => 'Invoice DT Customer Alpha']);
+        $customerB = Consignee::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Invoice DT Customer Beta',
+        ]);
+
+        $invoiceA = Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customerA->id,
+            'invoice_number' => 'INV-DT-ALPHA-01',
+            'manual_invoice_number' => 'MAN-DT-ALPHA',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'total_amount' => 10000,
+            'net_amount' => 10000,
+            'paid_amount' => 2500,
+            'remaining_amount' => 7500,
+            'payment_status' => 'partial',
+        ]);
+        InvoicePayment::create([
+            'invoice_id' => $invoiceA->id,
+            'amount' => 2500,
+            'payment_date' => now()->toDateString(),
+            'mode' => 'bank',
+        ]);
+
+        Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customerB->id,
+            'invoice_number' => 'INV-DT-BETA-99',
+            'manual_invoice_number' => 'MAN-DT-BETA',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'total_amount' => 500,
+            'net_amount' => 500,
+            'paid_amount' => 0,
+            'remaining_amount' => 500,
+            'payment_status' => 'pending',
+        ]);
+
+        $headers = [
+            'Accept' => 'application/json',
+            'X-Requested-With' => 'XMLHttpRequest',
+        ];
+        $base = 'draw=1&start=0&length=25';
+
+        $this->actingAs($admin)->withHeaders($headers)
+            ->get('/invoices?'.$base.'&columns[1][name]=invoice_link&columns[1][search][value]=INV-DT-ALPHA')
+            ->assertOk()
+            ->assertJsonPath('recordsFiltered', 1);
+
+        $this->actingAs($admin)->withHeaders($headers)
+            ->get('/invoices?'.$base.'&columns[1][name]=invoice_link&columns[1][search][value]=MAN-DT-ALPHA')
+            ->assertOk()
+            ->assertJsonPath('recordsFiltered', 1);
+
+        $this->actingAs($admin)->withHeaders($headers)
+            ->get('/invoices?'.$base.'&columns[4][data]=consignee_name&columns[4][name]=consignee_name&columns[4][search][value]=Alpha')
+            ->assertOk()
+            ->assertJsonPath('recordsFiltered', 1);
+
+        $this->actingAs($admin)->withHeaders($headers)
+            ->get('/invoices?'.$base.'&columns[6][data]=paid_amount_formatted&columns[6][name]=paid_amount_formatted&columns[6][search][value]=2500')
+            ->assertOk()
+            ->assertJsonPath('recordsFiltered', 1);
+
+        $this->actingAs($admin)->withHeaders($headers)
+            ->get('/invoices?'.$base.'&columns[7][data]=remaining_amount_formatted&columns[7][name]=remaining_amount_formatted&columns[7][search][value]=7500')
+            ->assertOk()
+            ->assertJsonPath('recordsFiltered', 1);
+    }
+
     public function test_destroy_requires_remark_and_only_latest_invoice(): void
     {
         $admin = $this->makeUser('admin');
@@ -1082,5 +1176,286 @@ class InvoiceTest extends TestCase
             'delete_remark' => 'Entered by mistake',
         ])->assertRedirect(route('invoices.index'))->assertSessionHas('success');
     }
+
+    public function test_invoice_index_ajax_renders_memo_numbers_and_action_buttons(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+        $lr1->update([
+            'memo_created_at' => now()->subDay()->toDateTimeString(),
+        ]);
+
+        $invoice = Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-ACTION-1',
+            'manual_invoice_number' => 'MAN-ACTION-1',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'total_amount' => 1000,
+            'net_amount' => 1000,
+            'base_amount' => 1000,
+            'payment_status' => 'pending',
+            'memo_ids' => [$lr1->memo_id],
+            'lr_ids' => [$lr1->id],
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/invoices?draw=1&start=0&length=10');
+
+        $response->assertOk();
+        $row = collect($response->json('data'))->firstWhere('id', $invoice->id);
+        $this->assertNotNull($row);
+        $this->assertStringContainsString((string) $lr1->memo_id, $row['memo_numbers']);
+        $this->assertStringContainsString('add-payment-btn', $row['actions']);
+        $this->assertStringContainsString('invoice-delete-btn', $row['actions']);
+    }
+
+    public function test_invoice_index_summary_applies_date_and_customer_filters(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        $other = Consignee::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Other Customer',
+        ]);
+
+        Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-FILTER-DATE',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->subDays(10)->toDateString(),
+            'total_amount' => 100,
+            'net_amount' => 100,
+            'payment_status' => 'pending',
+        ]);
+        Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $other->id,
+            'invoice_number' => 'INV-FILTER-OTHER',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'total_amount' => 200,
+            'net_amount' => 200,
+            'payment_status' => 'pending',
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/invoices?'.http_build_query([
+                'generated_date_from' => now()->subDays(15)->toDateString(),
+                'generated_date_to' => now()->subDays(5)->toDateString(),
+                'customer' => substr($customer->name, 0, 4),
+            ]))
+            ->assertOk()
+            ->assertViewHas('totalInvoices', 1);
+    }
+
+    public function test_store_forward_invoice_calculates_gst_and_survives_accounting_failure(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+
+        $country = Country::create(['name' => 'India', 'code' => 'IN']);
+        $state = State::create(['name' => 'Gujarat', 'country_id' => $country->id]);
+        $admin->company->update(['state_id' => $state->id]);
+        $customer->update(['state_id' => $state->id]);
+
+        $this->mock(AccountingPostingService::class, function ($mock): void {
+            $mock->shouldReceive('postInvoice')->andThrow(new \RuntimeException('ledger offline'));
+        });
+
+        $this->actingAs($admin)->post('/invoices', [
+            'manual_invoice_number' => 'INV-FWD-1',
+            'invoice_type' => 'Forward',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 1050,
+            'base_amount' => 1000,
+            'sgst' => 25,
+            'cgst' => 25,
+            'memo_ids' => [$lr1->memo_id],
+        ])
+            ->assertRedirect(route('invoices.index'));
+
+        $this->assertDatabaseHas('invoices', [
+            'manual_invoice_number' => 'INV-FWD-1',
+            'invoice_type' => 'Forward',
+            'base_amount' => 1000,
+        ]);
+    }
+
+    public function test_show_edit_and_get_payments_enforce_company_scope(): void
+    {
+        $owner = $this->makeUser('admin');
+        $customer = $this->seedConsignees($owner);
+        $invoice = $this->createInvoice($owner, $customer, 'INV-SCOPE');
+        $intruder = $this->makeUser('admin');
+
+        $this->actingAs($intruder)->get(route('invoices.show', $invoice))->assertForbidden();
+        $this->actingAs($intruder)->get(route('invoices.edit', $invoice))->assertForbidden();
+        $this->actingAs($intruder)->getJson(route('invoices.payments.index', $invoice))->assertForbidden();
+    }
+
+    public function test_edit_and_destroy_redirect_when_subscription_is_read_only(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        $invoice = $this->createInvoice($admin, $customer, 'INV-READONLY');
+        $this->setSubscriptionReadOnly($admin);
+        $this->withoutMiddleware(EnsureActiveSubscription::class);
+
+        $this->actingAs($admin)->get(route('invoices.edit', $invoice))
+            ->assertRedirect(route('invoices.index'))
+            ->assertSessionHas('error');
+
+        $this->actingAs($admin)->from('/invoices')->delete(route('invoices.destroy', $invoice), [
+            'delete_remark' => 'cleanup',
+        ])
+            ->assertRedirect(route('invoices.index'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_update_rejects_memo_already_invoiced_and_recalculates_interstate_forward_amounts(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1, $lr2] = $this->seedLrs($admin, $customer);
+
+        $otherInvoice = Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-OTHER-MEMO',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'total_amount' => 100,
+            'net_amount' => 100,
+            'payment_status' => 'pending',
+            'memo_ids' => [$lr2->memo_id],
+            'lr_ids' => [$lr2->id],
+        ]);
+        LorryReceipt::whereKey($lr2->id)->update(['invoice_generated' => 1]);
+
+        $invoice = Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-UPDATE-MEMO',
+            'invoice_type' => 'Forward',
+            'generated_date' => now()->toDateString(),
+            'total_amount' => 100,
+            'net_amount' => 100,
+            'payment_status' => 'pending',
+            'memo_ids' => [$lr1->memo_id],
+            'lr_ids' => [$lr1->id],
+        ]);
+
+        $this->actingAs($admin)->from(route('invoices.edit', $invoice))->put(route('invoices.update', $invoice), [
+            'generated_date' => now()->toDateString(),
+            'memo_ids' => [$lr2->memo_id],
+        ])->assertRedirect(route('invoices.edit', $invoice))->assertSessionHasErrors('memo_ids');
+
+        $country = Country::create(['name' => 'India GST', 'code' => 'IN2']);
+        $maharashtra = State::create(['name' => 'Maharashtra', 'country_id' => $country->id]);
+        $gujarat = State::create(['name' => 'Gujarat', 'country_id' => $country->id]);
+        $admin->company->update(['state_id' => $gujarat->id, 'gst_slab' => 5]);
+        $customer->update(['state_id' => $maharashtra->id]);
+        $lr1->update(['amount' => 1000]);
+
+        $this->actingAs($admin)->put(route('invoices.update', $invoice), [
+            'generated_date' => now()->toDateString(),
+            'memo_ids' => [$lr1->memo_id],
+        ])->assertRedirect(route('invoices.index'));
+
+        $invoice->refresh();
+        $this->assertGreaterThan(0, (float) $invoice->igst);
+        $this->assertEquals(1000.0, (float) $invoice->base_amount);
+        $this->assertFalse($otherInvoice->fresh()->trashed());
+    }
+
+    public function test_get_lrs_includes_current_invoice_lrs_when_invoice_id_is_passed(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+        $lr1->update(['invoice_generated' => 1]);
+
+        $invoice = Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-LR-JSON',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'total_amount' => 100,
+            'net_amount' => 100,
+            'payment_status' => 'pending',
+            'memo_ids' => [$lr1->memo_id],
+            'lr_ids' => [$lr1->id],
+        ]);
+
+        $this->actingAs($admin)
+            ->getJson('/invoices/lrs?'.http_build_query([
+                'memo_ids' => [$lr1->memo_id],
+                'invoice_id' => $invoice->id,
+            ]))
+            ->assertOk()
+            ->assertJsonPath((string) $lr1->memo_id.'.0.lr_number', $lr1->lr_number);
+    }
+
+    public function test_store_payment_rejects_zero_settlement_and_survives_accounting_failure(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        $invoice = $this->createInvoice($admin, $customer, 'INV-PAY-ERR');
+
+        $this->actingAs($admin)->postJson(route('invoices.payments.store', $invoice), [
+            'mode' => 'cash',
+            'amount' => 0,
+            'tds_amount' => 0,
+            'deduction_amount' => 0,
+            'payment_date' => now()->toDateString(),
+        ])->assertStatus(422);
+
+        $this->mock(AccountingPostingService::class, function ($mock): void {
+            $mock->shouldReceive('postInvoicePayment')->andThrow(new \RuntimeException('ledger offline'));
+        });
+
+        $this->actingAs($admin)->postJson(route('invoices.payments.store', $invoice), [
+            'mode' => 'cash',
+            'amount' => 100,
+            'payment_date' => now()->toDateString(),
+        ])->assertOk()->assertJsonPath('success', true);
+    }
+
+    public function test_destroy_surfaces_error_when_delete_transaction_fails(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+        $invoice = Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-DEL-ERR',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'total_amount' => 100,
+            'net_amount' => 100,
+            'payment_status' => 'pending',
+            'lr_ids' => [$lr1->id],
+        ]);
+
+        Invoice::deleting(static function (): void {
+            throw new \RuntimeException('Simulated invoice delete failure');
+        });
+
+        $this->actingAs($admin)->from('/invoices')->delete(route('invoices.destroy', $invoice), [
+            'delete_remark' => 'mistake',
+        ])
+            ->assertRedirect('/invoices')
+            ->assertSessionHas('error');
+    }
+
 }
 

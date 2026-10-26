@@ -33,7 +33,6 @@ class ConsigneeImport implements
 
     private array $uploadedPans = [];
 
-
     /*
     |--------------------------------------------------------------------------
     | NORMALIZE DATA
@@ -50,7 +49,6 @@ class ConsigneeImport implements
 
             $data[$key] = $value;
         }
-
 
         /*
          * Optional fields
@@ -71,7 +69,6 @@ class ConsigneeImport implements
             }
         }
 
-
         /*
          * Uppercase GST / PAN
          */
@@ -91,7 +88,6 @@ class ConsigneeImport implements
                 strtolower(trim($data['email']));
         }
 
-
         /*
          * Contact number should remain string
          */
@@ -104,10 +100,8 @@ class ConsigneeImport implements
                 trim((string) $data['contact_number']);
         }
 
-
         return $data;
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -148,7 +142,6 @@ class ConsigneeImport implements
                 'required',
                 'string',
             ],
-
 
             /*
              * OPTIONAL
@@ -217,7 +210,6 @@ class ConsigneeImport implements
 
         ]);
 
-
         if ($validator->fails()) {
 
             return $validator
@@ -225,10 +217,8 @@ class ConsigneeImport implements
                 ->all();
         }
 
-
         return [];
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -240,7 +230,6 @@ class ConsigneeImport implements
     {
         $errors = [];
 
-
         /*
          * COUNTRY
          */
@@ -249,7 +238,6 @@ class ConsigneeImport implements
             'name',
             trim((string) $data['country_id'])
         )->first();
-
 
         if (!$country) {
 
@@ -262,7 +250,6 @@ class ConsigneeImport implements
             $data['country_id'] =
                 $country->id;
         }
-
 
         /*
          * STATE
@@ -280,7 +267,6 @@ class ConsigneeImport implements
                 )
                 ->first();
 
-
             if (!$state) {
 
                 $errors[] =
@@ -293,7 +279,6 @@ class ConsigneeImport implements
                     $state->id;
             }
         }
-
 
         /*
          * CITY
@@ -311,7 +296,6 @@ class ConsigneeImport implements
                 )
                 ->first();
 
-
             if (!$city) {
 
                 $errors[] =
@@ -325,10 +309,8 @@ class ConsigneeImport implements
             }
         }
 
-
         return $errors;
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -343,14 +325,12 @@ class ConsigneeImport implements
         $companyId =
             $data['company_id'];
 
-
         /*
          * CONTACT NUMBER
          */
 
         $contact =
             trim((string) ($data['contact_number'] ?? ''));
-
 
         if ($contact !== '') {
 
@@ -378,7 +358,6 @@ class ConsigneeImport implements
                     ->whereNull('deleted_at')
                     ->exists();
 
-
                 if ($exists) {
 
                     $errors[] =
@@ -392,7 +371,6 @@ class ConsigneeImport implements
             }
         }
 
-
         /*
          * EMAIL
          */
@@ -401,7 +379,6 @@ class ConsigneeImport implements
             strtolower(
                 trim((string) ($data['email'] ?? ''))
             );
-
 
         if ($email !== '') {
 
@@ -429,7 +406,6 @@ class ConsigneeImport implements
                     ->whereNull('deleted_at')
                     ->exists();
 
-
                 if ($exists) {
 
                     $errors[] =
@@ -443,7 +419,6 @@ class ConsigneeImport implements
             }
         }
 
-
         /*
          * GST NUMBER
          */
@@ -452,7 +427,6 @@ class ConsigneeImport implements
             strtoupper(
                 trim((string) ($data['gst_number'] ?? ''))
             );
-
 
         if ($gst !== '') {
 
@@ -480,7 +454,6 @@ class ConsigneeImport implements
                     ->whereNull('deleted_at')
                     ->exists();
 
-
                 if ($exists) {
 
                     $errors[] =
@@ -494,7 +467,6 @@ class ConsigneeImport implements
             }
         }
 
-
         /*
          * PAN NUMBER
          */
@@ -503,7 +475,6 @@ class ConsigneeImport implements
             strtoupper(
                 trim((string) ($data['pan_number'] ?? ''))
             );
-
 
         if ($pan !== '') {
 
@@ -531,7 +502,6 @@ class ConsigneeImport implements
                     ->whereNull('deleted_at')
                     ->exists();
 
-
                 if ($exists) {
 
                     $errors[] =
@@ -545,10 +515,8 @@ class ConsigneeImport implements
             }
         }
 
-
         return $errors;
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -596,7 +564,6 @@ class ConsigneeImport implements
         });
     }
 
-
     /*
     |--------------------------------------------------------------------------
     | IMPORT COLLECTION
@@ -616,7 +583,6 @@ class ConsigneeImport implements
 
             $excelRowNumber =
                 $index + 2;
-
 
             try {
 
@@ -658,14 +624,12 @@ class ConsigneeImport implements
 
                 ];
 
-
                 /*
                  * Company
                  */
 
                 $data['company_id'] =
                     Auth::user()->company_id;
-
 
                 /*
                  * Normalize
@@ -674,14 +638,12 @@ class ConsigneeImport implements
                 $data =
                     $this->normalizeData($data);
 
-
                 /*
                  * 1. BASIC VALIDATION
                  */
 
                 $validationErrors =
                     $this->validateRow($data);
-
 
                 if (!empty($validationErrors)) {
 
@@ -701,14 +663,12 @@ class ConsigneeImport implements
                     continue;
                 }
 
-
                 /*
                  * 2. COUNTRY / STATE / CITY
                  */
 
                 $locationErrors =
                     $this->resolveLocationIds($data);
-
 
                 if (!empty($locationErrors)) {
 
@@ -728,14 +688,12 @@ class ConsigneeImport implements
                     continue;
                 }
 
-
                 /*
                  * 3. DUPLICATE CHECK
                  */
 
                 $duplicateErrors =
                     $this->validateDuplicates($data);
-
 
                 if (!empty($duplicateErrors)) {
 
@@ -755,20 +713,17 @@ class ConsigneeImport implements
                     continue;
                 }
 
-
                 /*
                  * 4. CREATE
                  */
 
                 $this->createConsignee($data);
 
-
                 /*
                  * 5. SUCCESS COUNT
                  */
 
                 $this->successCount++;
-
 
             } catch (\Throwable $e) {
 
@@ -789,7 +744,6 @@ class ConsigneeImport implements
             }
         }
     }
-
 
     /*
     |--------------------------------------------------------------------------

@@ -377,11 +377,7 @@ class FreightBookingController extends Controller
                         }
 
                         if (! empty($linkedIds)) {
-                            if (! empty($searchResultIds)) {
-                                $q->orWhereIn('freight_bookings.linked_lr_id', $linkedIds);
-                            } else {
-                                $q->whereIn('freight_bookings.linked_lr_id', $linkedIds);
-                            }
+                            $q->orWhereIn('freight_bookings.linked_lr_id', $linkedIds);
                         }
                     });
                 }
@@ -446,9 +442,6 @@ class FreightBookingController extends Controller
                         : '-';
                 })
                 ->addColumn('lr_number', function (FreightBooking $row) {
-                    if (! $row->lr) {
-                        return '-';
-                    }
                     $html = '<span class="fw-bold text-primary">'.e($row->lr->lr_number).'</span>';
                     if ($row->linked_lr_id) {
                         $html .= ' <span class="badge text-bg-success border-secondary">['.e((string) $row->linked_lr_id).']</span>';
@@ -457,9 +450,6 @@ class FreightBookingController extends Controller
                     return $html;
                 })
                 ->addColumn('customer', function (FreightBooking $row) {
-                    if (! $row->lr) {
-                        return '-';
-                    }
                     $name = $row->lr->customer?->name ?? '-';
                     $html = e($name);
                     if ($row->lr->memo_id) {
@@ -495,9 +485,6 @@ class FreightBookingController extends Controller
                     return e($row->lr->truck->truck_number);
                 })
                 ->addColumn('route', function (FreightBooking $row) {
-                    if (! $row->lr) {
-                        return '-';
-                    }
                     $src = e($row->lr->source_city ?: '-');
                     $dst = e($row->lr->destination_city ?: '-');
 

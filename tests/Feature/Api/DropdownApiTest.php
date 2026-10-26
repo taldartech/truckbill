@@ -9,6 +9,7 @@ use App\Models\State;
 use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class DropdownApiTest extends TestCase
@@ -74,5 +75,44 @@ class DropdownApiTest extends TestCase
     {
         $this->getJson('/api/states/1')->assertRedirect(route('login'));
         $this->getJson('/api/cities/1')->assertRedirect(route('login'));
+    }
+
+    public function test_states_endpoint_returns_500_when_query_fails(): void
+    {
+        $admin = $this->actingAdmin();
+        $country = Country::create(['name' => 'India', 'code' => 'IN']);
+
+        $shouldFail = true;
+        DB::listen(function ($query) use (&$shouldFail) {
+            if ($shouldFail && str_contains($query->sql, 'from "states"')) {
+                $shouldFail = false;
+                throw new \RuntimeException('Simulated states query failure');
+            }
+        });
+
+        $this->actingAs($admin)
+            ->getJson('/api/states/'.$country->id)
+            ->assertStatus(500)
+            ->assertJsonPath('error', 'Failed to fetch states');
+    }
+
+    public function test_cities_endpoint_returns_500_when_query_fails(): void
+    {
+        $admin = $this->actingAdmin();
+        $country = Country::create(['name' => 'India', 'code' => 'IN']);
+        $state = State::create(['name' => 'Gujarat', 'country_id' => $country->id]);
+
+        $shouldFail = true;
+        DB::listen(function ($query) use (&$shouldFail) {
+            if ($shouldFail && str_contains($query->sql, 'from "cities"')) {
+                $shouldFail = false;
+                throw new \RuntimeException('Simulated cities query failure');
+            }
+        });
+
+        $this->actingAs($admin)
+            ->getJson('/api/cities/'.$state->id)
+            ->assertStatus(500)
+            ->assertJsonPath('error', 'Failed to fetch cities');
     }
 }

@@ -3305,21 +3305,16 @@ class TransporterOwnerTest extends TestCase
         ]);
         $resDummyRemark->assertRedirect(route('truck_owners.index'));
 
-        // Dummy master without remark throws validation exception
-        try {
-            $this->actingAs($admin)->post('/truck_owners', [
-                'company_id' => $admin->company_id,
-                'transporter_master_id' => $dummyMaster->id,
-                'mobile_number' => '9876543299',
-                'declaration_given' => false,
-                'total_trucks' => 2,
-                'advance_amount' => 0,
-                'tds_percentage' => 2.0,
-                'tds_adjustment_remark' => '',
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            $this->assertArrayHasKey('tds_adjustment_remark', $e->errors());
-        }
+        $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $dummyMaster->id,
+            'mobile_number' => '9876543299',
+            'declaration_given' => false,
+            'total_trucks' => 2,
+            'advance_amount' => 0,
+            'tds_percentage' => 2.0,
+            'tds_adjustment_remark' => '',
+        ])->assertSessionHasErrors('tds_adjustment_remark');
 
         // D. Store with existing transporter_master_id with declaration_given = false and TDS mismatch remark
         $masterMismatch = TransporterMaster::create([

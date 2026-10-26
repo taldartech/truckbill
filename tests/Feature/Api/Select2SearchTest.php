@@ -8,12 +8,14 @@ use App\Models\Consignee;
 use App\Models\Country;
 use App\Models\Driver;
 use App\Models\State;
+use App\Models\Truck;
 use App\Models\Transporter;
 use App\Models\TransporterMaster;
-use App\Models\Truck;
 use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class Select2SearchTest extends TestCase
@@ -390,6 +392,62 @@ class Select2SearchTest extends TestCase
             ]);
     }
 
+    public function test_truck_owners_search_returns_empty_results_for_blank_query(): void
+    {
+        $admin = $this->makeAdmin();
+
+        $this->actingAs($admin)
+            ->get('/api/truck-owners/search?q=')
+            ->assertOk()
+            ->assertJson([
+                'results' => [],
+                'pagination' => ['more' => false],
+            ]);
+    }
+
+    public function test_trucks_search_labels_orphan_truck_and_driver_in_text(): void
+    {
+        $admin = $this->makeAdmin();
+
+        $driver = Driver::create([
+            'name' => 'Ravi Driver',
+            'mobile' => '9000000099',
+            'company_id' => $admin->company_id,
+        ]);
+
+        Truck::create([
+            'company_id' => $admin->company_id,
+            'transporter_id' => null,
+            'driver_id' => $driver->id,
+            'truck_number' => 'ORPHANTRK9',
+            'truck_type' => 'Open',
+        ]);
+
+        $response = $this->actingAs($admin)->get('/api/trucks/search?q=ORPHANTRK9&limit=20');
+
+        $response->assertOk();
+        $text = (string) collect($response->json('results'))->pluck('text')->first();
+        $this->assertStringContainsString('ORPHANTRK9', $text);
+        $this->assertStringContainsString('Driver: Ravi Driver', $text);
+        $this->assertStringContainsString('No Truck Owner', $text);
+    }
+
+    public function test_voucher_transporters_returns_empty_when_company_unresolved(): void
+    {
+        $adminWithoutCompany = User::factory()->create([
+            'user_role_id' => 3,
+            'company_id' => null,
+        ]);
+
+        $this->actingAs($adminWithoutCompany)
+            ->get('/api/transporters/search?q=Any')
+            ->assertOk()
+            ->assertJson([
+                'results' => [],
+                'pagination' => ['more' => false],
+            ]);
+    }
+
     public function test_voucher_transporters_search_uses_super_admin_company_session(): void
     {
         $admin = $this->makeAdmin();
@@ -452,5 +510,93 @@ class Select2SearchTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('pagination.more', true);
         $this->assertCount(2, $response->json('results'));
+    }
+
+    public function test_cities_search_returns_paginated_results_and_supports_query_filter(): void
+    {
+        $admin = $this->makeAdmin();
+        $country = Country::create(['name' => 'India', 'code' => 'IN']);
+        $state = State::create(['name' => 'Gujarat', 'country_id' => $country->id]);
+        City::create(['name' => 'Ahmedabad', 'state_id' => $state->id, 'country_id' => $country->id]);
+        City::create(['name' => 'Anand', 'state_id' => $state->id, 'country_id' => $country->id]);
+        City::create(['name' => 'Surat', 'state_id' => $state->id, 'country_id' => $country->id]);
+
+        $this->actingAs($admin)
+            ->get('/api/cities/search?q=Ahmed&page=1&limit=1')
+            ->assertOk()
+            ->assertJsonPath('pagination.more', false)
+            ->assertJsonCount(1, 'results');
+
+        $this->actingAs($admin)
+            ->get('/api/cities/search?page=1&limit=10')
+            ->assertOk()
+            ->assertJsonPath('pagination.more', false)
+            ->assertJsonCount(3, 'results');
+    }
+
+    public function test_truck_owners_search_matches_master_and_mobile_fields(): void
+    {
+        $admin = $this->makeAdmin();
+        $master = TransporterMaster::create([
+            'name' => 'Unique Owner Logistics',
+            'pan_number' => 'PANOWN1234',
+        ]);
+        Transporter::factory()->forCompany($admin->company_id)->create([
+            'transporter_master_id' => $master->id,
+            'mobile_number' => '9555123456',
+            'contact_person_name' => 'Ravi Owner',
+            'is_owner' => 1,
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/api/truck-owners/search?q=Unique')
+            ->assertOk()
+            ->assertJsonPath('results.0.text', 'Unique Owner Logistics');
+
+        $this->actingAs($admin)
+            ->get('/api/truck-owners/search?q=9555')
+            ->assertOk()
+            ->assertJsonCount(1, 'results');
+
+        $this->actingAs($admin)
+            ->get('/api/truck-owners/search?q=')
+            ->assertOk()
+            ->assertJsonPath('results', []);
+    }
+
+    public function test_select2_searches_return_empty_results_when_queries_fail(): void
+    {
+        Log::spy();
+        $admin = $this->makeAdmin();
+
+        $endpoints = [
+            '/api/cities/search?q=Surat' => 'from "cities"',
+            '/api/truck-owners/search?q=Owner' => 'transporter_masters',
+            '/api/transporters/search?q=Agency' => 'from "transporters"',
+            '/api/agencies/search?q=Agency' => 'from "transporters"',
+            '/api/trucks/search?q=MH' => 'from "trucks"',
+            '/api/consignees/search?q=Party' => 'from "consignees"',
+        ];
+
+        foreach ($endpoints as $url => $sqlNeedle) {
+            $connection = DB::connection();
+            $dispatcher = $connection->getEventDispatcher();
+            $shouldFail = true;
+            $connection->listen(function ($query) use (&$shouldFail, $sqlNeedle) {
+                if ($shouldFail && str_contains($query->sql, $sqlNeedle)) {
+                    $shouldFail = false;
+                    throw new \RuntimeException('Simulated Select2 failure');
+                }
+            });
+
+            $this->actingAs($admin)
+                ->getJson($url)
+                ->assertOk()
+                ->assertJsonPath('results', []);
+
+            $connection->setEventDispatcher($dispatcher);
+        }
+
+        Log::shouldHaveReceived('error')->atLeast()->once();
     }
 }

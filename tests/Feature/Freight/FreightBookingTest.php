@@ -7,6 +7,7 @@ use App\Models\AdvancePayment;
 use App\Models\Company;
 use App\Models\CompanySubscription;
 use App\Models\Consignee;
+use App\Models\EwayBill;
 use App\Models\FreightBooking;
 use App\Models\FreightBookingCustomAmount;
 use App\Models\LorryReceipt;
@@ -19,10 +20,13 @@ use App\Models\User;
 use App\Models\UserRole;
 use App\Models\VoucherLinked;
 use App\Models\VoucherPayment;
+use App\Http\Middleware\EnsureActiveSubscription;
+use App\Services\AccountingPostingService;
 use App\Services\FreightBookingCalculationService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Mockery;
 use Tests\TestCase;
 
 class FreightBookingTest extends TestCase
@@ -1455,6 +1459,24 @@ class FreightBookingTest extends TestCase
             ->assertJsonPath('id', $transporter->id);
     }
 
+    public function test_get_transporter_api_uses_super_admin_company_session(): void
+    {
+        $admin = $this->makeUser('admin');
+        [, $truck] = $this->makeTransporterAndTruck($admin);
+        $transporter = $truck->transporter;
+
+        $super = User::factory()->create([
+            'user_role_id' => UserRole::where('name', 'super_admin')->value('id'),
+            'company_id' => null,
+        ]);
+
+        $this->actingAs($super)
+            ->withSession(['super_admin_company_id' => $admin->company_id])
+            ->getJson("/api/transporters/{$transporter->id}")
+            ->assertOk()
+            ->assertJsonPath('id', $transporter->id);
+    }
+
     public function test_get_transporter_api_returns_404_for_unknown_id(): void
     {
         $admin = $this->makeUser('admin');
@@ -2219,4 +2241,878 @@ class FreightBookingTest extends TestCase
 
         $this->assertSame(2, VoucherPayment::query()->whereIn('freight_booking_id', [$positiveBooking->id, $negativeBooking->id])->count());
     }
+
+    public function test_edit_redirects_when_subscription_cannot_write(): void
+    {
+        $admin = $this->makeUser('admin');
+        $this->graceReadOnlyCompanySubscription($admin);
+        $lr = $this->makeLorryReceipt($admin);
+        $booking = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 88100,
+        ]));
+
+        $this->actingAs($admin)
+            ->get(route('freight_bookings.edit', $booking))
+            ->assertRedirect(route('freight_bookings.index'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_edit_returns_403_for_other_company_booking(): void
+    {
+        $admin = $this->makeUser('admin');
+        $other = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($other);
+        $booking = FreightBooking::create(array_merge($this->bookingPayload($other, $lr), [
+            'voucher_number' => 88101,
+        ]));
+
+        $this->actingAs($admin)
+            ->get(route('freight_bookings.edit', $booking))
+            ->assertRedirect(route('freight_bookings.index'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_bulk_memo_id_warns_when_memo_already_has_invoiced_lrs(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $lr->update(['memo_id' => 'MEMO-INV', 'invoice_generated' => 1]);
+        $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 88102,
+        ]));
+
+        $this->actingAs($admin)
+            ->from(route('freight_bookings.index'))
+            ->post(route('freight_bookings.bulk_memo_id'), [
+                'memo_id' => 'MEMO-INV',
+                'lr_ids' => [$lr->id],
+                'freight_booking_ids' => [$fb->id],
+            ])
+            ->assertRedirect(route('freight_bookings.index'))
+            ->assertSessionHas('warning');
+    }
+
+    public function test_voucher_payment_fuel_paid_to_pump_succeeds_with_pump(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'balance_amount' => 5000,
+            'advance_amount' => 5000,
+            'voucher_number' => 88103,
+        ]));
+        $pump = Pump::create([
+            'user_id' => $admin->company->user_id,
+            'pump_name' => 'Fuel Pump',
+            'contact_name' => 'Operator',
+            'contact_number' => '9999999991',
+            'remark' => 'Fuel',
+        ]);
+        $paymentType = PaymentType::firstOrCreate(['name' => 'final']);
+        $paymentMode = PaymentMode::firstOrCreate(['name' => 'fuel(paid to pump)']);
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.voucher_payment'), $this->voucherPaymentPayload($fb, $paymentType, $paymentMode, 500, [
+                'pump_id' => $pump->id,
+            ]))
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('voucher_payments', [
+            'freight_booking_id' => $fb->id,
+            'pump_id' => $pump->id,
+            'payment_status' => 'pending',
+        ]);
+    }
+
+    public function test_voucher_payment_adjust_in_advance_returns_remaining_transporter_balance(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $transporter = $lr->transporter;
+        $transporter->update(['advance_amount' => 5000]);
+        $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'transporter_id' => $transporter->id,
+            'balance_amount' => 4000,
+            'advance_amount' => 6000,
+            'voucher_number' => 88104,
+        ]));
+        $paymentType = PaymentType::firstOrCreate(['name' => 'final']);
+        $paymentMode = PaymentMode::firstOrCreate(['name' => 'adjust in advance']);
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.voucher_payment'), $this->voucherPaymentPayload($fb, $paymentType, $paymentMode, 1000))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('adjust_in_advance', true)
+            ->assertJsonPath('transporter_name', $transporter->name);
+
+        $transporter->refresh();
+        $this->assertSame(4000.0, (float) $transporter->advance_amount);
+    }
+
+    public function test_voucher_payment_rejects_payment_beyond_effective_payable_amount(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'tr_amount' => 10000,
+            'tds_amount' => 2000,
+            'advance_amount' => 7500,
+            'balance_amount' => 500,
+            'voucher_number' => 88105,
+        ]));
+        $paymentType = PaymentType::firstOrCreate(['name' => 'Cash']);
+        $paymentMode = PaymentMode::firstOrCreate(['name' => 'cash']);
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.voucher_payment'), $this->voucherPaymentPayload($fb, $paymentType, $paymentMode, 1000))
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_voucher_payment_combined_flow_rejects_positive_payment_on_negative_balance_row(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$positiveBooking, $negativeBooking] = $this->createLinkedFreightBookings($admin, 1000.0, -500.0);
+        $paymentType = PaymentType::firstOrCreate(['name' => 'Cash']);
+        $paymentMode = PaymentMode::firstOrCreate(['name' => 'cash']);
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.voucher_payment'), array_merge(
+                $this->voucherPaymentPayload($positiveBooking, $paymentType, $paymentMode, 500, [
+                    'booking_ids' => [$positiveBooking->id, $negativeBooking->id],
+                    'payment_amounts' => [200, 300],
+                    'total_amount' => 500,
+                    'combined_payment_flow' => true,
+                ])
+            ))
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_store_combined_payment_returns_validation_errors_for_missing_fields(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.store_combined_payment'), [])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonStructure(['errors']);
+    }
+
+    public function test_store_combined_payment_fuel_mode_sets_pending_status_on_linked_record(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$fb1, $fb2] = $this->createLinkedFreightBookings($admin, 5000.0, 3000.0);
+        $pump = Pump::create([
+            'user_id' => $admin->company->user_id,
+            'pump_name' => 'Combined Pump',
+            'contact_name' => 'Operator',
+            'contact_number' => '9999999992',
+            'remark' => 'Fuel',
+        ]);
+        $paymentType = PaymentType::firstOrCreate(['name' => 'final']);
+        $paymentMode = PaymentMode::firstOrCreate(['name' => 'fuel(paid to pump)']);
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.store_combined_payment'), [
+                'combined_amount' => 8000,
+                'payment_type' => $paymentType->id,
+                'payment_mode' => $paymentMode->id,
+                'pump_id' => $pump->id,
+                'booking_ids' => [$fb1->id, $fb2->id],
+                'payment_amounts' => [5000, 3000],
+                'payment_date' => now()->toDateString(),
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('voucher_linkeds', [
+            'company_id' => $admin->company_id,
+            'payment_status' => 'pending',
+            'pump_id' => $pump->id,
+        ]);
+    }
+
+    public function test_get_payment_history_requires_freight_booking_ids(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)
+            ->postJson('/freight_bookings/payment-history', [])
+            ->assertStatus(500)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_confirm_validation_errors_redirect_back_with_input(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)
+            ->from(route('freight_bookings.create'))
+            ->post(route('freight_bookings.confirm'), [
+                'company_id' => $admin->company_id,
+            ])
+            ->assertRedirect(route('freight_bookings.create'))
+            ->assertSessionHasErrors('lr_id');
+    }
+
+    public function test_store_rejects_lr_already_linked_to_freight_booking(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+
+        $this->actingAs($admin)->post(route('freight_bookings.store'), $this->bookingPayload($admin, $lr));
+
+        $this->actingAs($admin)
+            ->from(route('freight_bookings.create'))
+            ->post(route('freight_bookings.store'), $this->bookingPayload($admin, $lr))
+            ->assertRedirect(route('freight_bookings.index'))
+            ->assertSessionHas('error');
+
+        $this->assertSame(1, FreightBooking::where('lr_id', $lr->id)->count());
+    }
+
+    public function test_store_creates_cancelled_booking_and_syncs_lr_status(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+
+        $this->actingAs($admin)
+            ->post(route('freight_bookings.store'), array_merge($this->bookingPayload($admin, $lr), [
+                'is_cancelled' => '1',
+                'is_delivered' => '0',
+            ]))
+            ->assertRedirect(route('freight_bookings.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('freight_bookings', [
+            'lr_id' => $lr->id,
+            'is_cancelled' => 1,
+        ]);
+        $this->assertSame('Cancelled', $lr->fresh()->delivery_status);
+    }
+
+    public function test_store_persists_eway_bills_and_skips_blank_rows(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+
+        $this->actingAs($admin)
+            ->post(route('freight_bookings.store'), array_merge($this->bookingPayload($admin, $lr), [
+                'eway_bills' => [
+                    ['eway_bill_number' => '', 'eway_bill_expiry' => null],
+                    [
+                        'eway_bill_number' => 'EWB-STORE-1',
+                        'eway_bill_expiry' => now()->addDays(3)->toDateString(),
+                    ],
+                ],
+            ]))
+            ->assertRedirect(route('freight_bookings.index'));
+
+        $booking = FreightBooking::where('lr_id', $lr->id)->firstOrFail();
+        $this->assertDatabaseHas('eway_bills', [
+            'freight_booking_id' => $booking->id,
+            'eway_bill_number' => 'EWB-STORE-1',
+        ]);
+        $this->assertSame(1, $booking->ewayBills()->count());
+    }
+
+    public function test_store_amount_verification_failure_returns_general_error(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+
+        FreightBooking::saving(function (FreightBooking $booking): void {
+            $booking->balance_amount = 999999;
+        });
+
+        $this->actingAs($admin)
+            ->from(route('freight_bookings.create'))
+            ->post(route('freight_bookings.store'), $this->bookingPayload($admin, $lr))
+            ->assertRedirect(route('freight_bookings.create'))
+            ->assertSessionHasErrors('general');
+    }
+
+    public function test_show_redirects_when_freight_booking_missing(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)
+            ->get(route('freight_bookings.show', 999999))
+            ->assertRedirect(route('freight_bookings.index'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_edit_renders_when_lorry_receipt_was_soft_deleted(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $booking = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 88151,
+        ]));
+        LorryReceipt::withoutEvents(static function () use ($lr): void {
+            $lr->delete();
+        });
+
+        $this->actingAs($admin)
+            ->get(route('freight_bookings.edit', $booking))
+            ->assertOk()
+            ->assertSee((string) $booking->id, false);
+    }
+
+    public function test_update_redirects_when_subscription_cannot_write(): void
+    {
+        $admin = $this->makeUser('admin');
+        $this->graceReadOnlyCompanySubscription($admin);
+        $lr = $this->makeLorryReceipt($admin);
+        $booking = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 88152,
+        ]));
+
+        $this->actingAs($admin)
+            ->put(route('freight_bookings.update', $booking), $this->bookingPayload($admin, $lr))
+            ->assertRedirect(route('dashboard'));
+    }
+
+    public function test_update_rejects_missing_lorry_receipt_after_soft_delete(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $booking = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 88153,
+        ]));
+        $lrId = $lr->id;
+        LorryReceipt::withoutEvents(static function () use ($lr): void {
+            $lr->delete();
+        });
+
+        $this->actingAs($admin)
+            ->from(route('freight_bookings.edit', $booking))
+            ->put(route('freight_bookings.update', $booking), array_merge($this->bookingPayload($admin, $lr), [
+                'lr_id' => $lrId,
+            ]))
+            ->assertRedirect(route('freight_bookings.edit', $booking))
+            ->assertSessionHasErrors('lr_id');
+    }
+
+    public function test_update_syncs_eway_bill_rows_create_update_and_delete(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $booking = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 88154,
+        ]));
+        $keep = EwayBill::create([
+            'freight_booking_id' => $booking->id,
+            'eway_bill_number' => 'EWB-KEEP',
+            'eway_bill_expiry' => now()->addDay()->toDateString(),
+        ]);
+        $remove = EwayBill::create([
+            'freight_booking_id' => $booking->id,
+            'eway_bill_number' => 'EWB-REMOVE',
+            'eway_bill_expiry' => now()->addDays(2)->toDateString(),
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('freight_bookings.update', $booking), array_merge($this->bookingPayload($admin, $lr), [
+                'eway_bills' => [
+                    [
+                        'id' => $keep->id,
+                        'eway_bill_number' => 'EWB-KEEP-UPDATED',
+                        'eway_bill_expiry' => now()->addDays(4)->toDateString(),
+                    ],
+                    [
+                        'eway_bill_number' => 'EWB-NEW',
+                        'eway_bill_expiry' => now()->addDays(5)->toDateString(),
+                    ],
+                ],
+            ]))
+            ->assertRedirect(route('freight_bookings.index'));
+
+        $this->assertDatabaseHas('eway_bills', [
+            'id' => $keep->id,
+            'eway_bill_number' => 'EWB-KEEP-UPDATED',
+        ]);
+        $this->assertDatabaseHas('eway_bills', [
+            'freight_booking_id' => $booking->id,
+            'eway_bill_number' => 'EWB-NEW',
+        ]);
+        $this->assertDatabaseMissing('eway_bills', ['id' => $remove->id]);
+    }
+
+    public function test_update_amount_verification_failure_returns_general_error(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $booking = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 88155,
+        ]));
+
+        FreightBooking::updating(function (FreightBooking $model): void {
+            $model->balance_amount = 999999;
+        });
+
+        $this->actingAs($admin)
+            ->from(route('freight_bookings.edit', $booking))
+            ->put(route('freight_bookings.update', $booking), $this->bookingPayload($admin, $lr))
+            ->assertRedirect(route('freight_bookings.edit', $booking))
+            ->assertSessionHasErrors('general');
+    }
+
+    public function test_update_surfaces_general_error_when_persist_throws(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $booking = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 88156,
+        ]));
+
+        FreightBooking::updating(static function (): void {
+            throw new \RuntimeException('Simulated update failure');
+        });
+
+        $this->actingAs($admin)
+            ->from(route('freight_bookings.edit', $booking))
+            ->put(route('freight_bookings.update', $booking), $this->bookingPayload($admin, $lr))
+            ->assertRedirect(route('freight_bookings.edit', $booking))
+            ->assertSessionHasErrors('general');
+    }
+
+    public function test_get_truck_api_nulls_transporter_for_ownerless_truck(): void
+    {
+        $admin = $this->makeUser('admin');
+        $truck = Truck::create([
+            'company_id' => $admin->company_id,
+            'transporter_id' => null,
+            'truck_number' => 'GJ99ZZ9999',
+            'truck_type' => 'Flatbed',
+        ]);
+
+        $this->actingAs($admin)
+            ->getJson("/api/trucks/{$truck->id}")
+            ->assertOk()
+            ->assertJsonPath('id', $truck->id)
+            ->assertJsonPath('transporter', null);
+    }
+
+    public function test_datatable_filters_by_lr_number_and_shows_printed_voucher_title(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $lr->update(['lr_number' => 'LR-FILTER-88157']);
+        $printedAt = now()->subHour();
+        FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 88157,
+            'voucher_printed' => true,
+            'voucher_last_printed_at' => $printedAt,
+        ]));
+
+        $response = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/freight_bookings/data?'.http_build_query($this->freightBookingsDataTableRequestPayload([
+                'lr_number' => 'FILTER-88157',
+                'filter_search' => '88157',
+            ])));
+
+        $response->assertOk();
+        $row = $response->json('data.0');
+        $this->assertNotNull($row);
+        $this->assertStringContainsString('Last printed:', $row['actions'] ?? '');
+    }
+
+    public function test_voucher_payment_rejects_positive_amount_on_negative_balance_row(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'balance_amount' => -2500,
+            'advance_amount' => 12500,
+            'voucher_number' => 88158,
+        ]));
+        $paymentType = PaymentType::firstOrCreate(['name' => 'Cash']);
+        $paymentMode = PaymentMode::firstOrCreate(['name' => 'cash']);
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.voucher_payment'), $this->voucherPaymentPayload($fb, $paymentType, $paymentMode, 500))
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_voucher_payment_rejects_negative_payment_beyond_negative_balance(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'balance_amount' => -2500,
+            'advance_amount' => 12500,
+            'voucher_number' => 88159,
+        ]));
+        $paymentType = PaymentType::firstOrCreate(['name' => 'Cash']);
+        $paymentMode = PaymentMode::firstOrCreate(['name' => 'cash']);
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.voucher_payment'), $this->voucherPaymentPayload($fb, $paymentType, $paymentMode, -5000))
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_voucher_payment_returns_500_when_transporter_missing_for_adjust_in_advance(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $transporter = Transporter::factory()->forCompany($admin->company_id)->create([
+            'mobile_number' => '9777777777',
+        ]);
+        $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'balance_amount' => 3000,
+            'transporter_id' => $transporter->id,
+            'voucher_number' => 88160,
+        ]));
+        $transporter->delete();
+        $paymentType = PaymentType::firstOrCreate(['name' => 'final']);
+        $paymentMode = PaymentMode::firstOrCreate(['name' => 'adjust in advance']);
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.voucher_payment'), $this->voucherPaymentPayload($fb, $paymentType, $paymentMode, 500))
+            ->assertStatus(500)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_store_combined_payment_rejects_unknown_booking_ids(): void
+    {
+        $admin = $this->makeUser('admin');
+        $paymentType = PaymentType::firstOrCreate(['name' => 'final']);
+        $paymentMode = PaymentMode::firstOrCreate(['name' => 'cash']);
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.store_combined_payment'), [
+                'combined_amount' => 1000,
+                'payment_type' => $paymentType->id,
+                'payment_mode' => $paymentMode->id,
+                'booking_ids' => [999999],
+                'payment_amounts' => [1000],
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_store_combined_payment_propagates_inner_voucher_payment_failure(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$fb1, $fb2] = $this->createLinkedFreightBookings($admin, 5000.0, 3000.0);
+        $paymentType = PaymentType::firstOrCreate(['name' => 'final']);
+        $paymentMode = PaymentMode::firstOrCreate(['name' => 'cash']);
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.store_combined_payment'), [
+                'combined_amount' => 20000,
+                'payment_type' => $paymentType->id,
+                'payment_mode' => $paymentMode->id,
+                'booking_ids' => [$fb1->id, $fb2->id],
+                'payment_amounts' => [20000, 0],
+                'payment_date' => now()->toDateString(),
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_store_combined_payment_returns_500_when_voucher_linked_create_fails(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$fb1, $fb2] = $this->createLinkedFreightBookings($admin, 5000.0, 3000.0);
+        $paymentType = PaymentType::firstOrCreate(['name' => 'final']);
+        $paymentMode = PaymentMode::firstOrCreate(['name' => 'cash']);
+
+        VoucherLinked::creating(static function (): void {
+            throw new \RuntimeException('Simulated VoucherLinked failure');
+        });
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.store_combined_payment'), [
+                'combined_amount' => 8000,
+                'payment_type' => $paymentType->id,
+                'payment_mode' => $paymentMode->id,
+                'booking_ids' => [$fb1->id, $fb2->id],
+                'payment_amounts' => [5000, 3000],
+                'payment_date' => now()->toDateString(),
+            ])
+            ->assertStatus(500)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_bulk_memo_id_surfaces_general_error_when_save_fails(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 88161,
+        ]));
+
+        LorryReceipt::saving(static function (): void {
+            throw new \RuntimeException('Simulated memo save failure');
+        });
+
+        $this->actingAs($admin)
+            ->from(route('freight_bookings.index'))
+            ->post(route('freight_bookings.bulk_memo_id'), [
+                'memo_id' => 'MEMO-FAIL-1',
+                'lr_ids' => [$lr->id],
+                'freight_booking_ids' => [$fb->id],
+            ])
+            ->assertRedirect(route('freight_bookings.index'))
+            ->assertSessionHasErrors('general');
+    }
+
+    public function test_update_and_destroy_use_freight_index_when_subscription_locked_without_middleware(): void
+    {
+        $this->withoutMiddleware(EnsureActiveSubscription::class);
+
+        $admin = $this->makeUser('admin');
+        $this->lockCompanySubscription($admin);
+        $lr = $this->makeLorryReceipt($admin);
+        $booking = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 88162,
+        ]));
+
+        $this->actingAs($admin)
+            ->put(route('freight_bookings.update', $booking), $this->bookingPayload($admin, $lr))
+            ->assertRedirect(route('freight_bookings.index'))
+            ->assertSessionHas('error');
+
+        $this->actingAs($admin)
+            ->delete(route('freight_bookings.destroy', $booking))
+            ->assertRedirect(route('freight_bookings.index'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_datatable_renders_dash_for_lr_without_truck_or_weight(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $lr->update(['weight' => '']);
+        $lr->truck?->delete();
+        $lr->update(['truck_id' => null]);
+        FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 88164,
+        ]));
+
+        $response = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/freight_bookings/data?'.http_build_query($this->freightBookingsDataTableRequestPayload([
+                'filter_search' => '88164',
+            ])));
+
+        $response->assertOk();
+        $row = $response->json('data.0');
+        $this->assertSame('-', $row['truck_number'] ?? null);
+        $this->assertSame('-', $row['weight'] ?? null);
+    }
+
+    public function test_datatable_returns_error_payload_when_processing_fails(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 88165,
+        ]));
+
+        FreightBooking::retrieved(static function (): void {
+            throw new \RuntimeException('Simulated DataTables failure');
+        });
+
+        $response = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/freight_bookings/data?'.http_build_query($this->freightBookingsDataTableRequestPayload([
+                'filter_search' => '88165',
+            ])));
+
+        $response->assertOk()
+            ->assertJsonPath('recordsTotal', 0)
+            ->assertJsonPath('error', 'Simulated DataTables failure');
+    }
+
+    public function test_store_rejects_soft_deleted_lorry_receipt_as_invalid_bilty(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $lrId = $lr->id;
+        LorryReceipt::withoutEvents(static function () use ($lr): void {
+            $lr->delete();
+        });
+
+        $this->actingAs($admin)
+            ->from(route('freight_bookings.create'))
+            ->post(route('freight_bookings.store'), array_merge($this->bookingPayload($admin, $lr), [
+                'lr_id' => $lrId,
+            ]))
+            ->assertRedirect(route('freight_bookings.create'))
+            ->assertSessionHasErrors('lr_id');
+    }
+
+    public function test_store_sets_delivered_status_on_lorry_receipt(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+
+        $this->actingAs($admin)
+            ->post(route('freight_bookings.store'), array_merge($this->bookingPayload($admin, $lr), [
+                'is_delivered' => '1',
+            ]))
+            ->assertRedirect(route('freight_bookings.index'));
+
+        $this->assertDatabaseHas('lorry_receipts', [
+            'id' => $lr->id,
+            'delivery_status' => 'Delivered',
+        ]);
+    }
+
+    public function test_store_swallows_accounting_post_failure_after_commit(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+
+        $mock = Mockery::mock(AccountingPostingService::class);
+        $mock->shouldReceive('postFreightBooking')->andThrow(new \RuntimeException('Ledger offline'));
+        $this->app->instance(AccountingPostingService::class, $mock);
+
+        $this->actingAs($admin)
+            ->post(route('freight_bookings.store'), $this->bookingPayload($admin, $lr))
+            ->assertRedirect(route('freight_bookings.index'));
+
+        $this->assertDatabaseHas('freight_bookings', ['lr_id' => $lr->id]);
+    }
+
+    public function test_store_combined_payment_rejects_bookings_from_different_linked_groups(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$fb1] = $this->createLinkedFreightBookings($admin, 5000.0, 3000.0);
+        $lr3 = $this->makeLorryReceipt($admin);
+        $fb3 = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr3), [
+            'linked_lr_id' => 88801,
+            'balance_amount' => 2000,
+            'voucher_number' => 88166,
+        ]));
+        $paymentType = PaymentType::firstOrCreate(['name' => 'final']);
+        $paymentMode = PaymentMode::firstOrCreate(['name' => 'cash']);
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.store_combined_payment'), [
+                'combined_amount' => 7000,
+                'payment_type' => $paymentType->id,
+                'payment_mode' => $paymentMode->id,
+                'booking_ids' => [$fb1->id, $fb3->id],
+                'payment_amounts' => [5000, 2000],
+                'payment_date' => now()->toDateString(),
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Combined payment requires bookings from a single linked group.');
+    }
+
+    public function test_store_combined_payment_returns_500_on_unexpected_exception(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$fb1, $fb2] = $this->createLinkedFreightBookings($admin, 5000.0, 3000.0);
+        $paymentType = PaymentType::firstOrCreate(['name' => 'final']);
+        $paymentMode = PaymentMode::firstOrCreate(['name' => 'cash']);
+
+        PaymentType::retrieved(static function (): void {
+            throw new \RuntimeException('Simulated combined payment failure');
+        });
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.store_combined_payment'), [
+                'combined_amount' => 8000,
+                'payment_type' => $paymentType->id,
+                'payment_mode' => $paymentMode->id,
+                'booking_ids' => [$fb1->id, $fb2->id],
+                'payment_amounts' => [5000, 3000],
+                'payment_date' => now()->toDateString(),
+            ])
+            ->assertStatus(500)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_voucher_payment_rejects_negative_amount_on_positive_balance_row(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'balance_amount' => 5000,
+            'voucher_number' => 88167,
+        ]));
+        $paymentType = PaymentType::firstOrCreate(['name' => 'Cash']);
+        $paymentMode = PaymentMode::firstOrCreate(['name' => 'cash']);
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.voucher_payment'), $this->voucherPaymentPayload($fb, $paymentType, $paymentMode, -100))
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_voucher_payment_rejects_advance_exceeding_effective_payable(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'balance_amount' => 1000,
+            'advance_amount' => 8500,
+            'tr_amount' => 10000,
+            'voucher_number' => 88168,
+        ]));
+        $paymentType = PaymentType::firstOrCreate(['name' => 'Cash']);
+        $paymentMode = PaymentMode::firstOrCreate(['name' => 'cash']);
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.voucher_payment'), array_merge(
+                $this->voucherPaymentPayload($fb, $paymentType, $paymentMode, 2000),
+                ['combined_payment_flow' => true]
+            ))
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_voucher_payment_combined_flow_rejects_negative_amount_on_positive_balance(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'balance_amount' => 5000,
+            'voucher_number' => 88170,
+        ]));
+        $paymentType = PaymentType::firstOrCreate(['name' => 'Cash']);
+        $paymentMode = PaymentMode::firstOrCreate(['name' => 'cash']);
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.voucher_payment'), array_merge(
+                $this->voucherPaymentPayload($fb, $paymentType, $paymentMode, -100),
+                ['combined_payment_flow' => true]
+            ))
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_voucher_payment_combined_flow_rejects_negative_payment_beyond_balance(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'balance_amount' => -2500,
+            'advance_amount' => 12500,
+            'voucher_number' => 88171,
+        ]));
+        $paymentType = PaymentType::firstOrCreate(['name' => 'Cash']);
+        $paymentMode = PaymentMode::firstOrCreate(['name' => 'cash']);
+
+        $this->actingAs($admin)
+            ->postJson(route('freight_bookings.voucher_payment'), array_merge(
+                $this->voucherPaymentPayload($fb, $paymentType, $paymentMode, -5000),
+                ['combined_payment_flow' => true]
+            ))
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+    }
+
 }

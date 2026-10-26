@@ -75,4 +75,47 @@ class MasterPanelSummaryRequestTest extends TestCase
         $this->assertFalse($validator->passes());
         $this->assertArrayHasKey('company_id', $validator->errors()->toArray());
     }
+
+    public function test_with_validator_returns_early_when_user_is_missing(): void
+    {
+        $request = MasterPanelSummaryRequest::create('/master/summary', 'GET', [
+            'super_admin_user_id' => 99,
+        ]);
+        $request->setUserResolver(fn () => null);
+
+        $validator = Validator::make($request->all(), $request->rules());
+        $request->withValidator($validator);
+
+        $this->assertTrue($validator->passes());
+    }
+
+    public function test_authorize_allows_only_master_admin(): void
+    {
+        $super = User::factory()->create(['user_role_id' => 2, 'company_id' => null]);
+        $request = MasterPanelSummaryRequest::create('/master/summary', 'GET');
+        $request->setUserResolver(fn () => $super);
+
+        $this->assertFalse($request->authorize());
+    }
+
+    public function test_super_admin_can_filter_own_company_and_user_id(): void
+    {
+        $super = User::factory()->create(['user_role_id' => 2, 'company_id' => null]);
+        $company = Company::create([
+            'name' => 'Owned Co',
+            'user_id' => $super->id,
+            'is_blocked' => false,
+        ]);
+
+        $request = MasterPanelSummaryRequest::create('/master/summary', 'GET', [
+            'company_id' => $company->id,
+            'super_admin_user_id' => $super->id,
+        ]);
+        $request->setUserResolver(fn () => $super);
+
+        $validator = Validator::make($request->all(), $request->rules());
+        $request->withValidator($validator);
+
+        $this->assertTrue($validator->passes());
+    }
 }

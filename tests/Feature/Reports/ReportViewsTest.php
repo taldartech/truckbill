@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Models\UserRole;
 use App\Models\VoucherLinked;
 use App\Models\VoucherPayment;
+use App\Models\Pump;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -302,13 +303,25 @@ class ReportViewsTest extends TestCase
             'date' => now()->toDateString(),
         ]);
 
+        VoucherLinked::create([
+            'company_id' => $admin->company_id,
+            'freight_booking_id' => $booking->id,
+            'voucher_ids' => 'V-BANK-VIEW',
+            'payment_type' => 'bank',
+            'payment_mode' => 'bank transfer',
+            'amount' => 300,
+            'payment_status' => 'pending',
+            'date' => now()->toDateString(),
+        ]);
+
         $params = $this->dateParams(1) + ['payment_status' => 'pending'];
 
         $this->actingAs($admin)
             ->get(route('reports.bank', $params))
             ->assertOk()
             ->assertViewIs('reports.bank')
-            ->assertSee('Pending');
+            ->assertSee('Pending')
+            ->assertViewHas('grandTotalAmount', fn ($total) => (float) $total === 1000.0);
     }
 
     public function test_shortage_damage_report_renders_with_booking_amounts(): void
@@ -429,10 +442,12 @@ class ReportViewsTest extends TestCase
         $admin = $this->makeUser();
         $country = Country::create(['name' => 'India', 'code' => 'IN']);
         $state = State::create(['name' => 'Gujarat', 'country_id' => $country->id]);
+        $city = City::create(['name' => 'Ahmedabad', 'state_id' => $state->id, 'country_id' => $country->id]);
         $customer = Consignee::create([
             'company_id' => $admin->company_id,
             'name' => 'Party Bill View Customer',
             'state_id' => $state->id,
+            'city_id' => $city->id,
         ]);
         Invoice::create([
             'company_id' => $admin->company_id,
@@ -456,6 +471,17 @@ class ReportViewsTest extends TestCase
             ->assertViewHas('invoices', function ($invoices) {
                 return $invoices->isNotEmpty();
             });
+
+        $invoice = Invoice::query()
+            ->where('company_id', $admin->company_id)
+            ->where('customer_id', $customer->id)
+            ->firstOrFail();
+
+        $this->actingAs($admin)
+            ->get(route('reports.party-bill', ['invoice_number' => $invoice->id]))
+            ->assertOk()
+            ->assertViewHas('customerId', (string) $customer->id)
+            ->assertViewHas('invoice', fn ($loaded) => (int) $loaded->id === (int) $invoice->id);
     }
 
     public function test_lr_copy_export_streams_pdf_for_selected_lr(): void
@@ -558,5 +584,231 @@ class ReportViewsTest extends TestCase
             ]))
             ->assertStatus(422)
             ->assertJsonPath('errors.start_date.0', 'Maximum allowed date range is 3 months.');
+    }
+
+    public function test_pump_report_merges_linked_and_unlinked_payments_with_status_filter(): void
+    {
+        $admin = $this->makeUser();
+        [$lr, $booking] = $this->seedLr($admin);
+        $pump = Pump::create([
+            'user_id' => $admin->company->user_id,
+            'pump_name' => 'Merged Pump',
+            'contact_name' => 'Operator',
+            'contact_number' => '9888777666',
+            'remark' => 'Merged',
+        ]);
+
+        VoucherPayment::create([
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => 'V-PUMP-U',
+            'payment_type' => 'cash',
+            'payment_mode' => 'fuel',
+            'amount' => 300,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'pump_id' => $pump->id,
+            'date' => now()->toDateString(),
+        ]);
+
+        VoucherLinked::create([
+            'freight_booking_id' => $booking->id,
+            'company_id' => $admin->company_id,
+            'payment_type' => 'cash',
+            'payment_mode' => 'fuel',
+            'amount' => 450,
+            'payment_status' => 'pending',
+            'pump_id' => $pump->id,
+            'date' => now()->toDateString(),
+            'voucher_ids' => json_encode([]),
+        ]);
+
+        $params = [
+            'start_date' => now()->subDay()->toDateString(),
+            'end_date' => now()->toDateString(),
+            'pump_id' => $pump->id,
+            'payment_status' => 'pending',
+        ];
+
+        $this->actingAs($admin)
+            ->get(route('reports.pump', $params))
+            ->assertOk()
+            ->assertViewHas('grandTotalAmount', 750.0)
+            ->assertSee('Merged Pump');
+    }
+
+    public function test_transporter_report_clears_invalid_filters_and_supports_reference_filter(): void
+    {
+        $admin = $this->makeUser();
+        [$lr] = $this->seedLr($admin);
+        $params = $this->dateParams() + [
+            'transporter_id' => 999999,
+            'truck_id' => 999999,
+            'reference_by' => $lr->transporter_id,
+        ];
+
+        $this->actingAs($admin)
+            ->get(route('reports.transporter-report', $params))
+            ->assertOk()
+            ->assertViewHas('transporterId', null)
+            ->assertViewHas('truckId', null)
+            ->assertSee('LR-RPT-1');
+    }
+
+    public function test_voucher_receipt_export_requires_freight_bookings_on_linked_lrs(): void
+    {
+        $admin = $this->makeUser();
+        [$lr] = $this->seedLr($admin);
+        $linkedGroup = 55001;
+        $lr->update(['linked_lr_id' => $linkedGroup]);
+
+        LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $lr->customer_id,
+            'consignor_id' => $lr->customer_id,
+            'consignee_id' => $lr->customer_id,
+            'lr_number' => 'LR-LINKED-NO-FB',
+            'linked_lr_id' => $linkedGroup,
+            'delivery_status' => 'Delivered',
+            'invoice_generated' => 0,
+            'truck_id' => $lr->truck_id,
+            'transporter_id' => $lr->transporter_id,
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane',
+            'good_type' => 'Steel',
+            'weight' => 1,
+            'fr_rate' => 100,
+            'amount' => 100,
+            'gr_date' => now()->toDateString(),
+        ]);
+
+        $this->actingAs($admin)
+            ->from(route('reports.transporter-report', $this->dateParams()))
+            ->get(route('reports.voucher-receipt-export', ['lr_id' => $lr->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+    }
+
+    public function test_mark_voucher_receipt_printed_rejects_other_company_booking(): void
+    {
+        $owner = $this->makeUser();
+        [, $booking] = $this->seedLr($owner);
+        $intruder = $this->makeUser();
+
+        $this->actingAs($intruder)
+            ->postJson(route('reports.voucher-receipt-mark-printed'), [
+                'freight_booking_id' => $booking->id,
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_report_date_range_normalizes_swapped_dates(): void
+    {
+        $admin = $this->makeUser();
+
+        $this->actingAs($admin)
+            ->get(route('reports.bank', [
+                'start_date' => now()->toDateString(),
+                'end_date' => now()->subDays(3)->toDateString(),
+            ]))
+            ->assertOk()
+            ->assertViewHas('startDate', fn ($start) => $start <= now()->toDateString());
+    }
+
+    public function test_lr_copy_export_requires_selected_lr(): void
+    {
+        $admin = $this->makeUser();
+
+        $this->actingAs($admin)
+            ->from(route('reports.lr-copy'))
+            ->get(route('reports.lr-copy-export'))
+            ->assertRedirect()
+            ->assertSessionHas('error', 'Please select a Good Receipt (Bilty) to export.');
+    }
+
+    public function test_lr_copy_export_rejects_other_company_lr(): void
+    {
+        $owner = $this->makeUser();
+        [$lr] = $this->seedLr($owner);
+        $intruder = $this->makeUser();
+
+        $this->actingAs($intruder)
+            ->from(route('reports.lr-copy'))
+            ->get(route('reports.lr-copy-export', ['lr_id' => $lr->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+    }
+
+    public function test_memo_copy_export_requires_selected_memo(): void
+    {
+        $admin = $this->makeUser();
+
+        $this->actingAs($admin)
+            ->from(route('reports.memo-copy'))
+            ->get(route('reports.memo-copy-export'))
+            ->assertRedirect()
+            ->assertSessionHas('error', 'Please select a Memo to export.');
+    }
+
+    public function test_memo_copy_export_rejects_unknown_memo(): void
+    {
+        $admin = $this->makeUser();
+
+        $this->actingAs($admin)
+            ->from(route('reports.memo-copy'))
+            ->get(route('reports.memo-copy-export', [
+                'customer_id' => 1,
+                'memo_id' => 999999,
+            ]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+    }
+
+    public function test_pending_memo_and_invoice_reports_render_without_date_range(): void
+    {
+        $admin = $this->makeUser();
+        $this->seedLr($admin);
+
+        $this->actingAs($admin)
+            ->get(route('reports.pending-memo'))
+            ->assertOk()
+            ->assertViewIs('reports.pending-memo');
+
+        $this->actingAs($admin)
+            ->get(route('reports.pending-invoice'))
+            ->assertOk()
+            ->assertViewIs('reports.pending-invoice');
+    }
+
+    public function test_consignor_consignee_report_uses_default_sort_when_invalid(): void
+    {
+        $admin = $this->makeUser();
+        [$lr] = $this->seedLr($admin);
+
+        $this->actingAs($admin)
+            ->get(route('reports.consignor-consignee', $this->dateParams() + [
+                'consignor_id' => $lr->consignor_id,
+                'sort_by' => 'not_a_column',
+                'sort_order' => 'sideways',
+            ]))
+            ->assertOk();
+    }
+
+    public function test_mark_voucher_receipt_printed_updates_booking(): void
+    {
+        $admin = $this->makeUser();
+        [, $booking] = $this->seedLr($admin);
+
+        $this->actingAs($admin)
+            ->postJson(route('reports.voucher-receipt-mark-printed'), [
+                'freight_booking_id' => $booking->id,
+            ])
+            ->assertOk()
+            ->assertJsonPath('voucher_printed', true);
+
+        $this->assertTrue((bool) $booking->fresh()->voucher_printed);
+        $this->assertNotNull($booking->fresh()->voucher_last_printed_at);
     }
 }

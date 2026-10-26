@@ -9,7 +9,11 @@ use App\Models\LorryReceipt;
 use App\Models\User;
 use App\Models\UserRole;
 use Carbon\Carbon;
+use App\Http\Controllers\MasterPanelSummaryController;
+use App\Http\Requests\MasterPanelSummaryRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery;
+use ReflectionMethod;
 use Tests\TestCase;
 
 class MasterPanelSummaryDashboardTest extends TestCase
@@ -158,6 +162,49 @@ class MasterPanelSummaryDashboardTest extends TestCase
 
         $response->assertRedirect(route('master.summary-dashboard'));
         $response->assertSessionHasErrors(['to_date']);
+    }
+
+    public function test_super_admin_summary_controller_scopes_filters_and_filter_options(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($super, ['name' => 'Owned Summary Co']);
+        $this->seedOperationalData($company);
+
+        $controller = app(MasterPanelSummaryController::class);
+
+        $companyOptionsMethod = new ReflectionMethod(MasterPanelSummaryController::class, 'companyFilterOptions');
+        $companyOptionsMethod->setAccessible(true);
+        $superAdminOptionsMethod = new ReflectionMethod(MasterPanelSummaryController::class, 'superAdminFilterOptions');
+        $superAdminOptionsMethod->setAccessible(true);
+
+        $companyOptions = $companyOptionsMethod->invoke($controller, $super);
+        $superAdminOptions = $superAdminOptionsMethod->invoke($controller, $super);
+
+        $this->assertTrue($companyOptions->pluck('name')->contains('Owned Summary Co'));
+        $this->assertCount(1, $superAdminOptions);
+        $this->assertSame($super->id, (int) $superAdminOptions->first()->id);
+
+        $request = Mockery::mock(MasterPanelSummaryRequest::class)->makePartial();
+        $request->shouldReceive('authorize')->andReturn(true);
+        $request->shouldReceive('user')->andReturn($super);
+        $request->shouldReceive('validated')->andReturn([
+            'from_date' => Carbon::now()->startOfMonth()->toDateString(),
+            'to_date' => Carbon::now()->endOfMonth()->toDateString(),
+            'company_id' => null,
+            'super_admin_user_id' => null,
+        ]);
+
+        $view = $controller->index($request);
+        $data = $view->getData();
+
+        $this->assertSame($super->id, $data['filters']['super_admin_user_id']);
+        $this->assertCount(1, $data['companyBreakdown']);
+    }
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
     }
 
     public function test_company_filter_intersects_with_super_admin_selection(): void

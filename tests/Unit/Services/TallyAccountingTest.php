@@ -2849,6 +2849,19 @@ class TallyAccountingTest extends TestCase
         $this->assertEquals($pumpLedger->id, $updatedPumpLedger->id);
         $this->assertStringContainsString('Highway IOCL Station (Fuel Pump)', $updatedPumpLedger->name);
 
+        $fuelPumpsGroup = AccountGroup::query()->firstOrCreate(
+            ['company_id' => $company->id, 'name' => 'Fuel Pumps'],
+            ['parent_id' => null]
+        );
+        $sundryCreditors = AccountGroup::query()
+            ->where('company_id', $company->id)
+            ->where('name', 'Sundry Creditors')
+            ->first();
+        $this->assertNotNull($sundryCreditors);
+        $pumpLedger->update(['account_group_id' => $sundryCreditors->id]);
+        $groupSyncedLedger = $postingService->getOrCreatePartyLedger($company, $blankPump);
+        $this->assertEquals($fuelPumpsGroup->id, $groupSyncedLedger->account_group_id);
+
         // 2. postInvoice - null company & round-off debit ($diff < 0)
         $invoiceNoCo = new Invoice(['company_id' => null]);
         $this->assertNull($postingService->postInvoice($invoiceNoCo));
@@ -3053,6 +3066,38 @@ class TallyAccountingTest extends TestCase
 
         $postingService->deleteVoucherFor(Invoice::class, $roundOffInvoice->id, $company->id);
         $this->assertSoftDeleted('accounting_vouchers', ['source_type' => Invoice::class, 'source_id' => $roundOffInvoice->id]);
+    }
+
+    public function test_chart_of_accounts_provisioner_skips_ledgers_with_missing_groups(): void
+    {
+        $company = Company::create([
+            'name' => 'Missing Group Co',
+            'bank' => 'ICICI Bank',
+            'account_number' => '9988776655',
+        ]);
+
+        $provisioner = new ChartOfAccountsProvisioner;
+        $provisioner->provisionForCompany($company);
+
+        AccountGroup::where('company_id', $company->id)->where('name', 'Bank Accounts')->delete();
+
+        $groups = AccountGroup::where('company_id', $company->id)->get()->keyBy('name')->all();
+        unset($groups['Bank Accounts']);
+
+        $method = new \ReflectionMethod(ChartOfAccountsProvisioner::class, 'createDefaultLedgers');
+        $method->setAccessible(true);
+        Ledger::where('company_id', $company->id)->where('code', 'BANK_PRIMARY')->delete();
+
+        $method->invoke($provisioner, $company, $groups, [[
+            'name' => 'ICICI Bank (A/c 9988776655)',
+            'group' => 'Bank Accounts',
+            'code' => 'BANK_PRIMARY',
+            'type' => 'debit',
+        ]]);
+
+        $this->assertNull(
+            Ledger::where('company_id', $company->id)->where('code', 'BANK_PRIMARY')->first()
+        );
     }
 
     public function test_accounting_posting_service_comprehensive_missing_branches_coverage(): void

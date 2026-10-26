@@ -225,6 +225,24 @@ class SubscriptionCheckoutTest extends TestCase
             ->assertJsonPath('valid', false);
     }
 
+    public function test_checkout_returns_503_when_catalog_unavailable(): void
+    {
+        ['super' => $super, 'company' => $company] = $this->superAdminWithCompany();
+
+        $checkoutMock = Mockery::mock(SubscriptionCheckoutService::class);
+        $checkoutMock->shouldReceive('applyUpcomingForCompany')->andReturn(false);
+        $checkoutMock->shouldReceive('createCheckoutOrder')
+            ->once()
+            ->andThrow(new \App\Exceptions\SubscriptionCatalogUnavailableException('Catalog unavailable.'));
+        $this->app->instance(SubscriptionCheckoutService::class, $checkoutMock);
+
+        $this->actingAs($super)->postJson(route('subscription.checkout'), [
+            'company_id' => $company->id,
+            'purchase_type' => 'renewal',
+        ])->assertStatus(503)
+            ->assertJsonPath('message', 'Catalog unavailable.');
+    }
+
     public function test_checkout_and_callback_endpoints_delegate_to_checkout_service(): void
     {
         $this->fakeCatalog();
@@ -261,5 +279,79 @@ class SubscriptionCheckoutTest extends TestCase
             'razorpay_payment_id' => 'pay_test_1',
             'razorpay_signature' => 'sig_test_1',
         ])->assertOk()->assertJsonPath('success', true);
+    }
+
+    public function test_validate_promo_is_forbidden_for_non_super_admin(): void
+    {
+        $admin = User::factory()->create([
+            'user_role_id' => 3,
+            'company_id' => Company::create([
+                'name' => 'Admin Co',
+                'gst_slab' => config('payments.gst_slabs')[0],
+            ])->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->postJson(route('subscription.promo.validate'), ['code' => 'SAVE10'])
+            ->assertForbidden();
+    }
+
+    public function test_validate_promo_returns_503_when_catalog_unavailable(): void
+    {
+        Http::fake([
+            '*/promo-codes/validate' => Http::response(['message' => 'Unavailable'], 503),
+        ]);
+
+        ['super' => $super] = $this->superAdminWithCompany();
+
+        $this->actingAs($super)
+            ->postJson(route('subscription.promo.validate'), ['code' => 'SAVE10'])
+            ->assertStatus(503)
+            ->assertJsonPath('valid', false);
+    }
+
+    public function test_checkout_form_normalizes_invalid_purchase_type_to_renewal(): void
+    {
+        $this->fakeCatalog();
+        ['super' => $super, 'company' => $company] = $this->superAdminWithCompany();
+
+        $this->actingAs($super)->get(route('subscription.checkout.form', [
+            'company_id' => $company->id,
+            'purchase_type' => 'not-a-real-type',
+        ]))
+            ->assertOk()
+            ->assertViewIs('subscription.checkout')
+            ->assertViewHas('purchaseType', 'renewal');
+    }
+
+    public function test_checkout_returns_422_when_checkout_service_rejects_quote(): void
+    {
+        $this->fakeCatalog();
+        ['super' => $super, 'company' => $company] = $this->superAdminWithCompany();
+
+        $checkoutMock = Mockery::mock(SubscriptionCheckoutService::class);
+        $checkoutMock->shouldReceive('applyUpcomingForCompany')->andReturn(false);
+        $checkoutMock->shouldReceive('createCheckoutOrder')
+            ->once()
+            ->andThrow(new \InvalidArgumentException('Checkout blocked by policy.'));
+        $this->app->instance(SubscriptionCheckoutService::class, $checkoutMock);
+
+        $this->actingAs($super)->postJson(route('subscription.checkout'), [
+            'company_id' => $company->id,
+            'purchase_type' => 'renewal',
+        ])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Checkout blocked by policy.');
+    }
+
+    public function test_subscription_history_is_forbidden_for_non_super_admin(): void
+    {
+        ['super' => $super, 'company' => $company] = $this->superAdminWithCompany();
+        $master = User::factory()->create(['user_role_id' => 1, 'company_id' => null]);
+
+        $this->withoutMiddleware(\App\Http\Middleware\RoleMiddleware::class)
+            ->actingAs($master)
+            ->get(route('subscription.history', ['company_id' => $company->id]))
+            ->assertForbidden();
     }
 }

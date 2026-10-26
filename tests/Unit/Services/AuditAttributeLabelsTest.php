@@ -5,6 +5,7 @@ namespace Tests\Unit\Services;
 use App\Models\AuditLog;
 use App\Models\AuditLogChange;
 use App\Models\Company;
+use App\Models\Consignee;
 use App\Models\FreightBooking;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
@@ -202,6 +203,66 @@ class AuditAttributeLabelsTest extends TestCase
         $this->assertTrue($changes->has('generated_date'));
         $this->assertTrue($changes->has('lr_ids'));
         $this->assertSame('[1,2,3,4]', $changes['lr_ids']->new_value);
+    }
+
+    public function test_audit_logger_formats_datetime_and_invalid_date_cast_values(): void
+    {
+        $user = User::factory()->create();
+        Auth::login($user);
+
+        $company = Company::create([
+            'name' => 'Audit Transport Co 4',
+            'user_id' => $user->id,
+        ]);
+
+        $invoice = $this->createTestInvoice($company, [
+            'invoice_number' => 'INV-AUDIT-404',
+            'generated_date' => '2026-01-10',
+        ]);
+
+        $invoice->syncOriginal();
+        $invoice->generated_date = Carbon::parse('2026-02-15 14:30:00');
+        $invoice->syncChanges();
+
+        $logger = new AuditLogger();
+        $logger->logUpdated($invoice);
+
+        $change = AuditLogChange::query()
+            ->where('attribute_name', 'generated_date')
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($change);
+        $this->assertSame('15-02-2026 14:30', $change->new_value);
+
+        $invoice->syncOriginal();
+        $invoice->generated_date = 'not-a-real-date';
+        $invoice->syncChanges();
+        $logger->logUpdated($invoice);
+
+        $invalidChange = AuditLogChange::query()
+            ->where('attribute_name', 'generated_date')
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($invalidChange);
+        $this->assertSame('not-a-real-date', $invalidChange->new_value);
+    }
+
+    public function test_audit_logger_formats_boolean_and_decimal_values_via_reflection(): void
+    {
+        $logger = new AuditLogger();
+        $invoice = new Invoice();
+
+        $formatValue = new \ReflectionMethod(AuditLogger::class, 'formatValue');
+        $formatValue->setAccessible(true);
+        $this->assertSame('Yes', $formatValue->invoke($logger, $invoice, 'custom_invoice', true));
+        $this->assertSame('No', $formatValue->invoke($logger, $invoice, 'custom_invoice', false));
+
+        $normalize = new \ReflectionMethod(AuditLogger::class, 'normalizeComparableValue');
+        $normalize->setAccessible(true);
+        $this->assertSame('1', $normalize->invoke($logger, true));
+        $this->assertSame('0', $normalize->invoke($logger, false));
     }
 }
 

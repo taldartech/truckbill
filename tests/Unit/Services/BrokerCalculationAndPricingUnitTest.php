@@ -601,11 +601,12 @@ class BrokerCalculationAndPricingUnitTest extends TestCase
             $this->assertTrue(true);
         }
 
-        // decrementLrCredits on null subscription
+        $company->subscription()->delete();
+        $company->unsetRelation('subscription');
         $guard->decrementLrCredits($company, 5);
-        $this->assertTrue(true);
+        $this->assertNull($company->fresh()->subscription);
 
-        $subscription = CompanySubscription::create([
+        CompanySubscription::create([
             'company_id' => $company->id,
             'status' => 'active',
             'starts_on' => now()->subDay(),
@@ -615,6 +616,7 @@ class BrokerCalculationAndPricingUnitTest extends TestCase
             'users_per_branch' => 2,
             'addon_users' => 1,
         ]);
+        $company = $company->fresh();
 
         $b1 = Branch::create(['company_id' => $company->id, 'branch_name' => 'B1', 'branch_address' => 'Delhi']);
         $b2 = Branch::create(['company_id' => $company->id, 'branch_name' => 'B2', 'branch_address' => 'Noida']);
@@ -651,6 +653,26 @@ class BrokerCalculationAndPricingUnitTest extends TestCase
         } catch (ValidationException $e) {
             $this->assertSame('Company user limit reached for your subscription.', $e->errors()['branch_id'][0]);
         }
+
+        $guard->assertPlanActive($subscription);
+    }
+
+    public function test_subscription_guard_assert_can_mutate_aborts_when_subscription_cannot_write(): void
+    {
+        $guard = new SubscriptionGuard(new SubscriptionUsageService());
+
+        $company = Company::create(['name' => 'Readonly Co']);
+        CompanySubscription::create([
+            'company_id' => $company->id,
+            'status' => 'expired',
+            'starts_on' => now()->subYear(),
+            'ends_on' => now()->subDay(),
+            'included_branches' => 1,
+            'users_per_branch' => 1,
+        ]);
+
+        $this->expectException(\Illuminate\Http\Exceptions\HttpResponseException::class);
+        $guard->assertCanMutate($company);
     }
 
     public function test_freight_booking_calculation_service_assert_individual_payment_and_apply_negative_adjustments(): void

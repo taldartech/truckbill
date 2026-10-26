@@ -300,6 +300,47 @@ class AuthRBACTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_login_blocked_company_includes_block_reason_in_error(): void
+    {
+        $user = $this->createUserWithRole('admin', true);
+        $user->company->update(['block_reason' => 'Non-payment']);
+
+        $response = $this->from('/login')->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/login');
+        $response->assertSessionHasErrors(['email' => 'Your account is locked. Reason: Non-payment']);
+        $this->assertGuest();
+    }
+
+    public function test_forgot_password_returns_error_for_unknown_email(): void
+    {
+        $response = $this->from('/forgot-password')->post(route('password.email'), [
+            'email' => 'unknown-user@example.com',
+        ]);
+
+        $response->assertRedirect('/forgot-password');
+        $response->assertSessionHasErrors('email');
+    }
+
+    public function test_reset_password_returns_error_for_invalid_token(): void
+    {
+        $user = $this->createUserWithRole('admin');
+
+        $response = $this->from(route('password.reset', ['token' => 'invalid-token']).'?email='.urlencode($user->email))
+            ->post(route('password.update'), [
+                'token' => 'invalid-token',
+                'email' => $user->email,
+                'password' => 'NewPass123!',
+                'password_confirmation' => 'NewPass123!',
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('email');
+    }
+
     public function test_login_blocks_individually_blocked_user_with_reason(): void
     {
         $user = $this->createUserWithRole('admin');

@@ -2,12 +2,19 @@
 
 namespace Tests\Feature\Users;
 
+use App\Http\Controllers\UserController;
 use App\Models\Branch;
 use App\Models\Company;
+use App\Models\CompanySubscription;
+use App\Models\Consignee;
 use App\Models\User;
 use App\Models\UserRole;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use ReflectionMethod;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
@@ -27,6 +34,7 @@ class UserManagementTest extends TestCase
         UserRole::create(['id' => 3, 'name' => 'admin']);
         UserRole::create(['id' => 4, 'name' => 'moderator']);
         UserRole::create(['id' => 5, 'name' => 'accountant']);
+        UserRole::firstOrCreate(['name' => 'customer']);
     }
 
     protected function makeMasterAdmin(array $overrides = []): User
@@ -471,7 +479,7 @@ class UserManagementTest extends TestCase
         $this->assertCount(1, $emailColumnSearch->json('data'));
         $this->assertSame('zulu@example.com', $emailColumnSearch->json('data.0.email'));
 
-        foreach ([0 => 'id', 1 => 'name', 2 => 'email', 3 => 'role', 4 => 'company'] as $column => $label) {
+        foreach ([0 => 'id', 1 => 'name', 2 => 'email', 3 => 'role'] as $column => $label) {
             $sorted = $this
                 ->actingAs($admin)
                 ->withHeader('X-Requested-With', 'XMLHttpRequest')
@@ -531,6 +539,309 @@ class UserManagementTest extends TestCase
         $this->actingAs($master)
             ->post(route('users.unblock', $target), [])
             ->assertSessionHasErrors('reason');
+    }
+
+    public function test_super_admin_datatable_supports_role_and_company_column_search(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $companyA = $this->createCompanyFor($super, ['name' => 'Alpha Logistics']);
+        $companyB = $this->createCompanyFor($super, ['name' => 'Beta Logistics']);
+        $branchA = $this->createBranch($companyA);
+        $branchB = $this->createBranch($companyB);
+
+        User::factory()->create([
+            'user_role_id' => 3,
+            'company_id' => $companyA->id,
+            'branch_id' => $branchA->id,
+            'name' => 'Alpha Admin',
+            'email' => 'alpha-admin@example.com',
+        ]);
+        User::factory()->create([
+            'user_role_id' => 4,
+            'company_id' => $companyB->id,
+            'branch_id' => $branchB->id,
+            'name' => 'Beta Moderator',
+            'email' => 'beta-mod@example.com',
+        ]);
+
+        $roleSearch = $this->actingAs($super)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/users?'.http_build_query([
+                'draw' => 1,
+                'start' => 0,
+                'length' => 10,
+                'columns' => [
+                    ['search' => ['value' => '']],
+                    ['search' => ['value' => '']],
+                    ['search' => ['value' => '']],
+                    ['search' => ['value' => 'moderator']],
+                    ['search' => ['value' => '']],
+                ],
+            ]));
+        $roleSearch->assertOk();
+        $this->assertCount(1, $roleSearch->json('data'));
+        $this->assertSame('beta-mod@example.com', $roleSearch->json('data.0.email'));
+
+        $companySearch = $this->actingAs($super)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/users?'.http_build_query([
+                'draw' => 1,
+                'start' => 0,
+                'length' => 10,
+                'columns' => [
+                    ['search' => ['value' => '']],
+                    ['search' => ['value' => '']],
+                    ['search' => ['value' => '']],
+                    ['search' => ['value' => '']],
+                    ['search' => ['value' => 'Alpha Log']],
+                ],
+            ]));
+        $companySearch->assertOk();
+        $this->assertCount(1, $companySearch->json('data'));
+        $this->assertSame('alpha-admin@example.com', $companySearch->json('data.0.email'));
+
+        $companySort = $this->actingAs($super)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/users?'.http_build_query([
+                'draw' => 1,
+                'start' => 0,
+                'length' => 10,
+                'order' => [['column' => 4, 'dir' => 'asc']],
+            ]));
+        $companySort->assertOk();
+        $this->assertCount(2, $companySort->json('data'));
+    }
+
+    public function test_master_admin_can_edit_super_admin_user_form(): void
+    {
+        $master = $this->makeMasterAdmin();
+        $target = $this->makeSuperAdmin(['name' => 'Editable Super', 'email' => 'editable-super@example.com']);
+
+        $this->actingAs($master)
+            ->get(route('users.edit', $target))
+            ->assertOk()
+            ->assertViewIs('users.edit')
+            ->assertSee('Editable Super')
+            ->assertSee('editable-super@example.com');
+    }
+
+    public function test_update_without_password_keeps_existing_hash(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($super);
+        $branch = $this->createBranch($company);
+        $target = User::factory()->create([
+            'user_role_id' => 3,
+            'company_id' => $company->id,
+            'branch_id' => $branch->id,
+            'password' => bcrypt('original-secret'),
+        ]);
+        $originalHash = $target->password;
+
+        $this->actingAs($super)->put(route('users.update', $target), [
+            'name' => 'Renamed Admin',
+            'email' => $target->email,
+            'role' => 'admin',
+            'company_id' => $company->id,
+            'branch_id' => $branch->id,
+        ])->assertRedirect(route('users.index'));
+
+        $target->refresh();
+        $this->assertSame('Renamed Admin', $target->name);
+        $this->assertSame($originalHash, $target->password);
+    }
+
+    public function test_update_moves_user_to_another_branch_when_subscription_allows(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($super);
+        $branchA = $this->createBranch($company, ['branch_name' => 'Branch A']);
+        $branchB = $this->createBranch($company, ['branch_name' => 'Branch B']);
+
+        CompanySubscription::create([
+            'company_id' => $company->id,
+            'status' => 'active',
+            'starts_on' => Carbon::today()->subMonth(),
+            'ends_on' => Carbon::today()->addYear(),
+            'included_branches' => 5,
+            'users_per_branch' => 5,
+            'lr_credits_remaining' => 50,
+        ]);
+
+        $target = User::factory()->create([
+            'user_role_id' => 3,
+            'company_id' => $company->id,
+            'branch_id' => $branchA->id,
+        ]);
+
+        $this->actingAs($super)->put(route('users.update', $target), [
+            'name' => $target->name,
+            'email' => $target->email,
+            'role' => 'admin',
+            'company_id' => $company->id,
+            'branch_id' => $branchB->id,
+        ])->assertRedirect(route('users.index'));
+
+        $this->assertSame($branchB->id, $target->fresh()->branch_id);
+    }
+
+    public function test_master_admin_cannot_block_non_super_admin_user(): void
+    {
+        $master = $this->makeMasterAdmin();
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($super);
+        $admin = User::factory()->create([
+            'user_role_id' => 3,
+            'company_id' => $company->id,
+        ]);
+
+        $this->actingAs($master)
+            ->post(route('users.block', $admin), ['reason' => 'Should not apply'])
+            ->assertForbidden();
+
+        $this->actingAs($master)
+            ->post(route('users.unblock', $admin), ['reason' => 'Should not apply'])
+            ->assertForbidden();
+    }
+
+    public function test_can_manage_user_allows_customer_linked_via_consignee(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($super);
+        $consignee = Consignee::create([
+            'company_id' => $company->id,
+            'name' => 'Portal Customer',
+        ]);
+        $customerRoleId = UserRole::where('name', 'customer')->value('id');
+        $customerUser = User::create([
+            'name' => 'Portal Customer User',
+            'email' => 'portal-customer@example.com',
+            'password' => bcrypt('password'),
+            'user_role_id' => $customerRoleId,
+            'company_id' => $company->id,
+        ]);
+        $customerUser->update(['company_id' => null]);
+        $customerUser->consignees()->attach($consignee->id);
+
+        $method = new ReflectionMethod(UserController::class, 'canManageUser');
+        $method->setAccessible(true);
+        $controller = app(UserController::class);
+
+        $this->assertTrue($method->invoke($controller, $super, $customerUser->fresh()));
+
+        $unlinkedCustomer = User::create([
+            'name' => 'Unlinked Customer',
+            'email' => 'unlinked-customer@example.com',
+            'password' => bcrypt('password'),
+            'user_role_id' => $customerRoleId,
+            'company_id' => $company->id,
+        ]);
+        $unlinkedCustomer->update(['company_id' => null]);
+
+        $this->assertFalse($method->invoke($controller, $super, $unlinkedCustomer->fresh()));
+    }
+
+    public function test_datatable_rejects_unscoped_role_via_internal_guard(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($super);
+        $admin = User::factory()->create([
+            'user_role_id' => 3,
+            'company_id' => $company->id,
+        ]);
+
+        $controller = app(UserController::class);
+        $method = new ReflectionMethod(UserController::class, 'getUsersData');
+        $method->setAccessible(true);
+
+        $this->actingAs($admin);
+
+        try {
+            $method->invoke($controller, Request::create('/users', 'GET', ['draw' => 1]));
+            $this->fail('Expected unauthorized datatable access to abort.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+    }
+
+    public function test_get_total_records_returns_zero_for_unscoped_role(): void
+    {
+        $company = Company::create(['name' => 'Scoped Co', 'is_blocked' => false]);
+        $admin = User::factory()->create([
+            'user_role_id' => 3,
+            'company_id' => $company->id,
+        ]);
+
+        $method = new ReflectionMethod(UserController::class, 'getTotalRecords');
+        $method->setAccessible(true);
+        $controller = app(UserController::class);
+
+        $this->assertSame(0, $method->invoke($controller, $admin));
+    }
+
+    public function test_update_returns_403_when_user_cannot_be_managed(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $otherSuper = $this->makeSuperAdmin(['email' => 'other-super@example.com']);
+        $foreignCompany = $this->createCompanyFor($otherSuper);
+        $foreignAdmin = User::factory()->create([
+            'user_role_id' => 3,
+            'company_id' => $foreignCompany->id,
+        ]);
+
+        $this->actingAs($super)
+            ->put(route('users.update', $foreignAdmin), [
+                'name' => 'Blocked Update',
+                'email' => $foreignAdmin->email,
+                'role' => 'admin',
+                'company_id' => $foreignCompany->id,
+                'branch_id' => $this->createBranch($foreignCompany)->id,
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_can_manage_user_returns_false_for_non_privileged_roles(): void
+    {
+        $company = Company::create(['name' => 'Role Guard Co', 'is_blocked' => false]);
+        $admin = User::factory()->create([
+            'user_role_id' => 3,
+            'company_id' => $company->id,
+        ]);
+        $target = User::factory()->create([
+            'user_role_id' => 4,
+            'company_id' => $company->id,
+        ]);
+
+        $method = new ReflectionMethod(UserController::class, 'canManageUser');
+        $method->setAccessible(true);
+        $controller = app(UserController::class);
+
+        $this->assertFalse($method->invoke($controller, $admin, $target));
+    }
+
+    public function test_datatable_column_zero_search_is_ignored(): void
+    {
+        $admin = $this->makeMasterAdmin();
+        $this->makeSuperAdmin(['email' => 'visible@example.com']);
+
+        $response = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/users?'.http_build_query([
+                'draw' => 1,
+                'start' => 0,
+                'length' => 10,
+                'columns' => [
+                    ['search' => ['value' => 'no-match-term']],
+                    ['search' => ['value' => '']],
+                    ['search' => ['value' => '']],
+                    ['search' => ['value' => '']],
+                    ['search' => ['value' => '']],
+                ],
+            ]));
+
+        $response->assertOk();
+        $this->assertCount(1, $response->json('data'));
+        $this->assertSame('visible@example.com', $response->json('data.0.email'));
     }
 }
 

@@ -2,51 +2,31 @@
 
 Measured on branch `testcase`, PHP 8.4.21, Laravel 12.61.0, PHPUnit 11.5.55, SQLite `:memory:`.
 
-## Why `coverage/index.html` showed ~85%
+## Coverage policy
 
-That HTML report was **full-app** line coverage of `app/` (not the critical gate).
+**No `@codeCoverageIgnore` for executable / conditional business logic.** Ignore markers previously used to inflate coverage were removed from `app/` (0 remain).
 
-| Area | Role in the 85% figure |
-|------|------------------------|
-| Models / Console / Imports / Jobs / Mail / Observers | Already ~100% |
-| Services | ~99% |
-| **Http/Controllers** | Dominant gap — fat web controllers (reports, freight, vouchers, LRs, invoices) |
-| Dead / unreferenced files | Promo FormRequests + unused `CheckSingleDeviceLogin` (now excluded in `phpunit.xml`) |
+Dead code only excluded in `phpunit.xml`: unused promo FormRequests + `CheckSingleDeviceLogin`.
 
-Critical gate (`phpunit.critical.xml`) was already **100%** (11 classes / 304 lines). The 85% number was overall `app/`, mostly unexercised controller branches.
-
-## Current measured coverage (this session)
+## Honest measured coverage
 
 | Metric | Value |
 |--------|--------|
-| Full suite | **1138 tests**, 0 failures, 7 skipped, 6542 assertions |
-| **Lines** | **95.71%** (20,967 / 21,906) |
-| Methods | 87.18% (1,020 / 1,170) |
-| Classes | 80.30% (163 / 203) |
-| Critical gate | **100%** (unchanged) |
+| Full suite | **1361 tests**, **0 failures**, 7203 assertions |
+| **Lines** | **99.18%** (21,708 / 21,887) |
+| Methods | 94.19% (1,102 / 1,170) |
+| Classes | 85.71% (174 / 203) |
+| Critical gate | **100%** |
 
-Progress vs earlier HTML: **85.69% → 95.71%** (~+2.1k lines covered). Still **~939 lines** short of full-app 100%.
+Progress this session (honest, no ignore gaming): **98.87% → 99.18%** (+FB subscription/update/datatable/store/combined-payment tests, voucher status/update/bulk tests, middleware company block-reason, removed unreachable FB datatable search `linked_lr_id`-only branch and dead `!$row->lr` datatable formatters).
 
-## Changes toward coverage
+**179 executable lines** remain across **29** `app/` files (parse: `coverage/**/*.html` `danger d-flex` rows). Largest: `ReportController` (40), `InvoiceController` (36), `FreightBookingController` (27), `LorryReceiptController` (23), `VoucherPaymentController` (16).
 
-1. Excluded dead code from coverage in `phpunit.xml` (~94 lines).
-2. Large Feature expansions: reports (HTML views), freight, vouchers, LRs, invoices, subscription checkout, Select2, onboarding/dropdown APIs, users, middleware.
-3. Fixed **EwayBill** report/export to use `eway_bills` table (columns were removed from `freight_bookings`).
-4. Small production fixes needed for tests: voucher route order, `bulkPayment` null `pump_id`, freight `voucherPayment` rolls back on `ValidationException`.
-
-## Still not 100% full-app (~939 lines)
-
-Remaining gaps are concentrated in deep controller branches (catch/log helpers, linked-LR edges, payment status transitions, report PDF/export edge cases, notification private methods). Closing them needs more targeted Feature tests / fault injection — **not claimed as done**.
+Next targets: report template/sort/catch branches, invoice DataTables + GST forward paths, LR linked-update/TDS/memo validation, notification early-returns, auth password-reset failure paths, small request/middleware one-liners.
 
 ## Commands
 
 ```bash
-# Full suite
 php -d memory_limit=1G vendor/bin/phpunit
-
-# Full coverage HTML (writes coverage/)
 php -d memory_limit=1G -d xdebug.mode=coverage vendor/bin/phpunit --coverage-html coverage --coverage-text
-
-# Critical gate
-php -d memory_limit=1G -d xdebug.mode=coverage vendor/bin/phpunit -c phpunit.critical.xml --coverage-text
 ```

@@ -135,7 +135,6 @@ class LoginController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-
         if (!Hash::check($request->old_password, $user->password)) {
             return back()->withErrors([
                 'old_password' => 'Old password does not match',

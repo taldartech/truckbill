@@ -48,7 +48,8 @@ class CheckBlockMiddleware
         $sessionToken = Session::get('session_token');
 
         // Check if the session token matches the user's current session token
-        if ($user->session_token && $sessionToken !== $user->session_token) {
+        // Only treat as multi-device when both sides have a token and they differ.
+        if ($user->session_token && $sessionToken && $sessionToken !== $user->session_token) {
             // Session token doesn't match - user logged in from another device
             Auth::logout();
             $request->session()->invalidate();
@@ -59,7 +60,7 @@ class CheckBlockMiddleware
         }
 
         // Store session token in session if not already present
-        if (!$sessionToken && $user->session_token) {
+        if (! $sessionToken && $user->session_token) {
             Session::put('session_token', $user->session_token);
         }
 
@@ -71,6 +72,7 @@ class CheckBlockMiddleware
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
+            // companies.block_reason is not a persisted column; keep optional for forward-compat.
             $companyReason = '';
             if (! empty($company->block_reason)) {
                 $companyReason = ' Reason: '.$company->block_reason;

@@ -1147,10 +1147,7 @@ $lrs = $query
             'freight_booking_id' => ['required', 'integer', 'exists:freight_bookings,id'],
         ]);
 
-        $freightBooking = FreightBooking::with('lr')->find($validated['freight_booking_id']);
-        if (! $freightBooking) {
-            return response()->json(['message' => 'Freight Booking not found.'], 404);
-        }
+        $freightBooking = FreightBooking::with('lr')->findOrFail($validated['freight_booking_id']);
 
         $companyId = Auth::user()->company_id;
         if ($companyId && (int) $freightBooking->company_id !== (int) $companyId) {
@@ -1636,7 +1633,6 @@ $lrs = $query
 
         return Excel::download(new TransporterMasterExport($type), 'transporter_truck_owner_report.xlsx');
     }
-
 
    public function profitability(Request $request)
 {

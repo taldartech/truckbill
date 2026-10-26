@@ -18,10 +18,13 @@ use App\Exports\PumpExport;
 use App\Exports\ShortageDamageExport;
 use App\Exports\TDSExport;
 use App\Exports\TransporterReportExport;
+use App\Models\Branch;
 use App\Models\City;
 use App\Models\Company;
 use App\Models\CompanySetting;
 use App\Models\CompanySubscription;
+use App\Models\Transporter;
+use App\Models\TransporterMaster;
 use App\Models\Consignee;
 use App\Models\Country;
 use App\Models\FreightBooking;
@@ -35,6 +38,7 @@ use App\Models\User;
 use App\Models\UserRole;
 use App\Models\VoucherLinked;
 use App\Models\VoucherPayment;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -1121,6 +1125,194 @@ class ReportExportTest extends TestCase
         );
         $filteredData = $exportFiltered->collection();
         $this->assertNotEmpty($filteredData);
+
+        $lrProfit->update(['actual_amount' => 15000]);
+        $exportActualAmount = new ProfitabilityReportExport(
+            $admin->company_id,
+            now()->subDays(7)->toDateString(),
+            now()->addDays(1)->toDateString(),
+            $lrProfit->customer_id,
+        );
+        $actualRow = $exportActualAmount->collection()->first(fn ($row) => is_array($row) && ($row[0] ?? null) === $lrProfit->lr_number);
+        $this->assertNotNull($actualRow);
+        $this->assertSame(15000.0, $actualRow[5]);
+
+        $lrZeroRevenue = LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $lrProfit->customer_id,
+            'consignor_id' => $lrProfit->customer_id,
+            'consignee_id' => $lrProfit->customer_id,
+            'lr_number' => 'LR-ZERO-REV',
+            'delivery_status' => 'Delivered',
+            'invoice_generated' => 0,
+            'truck_id' => $lrProfit->truck_id,
+            'transporter_id' => $lrProfit->transporter_id,
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane',
+            'good_type' => 'Steel',
+            'weight' => 1.0,
+            'fr_rate' => 0,
+            'amount' => 0,
+            'gr_date' => now()->toDateString(),
+        ]);
+        $zeroBooking = FreightBooking::create([
+            'lr_id' => $lrZeroRevenue->id,
+            'transporter_id' => $lrProfit->transporter_id,
+            'tr_fr_rate' => 0,
+            'tr_amount' => 0,
+            'advance_amount' => 0,
+            'balance_amount' => 0,
+            'tds_amount' => 0,
+            'company_id' => $admin->company_id,
+            'voucher_number' => 9003,
+        ]);
+        $lrZeroRevenue->freight_booking_id = $zeroBooking->id;
+        $lrZeroRevenue->save();
+
+        $exportZeroRevenue = new ProfitabilityReportExport(
+            $admin->company_id,
+            now()->subDays(7)->toDateString(),
+            now()->addDays(1)->toDateString(),
+            null,
+            null,
+            null,
+            null,
+            'profit'
+        );
+        $zeroRow = $exportZeroRevenue->collection()->first(fn ($row) => is_array($row) && ($row[0] ?? null) === 'LR-ZERO-REV');
+        $this->assertNotNull($zeroRow);
+        $this->assertSame(0.0, $zeroRow[8]);
+    }
+
+    public function test_profitability_export_uses_transporter_master_name_fallback(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = Consignee::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Fallback Customer',
+        ]);
+
+        $masterOnlyName = TransporterMaster::create([
+            'name' => 'Master Only Label',
+            'pan_number' => 'MSTR1234B',
+        ]);
+        $transporterMasterOnly = Transporter::create([
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $masterOnlyName->id,
+        ]);
+        $lrMasterName = LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $customer->id,
+            'consignee_id' => $customer->id,
+            'transporter_id' => $transporterMasterOnly->id,
+            'lr_number' => 'LR-MASTER-NAME',
+            'delivery_status' => 'Delivered',
+            'invoice_generated' => 0,
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane',
+            'good_type' => 'Steel',
+            'weight' => 1,
+            'fr_rate' => 50,
+            'amount' => 500,
+            'gr_date' => now()->toDateString(),
+        ]);
+        FreightBooking::create([
+            'company_id' => $admin->company_id,
+            'lr_id' => $lrMasterName->id,
+            'transporter_id' => $transporterMasterOnly->id,
+            'tr_fr_rate' => 50,
+            'tr_amount' => 500,
+            'advance_amount' => 0,
+            'balance_amount' => 500,
+            'tds_amount' => 0,
+            'voucher_number' => 92002,
+        ]);
+
+        $export = new ProfitabilityReportExport(
+            $admin->company_id,
+            now()->subDay()->toDateString(),
+            now()->addDay()->toDateString(),
+        );
+
+        $masterRow = $export->collection()->first(fn ($trip) => is_array($trip) && ($trip[0] ?? null) === 'LR-MASTER-NAME');
+        $this->assertNotNull($masterRow);
+        $this->assertSame('Master Only Label', $masterRow[3]);
+    }
+
+    public function test_profitability_export_handles_missing_booking_transporter_name_and_zero_summary_margins(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = Consignee::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Margin Customer',
+        ]);
+        $master = TransporterMaster::create([
+            'name' => 'Hidden Master Name',
+            'pan_number' => 'MRGNM1234A',
+        ]);
+        $transporter = Transporter::create([
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $master->id,
+            'name' => 'Direct Transporter Label',
+        ]);
+
+        $lrNoCost = LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $customer->id,
+            'consignee_id' => $customer->id,
+            'transporter_id' => $transporter->id,
+            'lr_number' => 'LR-NO-BOOKING',
+            'delivery_status' => 'Delivered',
+            'invoice_generated' => 0,
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane',
+            'good_type' => 'Steel',
+            'weight' => 1,
+            'fr_rate' => 0,
+            'amount' => 0,
+            'gr_date' => now()->toDateString(),
+        ]);
+        FreightBooking::create([
+            'company_id' => $admin->company_id,
+            'lr_id' => $lrNoCost->id,
+            'transporter_id' => $transporter->id,
+            'tr_fr_rate' => 0,
+            'tr_amount' => 0,
+            'advance_amount' => 0,
+            'balance_amount' => 0,
+            'tds_amount' => 0,
+            'voucher_number' => 91001,
+        ]);
+
+        $export = new ProfitabilityReportExport(
+            $admin->company_id,
+            now()->subDay()->toDateString(),
+            now()->addDay()->toDateString(),
+        );
+
+        $tripRow = $export->collection()->first(fn ($row) => is_array($row) && ($row[0] ?? null) === 'LR-NO-BOOKING');
+        $this->assertNotNull($tripRow);
+        $this->assertSame('Hidden Master Name', $tripRow[3]);
+        $this->assertSame(0.0, $tripRow[6]);
+
+        $customerSummaryRow = $export->collection()->first(fn ($row) => is_array($row) && ($row[0] ?? null) === 'Margin Customer');
+        $this->assertNotNull($customerSummaryRow);
+        $this->assertSame(0.0, $customerSummaryRow[5]);
+
+        $transporterSummaryRow = $export->collection()->first(fn ($row) => is_array($row) && ($row[0] ?? null) === 'Hidden Master Name');
+        $this->assertNotNull($transporterSummaryRow);
+        $this->assertSame(0.0, $transporterSummaryRow[5]);
     }
 
     public function test_customer_tds_export_and_route(): void
@@ -1256,6 +1448,8 @@ class ReportExportTest extends TestCase
             ]))
             ->assertOk();
 
+        $this->actingAs($admin);
+
         // Status: in-progress
         $exportInProgress = new PendingMemoExport(null, null, null, 'in-progress');
         $this->assertNotNull($exportInProgress->collection());
@@ -1267,6 +1461,15 @@ class ReportExportTest extends TestCase
         // Status: both
         $exportBoth = new PendingMemoExport(null, null, null, 'both');
         $this->assertNotNull($exportBoth->collection());
+
+        // Customer filter branch
+        $exportForCustomer = new PendingMemoExport($lr->customer_id, null, null, 'delivered');
+        $rows = $exportForCustomer->collection();
+        $this->assertCount(1, $rows);
+        $this->assertSame($lr->lr_number, $rows->first()['Consignment No']);
+
+        $exportOtherCustomer = new PendingMemoExport($lr->customer_id + 99999, null, null, 'delivered');
+        $this->assertCount(0, $exportOtherCustomer->collection());
 
         $this->assertIsArray($exportDelivered->headings());
         $this->assertIsArray($exportDelivered->columnFormats());
@@ -1446,5 +1649,215 @@ class ReportExportTest extends TestCase
         $this->assertContains('Eway Bill No.', $export->headings());
         $this->assertArrayHasKey('E', $export->columnFormats());
     }
+
+    public function test_cash_export_can_filter_by_creator_branch(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$lr, $booking] = $this->seedLr($admin);
+
+        $branchA = Branch::create([
+            'company_id' => $admin->company_id,
+            'branch_name' => 'Branch A',
+            'head_office' => true,
+        ]);
+        $branchB = Branch::create([
+            'company_id' => $admin->company_id,
+            'branch_name' => 'Branch B',
+            'head_office' => false,
+        ]);
+
+        $creatorA = User::factory()->create([
+            'company_id' => $admin->company_id,
+            'branch_id' => $branchA->id,
+            'user_role_id' => 3,
+        ]);
+        $creatorB = User::factory()->create([
+            'company_id' => $admin->company_id,
+            'branch_id' => $branchB->id,
+            'user_role_id' => 3,
+        ]);
+
+        $this->actingAs($creatorA);
+        VoucherPayment::create([
+            'company_id' => $admin->company_id,
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => 'V-BR-A',
+            'payment_type' => 'advance',
+            'date' => now()->toDateString(),
+            'amount' => 100,
+            'payment_mode' => 'cash',
+            'payment_status' => 'in-progress',
+            'created_by' => $creatorA->id,
+        ]);
+
+        $this->actingAs($creatorB);
+        VoucherPayment::create([
+            'company_id' => $admin->company_id,
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => 'V-BR-B',
+            'payment_type' => 'advance',
+            'date' => now()->toDateString(),
+            'amount' => 200,
+            'payment_mode' => 'cash',
+            'payment_status' => 'in-progress',
+            'created_by' => $creatorB->id,
+        ]);
+
+        $this->actingAs($admin);
+        $export = new CashExport(
+            now()->subDay()->toDateString(),
+            now()->addDay()->toDateString(),
+            null,
+            $branchA->id
+        );
+
+        $amounts = $export->collection()->pluck('Amount')->all();
+        $this->assertSame([100], $amounts);
+    }
+
+    public function test_pending_invoice_export_filters_by_customer_and_date_range(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$lr] = $this->seedLr($admin);
+        $start = now()->subDays(3)->toDateString();
+        $end = now()->addDay()->toDateString();
+
+        $this->actingAs($admin);
+
+        $filtered = new PendingInvoiceExport($lr->customer_id, $start, $end);
+        $this->assertNotEmpty($filtered->collection());
+
+        $outOfRange = new PendingInvoiceExport($lr->customer_id, now()->addYear()->toDateString(), now()->addYears(2)->toDateString());
+        $this->assertEmpty($outOfRange->collection());
+    }
+
+    public function test_invoice_export_uses_total_amount_for_reverse_invoices_without_base_amount(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = Consignee::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Reverse Customer',
+        ]);
+
+        Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-REV-1',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'total_amount' => 1500,
+            'net_amount' => null,
+            'base_amount' => null,
+        ]);
+
+        $this->actingAs($admin);
+        $export = new InvoiceExport(now()->subDay()->toDateString(), now()->addDay()->toDateString());
+        $row = $export->collection()->first();
+
+        $this->assertNotNull($row);
+        $this->assertSame(1500.0, (float) $row['Taxable Value']);
+    }
+
+    public function test_pump_export_redirects_without_pump_or_date_range(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)
+            ->from(route('reports.pump'))
+            ->get(route('reports.pump-export'))
+            ->assertRedirect(route('reports.pump'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_pump_export_downloads_merged_linked_and_unlinked_rows(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$lr, $booking] = $this->seedLr($admin);
+        $pump = Pump::create([
+            'user_id' => $admin->company->user_id,
+            'pump_name' => 'Export Pump',
+            'contact_name' => 'Operator',
+            'contact_number' => '9777766666',
+            'remark' => 'Export',
+        ]);
+
+        VoucherPayment::create([
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => 'V-PUMP-EXP',
+            'payment_type' => 'cash',
+            'payment_mode' => 'fuel',
+            'amount' => 200,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'pump_id' => $pump->id,
+            'date' => now()->toDateString(),
+        ]);
+
+        VoucherLinked::create([
+            'freight_booking_id' => $booking->id,
+            'company_id' => $admin->company_id,
+            'payment_type' => 'cash',
+            'payment_mode' => 'fuel',
+            'amount' => 250,
+            'payment_status' => 'pending',
+            'pump_id' => $pump->id,
+            'date' => now()->toDateString(),
+            'voucher_ids' => json_encode([]),
+        ]);
+
+        $params = [
+            'start_date' => now()->subDay()->toDateString(),
+            'end_date' => now()->toDateString(),
+            'pump_id' => $pump->id,
+            'payment_status' => 'pending',
+        ];
+
+        $this->actingAs($admin)
+            ->get(route('reports.pump-export', $params))
+            ->assertOk();
+    }
+
+    public function test_party_bill_export_surfaces_pdf_generation_errors(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$lr] = $this->seedLr($admin);
+        $invoice = Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $lr->customer_id,
+            'invoice_number' => 'INV-PDF-ERR',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'total_amount' => 1000,
+            'base_amount' => 1000,
+            'net_amount' => 1000,
+            'payment_status' => 'pending',
+            'lr_ids' => [$lr->id],
+            'memo_ids' => [$lr->memo_id],
+        ]);
+
+        Pdf::shouldReceive('loadHTML')->andThrow(new \RuntimeException('PDF render failed'));
+
+        $this->actingAs($admin)
+            ->from(route('reports.party-bill'))
+            ->get(route('reports.party-bill-export', [
+                'invoice_number' => $invoice->id,
+                'type' => 'pdf',
+            ]))
+            ->assertRedirect(route('reports.party-bill'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_customer_memos_json_returns_distinct_memo_ids(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$lr] = $this->seedLr($admin);
+
+        $response = $this->actingAs($admin)
+            ->getJson(route('reports.customer-memos', ['customerId' => $lr->customer_id]))
+            ->assertOk();
+
+        $this->assertContains((string) $lr->memo_id, $response->json());
+    }
+
 }
 

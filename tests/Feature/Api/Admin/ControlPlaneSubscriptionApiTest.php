@@ -397,6 +397,74 @@ class ControlPlaneSubscriptionApiTest extends TestCase
             ->assertJson(['message' => 'Checkout is not available.']);
     }
 
+    public function test_extend_trial_returns_422_when_checkout_service_rejects_payload(): void
+    {
+        $company = Company::create(['name' => 'Trial Reject Co']);
+
+        $checkoutMock = Mockery::mock(SubscriptionCheckoutService::class);
+        $checkoutMock->shouldReceive('recordTrialExtension')
+            ->once()
+            ->andThrow(new \InvalidArgumentException('Trial extension not allowed.'));
+        $this->app->instance(SubscriptionCheckoutService::class, $checkoutMock);
+
+        $payload = [
+            'trial_ends_on' => now()->addDays(14)->toDateString(),
+            'amount' => 0,
+        ];
+        $raw = json_encode($payload);
+        $headers = $this->signedHeaders($raw);
+
+        $this->withHeaders($headers)
+            ->postJson("/api/admin/subscriptions/{$company->id}/extend-trial", $payload)
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Trial extension not allowed.');
+    }
+
+    public function test_patch_subscription_normalizes_stored_carbon_end_date(): void
+    {
+        $company = Company::create(['name' => 'Carbon Date Co']);
+        CompanySubscription::create([
+            'company_id' => $company->id,
+            'status' => 'active',
+            'starts_on' => '2026-01-01',
+            'ends_on' => '2027-01-01',
+            'included_branches' => 2,
+            'users_per_branch' => 3,
+        ]);
+
+        $payload = ['ends_on' => '2028-06-01'];
+        $raw = json_encode($payload);
+        $headers = $this->signedHeaders($raw);
+
+        $this->withHeaders($headers)
+            ->patchJson("/api/admin/subscriptions/{$company->id}", $payload)
+            ->assertOk()
+            ->assertJsonPath('subscription.ends_on', '2028-06-01');
+    }
+
+    public function test_patch_subscription_skips_unchanged_null_trial_end_date(): void
+    {
+        $company = Company::create(['name' => 'Null Trial Co']);
+        CompanySubscription::create([
+            'company_id' => $company->id,
+            'status' => 'active',
+            'starts_on' => '2026-01-01',
+            'ends_on' => '2027-01-01',
+            'trial_ends_on' => null,
+            'included_branches' => 2,
+            'users_per_branch' => 3,
+        ]);
+
+        $payload = ['trial_ends_on' => null, 'notes' => 'No-op null trial'];
+        $raw = json_encode($payload);
+        $headers = $this->signedHeaders($raw);
+
+        $this->withHeaders($headers)
+            ->patchJson("/api/admin/subscriptions/{$company->id}", $payload)
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'No changes to save.');
+    }
+
     public function test_patch_creates_subscription_when_company_has_none(): void
     {
         $company = Company::create(['name' => 'No Sub Co']);

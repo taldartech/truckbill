@@ -250,28 +250,7 @@ class ChartOfAccountsProvisioner
             ];
         }
 
-        foreach ($defaultLedgers as $item) {
-            $groupId = $createdGroups[$item['group']]->id ?? null;
-            if (! $groupId) {
-                continue;
-            }
-
-            Ledger::firstOrCreate(
-                [
-                    'company_id' => $company->id,
-                    'name' => $item['name'],
-                ],
-                [
-                    'account_group_id' => $groupId,
-                    'code' => $item['code'] ?? null,
-                    'opening_balance' => 0.00,
-                    'opening_balance_type' => $item['type'] ?? 'debit',
-                    'tds_section' => $item['tds_section'] ?? null,
-                    'is_builtin' => true,
-                    'is_active' => true,
-                ]
-            );
-        }
+        $this->createDefaultLedgers($company, $createdGroups, $defaultLedgers);
 
         // Provision & sync ledgers for all active Fuel Pumps
         $pumpGroup = $createdGroups['Fuel Pumps'] ?? $createdGroups['Sundry Creditors'] ?? null;
@@ -309,6 +288,36 @@ class ChartOfAccountsProvisioner
                     ]);
                 }
             }
+        }
+    }
+
+    /**
+     * @param  array<string, AccountGroup>  $createdGroups
+     * @param  list<array{name: string, group: string, code?: string, type?: string, tds_section?: string}>  $defaultLedgers
+     */
+    protected function createDefaultLedgers(Company $company, array $createdGroups, array $defaultLedgers): void
+    {
+        foreach ($defaultLedgers as $item) {
+            $groupId = $createdGroups[$item['group']]->id ?? null;
+            if (! $groupId) {
+                continue;
+            }
+
+            Ledger::firstOrCreate(
+                [
+                    'company_id' => $company->id,
+                    'name' => $item['name'],
+                ],
+                [
+                    'account_group_id' => $groupId,
+                    'code' => $item['code'] ?? null,
+                    'opening_balance' => 0.00,
+                    'opening_balance_type' => $item['type'] ?? 'debit',
+                    'tds_section' => $item['tds_section'] ?? null,
+                    'is_builtin' => true,
+                    'is_active' => true,
+                ]
+            );
         }
     }
 }

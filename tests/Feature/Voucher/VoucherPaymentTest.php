@@ -19,8 +19,11 @@ use App\Models\VoucherPayment;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\State;
+use App\Http\Middleware\EnsureActiveSubscription;
+use App\Services\AccountingPostingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Mockery;
 use Tests\TestCase;
 
 class VoucherPaymentTest extends TestCase
@@ -73,6 +76,19 @@ class VoucherPaymentTest extends TestCase
                 'users_per_branch' => 5,
             ]
         );
+    }
+
+    protected function setSubscriptionReadOnly(User $user): void
+    {
+        Cache::put('subscription.settings', [
+            'grace_period_days' => 15,
+            'gst_rate_percent' => 18.0,
+        ], now()->addDay());
+
+        $user->company->subscription->update([
+            'status' => 'active',
+            'ends_on' => now()->subDay()->toDateString(),
+        ]);
     }
 
     /**
@@ -1111,6 +1127,69 @@ class VoucherPaymentTest extends TestCase
             ->assertSessionHas('error', 'Adjust in advance requires a transporter on the freight booking.');
     }
 
+    public function test_admin_update_switching_from_adjust_in_advance_to_cash_reverses_advance(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin);
+        $booking->transporter->update(['advance_amount' => 5000]);
+        $adjustMode = PaymentMode::firstOrCreate(['name' => 'adjust in advance']);
+        $payment = $this->createVoucherPayment($admin, $booking, $ptype, $adjustMode, [
+            'payment_mode' => 'adjust in advance',
+            'payment_mode_id' => $adjustMode->id,
+            'amount' => 800,
+            'payment_status' => 'in-progress',
+        ]);
+        $booking->transporter->update(['advance_amount' => 4200]);
+
+        $this->actingAs($admin)->from(route('voucher_payments.edit', $payment))->put(
+            route('voucher_payments.update', $payment),
+            [
+                'freight_booking_id' => $booking->id,
+                'voucher_number' => (string) $booking->voucher_number,
+                'payment_type_id' => $ptype->id,
+                'payment_mode_id' => $pmode->id,
+                'payment_type' => $ptype->name,
+                'payment_mode' => $pmode->name,
+                'amount' => 800,
+                'payment_status' => 'in-progress',
+                'company_id' => $admin->company_id,
+                'date' => now()->toDateString(),
+            ]
+        )->assertRedirect(route('voucher_payments.index'));
+
+        $this->assertEquals(5000.0, (float) $booking->transporter->fresh()->advance_amount);
+    }
+
+    public function test_admin_update_switching_cash_to_bank_when_not_in_progress_uses_default_status(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin);
+        $bankMode = PaymentMode::firstOrCreate(['name' => 'bank transfer']);
+        $payment = $this->createVoucherPayment($admin, $booking, $ptype, $pmode, [
+            'payment_status' => 'pending',
+        ]);
+
+        $this->actingAs($admin)->from(route('voucher_payments.edit', $payment))->put(
+            route('voucher_payments.update', $payment),
+            [
+                'freight_booking_id' => $booking->id,
+                'voucher_number' => (string) $booking->voucher_number,
+                'payment_type_id' => $ptype->id,
+                'payment_mode_id' => $bankMode->id,
+                'payment_type' => $ptype->name,
+                'payment_mode' => 'bank transfer',
+                'amount' => 500,
+                'payment_status' => 'pending',
+                'company_id' => $admin->company_id,
+                'date' => now()->toDateString(),
+            ]
+        )->assertRedirect(route('voucher_payments.index'));
+
+        $payment->refresh();
+        $this->assertSame('bank transfer', $payment->payment_mode);
+        $this->assertSame('pending', $payment->payment_status);
+    }
+
     public function test_admin_update_switching_cash_to_fuel_sets_default_pending_status(): void
     {
         $admin = $this->makeUser('admin');
@@ -1139,5 +1218,726 @@ class VoucherPaymentTest extends TestCase
         $payment->refresh();
         $this->assertSame('fuel', $payment->payment_mode);
         $this->assertSame('pending', $payment->payment_status);
+    }
+
+    public function test_admin_update_switching_bank_pending_to_cash_sets_in_progress_status(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin);
+        $bankMode = PaymentMode::firstOrCreate(['name' => 'bank transfer']);
+        $payment = $this->createVoucherPayment($admin, $booking, $ptype, $bankMode, [
+            'payment_mode' => 'bank transfer',
+            'payment_mode_id' => $bankMode->id,
+            'payment_status' => 'pending',
+        ]);
+
+        $this->actingAs($admin)->from(route('voucher_payments.edit', $payment))->put(
+            route('voucher_payments.update', $payment),
+            [
+                'freight_booking_id' => $booking->id,
+                'voucher_number' => (string) $booking->voucher_number,
+                'payment_type_id' => $ptype->id,
+                'payment_mode_id' => $pmode->id,
+                'payment_type' => $ptype->name,
+                'payment_mode' => 'cash',
+                'amount' => 500,
+                'payment_status' => 'in-progress',
+                'company_id' => $admin->company_id,
+                'date' => now()->toDateString(),
+            ]
+        )->assertRedirect(route('voucher_payments.index'));
+
+        $payment->refresh();
+        $this->assertSame('cash', $payment->payment_mode);
+        $this->assertSame('in-progress', $payment->payment_status);
+    }
+
+    public function test_daily_payments_supports_lr_no_filter_and_linked_lorry_receipt_map(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode, $lr] = $this->seedBaseData($admin, 811);
+        $linkedGroupId = 88001;
+        $booking->update(['linked_lr_id' => $linkedGroupId]);
+        $lr->update(['linked_lr_id' => $linkedGroupId]);
+
+        LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $lr->customer_id,
+            'consignor_id' => $lr->consignor_id,
+            'consignee_id' => $lr->consignee_id,
+            'lr_number' => 'LR-LINKED-SIBLING',
+            'linked_lr_id' => $linkedGroupId,
+            'delivery_status' => 'Pending',
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane',
+            'good_type' => 'Steel',
+            'weight' => 1,
+            'fr_rate' => 100,
+            'amount' => 100,
+            'gr_date' => now()->toDateString(),
+            'truck_id' => $lr->truck_id,
+            'transporter_id' => $lr->transporter_id,
+        ]);
+
+        $linked = VoucherLinked::create([
+            'freight_booking_id' => $booking->id,
+            'company_id' => $admin->company_id,
+            'payment_type' => $ptype->name,
+            'payment_mode' => $pmode->name,
+            'payment_type_id' => $ptype->id,
+            'payment_mode_id' => $pmode->id,
+            'amount' => 400,
+            'date' => now()->toDateString(),
+            'payment_status' => 'in-progress',
+            'voucher_ids' => json_encode([]),
+        ]);
+
+        $this->actingAs($admin)->get('/daily-payments?'.http_build_query([
+            'date' => now()->toDateString(),
+            'lr_no' => 'LR-VP',
+        ]))
+            ->assertOk()
+            ->assertViewHas('linkedLorryReceiptsByLinkedId', fn ($map) => $map->has($linkedGroupId));
+
+        $this->actingAs($admin)->get('/daily-payments?'.http_build_query([
+            'date' => now()->toDateString(),
+        ]))
+            ->assertOk()
+            ->assertViewHas('payments1', fn ($payments) => $payments->contains('id', $linked->id));
+    }
+
+    public function test_create_redirects_when_freight_booking_is_linked(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, , , $lr] = $this->seedBaseData($admin, 812);
+        $booking->update(['linked_lr_id' => 99001]);
+
+        $this->actingAs($admin)->get(route('voucher_payments.create', [
+            'freight_booking_id' => $booking->id,
+            'lorry_receipt_id' => $lr->id,
+        ]))
+            ->assertRedirect(route('freight_bookings.index'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_store_rejects_when_amount_exceeds_balance_amount(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 813);
+        $booking->update(['advance_amount' => 9500, 'balance_amount' => 500]);
+
+        $this->actingAs($admin)->from('/voucher_payments/create')->post('/voucher_payments', [
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => 'V-BAL',
+            'payment_type_id' => $ptype->id,
+            'payment_mode_id' => $pmode->id,
+            'payment_type' => $ptype->name,
+            'payment_mode' => $pmode->name,
+            'amount' => 600,
+            'payment_status' => 'in-progress',
+            'date' => now()->toDateString(),
+        ])
+            ->assertRedirect('/voucher_payments/create')
+            ->assertSessionHas('error');
+    }
+
+    public function test_store_continues_when_accounting_post_fails(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 814);
+
+        $this->mock(AccountingPostingService::class, function ($mock): void {
+            $mock->shouldReceive('postVoucherPayment')->andThrow(new \RuntimeException('ledger offline'));
+        });
+
+        $this->actingAs($admin)->post('/voucher_payments', [
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => 'V-ACCT',
+            'payment_type_id' => $ptype->id,
+            'payment_mode_id' => $pmode->id,
+            'payment_type' => $ptype->name,
+            'payment_mode' => $pmode->name,
+            'amount' => 100,
+            'payment_status' => 'in-progress',
+            'date' => now()->toDateString(),
+        ])->assertRedirect(route('lorry_receipts.index'));
+
+        $this->assertDatabaseHas('voucher_payments', ['voucher_number' => 'V-ACCT']);
+    }
+
+    public function test_store_surfaces_generic_exception(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 815);
+
+        VoucherPayment::creating(static function (): void {
+            throw new \RuntimeException('Simulated store failure');
+        });
+
+        $this->actingAs($admin)->from('/voucher_payments/create')->post('/voucher_payments', [
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => 'V-ERR',
+            'payment_type_id' => $ptype->id,
+            'payment_mode_id' => $pmode->id,
+            'payment_type' => $ptype->name,
+            'payment_mode' => $pmode->name,
+            'amount' => 100,
+            'payment_status' => 'in-progress',
+            'date' => now()->toDateString(),
+        ])
+            ->assertRedirect('/voucher_payments/create')
+            ->assertSessionHas('error');
+    }
+
+    public function test_show_returns_not_found_and_forbidden_for_other_company(): void
+    {
+        $owner = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($owner, 816);
+        $this->createVoucherPayment($owner, $booking, $ptype, $pmode, ['voucher_number' => 'V-ISO-816']);
+
+        $intruder = $this->makeUser('admin');
+        $this->actingAs($intruder)->get(route('voucher_payments.show', 'V-ISO-816'))->assertForbidden();
+        $this->actingAs($intruder)->get(route('voucher_payments.show', 'V-MISSING-999'))->assertNotFound();
+    }
+
+    public function test_edit_and_destroy_redirect_when_subscription_is_read_only(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 817);
+        $payment = $this->createVoucherPayment($admin, $booking, $ptype, $pmode);
+        $this->setSubscriptionReadOnly($admin);
+        $this->withoutMiddleware(EnsureActiveSubscription::class);
+
+        $this->actingAs($admin)->get(route('voucher_payments.edit', $payment))
+            ->assertRedirect(route('voucher_payments.index'))
+            ->assertSessionHas('error');
+
+        $this->actingAs($admin)->delete(route('voucher_payments.destroy', $payment))
+            ->assertRedirect(route('voucher_payments.index'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_update_redirects_when_subscription_is_read_only(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 818);
+        $payment = $this->createVoucherPayment($admin, $booking, $ptype, $pmode);
+        $this->setSubscriptionReadOnly($admin);
+        $this->withoutMiddleware(EnsureActiveSubscription::class);
+
+        $this->actingAs($admin)->put(route('voucher_payments.update', $payment), [
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => (string) $booking->voucher_number,
+            'payment_type_id' => $ptype->id,
+            'payment_mode_id' => $pmode->id,
+            'payment_type' => $ptype->name,
+            'payment_mode' => $pmode->name,
+            'amount' => 500,
+            'payment_status' => 'in-progress',
+            'company_id' => $admin->company_id,
+            'date' => now()->toDateString(),
+        ])
+            ->assertRedirect(route('voucher_payments.index'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_update_rejects_changing_bank_mode_while_in_progress(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype] = $this->seedBaseData($admin, 819);
+        $bankMode = PaymentMode::firstOrCreate(['name' => 'bank transfer']);
+        $fuelMode = PaymentMode::firstOrCreate(['name' => 'fuel']);
+        $payment = $this->createVoucherPayment($admin, $booking, $ptype, $bankMode, [
+            'payment_mode' => 'bank transfer',
+            'payment_mode_id' => $bankMode->id,
+            'payment_status' => 'in-progress',
+        ]);
+
+        $this->actingAs($admin)->from(route('voucher_payments.edit', $payment))->put(
+            route('voucher_payments.update', $payment),
+            [
+                'freight_booking_id' => $booking->id,
+                'voucher_number' => (string) $booking->voucher_number,
+                'payment_type_id' => $ptype->id,
+                'payment_mode_id' => $fuelMode->id,
+                'payment_type' => $ptype->name,
+                'payment_mode' => 'fuel',
+                'amount' => 500,
+                'payment_status' => 'in-progress',
+                'company_id' => $admin->company_id,
+                'date' => now()->toDateString(),
+            ]
+        )
+            ->assertRedirect(route('voucher_payments.edit', $payment))
+            ->assertSessionHas('error');
+    }
+
+    public function test_update_rejects_total_payments_exceeding_effective_payable(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 820);
+        $this->createVoucherPayment($admin, $booking, $ptype, $pmode, ['amount' => 9000]);
+        $payment = $this->createVoucherPayment($admin, $booking, $ptype, $pmode, ['amount' => 500]);
+
+        $this->actingAs($admin)->from(route('voucher_payments.edit', $payment))->put(
+            route('voucher_payments.update', $payment),
+            [
+                'freight_booking_id' => $booking->id,
+                'voucher_number' => (string) $booking->voucher_number,
+                'payment_type_id' => $ptype->id,
+                'payment_mode_id' => $pmode->id,
+                'payment_type' => $ptype->name,
+                'payment_mode' => $pmode->name,
+                'amount' => 1500,
+                'payment_status' => 'in-progress',
+                'company_id' => $admin->company_id,
+                'date' => now()->toDateString(),
+            ]
+        )
+            ->assertRedirect(route('voucher_payments.edit', $payment))
+            ->assertSessionHas('error');
+    }
+
+    public function test_update_reverse_adjust_fails_when_original_booking_has_no_transporter(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype] = $this->seedBaseData($admin, 821);
+        $adjustMode = PaymentMode::firstOrCreate(['name' => 'adjust in advance']);
+        $cashMode = PaymentMode::firstOrCreate(['name' => 'cash']);
+        $booking->update(['transporter_id' => null]);
+        $payment = $this->createVoucherPayment($admin, $booking, $ptype, $adjustMode, [
+            'payment_mode' => 'adjust in advance',
+            'payment_mode_id' => $adjustMode->id,
+            'amount' => 300,
+        ]);
+
+        $this->actingAs($admin)->from(route('voucher_payments.edit', $payment))->put(
+            route('voucher_payments.update', $payment),
+            [
+                'freight_booking_id' => $booking->id,
+                'voucher_number' => (string) $booking->voucher_number,
+                'payment_type_id' => $ptype->id,
+                'payment_mode_id' => $cashMode->id,
+                'payment_type' => $ptype->name,
+                'payment_mode' => 'cash',
+                'amount' => 300,
+                'payment_status' => 'in-progress',
+                'company_id' => $admin->company_id,
+                'date' => now()->toDateString(),
+            ]
+        )
+            ->assertRedirect(route('voucher_payments.edit', $payment))
+            ->assertSessionHas('error', 'Cannot reverse adjust in advance: original freight booking has no transporter.');
+    }
+
+    public function test_update_adjust_in_advance_fails_when_transporter_advance_is_insufficient(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 822);
+        $adjustMode = PaymentMode::firstOrCreate(['name' => 'adjust in advance']);
+        $payment = $this->createVoucherPayment($admin, $booking, $ptype, $pmode, ['amount' => 200]);
+        $booking->transporter->update(['advance_amount' => 100]);
+
+        $this->actingAs($admin)->from(route('voucher_payments.edit', $payment))->put(
+            route('voucher_payments.update', $payment),
+            [
+                'freight_booking_id' => $booking->id,
+                'voucher_number' => (string) $booking->voucher_number,
+                'payment_type_id' => $ptype->id,
+                'payment_mode_id' => $adjustMode->id,
+                'payment_type' => $ptype->name,
+                'payment_mode' => 'adjust in advance',
+                'amount' => 500,
+                'payment_status' => 'in-progress',
+                'company_id' => $admin->company_id,
+                'date' => now()->toDateString(),
+            ]
+        )
+            ->assertRedirect(route('voucher_payments.edit', $payment))
+            ->assertSessionHas('error');
+    }
+
+    public function test_update_adjusts_linked_voucher_total_when_payment_is_grouped(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 823);
+        $linked = VoucherLinked::create([
+            'freight_booking_id' => $booking->id,
+            'company_id' => $admin->company_id,
+            'payment_type' => $ptype->name,
+            'payment_mode' => $pmode->name,
+            'payment_type_id' => $ptype->id,
+            'payment_mode_id' => $pmode->id,
+            'amount' => 500,
+            'date' => now()->toDateString(),
+            'payment_status' => 'in-progress',
+            'voucher_ids' => json_encode([]),
+        ]);
+        $payment = $this->createVoucherPayment($admin, $booking, $ptype, $pmode, [
+            'amount' => 500,
+            'linked_voucher_id' => $linked->id,
+        ]);
+
+        $this->actingAs($admin)->put(route('voucher_payments.update', $payment), [
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => (string) $booking->voucher_number,
+            'payment_type_id' => $ptype->id,
+            'payment_mode_id' => $pmode->id,
+            'payment_type' => $ptype->name,
+            'payment_mode' => $pmode->name,
+            'amount' => 650,
+            'payment_status' => 'in-progress',
+            'company_id' => $admin->company_id,
+            'date' => now()->toDateString(),
+        ])->assertRedirect(route('voucher_payments.index'));
+
+        $this->assertEquals(650.0, (float) $linked->fresh()->amount);
+    }
+
+    public function test_update_surfaces_exception_when_save_fails(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 824);
+        $payment = $this->createVoucherPayment($admin, $booking, $ptype, $pmode);
+
+        VoucherPayment::updating(static function (): void {
+            throw new \RuntimeException('Simulated update failure');
+        });
+
+        $this->actingAs($admin)->from(route('voucher_payments.edit', $payment))->put(
+            route('voucher_payments.update', $payment),
+            [
+                'freight_booking_id' => $booking->id,
+                'voucher_number' => (string) $booking->voucher_number,
+                'payment_type_id' => $ptype->id,
+                'payment_mode_id' => $pmode->id,
+                'payment_type' => $ptype->name,
+                'payment_mode' => $pmode->name,
+                'amount' => 500,
+                'payment_status' => 'in-progress',
+                'company_id' => $admin->company_id,
+                'date' => now()->toDateString(),
+            ]
+        )
+            ->assertRedirect(route('voucher_payments.edit', $payment))
+            ->assertSessionHas('error');
+    }
+
+    public function test_bulk_payment_rejects_invalid_company_and_payment_mode(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, , $lr] = $this->seedBaseData($admin, 825);
+        $other = $this->makeUser('admin');
+
+        $this->actingAs($admin)->from(route('voucher_payments.index'))->post(
+            route('voucher_payments.bulkPayment'),
+            [
+                'payment_type' => $ptype->name,
+                'payment_mode' => 'cash',
+                'lorry_receipts' => [$lr->id],
+                'freight_bookings' => [$lr->id => $booking->id],
+                'amounts' => [$lr->id => 100],
+                'company_id' => $other->company_id,
+                'date' => now()->toDateString(),
+            ]
+        )->assertSessionHas('error');
+
+        $this->actingAs($admin)->from(route('voucher_payments.index'))->post(
+            route('voucher_payments.bulkPayment'),
+            [
+                'payment_type' => $ptype->name,
+                'payment_mode' => 'not-a-real-mode',
+                'lorry_receipts' => [$lr->id],
+                'freight_bookings' => [$lr->id => $booking->id],
+                'amounts' => [$lr->id => 100],
+                'company_id' => $admin->company_id,
+                'date' => now()->toDateString(),
+            ]
+        )->assertSessionHas('error');
+    }
+
+    public function test_bulk_payment_skips_missing_booking_and_linked_freight_booking(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, , $lr] = $this->seedBaseData($admin, 826);
+        $booking->update(['linked_lr_id' => 44001]);
+
+        $this->actingAs($admin)->post(route('voucher_payments.bulkPayment'), [
+            'payment_type' => $ptype->name,
+            'payment_mode' => 'cash',
+            'lorry_receipts' => [$lr->id, 999999],
+            'freight_bookings' => [$lr->id => $booking->id, 999999 => 888888],
+            'amounts' => [$lr->id => 100, 999999 => 200],
+            'company_id' => $admin->company_id,
+            'date' => now()->toDateString(),
+        ])
+            ->assertRedirect(route('voucher_payments.index'))
+            ->assertSessionHas('success');
+
+        $this->assertEquals(0, VoucherPayment::where('freight_booking_id', $booking->id)->count());
+    }
+
+    public function test_bulk_update_status_updates_linked_voucher_group(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 827);
+        $child = $this->createVoucherPayment($admin, $booking, $ptype, $pmode, ['payment_status' => 'in-progress']);
+        $linked = VoucherLinked::create([
+            'freight_booking_id' => $booking->id,
+            'company_id' => $admin->company_id,
+            'payment_type' => $ptype->name,
+            'payment_mode' => $pmode->name,
+            'payment_type_id' => $ptype->id,
+            'payment_mode_id' => $pmode->id,
+            'amount' => 500,
+            'date' => now()->toDateString(),
+            'payment_status' => 'in-progress',
+            'voucher_ids' => json_encode([$child->id]),
+        ]);
+
+        $this->actingAs($admin)->from('/daily-payments?status=in-progress')->post(
+            route('voucher_payments.bulkUpdateStatus'),
+            [
+                'multiple_payment_ids' => [$linked->id],
+                'new_status' => 'paid',
+            ]
+        )
+            ->assertRedirect('/daily-payments?status=paid')
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('voucher_payments', ['id' => $child->id, 'payment_status' => 'paid']);
+        $this->assertDatabaseHas('voucher_linkeds', ['id' => $linked->id, 'payment_status' => 'paid']);
+    }
+
+    public function test_bulk_update_status_rejects_paid_selection_and_forbidden_for_moderator(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 828);
+        $paid = $this->createVoucherPayment($admin, $booking, $ptype, $pmode, ['payment_status' => 'paid']);
+
+        $this->actingAs($admin)->from('/daily-payments')->post(
+            route('voucher_payments.bulkUpdateStatus'),
+            ['payment_ids' => [$paid->id], 'new_status' => 'in-progress']
+        )->assertSessionHas('error');
+
+        $moderator = $this->makeUser('moderator');
+        [$modBooking, $modPtype, $modPmode] = $this->seedBaseData($moderator, 829);
+        $payment = $this->createVoucherPayment($moderator, $modBooking, $modPtype, $modPmode);
+
+        $this->actingAs($moderator)->from('/daily-payments')->post(
+            route('voucher_payments.bulkUpdateStatus'),
+            ['payment_ids' => [$payment->id], 'new_status' => 'paid']
+        )->assertForbidden();
+    }
+
+    public function test_destroy_surfaces_error_when_delete_fails(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 830);
+        $payment = $this->createVoucherPayment($admin, $booking, $ptype, $pmode);
+
+        VoucherPayment::deleting(static function (): void {
+            throw new \RuntimeException('Simulated delete failure');
+        });
+
+        $this->actingAs($admin)->from(route('voucher_payments.index'))
+            ->delete(route('voucher_payments.destroy', $payment))
+            ->assertRedirect(route('voucher_payments.index'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_update_status_honors_redirect_and_rejects_invalid_transitions(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 831);
+        $payment = $this->createVoucherPayment($admin, $booking, $ptype, $pmode, ['payment_status' => 'in-progress']);
+
+        $this->actingAs($admin)->put(route('voucher_payments.update_status'), [
+            'payment_id' => $payment->id,
+            'status' => 'paid',
+            'redirect' => '/daily-payments?status=paid',
+        ])
+            ->assertRedirect('/daily-payments?status=paid')
+            ->assertSessionHas('success');
+
+        $paid = $this->createVoucherPayment($admin, $booking, $ptype, $pmode, ['payment_status' => 'paid']);
+        $this->actingAs($admin)->from('/daily-payments')->put(route('voucher_payments.update_status'), [
+            'payment_id' => $paid->id,
+            'status' => 'in-progress',
+        ])->assertSessionHas('error');
+
+        $bankMode = PaymentMode::firstOrCreate(['name' => 'bank transfer']);
+        $pendingBank = $this->createVoucherPayment($admin, $booking, $ptype, $bankMode, [
+            'payment_mode' => 'bank transfer',
+            'payment_mode_id' => $bankMode->id,
+            'payment_status' => 'in-progress',
+        ]);
+        $this->actingAs($admin)->from('/daily-payments')->put(route('voucher_payments.update_status'), [
+            'payment_id' => $pendingBank->id,
+            'status' => 'pending',
+        ])->assertSessionHas('error');
+    }
+
+    public function test_store_uses_created_at_when_date_omitted(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 832);
+        $createdAt = now()->subDays(2)->toDateTimeString();
+
+        $this->actingAs($admin)->post('/voucher_payments', [
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => (string) $booking->voucher_number,
+            'payment_type_id' => $ptype->id,
+            'payment_mode_id' => $pmode->id,
+            'payment_type' => $ptype->name,
+            'payment_mode' => $pmode->name,
+            'amount' => 100,
+            'payment_status' => 'in-progress',
+            'created_at' => $createdAt,
+        ])
+            ->assertRedirect(route('lorry_receipts.index'));
+
+        $payment = VoucherPayment::where('freight_booking_id', $booking->id)->first();
+        $this->assertNotNull($payment);
+        $this->assertSame($createdAt, (string) $payment->date);
+    }
+
+    public function test_store_rejects_payment_amount_above_balance(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 833);
+        $booking->update(['balance_amount' => 500]);
+
+        $this->actingAs($admin)->from(route('voucher_payments.create'))->post(route('voucher_payments.store'), [
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => (string) $booking->voucher_number,
+            'payment_type_id' => $ptype->id,
+            'payment_mode_id' => $pmode->id,
+            'payment_type' => $ptype->name,
+            'payment_mode' => $pmode->name,
+            'amount' => 900,
+            'payment_status' => 'in-progress',
+            'company_id' => $admin->company_id,
+            'date' => now()->toDateString(),
+        ])
+            ->assertRedirect(route('voucher_payments.create'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_update_sets_default_status_when_payment_mode_changes_to_bank(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 835);
+        $bankMode = PaymentMode::firstOrCreate(['name' => 'bank transfer']);
+        $payment = $this->createVoucherPayment($admin, $booking, $ptype, $pmode, [
+            'payment_status' => 'in-progress',
+        ]);
+
+        $this->actingAs($admin)->put(route('voucher_payments.update', $payment), [
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => (string) $booking->voucher_number,
+            'payment_type_id' => $ptype->id,
+            'payment_mode_id' => $bankMode->id,
+            'payment_type' => $ptype->name,
+            'payment_mode' => 'bank transfer',
+            'amount' => 500,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'date' => now()->toDateString(),
+        ])
+            ->assertRedirect(route('voucher_payments.index'));
+
+        $this->assertSame('pending', $payment->fresh()->payment_status);
+    }
+
+    public function test_update_rejects_invalid_payment_status_transition_for_bank_mode(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $cashMode] = $this->seedBaseData($admin, 836);
+        $chequeMode = PaymentMode::firstOrCreate(['name' => 'cheque']);
+        $payment = $this->createVoucherPayment($admin, $booking, $ptype, $cashMode, [
+            'payment_status' => 'paid',
+        ]);
+
+        $this->actingAs($admin)->from(route('voucher_payments.edit', $payment))->put(route('voucher_payments.update', $payment), [
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => (string) $booking->voucher_number,
+            'payment_type_id' => $ptype->id,
+            'payment_mode_id' => $chequeMode->id,
+            'payment_type' => $ptype->name,
+            'payment_mode' => 'cheque',
+            'amount' => 500,
+            'payment_status' => 'in-progress',
+            'company_id' => $admin->company_id,
+            'date' => now()->toDateString(),
+        ])
+            ->assertRedirect(route('voucher_payments.edit', $payment))
+            ->assertSessionHas('error');
+    }
+
+    public function test_bulk_payment_logs_and_skips_when_advance_would_exceed_payable(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, , $lr] = $this->seedBaseData($admin, 837);
+        $booking->update(['balance_amount' => 100, 'advance_amount' => 9900, 'tr_amount' => 10000]);
+
+        $this->actingAs($admin)->post(route('voucher_payments.bulkPayment'), [
+            'payment_type' => $ptype->name,
+            'payment_mode' => 'cash',
+            'lorry_receipts' => [$lr->id],
+            'freight_bookings' => [$lr->id => $booking->id],
+            'amounts' => [$lr->id => 500],
+            'company_id' => $admin->company_id,
+            'date' => now()->toDateString(),
+        ])
+            ->assertRedirect(route('voucher_payments.index'))
+            ->assertSessionHas('success');
+
+        $this->assertEquals(0, VoucherPayment::where('freight_booking_id', $booking->id)->count());
+    }
+
+    public function test_update_status_surfaces_exception_when_save_fails(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 839);
+        $payment = $this->createVoucherPayment($admin, $booking, $ptype, $pmode, ['payment_status' => 'in-progress']);
+
+        VoucherPayment::updating(static function (): void {
+            throw new \RuntimeException('Simulated status update failure');
+        });
+
+        $this->actingAs($admin)->from('/daily-payments')->put(route('voucher_payments.update_status'), [
+            'payment_id' => $payment->id,
+            'status' => 'paid',
+        ])
+            ->assertRedirect('/daily-payments')
+            ->assertSessionHas('error');
+    }
+
+    public function test_bulk_update_status_surfaces_exception_when_save_fails(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin, 840);
+        $payment = $this->createVoucherPayment($admin, $booking, $ptype, $pmode, ['payment_status' => 'in-progress']);
+
+        VoucherPayment::updating(static function (): void {
+            throw new \RuntimeException('Simulated bulk status failure');
+        });
+
+        $this->actingAs($admin)->from('/daily-payments')->post(route('voucher_payments.bulkUpdateStatus'), [
+            'payment_ids' => [$payment->id],
+            'new_status' => 'paid',
+        ])
+            ->assertRedirect('/daily-payments')
+            ->assertSessionHas('error');
+    }
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
     }
 }
