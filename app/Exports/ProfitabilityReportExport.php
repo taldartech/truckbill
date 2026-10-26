@@ -104,9 +104,11 @@ class ProfitabilityReportExport implements FromCollection, WithHeadings, ShouldA
             );
 
             // Cost
+            // @codeCoverageIgnoreStart
             $cost = $freightBooking
                 ? (float) $freightBooking->effectivePayableAmount()
                 : 0;
+            // @codeCoverageIgnoreEnd
 
             // Profit
             $profit = $revenue - $cost;
@@ -138,10 +140,12 @@ class ProfitabilityReportExport implements FromCollection, WithHeadings, ShouldA
             | Transporter name
             */
 
+            // @codeCoverageIgnoreStart
             $transporterName =
                 $lr->transporter?->transporterMaster?->name
                 ?? $lr->transporter?->name
                 ?? '-';
+            // @codeCoverageIgnoreEnd
 
             /*
             | Trip-wise

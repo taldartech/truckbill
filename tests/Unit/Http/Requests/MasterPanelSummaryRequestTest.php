@@ -30,7 +30,7 @@ class MasterPanelSummaryRequestTest extends TestCase
             'from_date' => now()->toDateString(),
             'to_date' => now()->subDay()->toDateString(),
         ]);
-        $request->setUserResolver(fn () => $master);
+        $request->setUserResolver(fn() => $master);
 
         $this->assertTrue($request->authorize());
         $validator = Validator::make($request->all(), $request->rules(), $request->messages());
@@ -47,7 +47,7 @@ class MasterPanelSummaryRequestTest extends TestCase
         $request = MasterPanelSummaryRequest::create('/master/summary', 'GET', [
             'super_admin_user_id' => $otherSuper->id,
         ]);
-        $request->setUserResolver(fn () => $super);
+        $request->setUserResolver(fn() => $super);
 
         $validator = Validator::make($request->all(), $request->rules());
         $request->withValidator($validator);
@@ -68,7 +68,7 @@ class MasterPanelSummaryRequestTest extends TestCase
         $request = MasterPanelSummaryRequest::create('/master/summary', 'GET', [
             'company_id' => $foreignCompany->id,
         ]);
-        $request->setUserResolver(fn () => $super);
+        $request->setUserResolver(fn() => $super);
 
         $validator = Validator::make($request->all(), $request->rules());
         $request->withValidator($validator);
@@ -78,12 +78,11 @@ class MasterPanelSummaryRequestTest extends TestCase
 
     public function test_with_validator_returns_early_when_user_is_missing(): void
     {
-        $existing = User::factory()->create();
-
+        $super = User::factory()->create(['user_role_id' => 2, 'company_id' => null]);
         $request = MasterPanelSummaryRequest::create('/master/summary', 'GET', [
-            'super_admin_user_id' => $existing->id,
+            'super_admin_user_id' => $super->id,
         ]);
-        $request->setUserResolver(fn () => null);
+        $request->setUserResolver(fn() => null);
 
         $validator = Validator::make($request->all(), $request->rules());
         $request->withValidator($validator);
@@ -95,7 +94,7 @@ class MasterPanelSummaryRequestTest extends TestCase
     {
         $super = User::factory()->create(['user_role_id' => 2, 'company_id' => null]);
         $request = MasterPanelSummaryRequest::create('/master/summary', 'GET');
-        $request->setUserResolver(fn () => $super);
+        $request->setUserResolver(fn() => $super);
 
         $this->assertFalse($request->authorize());
     }
@@ -113,7 +112,7 @@ class MasterPanelSummaryRequestTest extends TestCase
             'company_id' => $company->id,
             'super_admin_user_id' => $super->id,
         ]);
-        $request->setUserResolver(fn () => $super);
+        $request->setUserResolver(fn() => $super);
 
         $validator = Validator::make($request->all(), $request->rules());
         $request->withValidator($validator);

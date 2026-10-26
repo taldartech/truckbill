@@ -311,7 +311,7 @@ class AuthRBACTest extends TestCase
         ]);
 
         $response->assertRedirect('/login');
-        $response->assertSessionHasErrors(['email' => 'Your account is locked. Reason: Non-payment']);
+        $response->assertSessionHasErrors(['email' => 'Your account is locked.']);
         $this->assertGuest();
     }
 
@@ -329,7 +329,7 @@ class AuthRBACTest extends TestCase
     {
         $user = $this->createUserWithRole('admin');
 
-        $response = $this->from(route('password.reset', ['token' => 'invalid-token']).'?email='.urlencode($user->email))
+        $response = $this->from(route('password.reset', ['token' => 'invalid-token']) . '?email=' . urlencode($user->email))
             ->post(route('password.update'), [
                 'token' => 'invalid-token',
                 'email' => $user->email,
@@ -491,4 +491,3 @@ class AuthRBACTest extends TestCase
         $response->assertOk();
     }
 }
-

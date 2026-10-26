@@ -438,8 +438,9 @@ class ControlPlaneSubscriptionApiTest extends TestCase
 
         $this->withHeaders($headers)
             ->patchJson("/api/admin/subscriptions/{$company->id}", $payload)
-            ->assertOk()
-            ->assertJsonPath('subscription.ends_on', '2028-06-01');
+            ->assertOk();
+
+        $this->assertSame('2028-06-01', $company->fresh()->subscription->ends_on->toDateString());
     }
 
     public function test_patch_subscription_skips_unchanged_null_trial_end_date(): void

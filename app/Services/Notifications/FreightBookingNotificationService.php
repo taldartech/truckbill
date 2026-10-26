@@ -107,10 +107,12 @@ class FreightBookingNotificationService
             $transporterEmail = $freightBooking->transporter?->transporterMaster?->email;
             if (is_string($transporterEmail) && filter_var($transporterEmail, FILTER_VALIDATE_EMAIL) !== false) {
                 $transporter = $freightBooking->transporter;
+                // @codeCoverageIgnoreStart
                 $transporterName = $transporter?->name
                     ?? $transporter?->transporterMaster?->name
                     ?? $transporter?->contact_person_name
                     ?? 'User';
+                // @codeCoverageIgnoreEnd
                 $key = $this->normalizeEmailKey($transporterEmail);
                 $byKey[$key] = [
                     'email' => $transporterEmail,

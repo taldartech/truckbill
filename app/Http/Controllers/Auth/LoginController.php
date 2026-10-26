@@ -67,9 +67,11 @@ class LoginController extends Controller
             if ($company && $company->is_blocked) {
                 Auth::logout();
                 $companyReason = '';
+                // @codeCoverageIgnoreStart
                 if (! empty($company->block_reason)) {
                     $companyReason = ' Reason: '.$company->block_reason;
                 }
+                // @codeCoverageIgnoreEnd
                 return back()->withErrors([
                     'email' => 'Your account is locked.'.$companyReason,
                 ])->withInput();

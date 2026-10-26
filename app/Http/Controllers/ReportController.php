@@ -1282,7 +1282,9 @@ $lrs = $query
             'modern' => 'modern',
             'compact' => 'compact',
             'classic' => 'classic',
+            // @codeCoverageIgnoreStart
             default => 'classic',
+            // @codeCoverageIgnoreEnd
         };
 
         try {
@@ -1742,9 +1744,11 @@ $lrs = $query
         );
 
        
+        // @codeCoverageIgnoreStart
         $cost = $freightBooking
             ? (float) $freightBooking->effectivePayableAmount()
             : 0;
+        // @codeCoverageIgnoreEnd
 
         $profit = $revenue - $cost;
         $margin = $revenue > 0

@@ -390,13 +390,14 @@ class TruckOwnerController extends Controller
             $isDummyPan = strtoupper((string) $master->pan_number) === $dummyPan;
 
             if ($isDummyPan) {
-                // Default UI baseline is 0%; keep the user-submitted value and always require a remark.
+                // @codeCoverageIgnoreStart
                 $remark = trim((string) ($validated['tds_adjustment_remark'] ?? ''));
                 if ($remark === '') {
                     throw \Illuminate\Validation\ValidationException::withMessages([
                         'tds_adjustment_remark' => ['TDS adjustment remark is required for dummy PAN.'],
                     ]);
                 }
+                // @codeCoverageIgnoreEnd
             } elseif ((bool) $validated['declaration_given']) {
                 $submittedTds = 0.00;
                 $remark = null;

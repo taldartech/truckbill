@@ -1668,9 +1668,9 @@ class VoucherPaymentTest extends TestCase
         $this->actingAs($admin)->post(route('voucher_payments.bulkPayment'), [
             'payment_type' => $ptype->name,
             'payment_mode' => 'cash',
-            'lorry_receipts' => [$lr->id, 999999],
+            'lorry_receipts' => [$lr->id, 999999, 777777],
             'freight_bookings' => [$lr->id => $booking->id, 999999 => 888888],
-            'amounts' => [$lr->id => 100, 999999 => 200],
+            'amounts' => [$lr->id => 100, 999999 => 200, 777777 => 0],
             'company_id' => $admin->company_id,
             'date' => now()->toDateString(),
         ])

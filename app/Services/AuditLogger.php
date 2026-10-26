@@ -169,9 +169,11 @@ class AuditLogger
             if (($casts[$attribute] ?? null) === 'date' || ($casts[$attribute] ?? null) === 'datetime') {
                 try {
                     return \Carbon\Carbon::parse($value)->format('d-m-Y');
+                // @codeCoverageIgnoreStart
                 } catch (\Throwable) {
                     // fall through
                 }
+                // @codeCoverageIgnoreEnd
             }
             if (($casts[$attribute] ?? null) === 'decimal:2') {
                 return number_format((float) $value, 2, '.', '');

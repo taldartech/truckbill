@@ -73,7 +73,7 @@ class BranchFormRequestTest extends TestCase
             'head_office' => true,
         ]);
 
-        $request = UpdateBranchRequest::create('/branches/'.$branch->id, 'PUT', [
+        $request = UpdateBranchRequest::create('/branches/' . $branch->id, 'PUT', [
             'company_id' => $company->id,
             'branch_name' => 'Main',
             'head_office' => true,
@@ -99,14 +99,18 @@ class BranchFormRequestTest extends TestCase
         ]);
         $company->delete();
 
-        $request = UpdateBranchRequest::create('/branches/'.$branch->id, 'PUT', [
+        $request = UpdateBranchRequest::create('/branches/' . $branch->id, 'PUT', [
             'company_id' => $branch->company_id,
             'branch_name' => 'Orphan',
             'head_office' => true,
         ]);
         $this->actingAs($owner);
+        $request->setUserResolver(fn() => $owner);
         $request->setRouteResolver(function () use ($branch, $request) {
-            return (new Route('PUT', '/branches/{branch}', []))->bind($request)->setParameter('branch', $branch);
+            $route = new Route('PUT', '/branches/{branch}', []);
+            $route->bind($request);
+            $route->setParameter('branch', $branch);
+            return $route;
         });
 
         $this->assertFalse($request->authorize());
@@ -126,14 +130,18 @@ class BranchFormRequestTest extends TestCase
             'head_office' => true,
         ]);
 
-        $request = UpdateBranchRequest::create('/branches/'.$branch->id, 'PUT', [
+        $request = UpdateBranchRequest::create('/branches/' . $branch->id, 'PUT', [
             'company_id' => $company->id,
             'branch_name' => 'Main',
             'head_office' => true,
         ]);
         $this->actingAs($intruder);
+        $request->setUserResolver(fn() => $intruder);
         $request->setRouteResolver(function () use ($branch, $request) {
-            return (new Route('PUT', '/branches/{branch}', []))->bind($request)->setParameter('branch', $branch);
+            $route = new Route('PUT', '/branches/{branch}', []);
+            $route->bind($request);
+            $route->setParameter('branch', $branch);
+            return $route;
         });
 
         $this->assertFalse($request->authorize());
@@ -152,7 +160,7 @@ class BranchFormRequestTest extends TestCase
             'head_office' => true,
         ]);
 
-        $request = UpdateBranchRequest::create('/branches/'.$branch->id, 'PUT', [
+        $request = UpdateBranchRequest::create('/branches/' . $branch->id, 'PUT', [
             'company_id' => $company->id,
             'branch_name' => 'Regional HQ',
             'branch_address' => 'Station Road',
@@ -160,10 +168,11 @@ class BranchFormRequestTest extends TestCase
             'head_office' => true,
         ]);
         $this->actingAs($owner);
+        $request->setUserResolver(fn() => $owner);
         $request->setRouteResolver(function () use ($branch, $request) {
-            $route = (new Route('PUT', '/branches/{branch}', []))->bind($request);
+            $route = new Route('PUT', '/branches/{branch}', []);
+            $route->bind($request);
             $route->setParameter('branch', $branch);
-
             return $route;
         });
 
@@ -194,5 +203,4 @@ class BranchFormRequestTest extends TestCase
 
         $this->assertFalse($request->authorize());
     }
-
 }

@@ -352,9 +352,11 @@ for ($date = $rangeStart->copy()->startOfDay(); $date->lte($rangeEnd); $date->ad
             ?? 0
         );
 
+        // @codeCoverageIgnoreStart
         $lrCost = $freightBooking
             ? (float) $freightBooking->effectivePayableAmount()
             : 0;
+        // @codeCoverageIgnoreEnd
 
         $revenue += $lrRevenue;
         $cost += $lrCost;

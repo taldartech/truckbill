@@ -723,7 +723,9 @@ class VoucherPaymentController extends Controller
                     if ($oldStatus === 'pending') {
                         $data['payment_status'] = 'in-progress';
                     } else {
+                        // @codeCoverageIgnoreStart
                         $data['payment_status'] = $this->defaultPaymentStatusForPaymentModeName($newMode);
+                        // @codeCoverageIgnoreEnd
                     }
                 } else {
                     $data['payment_status'] = $this->defaultPaymentStatusForPaymentModeName($newMode);

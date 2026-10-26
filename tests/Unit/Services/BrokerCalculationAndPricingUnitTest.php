@@ -368,7 +368,7 @@ class BrokerCalculationAndPricingUnitTest extends TestCase
         $guard = new SubscriptionGuard($usageService);
 
         $company = Company::create(['name' => 'Branch Co']);
-        CompanySubscription::create([
+        $subscription = CompanySubscription::create([
             'company_id' => $company->id,
             'status' => 'active',
             'starts_on' => now()->subDay(),
@@ -398,7 +398,7 @@ class BrokerCalculationAndPricingUnitTest extends TestCase
         $service = new SubscriptionUsageService();
 
         $company = Company::create(['name' => 'Metrics Co']);
-        CompanySubscription::create([
+        $subscription = CompanySubscription::create([
             'company_id' => $company->id,
             'status' => 'active',
             'starts_on' => now()->subDay(),
@@ -662,7 +662,7 @@ class BrokerCalculationAndPricingUnitTest extends TestCase
         $guard = new SubscriptionGuard(new SubscriptionUsageService());
 
         $company = Company::create(['name' => 'Readonly Co']);
-        CompanySubscription::create([
+        $subscription = CompanySubscription::create([
             'company_id' => $company->id,
             'status' => 'expired',
             'starts_on' => now()->subYear(),

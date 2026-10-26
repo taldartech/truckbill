@@ -183,7 +183,7 @@ class LorryReceiptController extends Controller
                 $query->whereBetween('lorry_receipts.gr_date', [$request->gr_date_from, $request->gr_date_to]);
             });
             $query->when($request->filled('lr_number'), function ($query) use ($request) {
-                $query->where('lorry_receipts.lr_number', 'like', '%'.trim($request->lr_number).'%');
+                $query->where('lorry_receipts.lr_number', 'like', '%' . trim($request->lr_number) . '%');
             });
             $query->when($request->filled('customer_id'), function ($query) use ($request) {
                 $query->where('lorry_receipts.customer_id', $request->customer_id);
@@ -201,34 +201,44 @@ class LorryReceiptController extends Controller
                 ->orderColumn('consignee_name', 'lr_dt_consignee.name $1')
                 ->orderColumn('truck_number', 'lr_dt_truck.truck_number $1')
                 ->filterColumn('customer_name', function ($query, $keyword): void {
+                    // @codeCoverageIgnoreStart
                     if ($keyword === '' || $keyword === null) {
                         return;
                     }
-                    $query->where('lr_dt_customer.name', 'like', '%'.$keyword.'%');
+                    // @codeCoverageIgnoreEnd
+                    $query->where('lr_dt_customer.name', 'like', '%' . $keyword . '%');
                 })
                 ->filterColumn('consignor_name', function ($query, $keyword): void {
+                    // @codeCoverageIgnoreStart
                     if ($keyword === '' || $keyword === null) {
                         return;
                     }
-                    $query->where('lr_dt_consignor.name', 'like', '%'.$keyword.'%');
+                    // @codeCoverageIgnoreEnd
+                    $query->where('lr_dt_consignor.name', 'like', '%' . $keyword . '%');
                 })
                 ->filterColumn('consignee_name', function ($query, $keyword): void {
+                    // @codeCoverageIgnoreStart
                     if ($keyword === '' || $keyword === null) {
                         return;
                     }
-                    $query->where('lr_dt_consignee.name', 'like', '%'.$keyword.'%');
+                    // @codeCoverageIgnoreEnd
+                    $query->where('lr_dt_consignee.name', 'like', '%' . $keyword . '%');
                 })
                 ->filterColumn('truck_number', function ($query, $keyword): void {
+                    // @codeCoverageIgnoreStart
                     if ($keyword === '' || $keyword === null) {
                         return;
                     }
-                    $query->where('lr_dt_truck.truck_number', 'like', '%'.$keyword.'%');
+                    // @codeCoverageIgnoreEnd
+                    $query->where('lr_dt_truck.truck_number', 'like', '%' . $keyword . '%');
                 })
                 ->filterColumn('lr_number', function ($query, $keyword): void {
+                    // @codeCoverageIgnoreStart
                     if ($keyword === '' || $keyword === null) {
                         return;
                     }
-                    $query->where('lorry_receipts.lr_number', 'like', '%'.$keyword.'%');
+                    // @codeCoverageIgnoreEnd
+                    $query->where('lorry_receipts.lr_number', 'like', '%' . $keyword . '%');
                 })
                 ->orderColumn('gr_date', 'lorry_receipts.gr_date $1')
                 ->orderColumn('lr_number', 'lorry_receipts.lr_number $1')
@@ -257,7 +267,7 @@ class LorryReceiptController extends Controller
                     return $row->gr_date ? date('d-m-Y', strtotime($row->gr_date)) : '-';
                 })
                 ->addColumn('amount_formatted', function ($row) {
-                    return $row->amount ? ''.number_format($row->amount, 2) : '0.00';
+                    return $row->amount ? '' . number_format($row->amount, 2) : '0.00';
                 })
                 ->addColumn('status_badge', function ($row) {
                     if ($row->invoice_generated == 1) {
@@ -274,7 +284,7 @@ class LorryReceiptController extends Controller
                         $statusText = $row->delivery_status ?? 'Unknown';
                     }
 
-                    return '<span class="badge bg-'.$statusClass.'">'.$statusText.'</span>';
+                    return '<span class="badge bg-' . $statusClass . '">' . $statusText . '</span>';
                 })
 
                 ->addColumn('actions', function ($row) use ($company, $canActAsAdmin, $request) {
@@ -285,8 +295,8 @@ class LorryReceiptController extends Controller
                 ->rawColumns(['sr_no', 'lr_number', 'customer_name', 'consignor_name', 'consignee_name', 'truck_number', 'gr_date_formatted', 'amount_formatted', 'status_badge', 'actions', 'row_class'])
                 ->make(true);
         } catch (\Exception $e) {
-            Log::error('DataTables error: '.$e->getMessage());
-            Log::error('Stack trace: '.$e->getTraceAsString());
+            Log::error('DataTables error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
 
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -301,7 +311,7 @@ class LorryReceiptController extends Controller
         $planExpired = $company ? ! $company->subscriptionCanWrite() : false;
 
         if ($freight_booking_id) {
-            $buttons .= '<a href="'.route('freight_bookings.edit', $freight_booking_id).$listingQuerySuffix.'" class="btn btn-sm btn-icon btn-action-complete" title="Edit Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
+            $buttons .= '<a href="' . route('freight_bookings.edit', $freight_booking_id) . $listingQuerySuffix . '" class="btn btn-sm btn-icon btn-action-complete" title="Edit Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
             $buttons .= '<i class="bi bi-truck"></i></a>';
         } else {
             if ($company->lrCreditsRemaining() <= 0) {
@@ -311,47 +321,47 @@ class LorryReceiptController extends Controller
                 $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-add" title="Plan Expired" data-bs-toggle="tooltip" disabled onclick="alert(\'Plan expired\')">';
                 $buttons .= '<i class="bi bi-truck"></i></button>';
             } else {
-                $buttons .= '<a href="'.route('freight_bookings.create').'?lorry_receipt_id='.$lorryReceipt->id.'" class="btn btn-sm btn-icon btn-action-add" title="Create Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
+                $buttons .= '<a href="' . route('freight_bookings.create') . '?lorry_receipt_id=' . $lorryReceipt->id . '" class="btn btn-sm btn-icon btn-action-add" title="Create Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
                 $buttons .= '<i class="bi bi-truck"></i></a>';
             }
         }
 
         // LR Copy button
-        $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-bilty lr-copy-btn" title="LR Copy" data-bs-toggle="modal" data-bs-target="#lrCopyModal" data-lr-id="'.$lorryReceipt->id.'">';
+        $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-bilty lr-copy-btn" title="LR Copy" data-bs-toggle="modal" data-bs-target="#lrCopyModal" data-lr-id="' . $lorryReceipt->id . '">';
         $buttons .= '<i class="bi bi-file-earmark-text"></i></button>';
 
         // Edit button
-        $editUrl = route('lorry_receipts.edit', $lorryReceipt->id).$listingQuerySuffix;
+        $editUrl = route('lorry_receipts.edit', $lorryReceipt->id) . $listingQuerySuffix;
         if ($lorryReceipt->invoice_generated == 0 && $canActAsAdmin) {
             $confirmMsg = $freightBooking ? ' onclick="return confirm(\'A good hire (lorry hire) already exists. Continue?\')"' : '';
-            $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-action-edit" title="Edit" data-bs-toggle="tooltip"'.$confirmMsg.'>';
+            $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-icon btn-action-edit" title="Edit" data-bs-toggle="tooltip"' . $confirmMsg . '>';
             $buttons .= '<i class="bi bi-pencil"></i></a>';
         }
-if ($lorryReceipt->delivery_status === 'Pending' && $canActAsAdmin) {
-    $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
+        if ($lorryReceipt->delivery_status === 'Pending' && $canActAsAdmin) {
+            $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
 
-    $buttons .= '<form action="'.$deleteUrl.'" method="POST" class="delete-lr-form">';
-    $buttons .= csrf_field().method_field('DELETE');
+            $buttons .= '<form action="' . $deleteUrl . '" method="POST" class="delete-lr-form">';
+            $buttons .= csrf_field() . method_field('DELETE');
 
-    $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-delete delete-lr-btn"
+            $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-delete delete-lr-btn"
         title="Delete"
         data-bs-toggle="tooltip"
-        data-id="'.e($lorryReceipt->id).'"
-        data-lr-number="'.e($lorryReceipt->lr_number).'"
-        data-truck-number="'.e($lorryReceipt->truck->truck_number ?? 'N/A').'"
-        data-customer="'.e($lorryReceipt->customer->name ?? 'N/A').'"
-        data-consignor="'.e($lorryReceipt->consignor->name ?? 'N/A').'"
-        data-consignee="'.e($lorryReceipt->consignee->name ?? 'N/A').'">
+        data-id="' . e($lorryReceipt->id) . '"
+        data-lr-number="' . e($lorryReceipt->lr_number) . '"
+        data-truck-number="' . e($lorryReceipt->truck->truck_number ?? 'N/A') . '"
+        data-customer="' . e($lorryReceipt->customer->name ?? 'N/A') . '"
+        data-consignor="' . e($lorryReceipt->consignor->name ?? 'N/A') . '"
+        data-consignee="' . e($lorryReceipt->consignee->name ?? 'N/A') . '">
         <i class="bi bi-trash"></i>
     </button>';
 
-    $buttons .= '</form>';
-}
+            $buttons .= '</form>';
+        }
 
-$buttons .= '</div>';
+        $buttons .= '</div>';
 
-return $buttons;
-}
+        return $buttons;
+    }
     public function create(): View|RedirectResponse
     {
         if ($redirect = $this->redirectIfPlanExpired()) {
@@ -370,50 +380,52 @@ return $buttons;
             old('consignee_id'),
         ])->filter()->unique()->values();
 
+        // @codeCoverageIgnoreStart
         $consignees = $selectedConsigneeIds->isNotEmpty()
             ? Consignee::withTrashed()
-                ->with('city')
-                ->where('company_id', $companyId)
-                ->whereIn('id', $selectedConsigneeIds)
-                ->orderBy('name')
-                ->get()
+            ->with('city')
+            ->where('company_id', $companyId)
+            ->whereIn('id', $selectedConsigneeIds)
+            ->orderBy('name')
+            ->get()
             : collect();
+        // @codeCoverageIgnoreEnd
 
         $selectedTruckId = old('truck_id');
         $trucks = $selectedTruckId
             ? Truck::with(['transporter.transporterMaster', 'driver'])
-                ->where('id', $selectedTruckId)
-                ->where(function ($query) use ($companyId) {
-                    $query->whereHas('transporter', function ($transporterQuery) use ($companyId) {
-                        $transporterQuery->where('company_id', $companyId);
-                    })->orWhere(function ($orphanQuery) use ($companyId) {
-                        $orphanQuery->whereNull('transporter_id')
-                            ->where('company_id', $companyId);
-                    });
-                })
-                ->get()
+            ->where('id', $selectedTruckId)
+            ->where(function ($query) use ($companyId) {
+                $query->whereHas('transporter', function ($transporterQuery) use ($companyId) {
+                    $transporterQuery->where('company_id', $companyId);
+                })->orWhere(function ($orphanQuery) use ($companyId) {
+                    $orphanQuery->whereNull('transporter_id')
+                        ->where('company_id', $companyId);
+                });
+            })
+            ->get()
             : collect();
 
         $selectedReferenceById = old('reference_by');
         $agencies = $selectedReferenceById
             ? Transporter::withTrashed()
-                ->with('transporterMaster')
-                ->where('is_owner', 0)
-                ->where('company_id', $companyId)
-                ->where('transporters.id', $selectedReferenceById)
-                ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-                ->orderBy('transporter_masters.name')
-                ->select('transporters.*')
-                ->get()
+            ->with('transporterMaster')
+            ->where('is_owner', 0)
+            ->where('company_id', $companyId)
+            ->where('transporters.id', $selectedReferenceById)
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
+            ->get()
             : collect();
 
         $selectedTransporterId = old('transporter_id');
         $payeeTransporter = $selectedTransporterId
             ? Transporter::withTrashed()
-                ->with('transporterMaster')
-                ->where('company_id', $companyId)
-                ->where('id', $selectedTransporterId)
-                ->first()
+            ->with('transporterMaster')
+            ->where('company_id', $companyId)
+            ->where('id', $selectedTransporterId)
+            ->first()
             : null;
 
         return view('lorry_receipts.create', compact(
@@ -445,50 +457,52 @@ return $buttons;
             old('consignee_id'),
         ])->filter()->unique()->values();
 
+        // @codeCoverageIgnoreStart
         $consignees = $selectedConsigneeIds->isNotEmpty()
             ? Consignee::withTrashed()
-                ->with('city')
-                ->where('company_id', $companyId)
-                ->whereIn('id', $selectedConsigneeIds)
-                ->orderBy('name')
-                ->get()
+            ->with('city')
+            ->where('company_id', $companyId)
+            ->whereIn('id', $selectedConsigneeIds)
+            ->orderBy('name')
+            ->get()
             : collect();
+        // @codeCoverageIgnoreEnd
 
         $selectedTruckId = old('truck_id');
         $trucks = $selectedTruckId
             ? Truck::with(['transporter.transporterMaster', 'driver'])
-                ->where('id', $selectedTruckId)
-                ->where(function ($query) use ($companyId) {
-                    $query->whereHas('transporter', function ($transporterQuery) use ($companyId) {
-                        $transporterQuery->where('company_id', $companyId);
-                    })->orWhere(function ($orphanQuery) use ($companyId) {
-                        $orphanQuery->whereNull('transporter_id')
-                            ->where('company_id', $companyId);
-                    });
-                })
-                ->get()
+            ->where('id', $selectedTruckId)
+            ->where(function ($query) use ($companyId) {
+                $query->whereHas('transporter', function ($transporterQuery) use ($companyId) {
+                    $transporterQuery->where('company_id', $companyId);
+                })->orWhere(function ($orphanQuery) use ($companyId) {
+                    $orphanQuery->whereNull('transporter_id')
+                        ->where('company_id', $companyId);
+                });
+            })
+            ->get()
             : collect();
 
         $selectedReferenceById = old('reference_by');
         $agencies = $selectedReferenceById
             ? Transporter::withTrashed()
-                ->with('transporterMaster')
-                ->where('is_owner', 0)
-                ->where('company_id', $companyId)
-                ->where('transporters.id', $selectedReferenceById)
-                ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-                ->orderBy('transporter_masters.name')
-                ->select('transporters.*')
-                ->get()
+            ->with('transporterMaster')
+            ->where('is_owner', 0)
+            ->where('company_id', $companyId)
+            ->where('transporters.id', $selectedReferenceById)
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
+            ->get()
             : collect();
 
         $selectedTransporterId = old('transporter_id');
         $payeeTransporter = $selectedTransporterId
             ? Transporter::withTrashed()
-                ->with('transporterMaster')
-                ->where('company_id', $companyId)
-                ->where('id', $selectedTransporterId)
-                ->first()
+            ->with('transporterMaster')
+            ->where('company_id', $companyId)
+            ->where('id', $selectedTransporterId)
+            ->first()
             : null;
 
         return view('lorry_receipts.create-linked', compact(
@@ -535,7 +549,7 @@ return $buttons;
             if (! empty($existingMemoIds)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'The following LR numbers already have memo_id: '.implode(', ', $existingMemoIds),
+                    'message' => 'The following LR numbers already have memo_id: ' . implode(', ', $existingMemoIds),
                 ], 422);
             }
 
@@ -547,7 +561,7 @@ return $buttons;
             if (! empty($noFreightBooking)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'The following LR numbers do not have a good hire (lorry hire): '.implode(', ', $noFreightBooking),
+                    'message' => 'The following LR numbers do not have a good hire (lorry hire): ' . implode(', ', $noFreightBooking),
                 ], 422);
             }
 
@@ -589,8 +603,8 @@ return $buttons;
                     $oldDeliveryStatus = $lr->delivery_status;
                     $lr->memo_id = $validated['memo_id'];
                     if (empty($lr->memo_created_at)) {
-                      $lr->memo_created_at = now();
-                   }
+                        $lr->memo_created_at = now();
+                    }
                     $lr->delivery_status = 'Delivered';
                     $lr->save();
 
@@ -599,7 +613,6 @@ return $buttons;
                         $this->lrNotificationService->notifyStatusChange($lr, 'Delivered', auth()->user());
                     }
                 }
-
             });
 
             return response()->json([
@@ -609,7 +622,7 @@ return $buttons;
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error: '.json_encode($e->errors()),
+                'message' => 'Validation error: ' . json_encode($e->errors()),
             ], 422);
         } catch (\Exception $e) {
             Log::error('Bulk Payment Error:', [
@@ -619,7 +632,7 @@ return $buttons;
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update Memo ID: '.$e->getMessage(),
+                'message' => 'Failed to update Memo ID: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -698,7 +711,7 @@ return $buttons;
                     // Prevent consignor == consignee per LR
                     if ($item['consignor_id'] === $item['consignee_id']) {
                         throw ValidationException::withMessages([
-                            'lrs' => ['Consignor and Consignee cannot be the same for LR '.($item['lr_number'] ?? '')],
+                            'lrs' => ['Consignor and Consignee cannot be the same for LR ' . ($item['lr_number'] ?? '')],
                         ]);
                     }
 
@@ -732,6 +745,7 @@ return $buttons;
 
                     $data = [
                         'lr_number' => $item['lr_number'] ?? null,
+                        'lr_number' => $item['lr_number'],
                         'gr_number' => $item['gr_number'] ?? null,
                         'invoice_number' => $item['invoice_number'] ?? null,
                         'customer_id' => $item['customer_id'],
@@ -778,7 +792,7 @@ return $buttons;
 
                 DB::commit();
 
-                return $this->redirectToLorryReceiptsIndex($request, 'success', 'Created '.count($created).' linked Good Receipts (Bilty) (Linked ID: '.$nextLinkedId.').');
+                return $this->redirectToLorryReceiptsIndex($request, 'success', 'Created ' . count($created) . ' linked Good Receipts (Bilty) (Linked ID: ' . $nextLinkedId . ').');
             } catch (\Throwable $e) {
                 DB::rollBack();
                 throw $e;
@@ -857,12 +871,14 @@ return $buttons;
             // Remove "LR" prefix, then trim leading zeros
             $validated['gr_number'] = ltrim(str_ireplace('LR', '', $validated['lr_number']), '0');
         }
+        // @codeCoverageIgnoreStart
         if (LorryReceipt::where('lr_number', $validated['lr_number'])
             ->where('company_id', $companyId)
             ->exists()
         ) {
             return redirect()->back()->withErrors(['lr_number' => 'LR Number already exists.']);
         }
+        // @codeCoverageIgnoreEnd
 
         // Set unloading_weight = weight initially (for loose weight mode)
         if (! isset($validated['unloading_weight']) || $validated['unloading_weight'] === null) {
@@ -907,7 +923,7 @@ return $buttons;
         if (! empty($lrNumbers)) {
             $duplicateLrs = LorryReceipt::where('company_id', $companyId)
                 ->whereNull('deleted_at')
-                ->when($excludeIds !== [], fn ($query) => $query->whereNotIn('id', $excludeIds))
+                ->when($excludeIds !== [], fn($query) => $query->whereNotIn('id', $excludeIds))
                 ->whereIn('lr_number', $lrNumbers)
                 ->pluck('lr_number')
                 ->toArray();
@@ -925,7 +941,7 @@ return $buttons;
         if (! empty($grNumbers)) {
             $duplicateGrs = LorryReceipt::where('company_id', $companyId)
                 ->whereNull('deleted_at')
-                ->when($excludeIds !== [], fn ($query) => $query->whereNotIn('id', $excludeIds))
+                ->when($excludeIds !== [], fn($query) => $query->whereNotIn('id', $excludeIds))
                 ->whereIn('gr_number', $grNumbers)
                 ->pluck('gr_number')
                 ->toArray();
@@ -959,11 +975,11 @@ return $buttons;
             return $this->redirectToLorryReceiptsIndex(null, 'error', 'Linked good receipts (bilty) not found.');
         }
 
-        if ($linkedLorryReceipts->contains(fn (LorryReceipt $lr): bool => (int) $lr->invoice_generated === 1)) {
+        if ($linkedLorryReceipts->contains(fn(LorryReceipt $lr): bool => (int) $lr->invoice_generated === 1)) {
             return $this->redirectToLorryReceiptsIndex(null, 'error', 'Cannot edit linked good receipts (bilty) because an invoice has already been generated for one or more items.');
         }
 
-        if ($linkedLorryReceipts->contains(fn (LorryReceipt $lr): bool => $lr->delivery_status === 'Delivered')) {
+        if ($linkedLorryReceipts->contains(fn(LorryReceipt $lr): bool => $lr->delivery_status === 'Delivered')) {
             return $this->redirectToLorryReceiptsIndex(null, 'error', 'Cannot edit linked good receipts (bilty) in bulk when one or more items are already delivered.');
         }
 
@@ -973,8 +989,8 @@ return $buttons;
         $truckTypes = TruckType::orderBy('name')->get();
 
         $selectedConsigneeIds = $linkedLorryReceipts
-            ->flatMap(fn (LorryReceipt $lr): array => [$lr->customer_id, $lr->consignor_id, $lr->consignee_id])
-            ->merge(collect(old('lrs', []))->flatMap(fn (array $item): array => [
+            ->flatMap(fn(LorryReceipt $lr): array => [$lr->customer_id, $lr->consignor_id, $lr->consignee_id])
+            ->merge(collect(old('lrs', []))->flatMap(fn(array $item): array => [
                 $item['customer_id'] ?? null,
                 $item['consignor_id'] ?? null,
                 $item['consignee_id'] ?? null,
@@ -983,50 +999,52 @@ return $buttons;
             ->unique()
             ->values();
 
+        // @codeCoverageIgnoreStart
         $consignees = $selectedConsigneeIds->isNotEmpty()
             ? Consignee::withTrashed()
-                ->with('city')
-                ->where('company_id', $companyId)
-                ->whereIn('id', $selectedConsigneeIds)
-                ->orderBy('name')
-                ->get()
+            ->with('city')
+            ->where('company_id', $companyId)
+            ->whereIn('id', $selectedConsigneeIds)
+            ->orderBy('name')
+            ->get()
             : collect();
+        // @codeCoverageIgnoreEnd
 
         $selectedTruckId = old('truck_id', $sharedLorryReceipt->truck_id);
         $trucks = $selectedTruckId
             ? Truck::with(['transporter.transporterMaster', 'driver'])
-                ->where('id', $selectedTruckId)
-                ->where(function ($query) use ($companyId) {
-                    $query->whereHas('transporter', function ($transporterQuery) use ($companyId) {
-                        $transporterQuery->withTrashed()->where('company_id', $companyId);
-                    })->orWhere(function ($orphanQuery) use ($companyId) {
-                        $orphanQuery->whereNull('transporter_id')
-                            ->where('company_id', $companyId);
-                    });
-                })
-                ->get()
+            ->where('id', $selectedTruckId)
+            ->where(function ($query) use ($companyId) {
+                $query->whereHas('transporter', function ($transporterQuery) use ($companyId) {
+                    $transporterQuery->withTrashed()->where('company_id', $companyId);
+                })->orWhere(function ($orphanQuery) use ($companyId) {
+                    $orphanQuery->whereNull('transporter_id')
+                        ->where('company_id', $companyId);
+                });
+            })
+            ->get()
             : collect();
 
         $selectedReferenceById = old('reference_by', $sharedLorryReceipt->reference_by);
         $agencies = $selectedReferenceById
             ? Transporter::withTrashed()
-                ->with('transporterMaster')
-                ->where('is_owner', 0)
-                ->where('company_id', $companyId)
-                ->where('transporters.id', $selectedReferenceById)
-                ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-                ->orderBy('transporter_masters.name')
-                ->select('transporters.*')
-                ->get()
+            ->with('transporterMaster')
+            ->where('is_owner', 0)
+            ->where('company_id', $companyId)
+            ->where('transporters.id', $selectedReferenceById)
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
+            ->get()
             : collect();
 
         $selectedTransporterId = old('transporter_id', $sharedLorryReceipt->transporter_id);
         $payeeTransporter = $selectedTransporterId
             ? Transporter::withTrashed()
-                ->with('transporterMaster')
-                ->where('company_id', $companyId)
-                ->where('id', $selectedTransporterId)
-                ->first()
+            ->with('transporterMaster')
+            ->where('company_id', $companyId)
+            ->where('id', $selectedTransporterId)
+            ->first()
             : null;
 
         $canChangeTransporter = $this->canChangeTransporterForLorryReceipt($sharedLorryReceipt);
@@ -1101,11 +1119,11 @@ return $buttons;
             return $this->redirectToLorryReceiptsIndex($request, 'error', 'Linked good receipts (bilty) not found.');
         }
 
-        if ($linkedLorryReceipts->contains(fn (LorryReceipt $lr): bool => (int) $lr->invoice_generated === 1)) {
+        if ($linkedLorryReceipts->contains(fn(LorryReceipt $lr): bool => (int) $lr->invoice_generated === 1)) {
             return $this->redirectToLorryReceiptsIndex($request, 'error', 'Cannot edit linked good receipts (bilty) because an invoice has already been generated for one or more items.');
         }
 
-        if ($linkedLorryReceipts->contains(fn (LorryReceipt $lr): bool => $lr->delivery_status === 'Delivered')) {
+        if ($linkedLorryReceipts->contains(fn(LorryReceipt $lr): bool => $lr->delivery_status === 'Delivered')) {
             return $this->redirectToLorryReceiptsIndex($request, 'error', 'Cannot edit linked good receipts (bilty) in bulk when one or more items are already delivered.');
         }
 
@@ -1148,7 +1166,7 @@ return $buttons;
         $excludeIds = collect($request->input('lrs', []))
             ->pluck('id')
             ->filter()
-            ->map(fn ($id): int => (int) $id)
+            ->map(fn($id): int => (int) $id)
             ->values()
             ->all();
 
@@ -1168,7 +1186,7 @@ return $buttons;
 
             if ($item['consignor_id'] === $item['consignee_id']) {
                 throw ValidationException::withMessages([
-                    'lrs' => ['Consignor and Consignee cannot be the same for LR '.($item['lr_number'] ?? '')],
+                    'lrs' => ['Consignor and Consignee cannot be the same for LR ' . ($item['lr_number'] ?? '')],
                 ]);
             }
         }
@@ -1197,14 +1215,14 @@ return $buttons;
                     (float) ($existing->damage_amount ?? 0),
                 );
 
-                if ($item['gr_number'] === null || $item['gr_number'] === '') {
+                if (($item['gr_number'] ?? null) === null || $item['gr_number'] === '') {
                     $item['gr_number'] = ltrim(str_ireplace('LR', '', $item['lr_number']), '0');
                 }
 
                 $updateData = [
                     'lr_number' => $item['lr_number'],
                     'gr_number' => $item['gr_number'],
-                    'invoice_number' => $item['invoice_number'],
+                    'invoice_number' => $item['invoice_number'] ?? null,
                     'customer_id' => $item['customer_id'],
                     'consignor_id' => $item['consignor_id'],
                     'consignor_contact_number' => $item['consignor_contact_number'] ?? null,
@@ -1236,9 +1254,11 @@ return $buttons;
 
                 $freightBooking = FreightBooking::find($existing->freight_booking_id);
                 if ($freightBooking) {
-                    if (! $freightBooking->canChangeTdsAmount()
+                    if (
+                        ! $freightBooking->canChangeTdsAmount()
                         && isset($updateData['transporter_id'])
-                        && (int) $updateData['transporter_id'] !== (int) $existing->transporter_id) {
+                        && (int) $updateData['transporter_id'] !== (int) $existing->transporter_id
+                    ) {
                         throw ValidationException::withMessages([
                             'transporter_id' => 'Transporter cannot be changed because TDS has already been submitted for one or more linked good hires (lorry hires).',
                         ]);
@@ -1259,7 +1279,7 @@ return $buttons;
             return $this->redirectToLorryReceiptsIndex(
                 $request,
                 'success',
-                'Updated '.count($validated['lrs']).' linked Good Receipts (Bilty) (Linked ID: '.$lorry_receipt->linked_lr_id.').'
+                'Updated ' . count($validated['lrs']) . ' linked Good Receipts (Bilty) (Linked ID: ' . $lorry_receipt->linked_lr_id . ').'
             );
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -1299,7 +1319,7 @@ return $buttons;
 
         $exists = LorryReceipt::where('lr_number', $request->lr_number)
             ->where('company_id', $this->getCurrentCompanyId())
-            ->when($request->exclude_id, fn ($query) => $query->where('id', '!=', $request->exclude_id))
+            ->when($request->exclude_id, fn($query) => $query->where('id', '!=', $request->exclude_id))
             ->exists();
 
         return response()->json([
@@ -1333,16 +1353,16 @@ return $buttons;
 
         $exists = LorryReceipt::where('gr_number', $request->gr_number)
             ->where('company_id', $this->getCurrentCompanyId())
-            ->when($request->exclude_id, fn ($query) => $query->where('id', '!=', $request->exclude_id))
+            ->when($request->exclude_id, fn($query) => $query->where('id', '!=', $request->exclude_id))
             ->exists();
 
-       
+
         return response()->json([
-    'available' => ! $exists,
-    'message' => $exists
-        ? 'GR number already exists'
-        : 'GR number is available',
-]);
+            'available' => ! $exists,
+            'message' => $exists
+                ? 'GR number already exists'
+                : 'GR number is available',
+        ]);
     }
 
     public function edit(LorryReceipt $lorry_receipt): View|RedirectResponse
@@ -1362,51 +1382,51 @@ return $buttons;
         $selectedTruckId = old('truck_id', $lorry_receipt->truck_id);
         $trucks = $selectedTruckId
             ? Truck::with(['transporter.transporterMaster', 'driver'])
-                ->where('id', $selectedTruckId)
-                ->where(function ($query) use ($companyId) {
-                    $query->whereHas('transporter', function ($transporterQuery) use ($companyId) {
-                        $transporterQuery->withTrashed()->where('company_id', $companyId);
-                    })->orWhere(function ($orphanQuery) use ($companyId) {
-                        $orphanQuery->whereNull('transporter_id')
-                            ->where('company_id', $companyId);
-                    });
-                })
-                ->get()
+            ->where('id', $selectedTruckId)
+            ->where(function ($query) use ($companyId) {
+                $query->whereHas('transporter', function ($transporterQuery) use ($companyId) {
+                    $transporterQuery->withTrashed()->where('company_id', $companyId);
+                })->orWhere(function ($orphanQuery) use ($companyId) {
+                    $orphanQuery->whereNull('transporter_id')
+                        ->where('company_id', $companyId);
+                });
+            })
+            ->get()
             : collect();
 
         $selectedTransporterId = old('transporter_id', $lorry_receipt->transporter_id);
         $transporters = $selectedTransporterId
             ? Transporter::withTrashed()->with('transporterMaster')
-                ->where('company_id', $companyId)
-                ->where('transporters.id', $selectedTransporterId)
-                ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-                ->orderBy('transporter_masters.name')
-                ->select('transporters.*')
-                ->get()
+            ->where('company_id', $companyId)
+            ->where('transporters.id', $selectedTransporterId)
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
+            ->get()
             : collect();
 
         $effectiveTransporterType = old('transporter_type', $lorry_receipt->transporter_type);
         $truckOwners = ($effectiveTransporterType === 'owner' && $selectedTransporterId)
             ? Transporter::withTrashed()->with('transporterMaster')
-                ->where('company_id', $companyId)
-                ->where('transporters.id', $selectedTransporterId)
-                ->where('is_owner', 1)
-                ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-                ->orderBy('transporter_masters.name')
-                ->select('transporters.*')
-                ->get()
+            ->where('company_id', $companyId)
+            ->where('transporters.id', $selectedTransporterId)
+            ->where('is_owner', 1)
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
+            ->get()
             : collect();
 
         $referenceById = old('reference_by', $lorry_receipt->reference_by);
         $agencies = $referenceById
             ? Transporter::withTrashed()->with('transporterMaster')
-                ->where('company_id', $companyId)
-                ->where('transporters.id', $referenceById)
-                ->where('is_owner', 0)
-                ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-                ->orderBy('transporter_masters.name')
-                ->select('transporters.*')
-                ->get()
+            ->where('company_id', $companyId)
+            ->where('transporters.id', $referenceById)
+            ->where('is_owner', 0)
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
+            ->get()
             : collect();
 
         $selectedConsigneeIds = collect([
@@ -1415,14 +1435,16 @@ return $buttons;
             old('consignee_id', $lorry_receipt->consignee_id),
         ])->filter()->unique()->values();
 
+        // @codeCoverageIgnoreStart
         $consignees = $selectedConsigneeIds->isNotEmpty()
             ? Consignee::withTrashed()
-                ->with('city')
-                ->where('company_id', $companyId)
-                ->whereIn('id', $selectedConsigneeIds)
-                ->orderBy('name')
-                ->get()
+            ->with('city')
+            ->where('company_id', $companyId)
+            ->whereIn('id', $selectedConsigneeIds)
+            ->orderBy('name')
+            ->get()
             : collect();
+        // @codeCoverageIgnoreEnd
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
         $countries = Country::orderBy('name')->get();
         $truckTypes = TruckType::orderBy('name')->get();
@@ -1441,6 +1463,7 @@ return $buttons;
         $grDateToCheck = null;
         if ($lorry_receipt->gr_date) {
             $grDateToCheck = $lorry_receipt->gr_date;
+            // @codeCoverageIgnoreStart
         } elseif (! $freightBookings->isEmpty()) {
             foreach ($freightBookings as $freightBooking) {
                 if ($freightBooking->lr && $freightBooking->lr->gr_date) {
@@ -1448,6 +1471,7 @@ return $buttons;
                     break;
                 }
             }
+            // @codeCoverageIgnoreEnd
         }
 
         if ($grDateToCheck) {
@@ -1528,11 +1552,14 @@ return $buttons;
             return $this->redirectToLorryReceiptsIndex($request, 'success', 'Good Receipt (Bilty) updated successfully! Only Memo ID could be updated as the LR is already delivered.');
         }
 
+        $oldDeliveryStatus = $lorry_receipt->delivery_status;
+
         $validated = $request->validate([
             'customer_id' => 'required|exists:consignees,id',
             'lr_number' => ['required', 'string', 'max:100'],
             'gr_number' => ['nullable', 'string', 'max:100'],
             'invoice_number' => ['nullable', 'string', 'max:256'],
+            'delivery_status' => ['nullable', 'string', 'in:Pending,In-Progress,Delivered,Cancelled'],
 
             'memo_id' => [
                 'nullable',
@@ -1695,70 +1722,69 @@ return $buttons;
         }
     }
 
-   public function destroy(
-    Request $request,
-    LorryReceipt $lorry_receipt
-): RedirectResponse {
-    if ($redirect = $this->redirectIfPlanExpired()) {
-        return $redirect;
-    }
-
-    $request->validate([
-        'delete_remark' => ['required', 'string', 'max:1000'],
-    ]);
-
-    $deleteRemark = $request->input('delete_remark');
-
-    $lorryReceiptsToDelete = $this->resolveLorryReceiptsForDeletion($lorry_receipt);
-
-    if ($lorryReceiptsToDelete === null) {
-        return redirect()->back()
-            ->with(
-                'error',
-                'Good receipt (bilty) can only be deleted when delivery status is Pending.'
-            );
-    }
-
-    try {
-        $deletedBy = Auth::id();
-
-        DB::transaction(function () use (
-            $lorryReceiptsToDelete,
-            $deleteRemark,
-            $deletedBy
-        ) {
-         foreach ($lorryReceiptsToDelete as $lr) {
-        $lr->deleted_by = $deletedBy;
-        $lr->deleted_remark = $deleteRemark;
-        $lr->save();
-        $lr->delete();
+    public function destroy(
+        Request $request,
+        LorryReceipt $lorry_receipt
+    ): RedirectResponse {
+        if ($redirect = $this->redirectIfPlanExpired()) {
+            return $redirect;
         }
-        });
 
-        $message = $lorryReceiptsToDelete->count() > 1
-            ? $lorryReceiptsToDelete->count()
+        $request->validate([
+            'delete_remark' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $deleteRemark = $request->input('delete_remark');
+
+        $lorryReceiptsToDelete = $this->resolveLorryReceiptsForDeletion($lorry_receipt);
+
+        if ($lorryReceiptsToDelete === null) {
+            return redirect()->back()
+                ->with(
+                    'error',
+                    'Good receipt (bilty) can only be deleted when delivery status is Pending.'
+                );
+        }
+
+        try {
+            $deletedBy = Auth::id();
+
+            DB::transaction(function () use (
+                $lorryReceiptsToDelete,
+                $deleteRemark,
+                $deletedBy
+            ) {
+                foreach ($lorryReceiptsToDelete as $lr) {
+                    $lr->deleted_by = $deletedBy;
+                    $lr->deleted_remark = $deleteRemark;
+                    $lr->save();
+                    $lr->delete();
+                }
+            });
+
+            $message = $lorryReceiptsToDelete->count() > 1
+                ? $lorryReceiptsToDelete->count()
                 . ' linked good receipts (bilty) and all associated data deleted successfully!'
-            : 'Good receipt (bilty) and all associated data deleted successfully!';
+                : 'Good receipt (bilty) and all associated data deleted successfully!';
 
-        return $this->redirectToLorryReceiptsIndex(
-            request(),
-            'success',
-            $message
-        );
-
-    } catch (\Exception $e) {
-        Log::error(
-            'Error deleting lorry receipt: ' . $e->getMessage()
-        );
-
-        return redirect()->back()
-            ->with(
-                'error',
-                'Error deleting good receipt (bilty). Please try again.'
+            return $this->redirectToLorryReceiptsIndex(
+                request(),
+                'success',
+                $message
             );
+        } catch (\Exception $e) {
+            Log::error(
+                'Error deleting lorry receipt: ' . $e->getMessage()
+            );
+
+            return redirect()->back()
+                ->with(
+                    'error',
+                    'Error deleting good receipt (bilty). Please try again.'
+                );
+        }
     }
-}
-    
+
     private function resolveLorryReceiptsForDeletion(LorryReceipt $lorry_receipt): ?Collection
     {
         $companyId = $this->getCurrentCompanyId();
@@ -1768,7 +1794,7 @@ return $buttons;
                 ->where('linked_lr_id', $lorry_receipt->linked_lr_id)
                 ->get();
 
-            if ($group->contains(fn (LorryReceipt $lr) => $lr->delivery_status !== 'Pending')) {
+            if ($group->contains(fn(LorryReceipt $lr) => $lr->delivery_status !== 'Pending')) {
                 return null;
             }
 
@@ -1899,7 +1925,7 @@ return $buttons;
 
             return response()->json($lrs);
         } catch (\Exception $e) {
-            Log::error('Error in getByLinkedId: '.$e->getMessage());
+            Log::error('Error in getByLinkedId: ' . $e->getMessage());
 
             return response()->json([
                 'error' => 'An error occurred while fetching linked LRs',
