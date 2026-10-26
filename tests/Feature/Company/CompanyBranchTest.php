@@ -260,21 +260,6 @@ class CompanyBranchTest extends TestCase
         ]);
     }
 
-    public function test_master_admin_can_update_company_subscription_fields(): void
-    {
-        $this->markTestSkipped('Legacy subscription fields dropped from companies table in migration 2026_06_19_000006');
-    }
-
-    public function test_super_admin_cannot_update_company_subscription_fields(): void
-    {
-        $this->markTestSkipped('Legacy subscription fields dropped from companies table in migration 2026_06_19_000006');
-    }
-
-    public function test_non_master_admin_cannot_update_company_subscription_fields(): void
-    {
-        $this->markTestSkipped('Legacy subscription fields dropped from companies table in migration 2026_06_19_000006');
-    }
-
     public function test_company_block_and_unblock_toggle_flag(): void
     {
         $master = $this->makeMasterAdmin();
