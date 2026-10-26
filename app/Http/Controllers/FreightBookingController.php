@@ -1810,6 +1810,7 @@ class FreightBookingController extends Controller
 
             return response()->json($payload);
         } catch (ValidationException $e) {
+            \DB::rollBack();
             \Log::error('Validation error in voucher payment', [
                 'errors' => $e->errors(),
                 'request_context' => $this->paymentRequestLogContext($request),

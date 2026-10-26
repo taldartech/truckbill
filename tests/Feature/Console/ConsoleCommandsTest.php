@@ -353,13 +353,30 @@ class ConsoleCommandsTest extends TestCase
             ->assertFailed();
     }
 
+    /**
+     * Create a fake mysqldump binary that writes a stub dump to --result-file=.
+     */
+    private function installFakeMysqldump(string $directory, string $scriptBody): string
+    {
+        File::ensureDirectoryExists($directory);
+        $binaryName = PHP_OS_FAMILY === 'Windows' ? 'mysqldump.bat' : 'mysqldump';
+        $binaryPath = $directory.DIRECTORY_SEPARATOR.$binaryName;
+        File::put($binaryPath, $scriptBody);
+        if (PHP_OS_FAMILY !== 'Windows') {
+            chmod($binaryPath, 0755);
+        }
+
+        return $directory;
+    }
+
     public function test_backup_database_to_s3_success_and_upload_flow(): void
     {
         Storage::fake('s3');
         $fakeBinDir = storage_path('app/testing-bin');
-        File::ensureDirectoryExists($fakeBinDir);
-        $batPath = $fakeBinDir . DIRECTORY_SEPARATOR . 'mysqldump.bat';
-        File::put($batPath, '@php -d "xdebug.mode=off" -r "foreach ($argv as $a) { if (str_starts_with($a, \'--result-file=\')) { file_put_contents(substr($a, 14), \'-- MOCK SQL DUMP\'); } }" -- %*');
+        $successScript = PHP_OS_FAMILY === 'Windows'
+            ? '@php -d "xdebug.mode=off" -r "foreach ($argv as $a) { if (str_starts_with($a, \'--result-file=\')) { file_put_contents(substr($a, 14), \'-- MOCK SQL DUMP\'); } }" -- %*'
+            : "#!/usr/bin/env php\n<?php\nforeach (\$argv as \$a) { if (str_starts_with(\$a, '--result-file=')) { file_put_contents(substr(\$a, 14), \"-- MOCK SQL DUMP\"); } }\n";
+        $this->installFakeMysqldump($fakeBinDir, $successScript);
 
         $origPath = getenv('PATH');
         $origDefault = config('database.default');
@@ -439,9 +456,10 @@ class ConsoleCommandsTest extends TestCase
     {
         Storage::fake('s3');
         $fakeBinDir = storage_path('app/testing-bin-fail');
-        File::ensureDirectoryExists($fakeBinDir);
-        $batPath = $fakeBinDir . DIRECTORY_SEPARATOR . 'mysqldump.bat';
-        File::put($batPath, '@php -d "xdebug.mode=off" -r "fwrite(STDERR, \"dump failed error\"); exit(1);"');
+        $failScript = PHP_OS_FAMILY === 'Windows'
+            ? '@php -d "xdebug.mode=off" -r "fwrite(STDERR, \"dump failed error\"); exit(1);"'
+            : "#!/usr/bin/env php\n<?php\nfwrite(STDERR, \"dump failed error\");\nexit(1);\n";
+        $this->installFakeMysqldump($fakeBinDir, $failScript);
 
         $origPath = getenv('PATH');
         $origDefault = config('database.default');

@@ -5,6 +5,7 @@ namespace Tests\Feature\Reports;
 use App\Exports\BankExport;
 use App\Exports\CashExport;
 use App\Exports\ConsignorConsigneeExport;
+use App\Exports\DispatchExport;
 use App\Exports\CustomerTDSExport;
 use App\Exports\EwayBillExport;
 use App\Exports\InvoiceExport;
@@ -19,6 +20,7 @@ use App\Exports\TDSExport;
 use App\Exports\TransporterReportExport;
 use App\Models\City;
 use App\Models\Company;
+use App\Models\CompanySetting;
 use App\Models\CompanySubscription;
 use App\Models\Consignee;
 use App\Models\Country;
@@ -1276,6 +1278,173 @@ class ReportExportTest extends TestCase
         $this->actingAs($admin);
         $export = new EwayBillExport(null, null);
         $this->assertEmpty($export->collection());
+    }
+
+    public function test_eway_bill_export_collection_includes_eway_bills_in_range(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$lr, $booking] = $this->seedLr($admin);
+        \App\Models\EwayBill::create([
+            'freight_booking_id' => $booking->id,
+            'eway_bill_number' => 'EWB-EXPORT-1',
+            'eway_bill_expiry' => now()->addDays(2)->toDateString(),
+        ]);
+
+        $this->actingAs($admin);
+        $export = new EwayBillExport(
+            now()->subDay()->toDateString(),
+            now()->addWeek()->toDateString()
+        );
+
+        $rows = $export->collection();
+        $this->assertCount(1, $rows);
+        $this->assertSame('EWB-EXPORT-1', $rows->first()['Eway Bill No.']);
+        $this->assertSame($lr->lr_number, $rows->first()['LR No']);
+    }
+
+    public function test_cash_export_marks_tds_and_status_for_linked_cash_payment(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$lr, $booking] = $this->seedLr($admin);
+        $booking->update(['tds_amount' => 50]);
+
+        $this->actingAs($admin);
+
+        VoucherLinked::create([
+            'company_id' => $admin->company_id,
+            'freight_booking_id' => $booking->id,
+            'voucher_ids' => '501',
+            'payment_type' => 'advance',
+            'date' => now()->toDateString(),
+            'amount' => 900,
+            'payment_mode' => 'cash',
+            'payment_status' => 'in-progress',
+        ]);
+
+        $export = new CashExport(
+            now()->subDay()->toDateString(),
+            now()->addDay()->toDateString(),
+            'in-progress'
+        );
+
+        $rows = $export->collection();
+        $this->assertCount(1, $rows);
+        $this->assertSame('Yes', $rows->first()['TDS Deducted']);
+        $this->assertSame('In progress', $rows->first()['Status']);
+    }
+
+    public function test_dispatch_export_view_renders_lr_rows_and_formats(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$lr] = $this->seedLr($admin);
+        $lr->update(['gr_date' => now()->toDateString()]);
+
+        $this->actingAs($admin);
+        $export = new DispatchExport(
+            now()->subDay()->toDateString(),
+            now()->addDay()->toDateString(),
+            now()->toDateString()
+        );
+
+        $view = $export->view();
+        $this->assertTrue($view->getData()['forExcel']);
+        $this->assertCount(1, $view->getData()['lrs']);
+        $this->assertNotEmpty($export->columnFormats());
+    }
+
+    public function test_dispatch_export_without_dates_returns_empty_collection_in_view(): void
+    {
+        $admin = $this->makeUser('admin');
+        $this->actingAs($admin);
+
+        $view = (new DispatchExport(null, null))->view();
+        $this->assertSame([], $view->getData()['lrs']);
+    }
+
+    public function test_party_bill_pdf_export_supports_invoice_templates(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$lr] = $this->seedLr($admin);
+        $country = Country::firstOrCreate(['name' => 'India', 'code' => 'IN']);
+        $state = State::firstOrCreate(['name' => 'Gujarat'], ['country_id' => $country->id]);
+        $city = City::firstOrCreate(['name' => 'Ahmedabad'], ['state_id' => $state->id, 'country_id' => $country->id]);
+        $customer = Consignee::query()->findOrFail($lr->customer_id);
+        $customer->update(['city_id' => $city->id, 'state_id' => $state->id]);
+        $admin->company->update(['city_id' => $city->id, 'state_id' => $state->id]);
+
+        $invoice = Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-PDF-1',
+            'invoice_type' => 'Forward',
+            'generated_date' => now()->toDateString(),
+            'lr_ids' => [$lr->id],
+            'total_amount' => 5000,
+            'base_amount' => 5000,
+        ]);
+
+        foreach (['classic', 'modern', 'compact'] as $template) {
+            CompanySetting::query()->updateOrCreate(
+                ['company_id' => $admin->company_id],
+                array_merge(CompanySetting::defaultsFor($admin->company), ['invoice_template' => $template])
+            );
+
+            $this->actingAs($admin)
+                ->get('/reports/party-bill-export?'.http_build_query([
+                    'invoice_number' => $invoice->id,
+                    'type' => 'pdf',
+                ]))
+                ->assertOk();
+        }
+    }
+
+    public function test_party_bill_pdf_export_errors_when_invoice_has_no_lrs(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = Consignee::create(['company_id' => $admin->company_id, 'name' => 'PDF Empty']);
+        $invoice = Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-PDF-EMPTY',
+            'invoice_type' => 'Forward',
+            'generated_date' => now()->toDateString(),
+            'lr_ids' => [],
+            'total_amount' => 100,
+        ]);
+
+        $this->actingAs($admin)
+            ->from('/reports/party-bill')
+            ->get('/reports/party-bill-export?'.http_build_query([
+                'invoice_number' => $invoice->id,
+                'type' => 'pdf',
+            ]))
+            ->assertRedirect('/reports/party-bill')
+            ->assertSessionHas('error');
+    }
+
+    public function test_party_bill_export_requires_invoice_number(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)
+            ->from('/reports/party-bill')
+            ->get('/reports/party-bill-export')
+            ->assertRedirect('/reports/party-bill')
+            ->assertSessionHas('error');
+    }
+
+    public function test_eway_bill_export_headings_and_column_formats(): void
+    {
+        $admin = $this->makeUser('admin');
+        $this->actingAs($admin);
+
+        $export = new EwayBillExport(
+            now()->subDay()->toDateString(),
+            now()->addWeek()->toDateString()
+        );
+
+        $this->assertContains('Eway Bill No.', $export->headings());
+        $this->assertArrayHasKey('E', $export->columnFormats());
     }
 }
 

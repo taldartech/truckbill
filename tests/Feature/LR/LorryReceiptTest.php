@@ -566,8 +566,27 @@ class LorryReceiptTest extends TestCase
         $this->actingAs($moderator)->put("/lorry_receipts/{$lr->id}", array_merge($payload, ['lr_number' => 'LR001-MOD']))->assertForbidden();
         $this->actingAs($moderator)->delete("/lorry_receipts/{$lr->id}")->assertForbidden();
 
-        // Admin can delete
-        $this->actingAs($admin)->delete("/lorry_receipts/{$lr->id}")->assertRedirectContains(route('lorry_receipts.index'));
+        // Admin can delete pending LR with remark
+        $this->actingAs($admin)->delete("/lorry_receipts/{$lr->id}", [
+            'delete_remark' => 'Entered in error',
+        ])->assertRedirectContains(route('lorry_receipts.index'));
+        $this->assertSoftDeleted('lorry_receipts', ['id' => $lr->id]);
+    }
+
+    public function test_destroy_rejects_non_pending_lorry_receipt(): void
+    {
+        $admin = $this->makeUser('admin');
+        $payload = $this->validPayload($admin);
+        $this->actingAs($admin)->post('/lorry_receipts', $payload);
+        $lr = LorryReceipt::where('lr_number', 'LR001')->firstOrFail();
+        $lr->update(['delivery_status' => 'Delivered']);
+
+        $this->actingAs($admin)
+            ->from(route('lorry_receipts.index'))
+            ->delete("/lorry_receipts/{$lr->id}", ['delete_remark' => 'Should not delete'])
+            ->assertRedirect(route('lorry_receipts.index'))
+            ->assertSessionHas('error');
+        $this->assertDatabaseHas('lorry_receipts', ['id' => $lr->id, 'deleted_at' => null]);
     }
 
     public function test_update_blocks_transporter_change_when_tds_submitted(): void
@@ -1062,5 +1081,485 @@ class LorryReceiptTest extends TestCase
         $this->post(route('logout'));
         $guest = $this->get('/lorry_receipts');
         $guest->assertRedirect(route('login'));
+    }
+
+    protected function lrReadyForBulkMemo(User $admin, array $overrides = []): LorryReceipt
+    {
+        [$lr, $booking] = $this->createLrWithBooking($admin, 1000, 0, 'VB-BULK-'.uniqid());
+        $lr->freight_booking_id = $booking->id;
+        $lr->fill($overrides);
+        $lr->save();
+
+        return $lr->fresh();
+    }
+
+    public function test_bulk_payment_assigns_memo_and_marks_delivered(): void
+    {
+        $admin = $this->makeAdmin();
+        [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
+        $shared = [
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+        ];
+        $lr1 = $this->lrReadyForBulkMemo($admin, array_merge($shared, ['lr_number' => 'LR-BP-1']));
+        $lr2 = $this->lrReadyForBulkMemo($admin, array_merge($shared, ['lr_number' => 'LR-BP-2']));
+
+        $response = $this->actingAs($admin)->postJson(route('lorry_receipts.bulkPayment'), [
+            'memo_id' => 'MEMO-9001',
+            'lr_ids' => [$lr1->id, $lr2->id],
+        ]);
+
+        $response->assertOk()->assertJson(['success' => true]);
+        $this->assertDatabaseHas('lorry_receipts', [
+            'id' => $lr1->id,
+            'memo_id' => 'MEMO-9001',
+            'delivery_status' => 'Delivered',
+        ]);
+        $this->assertDatabaseHas('freight_bookings', [
+            'id' => $lr1->freight_booking_id,
+            'is_delivered' => 1,
+        ]);
+    }
+
+    public function test_bulk_payment_rejects_mixed_customers_and_existing_memo(): void
+    {
+        $admin = $this->makeAdmin();
+        [$customerA, , $consigneeA] = $this->seedConsignees($admin);
+        $customerB = Consignee::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Customer B',
+            'address' => 'Addr',
+        ]);
+
+        $lrA = $this->lrReadyForBulkMemo($admin, ['customer_id' => $customerA->id, 'consignor_id' => $customerA->id, 'consignee_id' => $consigneeA->id]);
+        $lrB = $this->lrReadyForBulkMemo($admin, ['customer_id' => $customerB->id, 'consignor_id' => $customerB->id, 'consignee_id' => $consigneeA->id]);
+
+        $this->actingAs($admin)->postJson(route('lorry_receipts.bulkPayment'), [
+            'memo_id' => 'MEMO-MIX',
+            'lr_ids' => [$lrA->id, $lrB->id],
+        ])->assertStatus(422)->assertJsonPath('success', false);
+
+        $lrWithMemo = $this->lrReadyForBulkMemo($admin, ['memo_id' => 'EXISTING']);
+        $lrFresh = $this->lrReadyForBulkMemo($admin);
+
+        $this->actingAs($admin)->postJson(route('lorry_receipts.bulkPayment'), [
+            'memo_id' => 'MEMO-NEW',
+            'lr_ids' => [$lrWithMemo->id, $lrFresh->id],
+        ])->assertStatus(422)->assertJsonPath('success', false);
+    }
+
+    public function test_lorry_receipt_details_includes_linked_lrs_data(): void
+    {
+        $admin = $this->makeAdmin();
+        [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
+        [, $truck] = $this->makeTruck($admin);
+        $linkedId = 42;
+
+        $lr1 = LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'lr_number' => 'LR-DET-1',
+            'gr_number' => 'GR-DET-1',
+            'invoice_number' => 'INV-DET-1',
+            'truck_id' => $truck->id,
+            'transporter_id' => $truck->transporter_id,
+            'reference_by' => $truck->transporter_id,
+            'gr_date' => now()->toDateString(),
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane',
+            'good_type' => 'Steel',
+            'weight' => 5,
+            'fr_rate' => 100,
+            'amount' => 500,
+            'delivery_status' => 'Pending',
+            'linked_lr_id' => $linkedId,
+        ]);
+
+        LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'lr_number' => 'LR-DET-2',
+            'gr_number' => 'GR-DET-2',
+            'invoice_number' => 'INV-DET-2',
+            'truck_id' => $truck->id,
+            'transporter_id' => $truck->transporter_id,
+            'reference_by' => $truck->transporter_id,
+            'gr_date' => now()->toDateString(),
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane',
+            'good_type' => 'Cement',
+            'weight' => 7,
+            'fr_rate' => 100,
+            'amount' => 700,
+            'delivery_status' => 'Pending',
+            'linked_lr_id' => $linkedId,
+        ]);
+
+        $response = $this->actingAs($admin)->getJson("/api/lorry-receipts/{$lr1->id}/details");
+
+        $response->assertOk()
+            ->assertJsonPath('lr_number', 'LR-DET-1')
+            ->assertJsonPath('linked_lrs_data.common.truck_number', $truck->truck_number)
+            ->assertJsonCount(2, 'linked_lrs_data.lrs');
+    }
+
+    public function test_lorry_receipts_datatable_returns_filtered_rows_and_action_buttons(): void
+    {
+        $admin = $this->makeAdmin();
+        [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
+        [, $truck] = $this->makeTruck($admin);
+
+        $admin->company->subscription->update(['lr_credits_remaining' => 0]);
+
+        $withBooking = $this->lrReadyForBulkMemo($admin, [
+            'lr_number' => 'LR-DT-FILTER',
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'truck_id' => $truck->id,
+            'transporter_id' => $truck->transporter_id,
+            'reference_by' => $truck->transporter_id,
+            'invoice_generated' => 1,
+            'delivery_status' => 'Delivered',
+        ]);
+
+        $headers = ['X-Requested-With' => 'XMLHttpRequest'];
+
+        $response = $this->actingAs($admin)->getJson('/lorry_receipts?'.http_build_query([
+            'draw' => 1,
+            'start' => 0,
+            'length' => 50,
+            'lr_number' => 'LR-DT-FILTER',
+            'customer_id' => $customer->id,
+            'truck_id' => $truck->id,
+            'transporter_id' => $truck->transporter_id,
+            'gr_date_from' => now()->subDay()->toDateString(),
+            'gr_date_to' => now()->addDay()->toDateString(),
+        ]), $headers);
+
+        $response->assertOk();
+        $row = collect($response->json('data'))->first(fn (array $item) => ($item['lr_number'] ?? null) === 'LR-DT-FILTER');
+        $this->assertNotNull($row);
+        $this->assertStringContainsString('Invoiced', $row['status_badge']);
+        $this->assertStringContainsString('freight_bookings/', $row['actions']);
+
+        LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'lr_number' => 'LR-DT-NO-HIRE',
+            'gr_number' => 'GR-DT-NO-HIRE',
+            'invoice_number' => 'INV-DT-NO-HIRE',
+            'truck_id' => $truck->id,
+            'transporter_id' => $truck->transporter_id,
+            'reference_by' => $truck->transporter_id,
+            'gr_date' => now()->toDateString(),
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane',
+            'good_type' => 'Steel',
+            'weight' => 1,
+            'fr_rate' => 100,
+            'amount' => 100,
+            'delivery_status' => 'Pending',
+            'freight_booking_id' => null,
+        ]);
+
+        $noHireResponse = $this->actingAs($admin)->getJson('/lorry_receipts?'.http_build_query([
+            'draw' => 2,
+            'start' => 0,
+            'length' => 50,
+            'lr_number' => 'LR-DT-NO-HIRE',
+        ]), $headers);
+
+        $noHireRow = collect($noHireResponse->json('data'))->first(fn (array $item) => ($item['lr_number'] ?? null) === 'LR-DT-NO-HIRE');
+        $this->assertNotNull($noHireRow);
+        $this->assertStringContainsString('Insufficient Credits', $noHireRow['actions']);
+    }
+
+    public function test_create_and_create_linked_redirect_when_plan_cannot_write(): void
+    {
+        $admin = $this->makeAdmin();
+        $admin->company->subscription->update([
+            'status' => 'active',
+            'ends_on' => now()->subDays(3)->toDateString(),
+        ]);
+
+        $this->actingAs($admin)->get('/lorry_receipts/create')
+            ->assertRedirect(route('lorry_receipts.index'))
+            ->assertSessionHas('error');
+
+        $this->actingAs($admin)->get('/lorry_receipts/create-linked')
+            ->assertRedirect(route('lorry_receipts.index'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_index_renders_selected_filter_entities(): void
+    {
+        $admin = $this->makeAdmin();
+        [$customer, , ] = $this->seedConsignees($admin);
+        [$transporter, $truck] = $this->makeTruck($admin);
+
+        $this->actingAs($admin)->get('/lorry_receipts?'.http_build_query([
+            'customer_id' => $customer->id,
+            'transporter_id' => $transporter->id,
+            'truck_id' => $truck->id,
+        ]))->assertOk()
+            ->assertViewHas('selectedCustomer')
+            ->assertViewHas('selectedTransporter')
+            ->assertViewHas('selectedTruck');
+    }
+
+    public function test_api_returns_lorry_receipts_for_customer(): void
+    {
+        $admin = $this->makeAdmin();
+        [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
+        [, $truck] = $this->makeTruck($admin);
+
+        $lr = LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'lr_number' => 'LR-CUST-API',
+            'gr_number' => 'GR-CUST-API',
+            'invoice_number' => 'INV-CUST-API',
+            'truck_id' => $truck->id,
+            'transporter_id' => $truck->transporter_id,
+            'reference_by' => $truck->transporter_id,
+            'gr_date' => now()->toDateString(),
+            'delivery_status' => 'Pending',
+            'source_city' => 'Ahmedabad',
+            'source_state' => 'Gujarat',
+            'destination_city' => 'Mumbai',
+            'destination_state' => 'Maharashtra',
+            'lane' => 'Lane 1',
+            'good_type' => 'Cement',
+            'weight' => 10,
+            'fr_rate' => 1000,
+            'amount' => 10000,
+            'transporter_type' => 'agency',
+        ]);
+
+        $otherCustomer = Consignee::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Other Customer',
+        ]);
+        LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $otherCustomer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'lr_number' => 'LR-OTHER-CUST',
+            'gr_date' => now()->toDateString(),
+            'delivery_status' => 'Pending',
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane',
+            'good_type' => 'Steel',
+            'weight' => 1,
+            'fr_rate' => 100,
+            'amount' => 100,
+            'transporter_type' => 'agency',
+        ]);
+
+        $response = $this->actingAs($admin)->getJson("/api/lorry-receipts/customer/{$customer->id}");
+
+        $response->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonFragment(['id' => $lr->id, 'lr_number' => 'LR-CUST-API']);
+    }
+
+    public function test_create_pages_load_selected_entities_from_old_input(): void
+    {
+        $admin = $this->makeAdmin();
+        $payload = $this->validPayload($admin);
+        $this->actingAs($admin)->post('/lorry_receipts', $payload);
+
+        $this->actingAs($admin)
+            ->from('/lorry_receipts/create')
+            ->post('/lorry_receipts', $payload)
+            ->assertRedirect(route('lorry_receipts.create'));
+
+        $this->actingAs($admin)
+            ->get('/lorry_receipts/create')
+            ->assertOk()
+            ->assertViewHas('consignees', fn ($consignees) => $consignees->count() === 3)
+            ->assertViewHas('trucks', fn ($trucks) => $trucks->count() === 1)
+            ->assertViewHas('payeeTransporter', fn ($t) => (int) $t->id === (int) $payload['transporter_id']);
+
+        $this->actingAs($admin)
+            ->from('/lorry_receipts/create-linked')
+            ->post('/lorry_receipts', $payload)
+            ->assertRedirect('/lorry_receipts/create-linked');
+
+        $this->actingAs($admin)
+            ->get('/lorry_receipts/create-linked')
+            ->assertOk()
+            ->assertViewHas('consignees', fn ($consignees) => $consignees->count() === 3)
+            ->assertViewHas('trucks', fn ($trucks) => $trucks->count() === 1);
+    }
+
+    public function test_lorry_receipts_datatable_column_search_filters_by_customer_name(): void
+    {
+        $admin = $this->makeAdmin();
+        [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
+        [, $truck] = $this->makeTruck($admin);
+
+        LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'lr_number' => 'LR-COL-FILTER',
+            'gr_number' => 'GR-COL-FILTER',
+            'invoice_number' => 'INV-COL-FILTER',
+            'truck_id' => $truck->id,
+            'transporter_id' => $truck->transporter_id,
+            'reference_by' => $truck->transporter_id,
+            'gr_date' => now()->toDateString(),
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane',
+            'good_type' => 'Cement',
+            'weight' => 1,
+            'fr_rate' => 100,
+            'amount' => 100,
+            'delivery_status' => 'Pending',
+        ]);
+
+        $headers = ['X-Requested-With' => 'XMLHttpRequest'];
+        $response = $this->actingAs($admin)->getJson('/lorry_receipts?'.http_build_query([
+            'draw' => 1,
+            'start' => 0,
+            'length' => 50,
+            'columns' => [
+                2 => ['name' => 'customer_name', 'search' => ['value' => 'Customer A']],
+            ],
+        ]), $headers);
+
+        $response->assertOk();
+        $this->assertGreaterThanOrEqual(1, (int) $response->json('recordsFiltered'));
+        $this->assertStringContainsString('LR-COL-FILTER', json_encode($response->json('data')));
+    }
+
+    public function test_lorry_receipts_datatable_status_badges_cover_delivery_states(): void
+    {
+        $admin = $this->makeAdmin();
+        [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
+        [, $truck] = $this->makeTruck($admin);
+        $headers = ['X-Requested-With' => 'XMLHttpRequest'];
+
+        $statuses = [
+            'LR-ST-PEND' => 'Pending',
+            'LR-ST-DEL' => 'Delivered',
+            'LR-ST-CANC' => 'Cancelled',
+            'LR-ST-PROG' => 'In-Progress',
+        ];
+
+        foreach ($statuses as $lrNumber => $status) {
+            LorryReceipt::create([
+                'company_id' => $admin->company_id,
+                'customer_id' => $customer->id,
+                'consignor_id' => $consignor->id,
+                'consignee_id' => $consignee->id,
+                'lr_number' => $lrNumber,
+                'gr_number' => 'GR-'.$lrNumber,
+                'invoice_number' => 'INV-'.$lrNumber,
+                'truck_id' => $truck->id,
+                'transporter_id' => $truck->transporter_id,
+                'reference_by' => $truck->transporter_id,
+                'gr_date' => now()->toDateString(),
+                'source_city' => 'A',
+                'source_state' => 'B',
+                'destination_city' => 'C',
+                'destination_state' => 'D',
+                'lane' => 'Lane',
+                'good_type' => 'Cement',
+                'weight' => 1,
+                'fr_rate' => 100,
+                'amount' => 100,
+                'delivery_status' => $status,
+            ]);
+        }
+
+        foreach ($statuses as $lrNumber => $status) {
+            $response = $this->actingAs($admin)->getJson('/lorry_receipts?'.http_build_query([
+                'draw' => 1,
+                'start' => 0,
+                'length' => 10,
+                'lr_number' => $lrNumber,
+            ]), $headers);
+
+            $response->assertOk();
+            $row = collect($response->json('data'))->first(fn (array $item) => ($item['lr_number'] ?? null) === $lrNumber);
+            $this->assertNotNull($row);
+            $this->assertStringContainsString($status, $row['status_badge']);
+        }
+    }
+
+    public function test_lorry_receipt_action_shows_plan_expired_when_subscription_read_only(): void
+    {
+        $admin = $this->makeAdmin();
+        $admin->company->subscription->update([
+            'status' => 'expired',
+            'ends_on' => now()->subDays(2)->toDateString(),
+        ]);
+        [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
+        [, $truck] = $this->makeTruck($admin);
+
+        LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'lr_number' => 'LR-PLAN-EXP',
+            'gr_number' => 'GR-PLAN-EXP',
+            'invoice_number' => 'INV-PLAN-EXP',
+            'truck_id' => $truck->id,
+            'transporter_id' => $truck->transporter_id,
+            'reference_by' => $truck->transporter_id,
+            'gr_date' => now()->toDateString(),
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane',
+            'good_type' => 'Cement',
+            'weight' => 1,
+            'fr_rate' => 100,
+            'amount' => 100,
+            'delivery_status' => 'Pending',
+            'freight_booking_id' => null,
+        ]);
+
+        $response = $this->actingAs($admin)->getJson('/lorry_receipts?'.http_build_query([
+            'draw' => 1,
+            'start' => 0,
+            'length' => 10,
+            'lr_number' => 'LR-PLAN-EXP',
+        ]), ['X-Requested-With' => 'XMLHttpRequest']);
+
+        $response->assertOk();
+        $row = collect($response->json('data'))->first();
+        $this->assertStringContainsString('Plan Expired', $row['actions'] ?? '');
     }
 }

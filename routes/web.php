@@ -264,15 +264,15 @@ Route::middleware(['role:admin,super_admin', 'company.context', 'subscription.ac
         Route::get('voucher_payments/create', [VoucherPaymentController::class, 'create'])->name('voucher_payments.create');
         Route::post('voucher_payments', [VoucherPaymentController::class, 'store'])->name('voucher_payments.store');
 
+        // Bulk / status updates (static paths before route model binding)
+        Route::post('voucher_payments/bulk-update', [VoucherPaymentController::class, 'bulkUpdateStatus'])->name('voucher_payments.bulkUpdateStatus');
+        Route::post('voucher_payments/bulk-payment', [VoucherPaymentController::class, 'bulkPayment'])->name('voucher_payments.bulkPayment');
+        Route::put('voucher_payments/update-status', [VoucherPaymentController::class, 'updateStatus'])->name('voucher_payments.update_status');
+
         // Edit / Update / Delete
         Route::get('voucher_payments/{voucher_payment}/edit', [VoucherPaymentController::class, 'edit'])->name('voucher_payments.edit');
         Route::put('voucher_payments/{voucher_payment}', [VoucherPaymentController::class, 'update'])->name('voucher_payments.update');
         Route::delete('voucher_payments/{voucher_payment}', [VoucherPaymentController::class, 'destroy'])->name('voucher_payments.destroy');
-
-        // Bulk / status updates
-        Route::post('voucher_payments/bulk-update', [VoucherPaymentController::class, 'bulkUpdateStatus'])->name('voucher_payments.bulkUpdateStatus');
-        Route::post('voucher_payments/bulk-payment', [VoucherPaymentController::class, 'bulkPayment'])->name('voucher_payments.bulkPayment');
-        Route::put('voucher_payments/update-status', [VoucherPaymentController::class, 'updateStatus'])->name('voucher_payments.update_status');
     });
 
     // Admin + Moderator: read-only access (index, show, daily report)
@@ -283,13 +283,17 @@ Route::middleware(['role:admin,super_admin', 'company.context', 'subscription.ac
     });
 
     // Driver CRUD
-    Route::get('/drivers/data', [DriverController::class, 'getDriversData'])->name('drivers.data');
-    Route::post('/drivers/bulk-upload', [DriverController::class, 'bulkUpload'])
-    ->name('drivers.bulkUpload');
-
-Route::get('/drivers/bulk-upload-template', [DriverController::class, 'bulkUploadTemplate'])
-    ->name('drivers.bulkUploadTemplate');
-    Route::resource('drivers', DriverController::class)->except(['show']);
+    Route::middleware(['role:admin,moderator,super_admin', 'company.context', 'subscription.active'])->group(function () {
+        Route::get('/drivers/data', [DriverController::class, 'getDriversData'])->name('drivers.data');
+        Route::post('/drivers/bulk-upload', [DriverController::class, 'bulkUpload'])
+            ->name('drivers.bulkUpload');
+        Route::get('/drivers/bulk-upload-template', [DriverController::class, 'bulkUploadTemplate'])
+            ->name('drivers.bulkUploadTemplate');
+        Route::resource('drivers', DriverController::class)->only(['index', 'create', 'store']);
+    });
+    Route::middleware(['role:admin,super_admin', 'company.context', 'subscription.active'])->group(function () {
+        Route::resource('drivers', DriverController::class)->only(['edit', 'update', 'destroy']);
+    });
 
     // Master Routes
     Route::prefix('master')->name('master.')->group(function () {

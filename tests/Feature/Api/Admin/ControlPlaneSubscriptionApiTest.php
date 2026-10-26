@@ -6,9 +6,11 @@ use App\Models\Company;
 use App\Models\CompanySubscription;
 use App\Models\SubscriptionEvent;
 use App\Models\SubscriptionPayment;
+use App\Services\SubscriptionCheckoutService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
+use Mockery;
 use Tests\TestCase;
 
 class ControlPlaneSubscriptionApiTest extends TestCase
@@ -320,5 +322,98 @@ class ControlPlaneSubscriptionApiTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJson(['message' => 'No changes to save.']);
+    }
+
+    public function test_index_filters_with_q_parameter(): void
+    {
+        Company::create(['name' => 'North Logistics', 'contact_person' => 'Amit']);
+        Company::create(['name' => 'South Cargo', 'contact_person' => 'Vijay']);
+
+        $headers = $this->signedHeaders();
+        $response = $this->get('/api/admin/subscriptions?q=South', $headers);
+
+        $response->assertOk();
+        $this->assertCount(1, $response->json('data'));
+        $this->assertSame('South Cargo', $response->json('data.0.name'));
+    }
+
+    public function test_record_offline_payment_returns_payment_payload(): void
+    {
+        $company = Company::create(['name' => 'Offline Pay Co']);
+        $payment = SubscriptionPayment::create([
+            'company_id' => $company->id,
+            'type' => 'addon',
+            'status' => 'completed',
+            'subtotal' => 1000,
+            'promo_discount' => 0,
+            'gst_amount' => 180,
+            'total_amount' => 1180,
+        ]);
+
+        $mock = Mockery::mock(SubscriptionCheckoutService::class);
+        $mock->shouldReceive('recordOfflinePurchase')
+            ->once()
+            ->andReturn($payment);
+        $this->app->instance(SubscriptionCheckoutService::class, $mock);
+
+        $payload = [
+            'purchase_type' => 'addon',
+            'addon_branches' => 1,
+            'reference' => 'NEFT-001',
+        ];
+        $raw = json_encode($payload);
+        $headers = $this->signedHeaders($raw);
+
+        $response = $this->withHeaders($headers)
+            ->postJson("/api/admin/subscriptions/{$company->id}/offline-payment", $payload);
+
+        $response->assertOk()
+            ->assertJsonPath('payment.id', $payment->id)
+            ->assertJsonStructure(['subscription']);
+    }
+
+    public function test_record_offline_payment_returns_422_when_checkout_blocked(): void
+    {
+        $company = Company::create(['name' => 'Blocked Checkout Co']);
+
+        $mock = Mockery::mock(SubscriptionCheckoutService::class);
+        $mock->shouldReceive('recordOfflinePurchase')
+            ->once()
+            ->andThrow(new \InvalidArgumentException('Checkout is not available.'));
+        $this->app->instance(SubscriptionCheckoutService::class, $mock);
+
+        $payload = [
+            'purchase_type' => 'renewal',
+            'addon_branches' => 0,
+            'addon_users' => 0,
+        ];
+        $raw = json_encode($payload);
+        $headers = $this->signedHeaders($raw);
+
+        $response = $this->withHeaders($headers)
+            ->postJson("/api/admin/subscriptions/{$company->id}/offline-payment", $payload);
+
+        $response->assertStatus(422)
+            ->assertJson(['message' => 'Checkout is not available.']);
+    }
+
+    public function test_patch_creates_subscription_when_company_has_none(): void
+    {
+        $company = Company::create(['name' => 'No Sub Co']);
+
+        $payload = ['included_branches' => 4];
+        $raw = json_encode($payload);
+        $headers = $this->signedHeaders($raw);
+
+        $response = $this->withHeaders($headers)
+            ->patchJson("/api/admin/subscriptions/{$company->id}", $payload);
+
+        $response->assertOk()
+            ->assertJsonPath('subscription.included_branches', 4);
+
+        $this->assertDatabaseHas('company_subscriptions', [
+            'company_id' => $company->id,
+            'included_branches' => 4,
+        ]);
     }
 }

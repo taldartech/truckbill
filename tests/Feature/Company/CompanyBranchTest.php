@@ -545,6 +545,54 @@ class CompanyBranchTest extends TestCase
         $respUpdateHO->assertSessionHasErrors(['head_office']);
     }
 
+    public function test_branch_store_rejects_invalid_contact_and_foreign_company(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $owned = $this->createCompanyFor($super);
+        $otherSuper = $this->makeSuperAdmin();
+        $foreign = $this->createCompanyFor($otherSuper);
+
+        $this->actingAs($super)->from(route('branches.create'))->post('/branches', [
+            'company_id' => $owned->id,
+            'branch_name' => 'Bad Contact',
+            'branch_contact_number' => '123',
+            'head_office' => false,
+        ])->assertRedirect(route('branches.create'))
+            ->assertSessionHasErrors(['branch_contact_number']);
+
+        $this->actingAs($super)->post('/branches', [
+            'company_id' => $foreign->id,
+            'branch_name' => 'Foreign Branch',
+            'head_office' => false,
+        ])->assertForbidden();
+    }
+
+    public function test_branch_update_rejects_duplicate_contact_number(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($super);
+
+        Branch::create([
+            'company_id' => $company->id,
+            'branch_name' => 'First',
+            'branch_contact_number' => '9876543210',
+            'head_office' => true,
+        ]);
+        $second = Branch::create([
+            'company_id' => $company->id,
+            'branch_name' => 'Second',
+            'branch_contact_number' => '9123456789',
+            'head_office' => false,
+        ]);
+
+        $this->actingAs($super)->put("/branches/{$second->id}", [
+            'company_id' => $company->id,
+            'branch_name' => 'Second',
+            'branch_contact_number' => '9876543210',
+            'head_office' => false,
+        ])->assertSessionHasErrors(['branch_contact_number']);
+    }
+
     public function test_branch_destroy_requires_remark_and_soft_deletes(): void
     {
         $super = $this->makeSuperAdmin();

@@ -10,6 +10,7 @@ use App\Models\Driver;
 use App\Models\State;
 use App\Models\Transporter;
 use App\Models\TransporterMaster;
+use App\Models\Truck;
 use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -125,6 +126,54 @@ class Select2SearchTest extends TestCase
         $resultTexts = collect($response->json('results'))->pluck('text')->implode(' ');
         $this->assertStringContainsString('Owner Alpha (OWNR)', $resultTexts);
         $this->assertStringNotContainsString('Owner Other', $resultTexts);
+    }
+
+    public function test_trucks_search_returns_select2_shape_and_company_scoped_results(): void
+    {
+        $admin = $this->makeAdmin();
+        $otherAdmin = $this->makeAdmin();
+
+        $transporter = Transporter::factory()->forCompany($admin->company_id)->create([
+            'mobile_number' => '9555555555',
+            'declaration_given' => false,
+            'tds_percentage' => 20,
+            'total_trucks' => 0,
+            'advance_amount' => 0,
+        ]);
+
+        $otherTransporter = Transporter::factory()->forCompany($otherAdmin->company_id)->create([
+            'mobile_number' => '9444444444',
+            'declaration_given' => false,
+            'tds_percentage' => 20,
+            'total_trucks' => 0,
+            'advance_amount' => 0,
+        ]);
+
+        Truck::create([
+            'transporter_id' => $transporter->id,
+            'truck_number' => 'GJ11TRUCK1',
+            'truck_type' => 'Flatbed',
+        ]);
+
+        Truck::create([
+            'transporter_id' => $otherTransporter->id,
+            'truck_number' => 'GJ11TRUCK2',
+            'truck_type' => 'Flatbed',
+        ]);
+
+        $response = $this->actingAs($admin)->get('/api/trucks/search?q=GJ11TRUCK&limit=20');
+
+        $response->assertOk()
+            ->assertJsonStructure([
+                'results' => [
+                    '*' => ['id', 'text'],
+                ],
+                'pagination' => ['more'],
+            ]);
+
+        $resultTexts = collect($response->json('results'))->pluck('text')->implode(' ');
+        $this->assertStringContainsString('GJ11TRUCK1', $resultTexts);
+        $this->assertStringNotContainsString('GJ11TRUCK2', $resultTexts);
     }
 
     public function test_agencies_search_includes_short_name_in_brackets(): void
@@ -326,5 +375,82 @@ class Select2SearchTest extends TestCase
         $this->assertContains('Vikas Trading Co (UniqueVikasNagar)', $texts);
         $this->assertContains('Plain Name Ltd', $texts);
         $this->assertNotContains('Vikas Other Co', $texts);
+    }
+
+    public function test_drivers_search_returns_empty_results_for_blank_query(): void
+    {
+        $admin = $this->makeAdmin();
+
+        $this->actingAs($admin)
+            ->get('/api/drivers/search?q=')
+            ->assertOk()
+            ->assertJson([
+                'results' => [],
+                'pagination' => ['more' => false],
+            ]);
+    }
+
+    public function test_voucher_transporters_search_uses_super_admin_company_session(): void
+    {
+        $admin = $this->makeAdmin();
+        $super = User::factory()->create([
+            'user_role_id' => 2,
+            'company_id' => null,
+        ]);
+
+        $master = TransporterMaster::create([
+            'name' => 'Session Scoped Owner',
+            'pan_number' => 'PANSESS001',
+        ]);
+        Transporter::factory()->forCompany($admin->company_id)->create([
+            'transporter_master_id' => $master->id,
+            'short_name' => 'SCOPE',
+            'mobile_number' => '9111111111',
+            'is_owner' => 1,
+        ]);
+
+        $otherAdmin = $this->makeAdmin();
+        Transporter::factory()->forCompany($otherAdmin->company_id)->create([
+            'transporter_master_id' => TransporterMaster::create([
+                'name' => 'Other Company Owner',
+                'pan_number' => 'PANOTHER001',
+            ])->id,
+            'short_name' => 'OTHER',
+            'mobile_number' => '9222222222',
+            'is_owner' => 1,
+        ]);
+
+        $response = $this->actingAs($super)
+            ->withSession(['super_admin_company_id' => $admin->company_id])
+            ->get('/api/transporters/search?q=Session');
+
+        $response->assertOk();
+        $texts = collect($response->json('results'))->pluck('text')->all();
+        $this->assertContains('Session Scoped Owner (Owner)', $texts);
+        $this->assertNotContains('Other Company Owner (Owner)', $texts);
+    }
+
+    public function test_agencies_search_supports_pagination_more_flag(): void
+    {
+        $admin = $this->makeAdmin();
+
+        for ($i = 1; $i <= 3; $i++) {
+            $master = TransporterMaster::create([
+                'name' => "Paginated Agency {$i}",
+                'pan_number' => 'PAG'.str_pad((string) $i, 7, '0', STR_PAD_LEFT),
+            ]);
+            Transporter::factory()->forCompany($admin->company_id)->create([
+                'transporter_master_id' => $master->id,
+                'short_name' => "PA{$i}",
+                'mobile_number' => '933333333'.$i,
+                'is_owner' => 0,
+            ]);
+        }
+
+        $response = $this->actingAs($admin)->get('/api/agencies/search?page=1&limit=2');
+
+        $response->assertOk()
+            ->assertJsonPath('pagination.more', true);
+        $this->assertCount(2, $response->json('results'));
     }
 }

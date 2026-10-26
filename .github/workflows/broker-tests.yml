@@ -1,0 +1,71 @@
+name: TruckBill Broker Tests
+
+on:
+  push:
+    branches: [main, stable, development, testcase]
+  pull_request:
+    branches: [main, stable, development]
+
+concurrency:
+  group: broker-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  phpunit:
+    name: PHPUnit (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, sqlite3, pdo_sqlite, bcmath, zip, gd
+          coverage: xdebug
+          ini-values: memory_limit=1G
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-${{ matrix.php }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare Laravel env
+        run: |
+          php -r "file_exists('.env') || copy('.env.example', '.env');"
+          php artisan key:generate --force --no-interaction
+
+      - name: Run PHPUnit
+        run: php -d memory_limit=1G vendor/bin/phpunit
+
+      - name: Critical coverage gate
+        if: matrix.php == '8.4'
+        run: |
+          php -d memory_limit=1G -d xdebug.mode=coverage vendor/bin/phpunit \
+            -c phpunit.critical.xml \
+            --coverage-text \
+            --coverage-clover=coverage-critical.xml
+
+      - name: Upload critical coverage artifact
+        if: matrix.php == '8.4' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-critical-clover
+          path: coverage-critical.xml
+          if-no-files-found: ignore

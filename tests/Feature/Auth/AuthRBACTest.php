@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\Company;
+use App\Models\Consignee;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Notifications\ResetPasswordNotification;
@@ -31,6 +32,33 @@ class AuthRBACTest extends TestCase
             'user_role_id' => $role->id,
             'company_id' => $company->id,
         ]);
+    }
+
+    public function test_login_form_is_accessible_to_guests(): void
+    {
+        $this->get(route('login'))->assertOk()->assertViewIs('auth.login');
+    }
+
+    public function test_forgot_password_form_is_accessible_to_guests(): void
+    {
+        $this->get(route('password.request'))->assertOk()->assertViewIs('auth.forgot-password');
+    }
+
+    public function test_reset_password_form_renders_with_token(): void
+    {
+        $this->get(route('password.reset', ['token' => 'sample-reset-token']))
+            ->assertOk()
+            ->assertViewIs('auth.reset-password');
+    }
+
+    public function test_authenticated_user_can_view_change_password_form(): void
+    {
+        $user = $this->createUserWithRole('admin');
+
+        $this->actingAs($user)
+            ->get(route('password.change'))
+            ->assertOk()
+            ->assertViewIs('auth.changepassword');
     }
 
     public function test_user_can_login_with_valid_credentials(): void
@@ -262,7 +290,6 @@ class AuthRBACTest extends TestCase
     public function test_login_blocks_user_when_company_is_blocked(): void
     {
         $user = $this->createUserWithRole('admin', true);
-
         $response = $this->from('/login')->post('/login', [
             'email' => $user->email,
             'password' => 'password',
@@ -270,6 +297,69 @@ class AuthRBACTest extends TestCase
 
         $response->assertRedirect('/login');
         $response->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
+    public function test_login_blocks_individually_blocked_user_with_reason(): void
+    {
+        $user = $this->createUserWithRole('admin');
+        $user->update([
+            'is_blocked' => true,
+            'block_reason' => 'Manual suspension',
+        ]);
+
+        $response = $this->from('/login')->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/login');
+        $response->assertSessionHasErrors(['email' => 'Your account is locked. Reason: Manual suspension']);
+        $this->assertGuest();
+    }
+
+    public function test_customer_login_sets_portal_consignee_session(): void
+    {
+        $role = UserRole::firstOrCreate(['name' => 'customer']);
+        $company = Company::create(['name' => 'Portal Co']);
+        $consignee = Consignee::create([
+            'company_id' => $company->id,
+            'name' => 'Portal Party',
+            'address' => 'Main Road',
+        ]);
+
+        $customer = User::factory()->create([
+            'user_role_id' => $role->id,
+            'company_id' => null,
+            'password' => bcrypt('password'),
+        ]);
+        $customer->consignees()->attach($consignee->id);
+
+        $response = $this->post('/login', [
+            'email' => $customer->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/dashboard');
+        $this->assertSame($consignee->id, session('portal_consignee_id'));
+    }
+
+    public function test_customer_login_without_consignee_assignment_is_rejected(): void
+    {
+        $role = UserRole::firstOrCreate(['name' => 'customer']);
+        $orphan = User::factory()->create([
+            'user_role_id' => $role->id,
+            'company_id' => null,
+            'password' => bcrypt('password'),
+        ]);
+
+        $response = $this->from('/login')->post('/login', [
+            'email' => $orphan->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/login');
+        $response->assertSessionHasErrors(['email' => 'Your account has no customer access assigned. Please contact support.']);
         $this->assertGuest();
     }
 

@@ -402,5 +402,135 @@ class UserManagementTest extends TestCase
         $this->assertNull($linkedUser->blocked_by);
         $this->assertNull($linkedUser->session_token);
     }
+
+    public function test_master_admin_datatable_global_search_filters_super_admins(): void
+    {
+        $admin = $this->makeMasterAdmin();
+        $this->makeSuperAdmin(['name' => 'Searchable Super', 'email' => 'searchable@example.com']);
+        $this->makeSuperAdmin(['name' => 'Other Person', 'email' => 'other-super@example.com']);
+
+        $response = $this
+            ->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/users?'.http_build_query([
+                'draw' => 1,
+                'start' => 0,
+                'length' => 10,
+                'search' => ['value' => 'Searchable'],
+            ]));
+
+        $response->assertOk();
+        $this->assertCount(1, $response->json('data'));
+        $this->assertSame('searchable@example.com', $response->json('data.0.email'));
+        $this->assertSame(1, $response->json('recordsFiltered'));
+    }
+
+    public function test_master_admin_datatable_column_search_and_sorting(): void
+    {
+        $admin = $this->makeMasterAdmin();
+        $this->makeSuperAdmin(['name' => 'Zulu Admin', 'email' => 'zulu@example.com']);
+        $this->makeSuperAdmin(['name' => 'Alpha Admin', 'email' => 'alpha@example.com']);
+
+        $columnSearch = $this
+            ->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/users?'.http_build_query([
+                'draw' => 1,
+                'start' => 0,
+                'length' => 10,
+                'columns' => [
+                    ['search' => ['value' => '']],
+                    ['search' => ['value' => 'Alpha']],
+                    ['search' => ['value' => '']],
+                    ['search' => ['value' => '']],
+                    ['search' => ['value' => '']],
+                ],
+            ]));
+
+        $columnSearch->assertOk();
+        $this->assertCount(1, $columnSearch->json('data'));
+        $this->assertSame('alpha@example.com', $columnSearch->json('data.0.email'));
+
+        $emailColumnSearch = $this
+            ->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/users?'.http_build_query([
+                'draw' => 1,
+                'start' => 0,
+                'length' => 10,
+                'columns' => [
+                    ['search' => ['value' => '']],
+                    ['search' => ['value' => '']],
+                    ['search' => ['value' => 'zulu@']],
+                    ['search' => ['value' => '']],
+                    ['search' => ['value' => '']],
+                ],
+            ]));
+
+        $emailColumnSearch->assertOk();
+        $this->assertCount(1, $emailColumnSearch->json('data'));
+        $this->assertSame('zulu@example.com', $emailColumnSearch->json('data.0.email'));
+
+        foreach ([0 => 'id', 1 => 'name', 2 => 'email', 3 => 'role', 4 => 'company'] as $column => $label) {
+            $sorted = $this
+                ->actingAs($admin)
+                ->withHeader('X-Requested-With', 'XMLHttpRequest')
+                ->get('/users?'.http_build_query([
+                    'draw' => 1,
+                    'start' => 0,
+                    'length' => 10,
+                    'order' => [['column' => $column, 'dir' => 'asc']],
+                ]));
+
+            $sorted->assertOk();
+            $this->assertCount(2, $sorted->json('data'), "Expected two rows when sorting by {$label}");
+        }
+
+        $defaultSort = $this
+            ->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/users?'.http_build_query([
+                'draw' => 1,
+                'start' => 0,
+                'length' => 10,
+                'order' => [['column' => 99, 'dir' => 'asc']],
+            ]));
+        $defaultSort->assertOk();
+        $this->assertCount(2, $defaultSort->json('data'));
+    }
+
+    public function test_master_admin_datatable_includes_block_and_unblock_actions(): void
+    {
+        $admin = $this->makeMasterAdmin();
+        $this->makeSuperAdmin(['email' => 'blocked@example.com', 'is_blocked' => true]);
+        $this->makeSuperAdmin(['email' => 'active@example.com', 'is_blocked' => false]);
+
+        $response = $this
+            ->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/users?draw=1&start=0&length=10');
+
+        $response->assertOk();
+        $actionsByEmail = collect($response->json('data'))
+            ->mapWithKeys(fn (array $row) => [$row['email'] => $row['actions']]);
+
+        $this->assertStringContainsString('/users/', $actionsByEmail['blocked@example.com']);
+        $this->assertStringContainsString('unblock', $actionsByEmail['blocked@example.com']);
+        $this->assertStringContainsString('block', $actionsByEmail['active@example.com']);
+    }
+
+    public function test_block_and_unblock_require_reason(): void
+    {
+        $master = $this->makeMasterAdmin();
+        $target = $this->makeSuperAdmin();
+
+        $this->actingAs($master)
+            ->post(route('users.block', $target), [])
+            ->assertSessionHasErrors('reason');
+
+        $this->actingAs($master)
+            ->post(route('users.unblock', $target), [])
+            ->assertSessionHasErrors('reason');
+    }
 }
 

@@ -469,6 +469,32 @@ class InvoiceTest extends TestCase
         $this->actingAs($admin)->get("/invoices/{$invoice->id}/edit")->assertOk();
     }
 
+    public function test_invoice_edit_derives_memo_ids_from_lorry_receipts_when_memo_ids_empty(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1, $lr2] = $this->seedLrs($admin, $customer);
+
+        $invoice = Invoice::create([
+            'manual_invoice_number' => 'INV-DERIVE-MEMO',
+            'invoice_type' => 'Forward',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 300,
+            'base_amount' => 300,
+            'net_amount' => 300,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'memo_ids' => [],
+            'lr_ids' => [$lr1->id, $lr2->id],
+        ]);
+
+        $this->actingAs($admin)
+            ->get("/invoices/{$invoice->id}/edit")
+            ->assertOk()
+            ->assertViewHas('selectedMemoIds', fn ($memoIds) => array_map('intval', $memoIds) === [1001, 1002]);
+    }
+
     public function test_admin_can_update_invoice_memo_selection(): void
     {
         $admin = $this->makeUser('admin');
@@ -812,6 +838,249 @@ class InvoiceTest extends TestCase
         $this->assertEquals(0, (float) $matched['remaining_amount_value']);
         $this->assertStringContainsString('10,000.00', $matched['paid_amount_formatted']);
         $this->assertStringContainsString('0.00', $matched['remaining_amount_formatted']);
+    }
+
+    public function test_get_customer_memos_marks_current_invoice_memos_selected(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1, $lr2, $lr3] = array_merge($this->seedLrs($admin, $customer), [
+            LorryReceipt::create([
+                'company_id' => $admin->company_id,
+                'customer_id' => $customer->id,
+                'consignor_id' => $customer->id,
+                'consignee_id' => $customer->id,
+                'lr_number' => 'LR-INV-3',
+                'memo_id' => 1003,
+                'invoice_generated' => 1,
+                'delivery_status' => 'Pending',
+                'source_city' => 'A',
+                'source_state' => 'B',
+                'destination_city' => 'C',
+                'destination_state' => 'D',
+                'lane' => 'Lane 3',
+                'good_type' => 'Steel',
+                'weight' => 1,
+                'fr_rate' => 100,
+                'amount' => 100,
+                'gr_date' => now()->toDateString(),
+            ]),
+        ]);
+
+        $invoice = Invoice::create([
+            'manual_invoice_number' => 'INV-MEMO-API',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 200,
+            'base_amount' => 200,
+            'net_amount' => 200,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'memo_ids' => [$lr1->memo_id, $lr2->memo_id],
+            'lr_ids' => [$lr1->id, $lr2->id],
+        ]);
+
+        $response = $this->actingAs($admin)->get("/invoices/memos/{$customer->id}?invoice_id={$invoice->id}");
+
+        $response->assertOk();
+        $selected = collect($response->json())->where('selected', true)->pluck('id')->all();
+        $this->assertEqualsCanonicalizing([$lr1->memo_id, $lr2->memo_id], $selected);
+        $this->assertFalse(collect($response->json())->contains(fn ($row) => $row['id'] === $lr3->memo_id));
+    }
+
+    public function test_get_all_customer_memos_returns_distinct_memo_ids(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        $this->seedLrs($admin, $customer);
+
+        $response = $this->actingAs($admin)->get("/invoices/all-memos/{$customer->id}");
+
+        $response->assertOk()->assertJson([1001, 1002]);
+    }
+
+    public function test_check_manual_invoice_number_uniqueness_endpoint(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        $invoice = $this->createInvoice($admin, $customer, 'INV-UNIQ-1');
+
+        $this->actingAs($admin)->postJson('/api/check-manual-invoice-number-uniqueness', [
+            'manual_invoice_number' => '',
+        ])->assertOk()->assertJsonPath('valid', true);
+
+        $this->actingAs($admin)->postJson('/api/check-manual-invoice-number-uniqueness', [
+            'manual_invoice_number' => 'INV-UNIQ-1',
+        ])->assertOk()->assertJsonPath('valid', false);
+
+        $this->actingAs($admin)->postJson('/api/check-manual-invoice-number-uniqueness', [
+            'manual_invoice_number' => 'INV-UNIQ-1',
+            'invoice_id' => $invoice->id,
+        ])->assertOk()->assertJsonPath('valid', true);
+
+        $this->actingAs($admin)->postJson('/api/check-manual-invoice-number-uniqueness', [
+            'manual_invoice_number' => 'INV-UNIQ-NEW',
+        ])->assertOk()->assertJsonPath('valid', true);
+    }
+
+    public function test_get_payments_returns_totals_for_invoice(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+
+        $invoice = Invoice::create([
+            'manual_invoice_number' => 'INV-PAY-LIST',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 1000,
+            'base_amount' => 1000,
+            'net_amount' => 1000,
+            'payment_status' => 'partial',
+            'company_id' => $admin->company_id,
+            'lr_ids' => [$lr1->id],
+        ]);
+
+        $invoice->payments()->create([
+            'mode' => 'cash',
+            'amount' => 400,
+            'payment_date' => now()->toDateString(),
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('invoices.payments.index', $invoice));
+
+        $response->assertOk();
+        $payload = $response->json();
+        $this->assertEquals(400.0, (float) $payload['paid_amount']);
+        $this->assertEquals(600.0, (float) $payload['remaining_amount']);
+        $this->assertCount(1, $payload['payments']);
+    }
+
+    public function test_get_invoices_data_includes_memo_numbers_column(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+        $lr1->update(['memo_created_at' => now()]);
+
+        $invoice = Invoice::create([
+            'manual_invoice_number' => 'INV-MEMO-DT',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 100,
+            'base_amount' => 100,
+            'net_amount' => 100,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'memo_ids' => [$lr1->memo_id],
+            'lr_ids' => [$lr1->id],
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/invoices?draw=1&start=0&length=25');
+
+        $response->assertOk();
+        $row = collect($response->json('data'))->firstWhere('id', $invoice->id);
+        $this->assertNotNull($row);
+        $this->assertStringContainsString((string) $lr1->memo_id, $row['memo_numbers']);
+    }
+
+    public function test_invoice_create_redirects_when_subscription_cannot_write(): void
+    {
+        $admin = $this->makeUser('admin');
+        $admin->company->subscription->update([
+            'status' => 'expired',
+            'ends_on' => now()->subDays(2)->toDateString(),
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('invoices.create'))
+            ->assertRedirect(route('invoices.index'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_invoice_create_prefills_customer_select_from_old_input(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+
+        $response = $this->withSession(['_old_input' => ['customer_id' => $customer->id]])
+            ->actingAs($admin)
+            ->get(route('invoices.create'));
+
+        $response->assertOk()
+            ->assertViewHas('invoiceCustomerSelectPrefill', fn ($prefill) => (int) $prefill['id'] === (int) $customer->id);
+    }
+
+    public function test_invoice_index_ajax_applies_payment_status_and_manual_number_filters(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        $paid = $this->createInvoice($admin, $customer, 'INV-FILTER-PAID');
+        $paid->update(['payment_status' => 'paid', 'manual_invoice_number' => 'MAN-PAID-1']);
+        $pending = $this->createInvoice($admin, $customer, 'INV-FILTER-PEND');
+        $pending->update(['payment_status' => 'pending', 'manual_invoice_number' => 'MAN-PEND-1']);
+
+        $response = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/invoices?'.http_build_query([
+                'payment_status' => 'paid',
+                'manual_invoice_number' => 'MAN-PAID',
+            ]));
+
+        $response->assertOk();
+        $ids = collect($response->json('data'))->pluck('id')->all();
+        $this->assertContains($paid->id, $ids);
+        $this->assertNotContains($pending->id, $ids);
+    }
+
+    public function test_destroy_requires_remark_and_only_latest_invoice(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+
+        $older = Invoice::create([
+            'manual_invoice_number' => 'INV-OLD',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 100,
+            'base_amount' => 100,
+            'net_amount' => 100,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'lr_ids' => [$lr1->id],
+        ]);
+
+        $latest = Invoice::create([
+            'manual_invoice_number' => 'INV-LATEST',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 200,
+            'base_amount' => 200,
+            'net_amount' => 200,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'lr_ids' => [$lr1->id],
+        ]);
+
+        $this->actingAs($admin)->from('/invoices')->delete("/invoices/{$latest->id}")
+            ->assertRedirect('/invoices')
+            ->assertSessionHasErrors('delete_remark');
+
+        $this->actingAs($admin)->from('/invoices')->delete("/invoices/{$older->id}", [
+            'delete_remark' => 'Wrong order',
+        ])->assertRedirect('/invoices')->assertSessionHas('error');
+
+        $this->actingAs($admin)->delete("/invoices/{$latest->id}", [
+            'delete_remark' => 'Entered by mistake',
+        ])->assertRedirect(route('invoices.index'))->assertSessionHas('success');
     }
 }
 

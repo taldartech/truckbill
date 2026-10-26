@@ -485,5 +485,40 @@ public function test_pan_active_is_required(): void
         $resFallback->assertOk();
         $this->assertEquals($master2->id, $resFallback->json('data.0.id'));
     }
+
+    public function test_state_and_city_must_belong_to_selected_country_and_state(): void
+    {
+        $masterAdmin = $this->makeUser('master_admin');
+        $india = Country::create(['name' => 'India', 'code' => 'IN']);
+        $nepal = Country::create(['name' => 'Nepal', 'code' => 'NP']);
+        $gujarat = State::create(['name' => 'Gujarat', 'code' => 'GJ', 'country_id' => $india->id]);
+        $kathmandu = State::create(['name' => 'Bagmati', 'code' => 'BA', 'country_id' => $nepal->id]);
+        $ahmedabad = City::create(['name' => 'Ahmedabad', 'state_id' => $gujarat->id, 'country_id' => $india->id]);
+
+        $this->actingAs($masterAdmin)
+            ->post(route('master.transporter-masters.store'), [
+                'name' => 'Geo Mismatch',
+                'pan_number' => 'ABCDE1234Z',
+                'pan_active' => '1',
+                'country_id' => $india->id,
+                'state_id' => $kathmandu->id,
+            ])
+            ->assertSessionHasErrors(['state_id']);
+
+        $this->actingAs($masterAdmin)
+            ->post(route('master.transporter-masters.store'), [
+                'name' => 'City Mismatch',
+                'pan_number' => 'FGHIJ5678Z',
+                'pan_active' => '1',
+                'country_id' => $india->id,
+                'state_id' => $gujarat->id,
+                'city_id' => City::create([
+                    'name' => 'Kathmandu City',
+                    'state_id' => $kathmandu->id,
+                    'country_id' => $nepal->id,
+                ])->id,
+            ])
+            ->assertSessionHasErrors(['city_id']);
+    }
 }
 

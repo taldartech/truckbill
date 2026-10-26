@@ -97,11 +97,21 @@ class BackupDatabaseToS3 extends Command
             $databaseName,
         ];
 
-        $process = new Process($command, null, [
-            'MYSQL_PWD' => $password,
-        ]);
-        $process->setTimeout(300);
-        $process->run();
+        $previousMysqlPassword = getenv('MYSQL_PWD');
+        putenv('MYSQL_PWD='.$password);
+
+        try {
+            // Inherit the process environment (including PATH) so tests can inject a fake mysqldump.
+            $process = new Process($command);
+            $process->setTimeout(300);
+            $process->run();
+        } finally {
+            if ($previousMysqlPassword === false) {
+                putenv('MYSQL_PWD');
+            } else {
+                putenv('MYSQL_PWD='.$previousMysqlPassword);
+            }
+        }
 
         if (! $process->isSuccessful()) {
             throw new \RuntimeException('Database dump failed: '.$process->getErrorOutput());

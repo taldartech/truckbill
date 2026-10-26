@@ -147,6 +147,19 @@ class MasterPanelSummaryDashboardTest extends TestCase
         $response->assertViewHas('kpis', fn (array $kpis) => $kpis['total_lrs'] === 1);
     }
 
+    public function test_invalid_date_range_returns_validation_errors(): void
+    {
+        $master = $this->makeMasterAdmin();
+
+        $response = $this->actingAs($master)->from(route('master.summary-dashboard'))->get(route('master.summary-dashboard', [
+            'from_date' => '2026-10-20',
+            'to_date' => '2026-10-01',
+        ]));
+
+        $response->assertRedirect(route('master.summary-dashboard'));
+        $response->assertSessionHasErrors(['to_date']);
+    }
+
     public function test_company_filter_intersects_with_super_admin_selection(): void
     {
         $master = $this->makeMasterAdmin();

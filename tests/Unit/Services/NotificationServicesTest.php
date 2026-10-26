@@ -23,7 +23,9 @@ use App\Services\Notifications\EwayBillNotificationService;
 use App\Services\Notifications\FreightBookingNotificationService;
 use App\Services\Notifications\InvoiceNotificationService;
 use App\Services\Notifications\LorryReceiptNotificationService;
+use App\Services\Notifications\TransporterOnboardingNotificationService;
 use App\Services\Notifications\VoucherPaymentNotificationService;
+use InvalidArgumentException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
@@ -723,6 +725,30 @@ class NotificationServicesTest extends TestCase
         $vpNoCo = new VoucherPayment(['company_id' => null, 'payment_status' => 'paid']);
         $service->notifyForCurrentStatus($vpNoCo);
 
+        $this->assertTrue(true);
+    }
+
+    public function test_transporter_onboarding_notification_sends_or_skips_missing_template(): void
+    {
+        $mailSender = Mockery::mock(EmailTemplateMailSender::class);
+        $service = new TransporterOnboardingNotificationService($mailSender);
+
+        $mailSender->shouldReceive('sendByKey')
+            ->once()
+            ->withArgs(function ($key, $email, $vars, $meta) {
+                return $key === 'TRANSPORTER_ACCOUNT_CREATED'
+                    && $email === 'driver@transporter.test'
+                    && $vars['name'] === 'Driver One'
+                    && $meta['source'] === 'transporter_account_created';
+            });
+
+        $service->sendAccountCreated('driver@transporter.test', 'Driver One');
+
+        $mailSender->shouldReceive('sendByKey')
+            ->once()
+            ->andThrow(new InvalidArgumentException('Template missing'));
+
+        $service->sendAccountCreated('silent@transporter.test', 'Silent User');
         $this->assertTrue(true);
     }
 }

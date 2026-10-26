@@ -4,6 +4,7 @@ namespace Tests\Feature\Drivers;
 
 use App\Imports\DriverImport;
 use App\Models\Company;
+use App\Models\CompanySubscription;
 use App\Models\Driver;
 use App\Models\User;
 use App\Models\UserRole;
@@ -26,6 +27,8 @@ class DriverTest extends TestCase
         UserRole::create(['id' => 1, 'name' => 'master_admin']);
         UserRole::create(['id' => 2, 'name' => 'super_admin']);
         UserRole::create(['id' => 3, 'name' => 'admin']);
+        UserRole::create(['id' => 4, 'name' => 'moderator']);
+        UserRole::create(['id' => 5, 'name' => 'accountant']);
     }
 
     protected function makeAdmin(): User
@@ -37,8 +40,40 @@ class DriverTest extends TestCase
             'is_blocked' => false,
         ]);
 
+        CompanySubscription::create([
+            'company_id' => $company->id,
+            'status' => 'active',
+            'starts_on' => now()->subMonth(),
+            'ends_on' => now()->addYear(),
+            'included_branches' => 2,
+            'users_per_branch' => 3,
+        ]);
+
         return User::factory()->create([
             'user_role_id' => 3,
+            'company_id' => $company->id,
+        ]);
+    }
+
+    protected function makeUserWithRole(string $role): User
+    {
+        $roleId = UserRole::where('name', $role)->value('id');
+        $company = Company::create([
+            'name' => 'Company '.$role,
+            'user_id' => null,
+            'gst_slab' => config('payments.gst_slabs')[0],
+            'is_blocked' => false,
+        ]);
+
+        CompanySubscription::create([
+            'company_id' => $company->id,
+            'status' => 'active',
+            'starts_on' => now()->subMonth(),
+            'ends_on' => now()->addYear(),
+        ]);
+
+        return User::factory()->create([
+            'user_role_id' => $roleId,
             'company_id' => $company->id,
         ]);
     }
@@ -557,5 +592,42 @@ class DriverTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHas('error', 'Unable to delete driver. Please try again.');
+    }
+
+    public function test_accountant_cannot_access_driver_routes(): void
+    {
+        $accountant = $this->makeUserWithRole('accountant');
+
+        $this->actingAs($accountant)->get('/drivers')->assertForbidden();
+        $this->actingAs($accountant)->get('/drivers/create')->assertForbidden();
+        $this->actingAs($accountant)->post('/drivers', [
+            'name' => 'Blocked',
+            'mobile' => '9000000000',
+        ])->assertForbidden();
+    }
+
+    public function test_moderator_can_view_and_create_but_cannot_destroy_drivers(): void
+    {
+        $moderator = $this->makeUserWithRole('moderator');
+        $driver = Driver::create([
+            'name' => 'Mod Driver',
+            'mobile' => '9111111111',
+            'company_id' => $moderator->company_id,
+        ]);
+
+        $this->actingAs($moderator)->get('/drivers')->assertOk();
+        $this->actingAs($moderator)->post('/drivers', [
+            'name' => 'New Mod Driver',
+            'mobile' => '9222222222',
+        ])->assertRedirect();
+
+        $this->actingAs($moderator)
+            ->delete("/drivers/{$driver->id}", ['delete_remark' => 'Should be forbidden'])
+            ->assertForbidden();
+    }
+
+    public function test_guest_is_redirected_from_drivers(): void
+    {
+        $this->get('/drivers')->assertRedirect(route('login'));
     }
 }

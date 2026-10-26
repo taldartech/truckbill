@@ -904,7 +904,7 @@ class VoucherPaymentController extends Controller
                     'remark' => $remark,
                     'payment_status' => $payment_status,
                     'company_id' => $company_id,
-                    'pump_id' => $validated['pump_id'],
+                    'pump_id' => $validated['pump_id'] ?? null,
                     'date' => $validated['date'],
                 ]);
 
