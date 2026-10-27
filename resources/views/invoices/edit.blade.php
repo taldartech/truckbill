@@ -245,6 +245,226 @@
                 position: static;
             }
         }
+
+        @media (max-width: 767.98px) {
+            .invoice-edit-page {
+                margin-top: 0.5rem !important;
+                margin-bottom: 1.5rem !important;
+                padding-left: 0.6rem !important;
+                padding-right: 0.6rem !important;
+            }
+
+            .invoice-edit-page .row.g-4 {
+                --bs-gutter-y: 0.75rem;
+                --bs-gutter-x: 0.75rem;
+            }
+
+            .invoice-edit-page .row.g-3 {
+                --bs-gutter-y: 0.6rem;
+                --bs-gutter-x: 0.6rem;
+            }
+
+            .invoice-edit-hero {
+                padding: 0.65rem 0.85rem !important;
+                border-radius: 0.5rem;
+                margin-bottom: 0.75rem !important;
+            }
+
+            .invoice-edit-hero h4 {
+                font-size: 1.05rem;
+                margin-bottom: 0.25rem !important;
+            }
+
+            .invoice-edit-hero .badge {
+                font-size: 0.68rem;
+                padding: 0.2rem 0.45rem;
+            }
+
+            .invoice-edit-hero .btn {
+                padding: 0.22rem 0.5rem;
+                font-size: 0.75rem;
+            }
+
+            .invoice-edit-panel {
+                border-radius: 0.5rem;
+                margin-bottom: 0.75rem !important;
+            }
+
+            .invoice-edit-panel__header {
+                padding: 0.45rem 0.75rem;
+            }
+
+            .invoice-edit-panel__body {
+                padding: 0.75rem 0.85rem;
+            }
+
+            /* Section header (Bill details, Memos) */
+            .invoice-edit-section-title {
+                gap: 0.5rem;
+                margin-bottom: 0.65rem;
+            }
+
+            .invoice-edit-section-title__icon {
+                width: 1.85rem;
+                height: 1.85rem;
+                font-size: 0.95rem;
+                border-radius: 0.4rem;
+            }
+
+            .invoice-edit-section-title h5 {
+                font-size: 0.88rem;
+            }
+
+            .invoice-edit-section-title .small {
+                font-size: 0.7rem;
+            }
+
+            .invoice-edit-section-title .badge {
+                font-size: 0.68rem;
+                padding: 0.18rem 0.4rem;
+            }
+
+            /* Form labels & inputs in edit panel (Bill details) */
+            .invoice-edit-page .form-label {
+                font-size: 0.74rem !important;
+                font-weight: 600 !important;
+                margin-bottom: 0.15rem !important;
+            }
+
+            .invoice-edit-page .form-control {
+                font-size: 0.78rem !important;
+                padding: 0.28rem 0.5rem !important;
+                min-height: 32px !important;
+                height: 32px !important;
+                border-radius: 0.375rem !important;
+                line-height: 1.3 !important;
+            }
+
+            .invoice-edit-page input[type="date"].form-control {
+                font-size: 0.75rem !important;
+                padding: 0.2rem 0.35rem !important;
+            }
+
+            .invoice-edit-page .small.text-muted,
+            .invoice-edit-page .form-text,
+            .invoice-edit-page .invalid-feedback,
+            #manual-invoice-number-feedback {
+                font-size: 0.67rem !important;
+                margin-top: 0.15rem;
+                line-height: 1.35;
+            }
+
+            /* Buttons inside panel (Save changes & Cancel) */
+            .invoice-edit-panel .btn {
+                padding: 0.38rem 0.65rem;
+                font-size: 0.82rem;
+                border-radius: 0.45rem;
+            }
+
+            /* Invoice overview stats */
+            .invoice-edit-stat {
+                font-size: 0.76rem;
+                padding: 0.3rem 0;
+            }
+
+            .invoice-edit-memo-toolbar {
+                font-size: 0.72rem;
+                margin-bottom: 0.4rem;
+            }
+
+            .invoice-edit-memo-toolbar .btn {
+                padding: 0.15rem 0.4rem;
+                font-size: 0.68rem;
+            }
+
+            .invoice-edit-memo-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                gap: 0.4rem;
+            }
+
+            .invoice-edit-memo-item {
+                padding: 0.35rem 0.5rem;
+                border-radius: 0.45rem;
+            }
+
+            .invoice-edit-memo-item .form-check-label {
+                font-size: 0.74rem;
+            }
+
+            .invoice-edit-memo-item__hint {
+                font-size: 0.64rem;
+                margin-top: 0.08rem;
+                padding-left: 1.45rem;
+            }
+
+            #lrDetailsSection .invoice-edit-panel__header {
+                padding: 0.35rem 0.55rem;
+            }
+
+            #lrDetailsSection .invoice-edit-panel__header h6 {
+                font-size: 0.76rem;
+            }
+
+            #lrDetailsSection .invoice-edit-panel__header #lrSummaryMeta {
+                font-size: 0.64rem !important;
+            }
+
+            #lrDetailsSection .invoice-edit-panel__header .badge {
+                font-size: 0.64rem;
+                padding: 0.15rem 0.35rem;
+            }
+
+            .invoice-edit-lr-block {
+                border-radius: 0.45rem;
+                margin-bottom: 0.45rem;
+            }
+
+            .invoice-edit-lr-block__head {
+                padding: 0.35rem 0.55rem;
+            }
+
+            .invoice-edit-lr-block__head .fw-semibold {
+                font-size: 0.74rem;
+            }
+
+            .invoice-edit-lr-block__head .small {
+                font-size: 0.64rem;
+            }
+
+            .invoice-edit-lr-block__head .badge {
+                font-size: 0.66rem;
+                padding: 0.15rem 0.35rem;
+            }
+
+            .invoice-edit-lr-table th {
+                font-size: 0.6rem !important;
+                padding: 0.2rem 0.3rem !important;
+                letter-spacing: 0.02em;
+            }
+
+            .invoice-edit-lr-table td {
+                font-size: 0.68rem !important;
+                padding: 0.2rem 0.3rem !important;
+                white-space: nowrap;
+            }
+
+            .invoice-edit-route {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.12rem;
+                flex-wrap: nowrap;
+                white-space: nowrap;
+            }
+
+            .invoice-edit-route__city {
+                font-size: 0.6rem !important;
+                padding: 0.04rem 0.25rem !important;
+            }
+
+            .invoice-edit-route i {
+                font-size: 0.65rem;
+            }
+        }
     </style>
 @endpush
 
@@ -353,6 +573,16 @@
                                             <i class="bi bi-lock me-1"></i>Bill date is locked when payment is not pending.
                                         </div>
                                     @endif
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="due_date" class="form-label fw-semibold">Due date</label>
+                                    <input type="date" id="due_date" name="due_date"
+                                        class="form-control @error('due_date') is-invalid @enderror"
+                                        value="{{ old('due_date', $invoice->due_date ? \Illuminate\Support\Carbon::parse($invoice->due_date)->format('Y-m-d') : '') }}">
+                                    <div class="small mt-1 text-muted">Optional. Leave blank to use {{ \App\Models\Invoice::DEFAULT_CREDIT_DAYS }} days from the bill date.</div>
+                                    @error('due_date')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                         </div>

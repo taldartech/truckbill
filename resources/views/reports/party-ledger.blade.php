@@ -20,17 +20,17 @@
             <form method="GET" action="{{ route('reports.party-ledger') }}" id="searchForm"
                 class="tb-report-customer-select2-form" onsubmit="validateForm(event)">
                 <div class="row mb-2 g-2 align-items-end">
-                    <div class="col-md-3">
-                        <label class="form-label">Start Date <span class="text-danger">*</span></label>
-                        <input type="date" name="start_date" class="form-control" value="{{ $startDate }}" required>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label small mb-1">Start Date <span class="text-danger">*</span></label>
+                        <input type="date" name="start_date" class="form-control form-control-sm" value="{{ $startDate }}" required>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">End Date <span class="text-danger">*</span></label>
-                        <input type="date" name="end_date" class="form-control" value="{{ $endDate }}" required>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label small mb-1">End Date <span class="text-danger">*</span></label>
+                        <input type="date" name="end_date" class="form-control form-control-sm" value="{{ $endDate }}" required>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Customer <span class="text-danger">*</span></label>
-                        <select name="customer_id" id="party_ledger_customer_id" class="form-select js-party-ledger-customer-select2"
+                    <div class="col-6 col-md-3">
+                        <label class="form-label small mb-1">Customer <span class="text-danger">*</span></label>
+                        <select name="customer_id" id="party_ledger_customer_id" class="form-select form-select-sm js-party-ledger-customer-select2"
                             required>
                             <option value=""></option>
                             @if ($presetCustomer)
@@ -38,13 +38,13 @@
                             @endif
                         </select>
                     </div>
-                    
-                    <div class="col-md-3 text-end d-flex align-items-end justify-content-end gap-2">
-                        <button type="submit" class="btn btn-brand-primary">
-                            <i class="bi bi-search"></i> Search
+
+                    <div class="col-6 col-md-3 text-end d-flex align-items-end justify-content-end gap-1 gap-sm-2 mt-2 mt-md-0">
+                        <button type="submit" class="btn btn-brand-primary btn-sm btn-report-search" title="Search">
+                            <i class="bi bi-search"></i><span class="d-none d-sm-inline ms-1">Search</span>
                         </button>
-                        <a href="{{ route('reports.party-ledger') }}" class="btn btn-secondary">
-                            <i class="bi bi-arrow-clockwise"></i> Reset
+                        <a href="{{ route('reports.party-ledger') }}" class="btn btn-secondary btn-sm btn-report-reset" title="Reset">
+                            <i class="bi bi-arrow-clockwise"></i><span class="d-none d-sm-inline ms-1">Reset</span>
                         </a>
                     </div>
                 </div>
@@ -68,21 +68,23 @@
                         <h3 class="card-title mb-0">Party Ledger</h3>
                     </div>
                     <div class="d-flex">
-                        <a class="btn btn-warning ms-2"
+                        <a class="btn btn-warning btn-sm ms-2"
                             href="{{ route('reports.party-ledger-export', [
                                 'start_date' => $startDate,
                                 'end_date' => $endDate,
                                 'customer_id' => $customerId,
                             ]) }}">
-                            <i class="bi bi-file-earmark-spreadsheet"></i> Export
+                            <i class="bi bi-file-earmark-spreadsheet"></i> <span class="d-none d-sm-inline ms-1">Export</span>
                         </a>
                     </div>
                 </div>
             </div>
-            <div class="card-body" style="overflow-x: auto;">
-                @include('reports.exports.party-ledger-table', [
-                    'ledgerRows' => $ledgerRows,
-                ])
+            <div class="card-body">
+                <div class="table-responsive">
+                    @include('reports.exports.party-ledger-table', [
+                        'ledgerRows' => $ledgerRows,
+                    ])
+                </div>
             </div>
             @if ($lrs instanceof \Illuminate\Pagination\LengthAwarePaginator)
                 <div class="card-body pt-0 d-flex justify-content-end">

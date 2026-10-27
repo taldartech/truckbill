@@ -29,6 +29,13 @@ use App\Models\TruckType;
 
 class LorryReceiptController extends Controller
 {
+    /**
+     * Status options for the bilty list filter; "Invoiced" matches the list badge rather than delivery_status.
+     *
+     * @var list<string>
+     */
+    public const LISTING_STATUSES = ['Pending', 'In-Progress', 'Delivered', 'Cancelled', 'Invoiced'];
+
     public function __construct(
         private readonly LorryReceiptNotificationService $lrNotificationService,
         private readonly LorryReceiptCalculationService $lrCalculationService,
@@ -194,6 +201,16 @@ class LorryReceiptController extends Controller
             $query->when($request->filled('truck_id'), function ($query) use ($request) {
                 $query->where('lorry_receipts.truck_id', $request->truck_id);
             });
+            $query->when(in_array($request->delivery_status, self::LISTING_STATUSES, true), function ($query) use ($request) {
+                if ($request->delivery_status === 'Invoiced') {
+                    $query->where('lorry_receipts.invoice_generated', 1);
+
+                    return;
+                }
+
+                $query->where('lorry_receipts.delivery_status', $request->delivery_status)
+                    ->where('lorry_receipts.invoice_generated', 0);
+            });
 
             return DataTables::of($query)
                 ->orderColumn('customer_name', 'lr_dt_customer.name $1')
@@ -327,23 +344,31 @@ class LorryReceiptController extends Controller
             $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-action-edit" title="Edit" data-bs-toggle="tooltip"'.$confirmMsg.'>';
             $buttons .= '<i class="bi bi-pencil"></i></a>';
         }
+if ($lorryReceipt->delivery_status === 'Pending' && $canActAsAdmin) {
+    $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id).$listingQuerySuffix;
 
-        if ($lorryReceipt->delivery_status === 'Pending' && $canActAsAdmin) {
-            $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
-            $confirmMsg = $lorryReceipt->linked_lr_id
-                ? 'This will delete all linked good receipts in this group. Are you sure?'
-                : 'Are you sure you want to delete this good receipt (bilty)?';
-            $buttons .= '<form action="'.$deleteUrl.'" method="POST" onsubmit="return confirm(\''.$confirmMsg.'\')">';
-            $buttons .= csrf_field().method_field('DELETE');
-            $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete" data-bs-toggle="tooltip">';
-            $buttons .= '<i class="bi bi-trash"></i></button></form>';
-        }
+    $buttons .= '<form action="'.$deleteUrl.'" method="POST" class="delete-lr-form">';
+    $buttons .= csrf_field().method_field('DELETE');
 
-        $buttons .= '</div>';
+    $buttons .= '<button type="button" class="btn btn-sm btn-icon btn-action-delete delete-lr-btn"
+        title="Delete"
+        data-bs-toggle="tooltip"
+        data-id="'.e($lorryReceipt->id).'"
+        data-lr-number="'.e($lorryReceipt->lr_number).'"
+        data-truck-number="'.e($lorryReceipt->truck->truck_number ?? 'N/A').'"
+        data-customer="'.e($lorryReceipt->customer->name ?? 'N/A').'"
+        data-consignor="'.e($lorryReceipt->consignor->name ?? 'N/A').'"
+        data-consignee="'.e($lorryReceipt->consignee->name ?? 'N/A').'">
+        <i class="bi bi-trash"></i>
+    </button>';
 
-        return $buttons;
-    }
+    $buttons .= '</form>';
+}
 
+$buttons .= '</div>';
+
+return $buttons;
+}
     public function create(): View|RedirectResponse
     {
         if ($redirect = $this->redirectIfPlanExpired()) {
@@ -502,8 +527,11 @@ class LorryReceiptController extends Controller
         try {
             $validated = $request->validate([
                 'memo_id' => 'required|string',
+                'memo_created_at' => 'nullable|date|before_or_equal:now',
                 'lr_ids' => 'required|array',
                 'lr_ids.*' => 'integer|exists:lorry_receipts,id',
+            ], [
+                'memo_created_at.before_or_equal' => 'The memo date & time cannot be in the future.',
             ]);
 
             $companyId = Auth::user()->company_id;
@@ -580,6 +608,11 @@ class LorryReceiptController extends Controller
                 foreach ($lorryReceipts as $lr) {
                     $oldDeliveryStatus = $lr->delivery_status;
                     $lr->memo_id = $validated['memo_id'];
+                    if (! empty($validated['memo_created_at'])) {
+                        $lr->memo_created_at = Carbon::parse($validated['memo_created_at']);
+                    } elseif (empty($lr->memo_created_at)) {
+                        $lr->memo_created_at = now();
+                    }
                     $lr->delivery_status = 'Delivered';
                     $lr->save();
 
@@ -703,23 +736,39 @@ class LorryReceiptController extends Controller
                         $amountInput
                     );
 
+                    $sourceCity = $item['source_city'] ?? null;
+                    $sourceState = $item['source_state'] ?? null;
+                    if (empty($sourceCity) && ! empty($item['consignor_id'])) {
+                        $consignorParty = Consignee::with(['city', 'state'])->find($item['consignor_id']);
+                        $sourceCity = $consignorParty?->city?->name ?? 'N/A';
+                        $sourceState = $consignorParty?->state?->name ?? 'N/A';
+                    }
+
+                    $destCity = $item['destination_city'] ?? null;
+                    $destState = $item['destination_state'] ?? null;
+                    if (empty($destCity) && ! empty($item['consignee_id'])) {
+                        $consigneeParty = Consignee::with(['city', 'state'])->find($item['consignee_id']);
+                        $destCity = $consigneeParty?->city?->name ?? 'N/A';
+                        $destState = $consigneeParty?->state?->name ?? 'N/A';
+                    }
+
                     $data = [
                         'lr_number' => $item['lr_number'],
                         'gr_number' => $item['gr_number'],
                         'invoice_number' => $item['invoice_number'],
                         'customer_id' => $item['customer_id'],
                         'consignor_id' => $item['consignor_id'],
-                        'consignor_contact_number' => $item['consignor_contact_number'],
+                        'consignor_contact_number' => $item['consignor_contact_number'] ?? null,
                         'consignee_id' => $item['consignee_id'],
-                        'consignee_contact_number' => $item['consignee_contact_number'],
-                        'source_city' => $item['source_city'],
-                        'source_state' => $item['source_state'],
-                        'destination_city' => $item['destination_city'],
-                        'destination_state' => $item['destination_state'],
+                        'consignee_contact_number' => $item['consignee_contact_number'] ?? null,
+                        'source_city' => $sourceCity ?? 'N/A',
+                        'source_state' => $sourceState ?? 'N/A',
+                        'destination_city' => $destCity ?? 'N/A',
+                        'destination_state' => $destState ?? 'N/A',
                         'loading_station' => $item['loading_station'] ?? null,
                         'unloading_station' => $item['unloading_station'] ?? null,
-                        'lane' => $item['lane'],
-                        'good_type' => $item['good_type'],
+                        'lane' => $item['lane'] ?? null,
+                        'good_type' => $item['good_type'] ?? null,
                         'goods_value' => $item['goods_value'] ?? null,
                         'weight' => $item['weight'],
                         'unloading_weight' => $itemWeight,
@@ -751,7 +800,8 @@ class LorryReceiptController extends Controller
 
                 DB::commit();
 
-                return $this->redirectToLorryReceiptsIndex($request, 'success', 'Created '.count($created).' linked Good Receipts (Bilty) (Linked ID: '.$nextLinkedId.').');
+                return redirect()->route('lorry_receipts.index')
+                    ->with('success', 'Created '.count($created).' linked Good Receipts (Bilty) (Linked ID: '.$nextLinkedId.').');
             } catch (\Throwable $e) {
                 DB::rollBack();
                 throw $e;
@@ -861,7 +911,8 @@ class LorryReceiptController extends Controller
                 ->with('success', 'Good Receipt (Bilty) saved! Now create Good Hire (Lorry Hire).');
         }
 
-        return $this->redirectToLorryReceiptsIndex($request, 'success', 'Good Receipt (Bilty) created successfully!');
+        return redirect()->route('lorry_receipts.index')
+            ->with('success', 'Good Receipt (Bilty) created successfully!');
     }
 
     /**
@@ -1588,7 +1639,9 @@ class LorryReceiptController extends Controller
         // Add company_id to validated data
         $validated['company_id'] = $companyId;
 
-        $freightBooking = FreightBooking::find($lorry_receipt->freight_booking_id);
+        $freightBooking = $lorry_receipt->freight_booking_id
+            ? FreightBooking::find($lorry_receipt->freight_booking_id)
+            : FreightBooking::where('lr_id', $lorry_receipt->id)->first();
         if ($freightBooking) {
             if (! $freightBooking->canChangeTdsAmount() && isset($validated['transporter_id']) && $validated['transporter_id'] != $lorry_receipt->transporter_id) {
                 return redirect()->back()->withErrors([
@@ -1665,42 +1718,70 @@ class LorryReceiptController extends Controller
         }
     }
 
-    public function destroy(LorryReceipt $lorry_receipt): RedirectResponse
-    {
+    public function destroy(
+        Request $request,
+        LorryReceipt $lorry_receipt
+    ): RedirectResponse {
         if ($redirect = $this->redirectIfPlanExpired()) {
             return $redirect;
         }
+
+        $request->validate([
+            'delete_remark' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $deleteRemark = $request->input('delete_remark');
 
         $lorryReceiptsToDelete = $this->resolveLorryReceiptsForDeletion($lorry_receipt);
 
         if ($lorryReceiptsToDelete === null) {
             return redirect()->back()
-                ->with('error', 'Good receipt (bilty) can only be deleted when delivery status is Pending.');
+                ->with(
+                    'error',
+                    'Good receipt (bilty) can only be deleted when delivery status is Pending.'
+                );
         }
 
         try {
-            DB::transaction(function () use ($lorryReceiptsToDelete) {
+            $deletedBy = Auth::id();
+
+            DB::transaction(function () use (
+                $lorryReceiptsToDelete,
+                $deleteRemark,
+                $deletedBy
+            ) {
                 foreach ($lorryReceiptsToDelete as $lr) {
+                    $lr->deleted_by = $deletedBy;
+                    $lr->deleted_remark = $deleteRemark;
+                    $lr->save();
                     $lr->delete();
                 }
             });
 
             $message = $lorryReceiptsToDelete->count() > 1
-                ? $lorryReceiptsToDelete->count().' linked good receipts (bilty) and all associated data deleted successfully!'
+                ? $lorryReceiptsToDelete->count()
+                    . ' linked good receipts (bilty) and all associated data deleted successfully!'
                 : 'Good receipt (bilty) and all associated data deleted successfully!';
 
-            return $this->redirectToLorryReceiptsIndex(request(), 'success', $message);
+            return $this->redirectToLorryReceiptsIndex(
+                $request,
+                'success',
+                $message
+            );
+
         } catch (\Exception $e) {
-            Log::error('Error deleting lorry receipt: '.$e->getMessage());
+            Log::error(
+                'Error deleting lorry receipt: ' . $e->getMessage()
+            );
 
             return redirect()->back()
-                ->with('error', 'Error deleting good receipt (bilty). Please try again.');
+                ->with(
+                    'error',
+                    'Error deleting good receipt (bilty). Please try again.'
+                );
         }
     }
-
-    /**
-     * @return Collection<int, LorryReceipt>|null
-     */
+    
     private function resolveLorryReceiptsForDeletion(LorryReceipt $lorry_receipt): ?Collection
     {
         $companyId = $this->getCurrentCompanyId();

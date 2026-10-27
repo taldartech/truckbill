@@ -12,7 +12,9 @@ use App\Exports\MemoCopyExport;
 use App\Exports\PartyBillExport;
 use App\Exports\PendingInvoiceExport;
 use App\Exports\PendingMemoExport;
+use App\Exports\ProfitabilityReportExport;
 use App\Exports\PumpExport;
+use App\Exports\CustomerTDSExport;
 use App\Exports\ShortageDamageExport;
 use App\Exports\TDSExport;
 use App\Exports\TransporterMasterExport;
@@ -21,8 +23,10 @@ use App\Models\Branch;
 use App\Models\Company;
 use App\Models\CompanySetting;
 use App\Models\Consignee;
+use App\Models\EwayBill;
 use App\Models\FreightBooking;
 use App\Models\Invoice;
+use App\Models\InvoicePayment;
 use App\Models\LorryReceipt;
 use App\Models\PaymentMode;
 use App\Models\Pump;
@@ -167,8 +171,27 @@ if (! $startInput || ! $endInput) {
             if ($consignorId) {
                 $query->where('consignor_id', $consignorId);
             }
-            $query->orderBy('gr_date', 'asc');
-            $lrs = $query->paginate(self::REPORTS_PER_PAGE)->appends($request->query());
+            $sortBy = $request->input('sort_by', 'gr_date');
+            $sortOrder = $request->input('sort_order', 'desc');
+
+            $allowedSorts = [
+                'gr_date',
+                'lr_number',
+            ];
+
+            if (! in_array($sortBy, $allowedSorts, true)) {
+                $sortBy = 'gr_date';
+            }
+
+            if (! in_array($sortOrder, ['asc', 'desc'], true)) {
+                $sortOrder = 'desc';
+            }
+
+            $query->orderBy($sortBy, $sortOrder);
+
+            $lrs = $query
+                ->paginate(self::REPORTS_PER_PAGE)
+                ->appends($request->query());
         } else {
             $lrs = collect();
         }
@@ -199,6 +222,7 @@ if (! $startInput || ! $endInput) {
     public function tds(Request $request)
     {
         [$startDate, $endDate, $generated] = $this->normalizeDateRange($request);
+        $tab = $request->input('tab', 'payable');
 
         $user = Auth::user()->company_id;
         if ($generated) {
@@ -215,23 +239,42 @@ if (! $startInput || ! $endInput) {
                     ->whereColumn('lorry_receipts.id', 'freight_bookings.lr_id')
                     ->limit(1);
             }, 'asc');
-            $lrs = $query->paginate(self::REPORTS_PER_PAGE)->appends($request->query());
+            $lrs = $query->paginate(self::REPORTS_PER_PAGE, ['*'], 'payable_page')->appends($request->query());
+
+            $customerQuery = InvoicePayment::query()
+                ->with(['invoice.consignee', 'invoice.company'])
+                ->where('tds_amount', '>', 0)
+                ->whereBetween('payment_date', [$startDate, $endDate]);
+
+            if ($user) {
+                $customerQuery->whereHas('invoice', function ($q) use ($user) {
+                    $q->where('company_id', $user);
+                });
+            }
+            $customerPayments = $customerQuery->orderBy('payment_date', 'asc')
+                ->paginate(self::REPORTS_PER_PAGE, ['*'], 'receivable_page')
+                ->appends($request->query());
+
             $generated = true;
         } else {
             $lrs = collect();
+            $customerPayments = collect();
         }
 
-        return view('reports.tds', compact('lrs', 'startDate', 'endDate', 'generated'));
+        return view('reports.tds', compact('lrs', 'customerPayments', 'startDate', 'endDate', 'generated', 'tab'));
     }
 
     public function tds_export(Request $request)
     {
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
+        $tab = $request->input('tab', 'payable');
 
-        $export = Excel::download(new TDSExport($startDate, $endDate), 'tds_report.xlsx');
+        if ($tab === 'receivable') {
+            return Excel::download(new CustomerTDSExport($startDate, $endDate), 'customer_tds_receivable_report.xlsx');
+        }
 
-        return $export;
+        return Excel::download(new TDSExport($startDate, $endDate), 'tds_report.xlsx');
     }
 
     public function dispatch(Request $request)
@@ -239,6 +282,8 @@ if (! $startInput || ! $endInput) {
         [$startDate, $endDate, $generated] = $this->normalizeDateRange($request);
        
         $balanceAsOnDate = $request->input('balance_as_on_date');
+        $customerId = $request->filled('customer_id') ? $request->input('customer_id') : null;
+        $transporterId = $request->filled('transporter_id') ? $request->input('transporter_id') : null;
 
         $user = Auth::user()->company_id;
 
@@ -252,11 +297,26 @@ if (! $startInput || ! $endInput) {
                 'consignee',
                 'customer',
                 'truck',
+                'transporter',
             ])->whereBetween('gr_date', [$startDate, $endDate]);
 
             if ($user) {
                 $query->where('company_id', $user);
             }
+
+            if ($customerId) {
+                $query->where('customer_id', $customerId);
+            }
+
+            if ($transporterId) {
+                $query->where(function ($q) use ($transporterId) {
+                    $q->where('transporter_id', $transporterId)
+                        ->orWhereHas('freightBookings', function ($fb) use ($transporterId) {
+                            $fb->where('transporter_id', $transporterId);
+                        });
+                });
+            }
+
             $query->orderBy('gr_date', 'asc');
             $lrs = $query->paginate(self::REPORTS_PER_PAGE)->appends($request->query());
 
@@ -264,21 +324,43 @@ if (! $startInput || ! $endInput) {
             $lrs = collect();
         }
 
-        return view('reports.dispatch', compact('lrs', 'startDate', 'endDate', 'generated', 'balanceAsOnDate'));
+        $customers = $user
+            ? Consignee::where('company_id', $user)->orderBy('name')->get(['id', 'name'])
+            : collect();
+
+        $transporters = $user
+            ? Transporter::with('transporterMaster')
+                ->where('company_id', $user)
+                ->get()
+                ->sortBy(fn ($t) => strtolower($t->name ?? ''))
+                ->values()
+            : collect();
+
+        return view('reports.dispatch', compact(
+            'lrs',
+            'startDate',
+            'endDate',
+            'generated',
+            'balanceAsOnDate',
+            'customers',
+            'transporters',
+            'customerId',
+            'transporterId'
+        ));
     }
 
     public function dispatch_export(Request $request)
     {
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
-        
         $balanceAsOnDate = $request->input('balance_as_on_date');
+        $customerId = $request->filled('customer_id') ? $request->input('customer_id') : null;
+        $transporterId = $request->filled('transporter_id') ? $request->input('transporter_id') : null;
 
-      
         $export = Excel::download(
-         new DispatchExport($startDate, $endDate, $balanceAsOnDate),
-         'dispatch_report.xlsx'
-);
+            new DispatchExport($startDate, $endDate, $balanceAsOnDate, $customerId, $transporterId),
+            'dispatch_report.xlsx'
+        );
 
         return $export;
     }
@@ -439,12 +521,23 @@ if (! $startInput || ! $endInput) {
         $invoices = [];
 
         if ($generated) {
-            // First, get the LorryReceipts with their freight bookings and voucher payments
-            $query = FreightBooking::whereBetween('eway_bill_expiry', [$startDate, $endDate]);
-            if ($user) {
-                $query->where('company_id', $user);
-            }
-            $query->orderBy('eway_bill_expiry', 'asc');
+            $query = EwayBill::with([
+                'freightBooking.lr.truck',
+                'freightBooking.lr.consignor',
+                'freightBooking.lr.consignee',
+                'freightBooking.lr.transporter',
+                'freightBooking.transporter',
+                'freightBooking.voucherPayments',
+            ])
+            ->whereHas('freightBooking', function ($q) use ($user) {
+                if ($user) {
+                    $q->where('company_id', $user);
+                }
+                $q->where('is_cancelled', 0);
+            })
+            ->whereBetween('eway_bill_expiry', [$startDate, $endDate])
+            ->orderBy('eway_bill_expiry', 'asc');
+
             $frs = $query->paginate(self::REPORTS_PER_PAGE)->appends($request->query());
         } else {
             $frs = collect();
@@ -1584,4 +1677,378 @@ if (! $startInput || ! $endInput) {
 
         return Excel::download(new TransporterMasterExport($type), 'transporter_truck_owner_report.xlsx');
     }
+
+
+   public function profitability(Request $request)
+{
+    $companyId = Auth::user()->company_id;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Date Filters
+    |--------------------------------------------------------------------------
+    */
+    [$startDate, $endDate, $hasRange] = $this->normalizeDateRange($request);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Base Query
+    |--------------------------------------------------------------------------
+    */
+    $query = LorryReceipt::query()
+        ->with([
+            'customer',
+            'transporter.transporterMaster',
+            'truck',
+            'freightBookings.customAmounts',
+            'branch',
+        ])
+        ->where('company_id', $companyId)
+        ->whereDate('gr_date', '>=', $startDate)
+        ->whereDate('gr_date', '<=', $endDate)
+        ->whereHas('freightBookings');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Customer Filter
+    |--------------------------------------------------------------------------
+    */
+    if ($request->filled('customer_id')) {
+        $query->where(
+            'customer_id',
+            $request->input('customer_id')
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Transporter Filter
+    |--------------------------------------------------------------------------
+    */
+    if ($request->filled('transporter_id')) {
+        $query->where(
+            'transporter_id',
+            $request->input('transporter_id')
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Trip / LR Filter
+    |--------------------------------------------------------------------------
+    */
+    if ($request->filled('trip_id')) {
+        $query->where(
+            'id',
+            $request->input('trip_id')
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Vehicle Filter
+    |--------------------------------------------------------------------------
+    */
+    if ($request->filled('truck_id')) {
+        $query->where(
+            'truck_id',
+            $request->input('truck_id')
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Branch Filter
+    |--------------------------------------------------------------------------
+    */
+    if ($request->filled('branch_id')) {
+        $query->where(
+            'branch_id',
+            $request->input('branch_id')
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Status Filter
+    |--------------------------------------------------------------------------
+    */
+    if ($request->filled('status')) {
+        $query->where(
+            'delivery_status',
+            $request->input('status')
+        );
+    }
+
+    $allLrs = $query
+        ->orderByDesc('gr_date')
+        ->get();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Calculate Profitability
+    |--------------------------------------------------------------------------
+    */
+    $profitabilityRows = $allLrs->map(function ($lr) {
+
+        $freightBooking = $lr->freightBookings->first();
+
+        $revenue = (float) (
+            $lr->actual_amount
+            ?? $lr->amount
+            ?? 0
+        );
+
+       
+        $cost = $freightBooking
+            ? (float) $freightBooking->effectivePayableAmount()
+            : 0;
+
+        $profit = $revenue - $cost;
+        $margin = $revenue > 0
+            ? ($profit / $revenue) * 100
+            : 0;
+
+        return [
+            'lr' => $lr,
+
+            'trip' => $lr->lr_number,
+
+            'date' => $lr->gr_date,
+
+            'customer' => $lr->customer?->name ?? '-',
+
+            'customer_id' => $lr->customer_id,
+
+            'transporter' =>
+                $lr->transporter?->transporterMaster?->name
+                ?? $lr->transporter?->name
+                ?? '-',
+
+            'transporter_id' => $lr->transporter_id,
+
+            'vehicle' =>
+                $lr->truck?->truck_number
+                ?? '-',
+
+            'truck_id' => $lr->truck_id,
+
+            'revenue' => round($revenue, 2),
+
+            'cost' => round($cost, 2),
+
+            'profit' => round($profit, 2),
+
+            'margin' => round($margin, 2),
+
+            'status' => $lr->delivery_status ?? '-',
+        ];
+    });
+    
+    if ($request->filled('profit_loss')) {
+
+        if ($request->input('profit_loss') === 'profit') {
+
+            $profitabilityRows = $profitabilityRows
+                ->filter(function ($row) {
+                    return $row['profit'] > 0;
+                });
+
+        } elseif ($request->input('profit_loss') === 'loss') {
+
+            $profitabilityRows = $profitabilityRows
+                ->filter(function ($row) {
+                    return $row['profit'] < 0;
+                });
+        }
+
+        $profitabilityRows = $profitabilityRows->values();
+    }
+
+    
+    $totalRevenue = $profitabilityRows->sum('revenue');
+
+    $totalCost = $profitabilityRows->sum('cost');
+
+    $totalProfit = $totalRevenue - $totalCost;
+
+    $totalMargin = $totalRevenue > 0
+        ? ($totalProfit / $totalRevenue) * 100
+        : 0;
+
+    
+    $customerSummary = $profitabilityRows
+        ->groupBy('customer_id')
+        ->map(function ($rows) {
+
+            $revenue = $rows->sum('revenue');
+
+            $cost = $rows->sum('cost');
+
+            $profit = $revenue - $cost;
+
+            return [
+                'customer' => $rows->first()['customer'] ?? '-',
+
+                'trips' => $rows->count(),
+
+                'revenue' => round($revenue, 2),
+
+                'cost' => round($cost, 2),
+
+                'profit' => round($profit, 2),
+
+                'margin' => $revenue > 0
+                    ? round(($profit / $revenue) * 100, 2)
+                    : 0,
+            ];
+        })
+        ->values();
+
+    
+    $transporterSummary = $profitabilityRows
+        ->groupBy('transporter_id')
+        ->map(function ($rows) {
+
+            $revenue = $rows->sum('revenue');
+
+            $cost = $rows->sum('cost');
+
+            $profit = $revenue - $cost;
+
+            return [
+                'transporter' =>
+                    $rows->first()['transporter'] ?? '-',
+
+                'trips' => $rows->count(),
+
+                'revenue' => round($revenue, 2),
+
+                'cost' => round($cost, 2),
+
+                'profit' => round($profit, 2),
+
+                'margin' => $revenue > 0
+                    ? round(($profit / $revenue) * 100, 2)
+                    : 0,
+            ];
+        })
+        ->values();
+
+    
+    $currentPage = LengthAwarePaginator::resolveCurrentPage();
+
+    $perPage = self::REPORTS_PER_PAGE;
+
+    $currentItems = $profitabilityRows
+        ->slice(
+            ($currentPage - 1) * $perPage,
+            $perPage
+        )
+        ->values();
+
+    $lrs = new LengthAwarePaginator(
+        $currentItems,
+        $profitabilityRows->count(),
+        $perPage,
+        $currentPage,
+        [
+            'path' => $request->url(),
+            'query' => $request->query(),
+        ]
+    );
+
+    $customers = Consignee::where(
+        'company_id',
+        $companyId
+    )
+        ->orderBy('name')
+        ->get();
+
+   $transporters = Transporter::with('transporterMaster')
+    ->where('company_id', $companyId)
+    ->get();
+
+    $trucks = Truck::where(
+        'company_id',
+        $companyId
+    )
+        ->orderBy('truck_number')
+        ->get();
+
+    $trips = LorryReceipt::where(
+        'company_id',
+        $companyId
+    )
+        ->whereNotNull('lr_number')
+        ->orderByDesc('gr_date')
+        ->get([
+            'id',
+            'lr_number',
+            'gr_date',
+        ]);
+
+    $branches = Branch::where(
+        'company_id',
+        $companyId
+    )
+        ->orderBy('branch_name')
+        ->get();
+
+    return view('reports.profitability', [
+        'lrs' => $lrs,
+        'rows' => $currentItems,
+
+        /*
+         * Dates
+         */
+        'startDate' => $startDate,
+        'endDate' => $endDate,
+
+        /*
+         * Dropdowns
+         */
+        'customers' => $customers,
+        'transporters' => $transporters,
+        'trucks' => $trucks,
+        'trips' => $trips,
+        'branches' => $branches,
+
+        /*
+         * Overall summary
+         */
+        'totalRevenue' => round($totalRevenue, 2),
+        'totalCost' => round($totalCost, 2),
+        'totalProfit' => round($totalProfit, 2),
+        'totalMargin' => round($totalMargin, 2),
+
+        /*
+         * Customer / Transporter summaries
+         */
+        'customerSummary' => $customerSummary,
+        'transporterSummary' => $transporterSummary,
+    ]);
+}
+
+public function profitability_export(Request $request)
+{
+    $companyId = Auth::user()->company_id;
+
+    [$startDate, $endDate, $hasRange] = $this->normalizeDateRange($request);
+
+    return Excel::download(
+        new \App\Exports\ProfitabilityReportExport(
+            $companyId,
+            $startDate,
+            $endDate,
+            $request->input('customer_id'),
+            $request->input('transporter_id'),
+            $request->input('truck_id'),
+            $request->input('status'),
+            $request->input('profit_loss'),
+            $request->input('branch_id')
+        ),
+        'profitability_report.xlsx'
+    );
+}
 }

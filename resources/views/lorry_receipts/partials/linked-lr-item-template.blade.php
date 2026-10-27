@@ -119,18 +119,18 @@
                 <div class="linked-lr-subsection__label">Freight Details</div>
                 <div class="lrf-grid lrf-grid--7">
                     <div class="lrf-pf">
-                        <label class="lrf-pf__lbl">Goods Type<span class="lrf-pf__req">*</span></label>
-                        <div class="input-group flex-nowrap">
-                            <select class="form-select select2 goods-type" required>
-                                <option value="">Select Goods Type</option>
-                                @foreach ($goodsTypes as $goodsType)
-                                    <option value="{{ $goodsType->name }}">{{ $goodsType->name }}</option>
-                                @endforeach
-                            </select>
-                            <button type="button" class="btn btn-success" onclick="displayGoodAdd(this)" title="Add New Goods Type">
-                                <i class="bi bi-plus"></i>
+                        <div class="lrf-pf__lbl-row">
+                            <label class="lrf-pf__lbl">Goods Type<span class="lrf-pf__req">*</span></label>
+                            <button type="button" class="lrf-quick-add border-0 bg-transparent p-0" onclick="displayGoodAdd(this)" title="Add New Goods Type">
+                                <i class="bi bi-plus-lg"></i> Add
                             </button>
                         </div>
+                        <select class="form-select select2 goods-type" required data-placeholder="Search and select goods type...">
+                            <option value=""></option>
+                            @foreach ($goodsTypes as $goodsType)
+                                <option value="{{ $goodsType->name }}">{{ $goodsType->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div class="lrf-pf">
                         <label class="lrf-pf__lbl">Units</label>

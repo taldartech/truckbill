@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TransporterMaster extends Model
@@ -19,6 +18,8 @@ class TransporterMaster extends Model
         'pan_number',
         'gst_number',
         'gst_type',
+        'is_msme',
+        'msme_reg_no',
         'pan_active',
         'address',
         'city_id',
@@ -30,17 +31,13 @@ class TransporterMaster extends Model
     {
         return [
             'pan_active' => 'boolean',
+            'is_msme' => 'boolean',
         ];
     }
 
     public function transporters(): HasMany
     {
         return $this->hasMany(Transporter::class, 'transporter_master_id');
-    }
-
-    public function user(): HasOne
-    {
-        return $this->hasOne(User::class, 'transporter_master_id');
     }
 
     public function city(): BelongsTo

@@ -6,6 +6,7 @@ use App\Http\Requests\StoreTruckTypeRequest;
 use App\Http\Requests\UpdateTruckTypeRequest;
 use App\Models\TruckType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TruckTypeController extends Controller
 {
@@ -84,29 +85,36 @@ class TruckTypeController extends Controller
     }
 
     private function getActionButtons(TruckType $truckType): string
-    {
-        if (! auth()->user()->canActAsAdmin()) {
-            return '';
-        }
-
-        $editUrl = route('master.truck-types.edit', $truckType);
-        $deleteUrl = route('master.truck-types.destroy', $truckType);
-
-        return '
-            <div class="app-index-table-actions">
-                <a href="' . e($editUrl) . '" class="btn btn-sm btn-icon btn-action-edit">
-                    <i class="bi bi-pencil"></i>
-                </a>
-                <form action="' . e($deleteUrl) . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Delete this truck type? Trucks using it will keep the name.\')">
-                    ' . csrf_field() . '
-                    ' . method_field('DELETE') . '
-                    <button type="submit" class="btn btn-sm btn-icon btn-action-delete">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </form>
-            </div>
-        ';
+{
+    if (! auth()->user()->canActAsAdmin()) {
+        return '';
     }
+
+    $editUrl = route('master.truck-types.edit', $truckType);
+    $deleteUrl = route('master.truck-types.destroy', $truckType);
+
+    return '
+        <div class="app-index-table-actions">
+            <a href="' . e($editUrl) . '" class="btn btn-sm btn-icon btn-action-edit">
+                <i class="bi bi-pencil"></i>
+            </a>
+
+            <form action="' . e($deleteUrl) . '" method="POST" class="truck-type-delete-form">
+                ' . csrf_field() . '
+                ' . method_field('DELETE') . '
+
+                <button type="button"
+                    class="btn btn-sm btn-icon btn-action-delete truck-type-delete-btn"
+                    data-bs-toggle="modal"
+                    data-bs-target="#truckTypeDeleteModal"
+                    data-truck-type-id="' . e($truckType->id) . '"
+                    data-truck-type-name="' . e($truckType->name) . '">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </form>
+        </div>
+    ';
+}
 
     public function create()
     {
@@ -132,10 +140,20 @@ class TruckTypeController extends Controller
         return redirect()->route('master.truck-types.index')->with('success', 'Truck type updated successfully.');
     }
 
-    public function destroy(TruckType $truck_type)
-    {
-        $truck_type->delete();
+  public function destroy(Request $request, TruckType $truckType)
+{
+    $request->validate([
+        'delete_remark' => ['required', 'string', 'max:1000'],
+    ]);
 
-        return redirect()->route('master.truck-types.index')->with('success', 'Truck type deleted successfully.');
-    }
+    $truckType->deleted_by = Auth::id();
+    $truckType->deleted_remark = $request->input('delete_remark');
+    $truckType->save();
+
+    $truckType->delete();
+
+   return redirect()
+    ->route('master.truck-types.index')
+    ->with('success', 'Truck type deleted successfully!');
+}
 }

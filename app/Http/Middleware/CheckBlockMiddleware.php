@@ -63,9 +63,9 @@ class CheckBlockMiddleware
             Session::put('session_token', $user->session_token);
         }
 
-        // 3. Check if company exists and is blocked
-        $company_id = $user->company_id;
-        $company = \App\Models\Company::find($company_id);
+        // 3. Check if user's permanent company exists and is blocked
+        $company_id = $user->getRawOriginal('company_id');
+        $company = $company_id ? \App\Models\Company::find($company_id) : null;
 
         if ($company && $company->is_blocked) {
             Auth::logout();

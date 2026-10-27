@@ -16,6 +16,7 @@ use App\Models\Truck;
 use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class TransporterOwnerTest extends TestCase
@@ -76,9 +77,8 @@ class TransporterOwnerTest extends TestCase
         $response->assertOk()->assertViewIs('transporters.index');
     }
 
-    public function test_transporter_store_without_email_keeps_null_and_skips_portal_user(): void
+    public function test_transporter_store_without_email_keeps_null(): void
     {
-        UserRole::create(['id' => 6, 'name' => 'transporter']);
         $admin = $this->makeAdmin();
         [$country, $state, $city] = $this->seedGeo();
 
@@ -104,9 +104,38 @@ class TransporterOwnerTest extends TestCase
             'pan_number' => 'ABCDE1234F',
             'email' => null,
         ]);
+    }
 
-        $masterId = TransporterMaster::query()->where('pan_number', 'ABCDE1234F')->value('id');
-        $this->assertNull(User::query()->where('transporter_master_id', $masterId)->first());
+    public function test_transporter_store_with_email_creates_no_login_and_sends_no_mail(): void
+    {
+        Mail::fake();
+        $admin = $this->makeAdmin();
+        [$country, $state, $city] = $this->seedGeo();
+        $usersBefore = User::query()->count();
+
+        $this->actingAs($admin)->post('/transporters', [
+            'company_id' => $admin->company_id,
+            'name' => 'Email Logistics',
+            'email' => 'ops@emaillogistics.test',
+            'gst_number' => '12ABCDE1234F1Z5',
+            'pan_number' => 'ABCDE1234F',
+            'advance_amount' => 0,
+            'pan_active' => true,
+            'address' => '123 Street',
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+            'mobile_number' => '9876543210',
+            'declaration_given' => false,
+            'tds_percentage' => 20,
+        ])->assertRedirect(route('transporters.index'))
+            ->assertSessionHas('success', 'Transporter created successfully!');
+
+        $this->assertDatabaseHas('transporter_masters', ['email' => 'ops@emaillogistics.test']);
+        $this->assertSame($usersBefore, User::query()->count());
+        $this->assertDatabaseMissing('users', ['email' => 'ops@emaillogistics.test']);
+        Mail::assertNothingSent();
+        Mail::assertNothingQueued();
     }
 
     public function test_transporter_store_creates_agency(): void
@@ -218,6 +247,43 @@ class TransporterOwnerTest extends TestCase
         $this->assertDatabaseHas('transporters', [
             'company_id' => $admin->company_id,
             'is_owner' => 1,
+            'tds_percentage' => 1.00,
+        ]);
+    }
+
+    public function test_truck_owner_store_with_existing_master_creates_owner(): void
+    {
+        $admin = $this->makeAdmin();
+        [$country, $state, $city] = $this->seedGeo();
+
+        $master = TransporterMaster::factory()->create([
+            'name' => 'Existing Owner Master',
+            'pan_number' => 'ABCPD5678R',
+            'pan_active' => true,
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+        ]);
+
+        $response = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $master->id,
+            'name' => 'Existing Owner Master',
+            'pan_number' => $master->pan_number,
+            'pan_active' => true,
+            'declaration_given' => false,
+            'total_trucks' => 2,
+            'advance_amount' => 0,
+            'mobile_number' => '9876543210',
+            'tds_percentage' => 1,
+        ]);
+
+        $response->assertRedirect(route('truck_owners.index'));
+        $this->assertDatabaseHas('transporters', [
+            'company_id' => $admin->company_id,
+            'transporter_master_id' => $master->id,
+            'is_owner' => 1,
+            'mobile_number' => '9876543210',
             'tds_percentage' => 1.00,
         ]);
     }

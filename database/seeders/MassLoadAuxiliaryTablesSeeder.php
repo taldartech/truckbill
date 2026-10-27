@@ -60,7 +60,6 @@ class MassLoadAuxiliaryTablesSeeder extends Seeder
         $this->seedEmailDispatchLogs($target, $batch, $companyId, $runToken, $nowStr);
         $this->seedCompanyReminderLogs($target, $batch, $companyId, $runToken, $dateStr, $nowStr);
         $this->seedAuditLogsWithChanges($target, $batch, $companyId, $userId, $runToken, $now);
-        $this->seedConsigneeUser($target, $userId, $nowStr);
         $this->seedInvoiceReminderLogs($target, $companyId, $runToken, $dateStr, $nowStr);
         $this->seedEwayBillReminderLogs($target, $companyId, $runToken, $dateStr, $nowStr);
         $this->seedCustomInvoiceDetails($target, $userId, $nowStr);
@@ -277,21 +276,6 @@ class MassLoadAuxiliaryTablesSeeder extends Seeder
 
             $inserted += $chunk;
         }
-    }
-
-    private function seedConsigneeUser(int $target, int $userId, string $nowStr): void
-    {
-        $sql = <<<'SQL'
-INSERT IGNORE INTO consignee_user (user_id, consignee_id, created_at, updated_at)
-SELECT ?, c.id, ?, ?
-FROM consignees c
-WHERE c.deleted_at IS NULL
-  AND NOT EXISTS (
-    SELECT 1 FROM consignee_user cu WHERE cu.user_id = ? AND cu.consignee_id = c.id
-  )
-LIMIT ?
-SQL;
-        DB::statement($sql, [$userId, $nowStr, $nowStr, $userId, $target]);
     }
 
     private function seedInvoiceReminderLogs(int $target, int $companyId, string $runToken, string $dateStr, string $nowStr): void

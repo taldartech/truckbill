@@ -132,12 +132,170 @@
         @media (max-width: 767.98px) {
             .invoice-stats {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.4rem;
+            }
+
+            .invoice-stats > .invoice-stat--amount {
+                grid-column: span 2;
+            }
+
+            .invoices-index .app-index-list-card > .card-header {
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-wrap: nowrap !important;
+            }
+
+            .invoices-index .app-index-card-toolbar {
+                width: auto !important;
+                margin-left: auto !important;
             }
         }
 
-        @media (max-width: 420px) {
+        @media (max-width: 575.98px) {
+            .invoices-index .app-index-list-card > .card-header {
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-wrap: nowrap !important;
+                gap: 0.4rem !important;
+                padding: 0.45rem 0.65rem !important;
+            }
+
+            .invoices-index .app-index-list-card > .card-header .card-title {
+                font-size: 0.95rem !important;
+                margin: 0 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                flex-shrink: 1 !important;
+            }
+
+            .invoices-index .app-index-card-toolbar {
+                width: auto !important;
+                margin-left: auto !important;
+                display: inline-flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                align-items: center !important;
+                gap: 0.35rem !important;
+                flex-shrink: 0 !important;
+            }
+
+            .invoices-index .app-index-card-toolbar .app-index-header-btn {
+                width: 32px !important;
+                height: 32px !important;
+                min-width: 32px !important;
+                min-height: 32px !important;
+                padding: 0 !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border-radius: 8px !important;
+                font-size: 1rem !important;
+                flex: 0 0 auto !important;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+            }
+
             .invoice-stats {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 0.35rem !important;
+            }
+
+            .invoice-stats > .invoice-stat--amount {
+                grid-column: span 2 !important;
+            }
+
+            .invoice-stat {
+                padding: 0.35rem 0.45rem !important;
+                gap: 0.4rem !important;
+                border-radius: 0.55rem !important;
+                border-top-width: 2.5px !important;
+                min-height: 42px !important;
+            }
+
+            .invoice-stat__icon {
+                width: 1.5rem !important;
+                height: 1.5rem !important;
+                font-size: 0.72rem !important;
+                border-radius: 0.4rem !important;
+            }
+
+            .invoice-stat__label {
+                font-size: 0.52rem !important;
+                letter-spacing: 0.02em !important;
+                margin-bottom: 0 !important;
+            }
+
+            .invoice-stat__value {
+                font-size: 0.8rem !important;
+                margin-top: 0 !important;
+            }
+
+            .invoice-stat--amount .invoice-stat__value {
+                font-size: 0.88rem !important;
+            }
+
+            /* DataTables toolbar: Show entries & Search on 1 clean row */
+            .invoices-index .dataTables_wrapper > div:first-child {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: 0.35rem !important;
+                padding: 0.35rem 0.5rem !important;
+            }
+
+            .invoices-index .dataTables_length {
+                flex: 0 0 auto !important;
+                width: auto !important;
+            }
+
+            .invoices-index .dataTables_length label {
+                margin: 0 !important;
+                font-size: 0.72rem !important;
+                gap: 0.25rem !important;
+                white-space: nowrap !important;
+                color: var(--brand-text-muted);
+                display: inline-flex !important;
+                align-items: center !important;
+            }
+
+            .invoices-index .dataTables_length select {
+                padding: 0.2rem 1.4rem 0.2rem 0.4rem !important;
+                min-width: 3.5rem !important;
+                font-size: 0.72rem !important;
+                height: 28px !important;
+                border-radius: 6px !important;
+            }
+
+            .invoices-index .dataTables_filter {
+                flex: 1 1 auto !important;
+                width: auto !important;
+                min-width: 0 !important;
+            }
+
+            .invoices-index .dataTables_filter label {
+                margin: 0 !important;
+                width: 100% !important;
+                font-size: 0.72rem !important;
+                gap: 0.25rem !important;
+                justify-content: flex-end !important;
+                color: var(--brand-text-muted);
+                display: inline-flex !important;
+                align-items: center !important;
+            }
+
+            .invoices-index .dataTables_filter input {
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+                width: 100% !important;
+                height: 28px !important;
+                font-size: 0.72rem !important;
+                padding: 0.2rem 0.4rem !important;
+                margin-left: 0.25rem !important;
+                border-radius: 6px !important;
             }
         }
 
@@ -149,7 +307,7 @@
 @endpush
 
 @section('content')
-    <div class="container mt-4 app-index-page app-index-page--standard">
+    <div class="container mt-4 app-index-page app-index-page--standard invoices-index">
         @if (session('success'))
             <div class="mb-3">
                 <span class="badge text-bg-dark border app-index-flash">
@@ -166,25 +324,25 @@
         @endif
 
         <div class="card app-index-list-card mb-4">
-            <div class="card-header">
+            <div class="card-header d-flex align-items-center justify-content-between">
                 <h3 class="card-title mb-0">Invoice Management</h3>
-                <div class="app-index-card-toolbar d-flex flex-wrap gap-2 align-items-center">
-                    <button type="button" class="btn app-index-header-btn"
+                <div class="app-index-card-toolbar d-flex align-items-center gap-2">
+                    <button type="button" class="btn app-index-header-btn" title="Search filter" aria-label="Search filter"
                         onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
-                        <i class="bi bi-funnel"></i> Search filter
+                        <i class="bi bi-funnel"></i><span class="d-none d-sm-inline ms-1">Search filter</span>
                     </button>
-                    <a href="{{ route('custom-invoices.create') }}" class="btn app-index-header-btn">
-                        <i class="bi bi-file-earmark-plus"></i> Create Custom Invoice
+                    <a href="{{ route('custom-invoices.create') }}" class="btn app-index-header-btn" title="Create Custom Invoice" aria-label="Create custom invoice">
+                        <i class="bi bi-file-earmark-plus"></i><span class="d-none d-sm-inline ms-1">Create Custom Invoice</span>
                     </a>
-                    <a href="{{ route('invoices.create') }}" class="btn app-index-header-btn">
-                        <i class="bi bi-plus"></i> Create
+                    <a href="{{ route('invoices.create') }}" class="btn app-index-header-btn" title="Create Invoice" aria-label="Create invoice">
+                        <i class="bi bi-plus"></i><span class="d-none d-sm-inline ms-1">Create</span>
                     </a>
                 </div>
             </div>
 
-            <div class="app-index-dt-toolbar">
+            <div class="p-2 p-md-3 border-bottom bg-white">
                 {{-- Quick Stats --}}
-                <div class="invoice-stats">
+                <div class="invoice-stats mb-0">
                     <div class="invoice-stat invoice-stat--total">
                         <span class="invoice-stat__icon"><i class="bi bi-receipt"></i></span>
                         <span class="invoice-stat__meta">
@@ -224,60 +382,60 @@
 
                 {{-- Hidden filter form --}}
                 <form method="GET" action="{{ route('invoices.index') }}" id="advanced-search-box"
-                    class="card card-body shadow-sm mb-0 d-none">
+                    class="card card-body shadow-sm p-2 p-md-3 mb-2 d-none">
                     {{-- Filter checkboxes --}}
-                    <div class="row g-2">
-                        <div class="col-md-12">
-                            <label class="form-label fw-bold">Choose Filter Fields:</label>
-                            <div class="form-check form-check-inline">
+                    <div>
+                        <label class="form-label small fw-bold text-secondary d-block mb-1">Choose Filter Fields:</label>
+                        <div class="d-flex flex-wrap align-items-center gap-2 gap-sm-3 small">
+                            <div class="form-check form-check-inline m-0">
                                 <input class="form-check-input" type="checkbox" value="manual_invoice_number" id="filter_invoice"
                                     onchange="toggleField(this)">
-                                <label class="form-check-label" for="filter_invoice">Invoice #</label>
+                                <label class="form-check-label fw-semibold" for="filter_invoice">Invoice #</label>
                             </div>
-                            <div class="form-check form-check-inline">
+                            <div class="form-check form-check-inline m-0">
                                 <input class="form-check-input" type="checkbox" value="customer" id="filter_customer"
                                     onchange="toggleField(this)">
-                                <label class="form-check-label" for="filter_customer">Customer</label>
+                                <label class="form-check-label fw-semibold" for="filter_customer">Customer</label>
                             </div>
-                            <div class="form-check form-check-inline">
+                            <div class="form-check form-check-inline m-0">
                                 <input class="form-check-input" type="checkbox" value="payment_status" id="filter_status"
                                     onchange="toggleField(this)">
-                                <label class="form-check-label" for="filter_status">Status</label>
+                                <label class="form-check-label fw-semibold" for="filter_status">Status</label>
                             </div>
-                            <div class="form-check form-check-inline">
+                            <div class="form-check form-check-inline m-0">
                                 <input class="form-check-input" type="checkbox" value="generated_date" id="filter_date"
                                     onchange="toggleField(this)">
-                                <label class="form-check-label" for="filter_date">Date</label>
+                                <label class="form-check-label fw-semibold" for="filter_date">Date</label>
                             </div>
                         </div>
                     </div>
 
                     {{-- Conditionally visible filter fields --}}
-                    <div class="row g-3 mt-2" id="filter-fields">
-                        <div class="col-md-3 d-none" id="field_generated_date_from">
-                            <label class="form-label">From Date</label>
-                            <input type="date" name="generated_date_from" class="form-control"
+                    <div class="row g-2 mt-1" id="filter-fields">
+                        <div class="col-6 col-md-3 d-none" id="field_generated_date_from">
+                            <label class="form-label small fw-semibold mb-1">From Date</label>
+                            <input type="date" name="generated_date_from" class="form-control form-control-sm"
                                 value="{{ request('generated_date_from') }}">
                         </div>
-                        <div class="col-md-3 d-none" id="field_generated_date_to">
-                            <label class="form-label">To Date</label>
-                            <input type="date" name="generated_date_to" class="form-control"
+                        <div class="col-6 col-md-3 d-none" id="field_generated_date_to">
+                            <label class="form-label small fw-semibold mb-1">To Date</label>
+                            <input type="date" name="generated_date_to" class="form-control form-control-sm"
                                 value="{{ request('generated_date_to') }}">
                         </div>
-                        <div class="col-md-3 d-none" id="field_manual_invoice_number">
-                            <label class="form-label">Invoice #</label>
-                            <input type="text" name="manual_invoice_number" class="form-control"
+                        <div class="col-6 col-md-3 d-none" id="field_manual_invoice_number">
+                            <label class="form-label small fw-semibold mb-1">Invoice #</label>
+                            <input type="text" name="manual_invoice_number" class="form-control form-control-sm"
                                 value="{{ request('manual_invoice_number') }}">
                         </div>
-                        <div class="col-md-3 d-none" id="field_customer">
-                            <label class="form-label">Customer</label>
-                            <select name="customer" id="filter_customer_select" class="form-select">
+                        <div class="col-6 col-md-3 d-none" id="field_customer">
+                            <label class="form-label small fw-semibold mb-1">Customer</label>
+                            <select name="customer" id="filter_customer_select" class="form-select form-select-sm">
                                 <option value="">All</option>
                             </select>
                         </div>
-                        <div class="col-md-3 d-none" id="field_payment_status">
-                            <label class="form-label">Status</label>
-                            <select name="payment_status" class="form-select">
+                        <div class="col-6 col-md-3 d-none" id="field_payment_status">
+                            <label class="form-label small fw-semibold mb-1">Status</label>
+                            <select name="payment_status" class="form-select form-select-sm">
                                 <option value="">All</option>
                                 <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Pending
                                 </option>
@@ -286,33 +444,33 @@
                                 <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
                             </select>
                         </div>
-                        <div class="col-md-3 d-none" id="field_generated_date">
-                            <label class="form-label">Date</label>
-                            <input type="date" name="generated_date" class="form-control"
+                        <div class="col-6 col-md-3 d-none" id="field_generated_date">
+                            <label class="form-label small fw-semibold mb-1">Date</label>
+                            <input type="date" name="generated_date" class="form-control form-control-sm"
                                 value="{{ request('generated_date') }}">
                         </div>
                     </div>
 
                     {{-- Form action buttons --}}
-                    <div class="text-end mt-3">
-                        <button type="submit" class="btn btn-brand-primary">
+                    <div class="d-flex justify-content-end align-items-center gap-2 mt-2">
+                        <button type="submit" class="btn btn-brand-primary btn-sm">
                             <i class="bi bi-search"></i> Search
                         </button>
-                        <a href="{{ route('invoices.index') }}" class="btn btn-back ms-2">
+                        <a href="{{ route('invoices.index') }}" class="btn btn-secondary btn-sm ms-0">
                             <i class="bi bi-arrow-clockwise"></i> Reset
                         </a>
                     </div>
                 </form>
             </div>
 
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="table-responsive">
                     <table id="invoicesTable" class="table table-striped table-hover align-middle mb-0 app-index-table w-100">
                         <thead class="table-light">
                             <tr>
                                 <th style="width: 10px">ID</th>
                                 <th>Invoice #</th>
-                                <th>Memo No.</th>
+                                <th>Memo / POD No.</th>
                                 <th>Generated Date</th>
                                 <th>Customer</th>
                                 <th>Total Amount</th>
@@ -345,6 +503,7 @@
                         <input type="hidden" id="payment_invoice_id" name="invoice_id">
                         <input type="hidden" id="payment_invoice_number">
                         <input type="hidden" id="payment_total_amount">
+                        <input type="hidden" id="payment_base_amount">
                         <input type="hidden" id="payment_paid_amount">
                         <input type="hidden" id="payment_remaining_amount">
 
@@ -371,15 +530,65 @@
                         </div>
 
                         <div class="mb-2">
-                            <label for="payment_amount" class="form-label fw-semibold mb-1">Amount <span
+                            <label for="payment_bank_ledger_id" class="form-label fw-semibold mb-1">Deposit To Account</label>
+                            <select class="form-select form-select-sm" id="payment_bank_ledger_id" name="bank_ledger_id">
+                                <option value="">Default Primary Bank / Cash A/c</option>
+                                @foreach($bankLedgers ?? [] as $bLedger)
+                                    <option value="{{ $bLedger->id }}">{{ $bLedger->name }} ({{ $bLedger->accountGroup?->name ?? 'Bank/Cash' }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="mb-2">
+                            <label for="payment_amount" class="form-label fw-semibold mb-1">Amount Received (₹) <span
                                     class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text">&#8377;</span>
                                 <input type="number" class="form-control" id="payment_amount" name="amount"
-                                    step="0.01" min="0.01" required placeholder="0.00">
-                                <button type="button" class="btn btn-outline-secondary" id="fill_full_amount">Full</button>
+                                    step="0.01" min="0" required placeholder="0.00">
+                                <button type="button" class="btn btn-outline-secondary" id="fill_full_amount" title="Fill net remaining balance">Full</button>
                             </div>
-                            <div class="form-text mt-1">Max: &#8377;<span id="max_payment_amount">0.00</span></div>
+                            <div class="form-text mt-1">Invoice Balance: &#8377;<span id="max_payment_amount">0.00</span></div>
+                        </div>
+
+                        <!-- Customer Deductions Section (TDS & Transit Claims) -->
+                        <div class="p-2.5 rounded border mb-2" style="background-color: #f8fafc; border-color: var(--brand-border) !important;">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small fw-bold text-dark"><i class="bi bi-scissors me-1 text-danger"></i>Customer Deductions (Optional)</span>
+                                <span class="badge bg-light text-muted border small">TDS & Claims</span>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="form-label small fw-semibold text-muted mb-0">TDS u/s 194C (₹)</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">₹</span>
+                                        <input type="number" step="0.01" min="0" class="form-control" id="payment_tds_amount" name="tds_amount" placeholder="0.00">
+                                    </div>
+                                    <div class="d-flex gap-1 mt-1">
+                                        <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1 calc-tds-btn" style="font-size: 0.75rem;" data-pct="1">1%</button>
+                                        <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1 calc-tds-btn" style="font-size: 0.75rem;" data-pct="2">2%</button>
+                                        <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1 calc-tds-btn" style="font-size: 0.75rem;" data-pct="0">Clear</button>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-semibold text-muted mb-0">Shortage / Claims (₹)</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">₹</span>
+                                        <input type="number" step="0.01" min="0" class="form-control" id="payment_deduction_amount" name="deduction_amount" placeholder="0.00">
+                                    </div>
+                                    <input type="text" class="form-control form-control-sm mt-1" id="payment_deduction_reason" name="deduction_reason" placeholder="Reason (e.g. Shortage, Penalty)">
+                                </div>
+                            </div>
+                            <div class="p-2 rounded bg-white border small">
+                                <div class="d-flex justify-content-between text-muted mb-1">
+                                    <span>Total Invoice Cleared:</span>
+                                    <span class="fw-bold text-dark" id="summary_total_cleared">₹0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted">
+                                    <span>Remaining Balance After:</span>
+                                    <span class="fw-bold text-primary" id="summary_remaining_balance">₹0.00</span>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mb-1">
@@ -432,6 +641,59 @@
             </div>
         </div>
     </div>
+
+    <!-- Invoice Delete Modal -->
+<div class="modal fade" id="invoiceDeleteModal" tabindex="-1" aria-labelledby="invoiceDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="invoiceDeleteModalLabel">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                    Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <p>Are you sure you want to delete this invoice?</p>
+
+                <p>
+                    <strong>Invoice #:</strong>
+                    <span id="deleteInvoiceNumber"></span>
+                </p>
+
+                <div class="mb-3">
+                    <label for="deleteRemark" class="form-label">
+                        <strong>Remark <span class="text-danger">*</span></strong>
+                    </label>
+
+                    <textarea
+                        id="deleteRemark"
+                        class="form-control"
+                        rows="4"
+                        placeholder="Enter reason for deletion"
+                    ></textarea>
+                </div>
+
+                <div id="deleteRemarkError" class="text-danger small d-none">
+                    Delete remark is required.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i> Cancel
+                </button>
+
+                <button type="button" class="btn btn-danger" id="confirmInvoiceDelete">
+                    <i class="bi bi-trash"></i> Confirm Delete
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
 
     @include('invoices.partials.confirmation-assets')
 
@@ -515,9 +777,9 @@
                 order: [
                     [0, 'desc']
                 ],
-                dom: '<"app-index-dt-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2"<"d-flex flex-wrap align-items-center gap-2"l><"d-flex flex-wrap align-items-center gap-2"f>>' +
+                dom: '<"d-flex flex-wrap justify-content-between align-items-center gap-1 gap-sm-2 p-2 p-sm-3 border-bottom"<"d-flex align-items-center gap-1"l><"d-flex align-items-center gap-1"f>>' +
                     't' +
-                    '<"app-index-partload-pagination d-flex flex-wrap align-items-center justify-content-between gap-2"<"app-index-partload-pagination__summary"i><"app-index-partload-pagination__nav"p>>',
+                    '<"app-index-partload-pagination d-flex flex-wrap align-items-center justify-content-between gap-2 p-2 p-sm-3"<"app-index-partload-pagination__summary"i><"app-index-partload-pagination__nav"p>>',
                 drawCallback: function() {
                     initTooltips();
                 }
@@ -587,6 +849,10 @@
                                     <tr>
                                         <td class="fw-bold">Date:</td>
                                         <td>${data.generated_date || 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Due Date:</td>
+                                        <td>${data.due_date || 'N/A'}</td>
                                     </tr>
                                     <tr>
                                         <td class="fw-bold">Status:</td>
@@ -782,16 +1048,16 @@
                 if (form) {
                     form.reset();
                 }
-                $('.form-check-input').prop('checked', false);
-                ['field_generated_date_from', 'field_generated_date_to', 'field_manual_invoice_number', 'field_customer', 'field_payment_status', 'field_generated_date']
-                    .forEach(function(id) {
-                        const el = document.getElementById(id);
-                        if (el) {
-                            el.classList.add('d-none');
-                        }
+             $('.form-check-input').prop('checked', false);
+            ['field_generated_date_from', 'field_generated_date_to', 'field_manual_invoice_number', 'field_customer', 'field_payment_status', 'field_generated_date']
+                 .forEach(function(id) {
+                     const el = document.getElementById(id);
+                     if (el) {
+                     el.classList.add('d-none');
+                  }
                     });
-                $('#filter_customer_select').val(null).trigger('change');
-                invoiceTable.ajax.reload();
+             $('#filter_customer_select').val(null).trigger('change');
+             invoiceTable.ajax.reload();
             });
 
             function formatPaymentAmount(value) {
@@ -801,10 +1067,38 @@
                 });
             }
 
+            function updateSettlementSummary() {
+                var remaining = parseFloat($('#payment_remaining_amount').val()) || 0;
+                var amount = parseFloat($('#payment_amount').val()) || 0;
+                var tds = parseFloat($('#payment_tds_amount').val()) || 0;
+                var ded = parseFloat($('#payment_deduction_amount').val()) || 0;
+                var totalCleared = amount + tds + ded;
+                var balanceAfter = Math.max(0, remaining - totalCleared);
+
+                $('#summary_total_cleared').text('₹' + totalCleared.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#summary_remaining_balance').text('₹' + balanceAfter.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+            }
+
+            $('#payment_amount, #payment_tds_amount, #payment_deduction_amount').on('input', updateSettlementSummary);
+
+            $('.calc-tds-btn').on('click', function() {
+                var pct = parseFloat($(this).data('pct')) || 0;
+                var baseTotal = parseFloat($('#payment_base_amount').val()) || parseFloat($('#payment_total_amount').val()) || 0;
+                if (pct > 0) {
+                    var tds = Math.round((baseTotal * (pct / 100)) * 100) / 100;
+                    $('#payment_tds_amount').val(tds.toFixed(2)).trigger('input');
+                } else {
+                    $('#payment_tds_amount').val('').trigger('input');
+                }
+            });
+
             // Quick-fill the full remaining balance
             $('#fill_full_amount').on('click', function() {
-                var max = parseFloat($('#payment_amount').attr('max')) || 0;
-                $('#payment_amount').val(max.toFixed(2)).focus();
+                var remaining = parseFloat($('#payment_remaining_amount').val()) || 0;
+                var tds = parseFloat($('#payment_tds_amount').val()) || 0;
+                var ded = parseFloat($('#payment_deduction_amount').val()) || 0;
+                var netRemit = Math.max(0, remaining - tds - ded);
+                $('#payment_amount').val(netRemit.toFixed(2)).trigger('input').focus();
             });
 
             // Add Payment Modal Handler
@@ -814,6 +1108,7 @@
                 var invoiceId = $(this).data('invoice-id');
                 var invoiceNumber = $(this).data('invoice-number');
                 var totalAmount = parseFloat($(this).data('total-amount')) || 0;
+                var baseAmount = parseFloat($(this).data('base-amount')) || totalAmount;
                 var paidAmount = parseFloat($(this).data('paid-amount')) || 0;
                 var remainingAmount = parseFloat($(this).data('remaining-amount')) || 0;
 
@@ -827,15 +1122,20 @@
                 $('#payment_invoice_id').val(invoiceId);
                 $('#payment_invoice_number').val(invoiceNumber || '—');
                 $('#payment_total_amount').val(totalAmount);
+                $('#payment_base_amount').val(baseAmount);
                 $('#payment_paid_amount').val(paidAmount);
                 $('#payment_remaining_amount').val(remainingAmount);
                 $('#max_payment_amount').text(formatPaymentAmount(remainingAmount));
                 $('#payment_amount').attr('max', remainingAmount);
-            $('#payment_amount').val('');
-            $('#payment_mode').val('');
-            $('#payment_remark').val('');
-            $('#payment_date').val(new Date().toISOString().split('T')[0]); // Set today's date
-            $('#payment_error').addClass('d-none').text('');
+                $('#payment_amount').val('');
+                $('#payment_tds_amount').val('');
+                $('#payment_deduction_amount').val('');
+                $('#payment_deduction_reason').val('');
+                $('#payment_mode').val('');
+                $('#payment_remark').val('');
+                $('#payment_date').val(new Date().toISOString().split('T')[0]); // Set today's date
+                $('#payment_error').addClass('d-none').text('');
+                updateSettlementSummary();
 
                 // Show modal - ensure Bootstrap is loaded
                 if (typeof bootstrap === 'undefined') {
@@ -857,43 +1157,50 @@
                 var invoiceId = $('#payment_invoice_id').val();
                 var formData = {
                     mode: $('#payment_mode').val(),
-                    amount: parseFloat($('#payment_amount').val()),
+                    amount: parseFloat($('#payment_amount').val()) || 0,
+                    tds_amount: parseFloat($('#payment_tds_amount').val()) || 0,
+                    deduction_amount: parseFloat($('#payment_deduction_amount').val()) || 0,
+                    deduction_reason: $('#payment_deduction_reason').val(),
                     remark: $('#payment_remark').val(),
-                    payment_date: $('#payment_date').val(),
+                    payment_date: $('#payment_date').val() || new Date().toISOString().split('T')[0],
+                    bank_ledger_id: $('#payment_bank_ledger_id').val() || null,
                     _token: '{{ csrf_token() }}'
                 };
 
-                // Validate amount
-                var remainingAmount = parseFloat($('#payment_amount').attr('max')) || 0;
+                var invoiceTotal = parseFloat($('#payment_total_amount').val()) || 0;
+                var paidAmount = parseFloat($('#payment_paid_amount').val()) || 0;
+                var remainingAmount = parseFloat($('#payment_remaining_amount').val()) || 0;
+                var totalCleared = formData.amount + formData.tds_amount + formData.deduction_amount;
+
                 if (!formData.mode) {
                     $('#payment_error').removeClass('d-none').text('Please select a payment mode.');
                     return;
                 }
-                if (!formData.amount || formData.amount <= 0) {
-                    $('#payment_error').removeClass('d-none').text('Please enter a valid payment amount.');
+                if (totalCleared <= 0) {
+                    $('#payment_error').removeClass('d-none').text('Total payment settlement (Remitted + TDS + Deductions) must be greater than zero.');
                     return;
                 }
-                if (formData.amount > remainingAmount) {
+                if (totalCleared > (remainingAmount + 0.01)) {
                     $('#payment_error').removeClass('d-none').text(
-                        'Payment amount cannot exceed remaining balance of ' + remainingAmount.toFixed(2));
+                        'Total cleared amount (₹' + totalCleared.toFixed(2) + ') cannot exceed remaining balance of ₹' + remainingAmount.toFixed(2));
                     return;
                 }
 
                 $('#payment_error').addClass('d-none').text('');
 
                 var submitBtn = $(this).find('button[type="submit"]');
-                var invoiceTotal = parseFloat($('#payment_total_amount').val()) || 0;
-                var paidAmount = parseFloat($('#payment_paid_amount').val()) || 0;
                 var confirmationData = {
                     invoiceNumber: $('#payment_invoice_number').val(),
                     paymentDate: formData.payment_date,
                     mode: formData.mode,
                     amount: formData.amount,
+                    tdsAmount: formData.tds_amount,
+                    deductionAmount: formData.deduction_amount,
                     remark: formData.remark,
                     invoiceTotal: invoiceTotal,
                     paidAmount: paidAmount,
                     balanceBefore: remainingAmount,
-                    balanceAfter: Math.max(0, remainingAmount - formData.amount),
+                    balanceAfter: Math.max(0, remainingAmount - totalCleared),
                 };
 
                 function submitPayment() {
@@ -981,8 +1288,45 @@
                 $('#filter_customer_select').append(opt).trigger('change');
             }
         }); // End of document ready
+
+        // Invoice delete modal
+           $(document).on('click', '.invoice-delete-btn', function() {
+              const button = $(this);
+              const form = button.closest('.invoice-delete-form');
+
+              const invoiceNumber = button.data('invoice-number') || '-';
+      
+            $('#deleteInvoiceNumber').text(invoiceNumber);
+            $('#deleteRemark').val('');
+            $('#deleteRemarkError').addClass('d-none');
+
+            $('#confirmInvoiceDelete').data('form', form);
+        });
+
+           $('#confirmInvoiceDelete').on('click', function() {
+             const remark = $('#deleteRemark').val().trim();
+             const form = $('#confirmInvoiceDelete').data('form');
+
+       if (!remark) {
+           $('#deleteRemarkError')
+            .removeClass('d-none')
+            .text('Please enter a remark before deleting.');
+           return;
+       }
+
+           $('#deleteRemarkError').addClass('d-none');
+           form.find('input[name="delete_remark"]').remove();
+
+           $('<input>', {
+           type: 'hidden',
+           name: 'delete_remark',
+           value: remark
+       }).appendTo(form);
+
+       form[0].submit();
+      });
     </script>
-@endsection
+  @endsection
 
 @push('scripts')
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>

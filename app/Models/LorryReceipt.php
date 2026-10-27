@@ -38,6 +38,7 @@ class LorryReceipt extends Model implements Auditable
         'actual_amount',
         'gr_date',
         'memo_id',
+        'memo_created_at',
         'lane',
         'damage_amount',
         'shortage_amount',
@@ -46,9 +47,13 @@ class LorryReceipt extends Model implements Auditable
         'transporter_type',
         'linked_lr_id',
         'invoice_number',
+        'invoice_generated',
         'loading_station',
         'unloading_station',
         'gr_number',
+        'branch_id',
+        'deleted_by',
+        'deleted_remark',
     ];
 
     protected $attributes = [
@@ -58,6 +63,11 @@ class LorryReceipt extends Model implements Auditable
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function truck()

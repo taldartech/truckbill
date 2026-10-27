@@ -44,24 +44,7 @@ class LoginController extends Controller
                 ])->withInput();
             }
 
-            $company = null;
-            if ($authenticatedUser->userRole?->name === 'customer') {
-                $defaultConsignee = $authenticatedUser->consignees()
-                    ->orderBy('consignees.id')
-                    ->first();
-
-                if (! $defaultConsignee) {
-                    Auth::logout();
-                    return back()->withErrors([
-                        'email' => 'Your account has no customer access assigned. Please contact support.',
-                    ])->withInput();
-                }
-
-                $request->session()->put('portal_consignee_id', $defaultConsignee->id);
-                $company = Company::find($defaultConsignee->company_id);
-            } else {
-                $company = Company::find($authenticatedUser->company_id);
-            }
+            $company = Company::find($authenticatedUser->company_id);
 
             // If is_blocked is true (1), block login
             if ($company && $company->is_blocked) {

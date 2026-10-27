@@ -8,22 +8,24 @@
     @include('lorry_receipts.partials.linked-lr-form-styles')
     <div class="lrf-page app-index-page linked-lr-page">
         <div class="lrf-page__toolbar">
-            <div>
-                <h1 class="lrf-page__toolbar-title">Add Linked Good Receipts (Bilty)</h1>
-                <p class="lrf-page__toolbar-sub">Enter shared transport details once, then add multiple lorry receipts in the same linked group.</p>
+            <div class="lrf-page__toolbar-left">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <h1 class="lrf-page__toolbar-title mb-0">Add Linked Good Receipts (Bilty)</h1>
+                    <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-secondary btn-sm lrf-toolbar-back-btn">
+                        <i class="bi bi-arrow-left me-1"></i> Back
+                    </a>
+                </div>
+                <p class="lrf-page__toolbar-sub mb-0 mt-1">Enter shared transport details once, then add multiple lorry receipts in the same linked group.</p>
             </div>
             <div class="lrf-page__toolbar-actions">
                 <a href="{{ route('consignees.create') }}" class="btn btn-outline-secondary btn-sm" target="_blank">
                     <i class="bi bi-plus-lg me-1"></i> Create Consignee
                 </a>
-                <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-arrow-left me-1"></i> Back
-                </a>
             </div>
         </div>
 
         <form method="POST" action="{{ route('lorry_receipts.store') }}" id="lorryReceiptForm" class="needs-validation lrf linked-lr-form"
-            novalidate="">
+            novalidate="" data-draft-key="lorry_receipts_create_linked">
             @csrf
             <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
 
@@ -86,7 +88,7 @@
                             </div>
                         </div>
 
-                        <div class="lrf-receipt-card">
+                        <div class="lrf-receipt-card lrf-receipt-card--vehicle">
                             <div class="lrf-receipt-card__title">Vehicle &amp; Payee</div>
                             <div class="lrf-receipt-card__row lrf-grid lrf-grid--2">
                                 <div class="lrf-pf">
@@ -116,17 +118,17 @@
                                         @endif
                                     </select>
                                     @error('truck_id')
-                                        <div class="text-danger">{{ $message }}</div>
+                                                     <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                     <div class="invalid-feedback">Please select a truck.</div>
                                 </div>
 
                                 <div class="lrf-pf" id="lrPayToField" @if(! $lrTruckSelected) hidden @endif>
                                     <label class="lrf-pf__lbl" id="transporterTypeLabel">Pay to<span class="lrf-pf__req">*</span></label>
-                                    <div class="lrf-pay-pills" role="group" aria-label="Pay to">
-                                        <button type="button" class="lrf-pay-pill{{ old('transporter_type') === 'owner' ? ' is-active' : '' }}"
-                                            data-pay-type="owner" id="lrPayPillOwner">Truck Owner</button>
-                                        <button type="button" class="lrf-pay-pill{{ old('transporter_type') === 'agency' ? ' is-active' : '' }}"
+                                    <div class="lrf-pay-pills d-flex flex-nowrap" role="group" aria-label="Pay to">
+                                        <button type="button" class="lrf-pay-pill w-50 text-nowrap{{ old('transporter_type') === 'owner' ? ' is-active' : '' }}"
+                                            data-pay-type="owner" id="lrPayPillOwner"><span class="d-none d-sm-inline">Truck </span>Owner</button>
+                                        <button type="button" class="lrf-pay-pill w-50 text-nowrap{{ old('transporter_type') === 'agency' ? ' is-active' : '' }}"
                                             data-pay-type="agency" id="lrPayPillAgency">Agency</button>
                                     </div>
                                     <select class="form-select lrf-pay-type-select" id="transporter_type" name="transporter_type"
@@ -250,6 +252,9 @@
                 <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-x-lg me-1"></i> Cancel
                 </a>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="lrClearFormBtn">
+                    <i class="bi bi-eraser me-1"></i> Clear
+                </button>
                 <button class="btn btn-success btn-sm" type="submit" id="linked-lr-submit" disabled
                     title="Add at least 2 lorry receipts to create a linked group">
                     <i class="bi bi-floppy-fill me-1"></i> Create Linked Good Receipts
@@ -343,9 +348,107 @@
             }
             const node = tpl.content.cloneNode(true);
             lrItemsContainer.appendChild(node);
+            const item = lrItemsContainer.lastElementChild;
+
+            if (item && prefill && Object.keys(prefill).length > 0) {
+                const setValue = (selector, value) => {
+                    const el = item.querySelector(selector);
+                    if (el && value !== undefined && value !== null) {
+                        el.value = value;
+                    }
+                };
+
+                setValue('.lr-id-input', prefill.id ?? '');
+                setValue('.lr-number-input', prefill.lr_number ?? '');
+                setValue('.invoice-number-input', prefill.invoice_number ?? '');
+                setValue('.gr-number-input', prefill.gr_number ?? '');
+                setValue('.consignor-contact', prefill.consignor_contact_number ?? prefill.consignor_contact ?? '');
+                setValue('.consignee-contact', prefill.consignee_contact_number ?? prefill.consignee_contact ?? '');
+                setValue('.source-city', prefill.source_city ?? '');
+                setValue('.source-state', prefill.source_state ?? '');
+                setValue('.destination-city', prefill.destination_city ?? '');
+                setValue('.destination-state', prefill.destination_state ?? '');
+                setValue('.loading-station-input', prefill.loading_station ?? '');
+                setValue('.unloading-station-input', prefill.unloading_station ?? '');
+                setValue('.units', prefill.no_of_units ?? prefill.units ?? '');
+                setValue('.goods-value', prefill.goods_value ?? '');
+                setValue('.weight', prefill.weight ?? '');
+                setValue('.fr-rate', prefill.fr_rate ?? '');
+                setValue('.amount', prefill.amount ?? '');
+
+                const unitsVal = parseFloat(item.querySelector('.units')?.value);
+                const weightVal = parseFloat(item.querySelector('.weight')?.value);
+                const perUnitInput = item.querySelector('.weight-per-unit');
+                if (perUnitInput && unitsVal > 0 && weightVal > 0) {
+                    perUnitInput.value = Number((weightVal / unitsVal).toFixed(3)).toString();
+                }
+
+                const fixedCheckbox = item.querySelector('.is-fixed-amount');
+                if (fixedCheckbox) {
+                    fixedCheckbox.checked = Boolean(Number(prefill.is_fixed_amount ?? 0));
+                }
+
+                const appendSelectOption = (selector, id, text) => {
+                    if (!id) {
+                        return;
+                    }
+                    const select = item.querySelector(selector);
+                    if (!select) {
+                        return;
+                    }
+                    let label = text;
+                    if (!label || label === id || label === ('#' + id)) {
+                        try { label = sessionStorage.getItem('tb_label_' + id) || ''; } catch (e) {}
+                    }
+                    const option = new Option(label, id, true, true);
+                    select.appendChild(option);
+                };
+
+                appendSelectOption('.customer-select', prefill.customer_id, prefill.customer_text || prefill.customer_name);
+                appendSelectOption('.consignor-select', prefill.consignor_id, prefill.consignor_text || prefill.consignor_name);
+                appendSelectOption('.consignee-select', prefill.consignee_id, prefill.consignee_text || prefill.consignee_name);
+
+                const goodsSelect = item.querySelector('.goods-type');
+                if (goodsSelect && (prefill.goods_type || prefill.good_type)) {
+                    const gt = String(prefill.goods_type || prefill.good_type).trim();
+                    const matchedOpt = Array.from(goodsSelect.options).find((opt) => (opt.getAttribute('data-id') && String(opt.getAttribute('data-id')).trim() === gt) || opt.value === gt);
+                    if (matchedOpt) {
+                        goodsSelect.value = matchedOpt.value;
+                        if (window.jQuery && window.jQuery(goodsSelect).hasClass('select2-hidden-accessible')) {
+                            window.jQuery(goodsSelect).val(matchedOpt.value).trigger('change');
+                        }
+                    } else {
+                        const newOpt = new Option(gt, gt, true, true);
+                        newOpt.setAttribute('data-id', gt);
+                        goodsSelect.add(newOpt);
+                    }
+                }
+
+                const consignorContact = prefill.consignor_contact_number ?? prefill.consignor_contact ?? '';
+                const consignorCity = prefill.source_city ?? '';
+                const consignorState = prefill.source_state ?? '';
+                if (consignorContact && item.querySelector('.consignor-contact-text')) item.querySelector('.consignor-contact-text').textContent = 'Contact Number: ' + consignorContact;
+                if (consignorCity && item.querySelector('.consignor-city-text')) item.querySelector('.consignor-city-text').textContent = 'Source City: ' + consignorCity;
+                if (consignorState && item.querySelector('.consignor-state-text')) item.querySelector('.consignor-state-text').textContent = 'Source State: ' + consignorState;
+
+                const consigneeContact = prefill.consignee_contact_number ?? prefill.consignee_contact ?? '';
+                const consigneeCity = prefill.destination_city ?? '';
+                const consigneeState = prefill.destination_state ?? '';
+                if (consigneeContact && item.querySelector('.consignee-contact-text')) item.querySelector('.consignee-contact-text').textContent = 'Contact Number: ' + consigneeContact;
+                if (consigneeCity && item.querySelector('.consignee-city-text')) item.querySelector('.consignee-city-text').textContent = 'Destination City: ' + consigneeCity;
+                if (consigneeState && item.querySelector('.consignee-state-text')) item.querySelector('.consignee-state-text').textContent = 'Destination State: ' + consigneeState;
+
+                if (window.LinkedLrFormUI) {
+                    window.LinkedLrFormUI.updateRoutePreview(item);
+                    window.LinkedLrFormUI.updateItemMeta(item);
+                    window.LinkedLrFormUI.updateSummary();
+                }
+            }
+
             refreshIndices();
             initSelect2In(lrItemsContainer.lastElementChild);
         }
+        window.addLrItem = addLrItem;
 
         function refreshIndices() {
             if (window.LinkedLrFormUI) {
@@ -692,8 +795,10 @@
                     });
                 }
 
-                // Add first LR item by default
-                addLrItem();
+                // Add first LR item by default (only if no draft restored items exist)
+                if (!document.querySelectorAll('#lr-items-container .lr-item').length) {
+                    addLrItem();
+                }
 
                 setTimeout(function() {
                     $('#truck_id, #transporter_id, #reference_by').trigger('change.select2');
@@ -733,6 +838,8 @@
             if (addBtn) {
                 addBtn.addEventListener('click', () => addLrItem());
             }
+
+
 
             // Remove LR item
             lrItemsContainer.addEventListener('click', function(e) {
@@ -1517,7 +1624,7 @@ lrItemsContainer.addEventListener('blur', function(e) {
             // Using Bootstrap's Modal API to show the modal
             const modalElement = document.getElementById('addGoodsTypeModal');
             const goodTypeField = document.getElementById('good_type_field');
-            goodTypeField.value = btn.closest('.input-group').querySelector('.goods-type').dataset.select2Id;
+            goodTypeField.value = btn.closest('.input-group, .lrf-pf').querySelector('.goods-type').dataset.select2Id;
             const modal = new bootstrap.Modal(modalElement);
             modal.show();
         }
@@ -1562,14 +1669,18 @@ lrItemsContainer.addEventListener('blur', function(e) {
                         let newOption = new Option(data.goodsType.name, data.goodsType.name);
 
                         selects.forEach(select => {
-                            select.add(new Option(data.goodsType.name, data.goodsType.name));
+                            const opt = new Option(data.goodsType.name, data.goodsType.name);
+                            opt.setAttribute('data-id', data.goodsType.id);
+                            select.add(opt);
                         });
 
                         // Add in template as well for future items
                         const templateSelect = document.getElementById('lr-item-template').content
                             .querySelector('.goods-type');
                         if (templateSelect) {
-                            templateSelect.add(new Option(data.goodsType.name, data.goodsType.name));
+                            const opt = new Option(data.goodsType.name, data.goodsType.name);
+                            opt.setAttribute('data-id', data.goodsType.id);
+                            templateSelect.add(opt);
                         }
 
                         // Select the newly added option in the relevant dropdown

@@ -1,182 +1,156 @@
+@php
+    $period = $insights['period'];
+    $receivables = $insights['receivables'];
+    $unbilled = $insights['unbilled'];
+    $payables = $insights['payables'];
+    $growth = $insights['growth'];
+    $backlogRange = ['start_date' => now()->subMonths(3)->toDateString(), 'end_date' => now()->toDateString()];
+@endphp
+
 @include('dashboard.partials.hero', [
-    'subtitle' => 'Financial overview and payment ledger monitoring.',
-    'showPeriodFilter' => false,
+    'subtitle' => 'Collections, dues and cash position for '.strtolower($period->label).'.',
+    'quickActions' => [
+        ['label' => 'Debtors Aging', 'icon' => 'bi bi-hourglass-split', 'url' => route('accounting.debtors-aging')],
+        ['label' => 'Day Book', 'icon' => 'bi bi-journal-text', 'url' => route('accounting.day-book')],
+        ['label' => 'New Voucher', 'icon' => 'bi bi-plus-lg', 'url' => route('accounting.vouchers.create')],
+    ],
+    'showPeriodFilter' => true,
+    'dashboardPeriod' => $period,
 ])
 
-<!-- Accountant KPI Cards -->
-<div class="row g-3">
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="card glass-card info-box">
-            <div class="card-body p-0 d-flex align-items-center">
-                <div class="icon-circle bg-soft-success me-3 shadow-sm">
-                    <i class="fa-solid fa-indian-rupee-sign text-success"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted fw-semi-bold mb-1">Total Revenue</h6>
-                    <h3 class="fw-bold mb-1">{{ number_format($financialStats['total_revenue'], 2) }}</h3>
-                    <span class="badge bg-soft-success text-success rounded-pill">Total Earnings</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="card glass-card info-box">
-            <div class="card-body p-0 d-flex align-items-center">
-                <div class="icon-circle bg-soft-primary me-3 shadow-sm">
-                    <i class="fas fa-file-invoice text-primary"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted fw-semi-bold mb-1">Total Invoiced</h6>
-                    <h3 class="fw-bold mb-1">{{ number_format($financialStats['total_invoiced'], 2) }}</h3>
-                    <span class="badge bg-soft-primary text-primary rounded-pill">Monthly</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="card glass-card info-box">
-            <div class="card-body p-0 d-flex align-items-center">
-                <div class="icon-circle bg-soft-warning me-3 shadow-sm">
-                    <i class="fas fa-clock text-warning"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted fw-semi-bold mb-1">Pending Payments</h6>
-                    <h3 class="fw-bold mb-1">{{ number_format($financialStats['pending_payments'], 2) }}</h3>
-                    <span class="badge bg-soft-warning text-warning rounded-pill">Awaiting</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="card glass-card info-box">
-            <div class="card-body p-0 d-flex align-items-center">
-                <div class="icon-circle bg-soft-info me-3 shadow-sm">
-                    <i class="fas fa-indian-rupee-sign text-info"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted fw-semi-bold mb-1">Total Paid</h6>
-                    <h3 class="fw-bold mb-1">{{ number_format($financialStats['total_paid'], 2) }}</h3>
-                    <span class="badge bg-soft-info text-info rounded-pill">Received</span>
-                </div>
-            </div>
-        </div>
-    </div>
+@include('dashboard.partials.action-center', ['actions' => $actions, 'title' => 'Finance to-do'])
+
+<div class="dashboard-kpis">
+    @include('dashboard.partials.kpi-card', [
+        'title' => 'Outstanding receivables',
+        'value' => formatRupeesCompact($receivables['outstanding']),
+        'icon' => 'bi bi-cash-stack',
+        'tone' => 'primary',
+        'hint' => $receivables['open_count'].' unpaid '.Str::plural('invoice', $receivables['open_count']),
+        'href' => route('accounting.debtors-aging'),
+    ])
+    @include('dashboard.partials.kpi-card', [
+        'title' => 'Overdue',
+        'value' => formatRupeesCompact($receivables['overdue']),
+        'icon' => 'bi bi-exclamation-octagon',
+        'tone' => $receivables['overdue'] > 0 ? 'danger' : 'success',
+        'hint' => $receivables['overdue_share'].'% of outstanding · '.$receivables['overdue_count'].' '.Str::plural('invoice', $receivables['overdue_count']),
+        'href' => route('accounting.debtors-aging'),
+    ])
+    @include('dashboard.partials.kpi-card', [
+        'title' => 'Due in next '.\App\Services\Dashboard\BusinessInsightsService::DUE_SOON_DAYS.' days',
+        'value' => formatRupeesCompact($receivables['due_soon']),
+        'icon' => 'bi bi-bell',
+        'tone' => 'info',
+        'hint' => $receivables['due_soon_count'].' '.Str::plural('invoice', $receivables['due_soon_count']).' to remind',
+        'href' => route('reports.party-pending-invoice'),
+    ])
+    @include('dashboard.partials.kpi-card', [
+        'title' => 'Collected',
+        'value' => formatRupeesCompact($receivables['collected']),
+        'icon' => 'bi bi-piggy-bank',
+        'tone' => 'success',
+        'delta' => $receivables['collected_change'],
+        'comparison' => $period->comparisonLabel,
+        'hint' => $period->label,
+    ])
+    @include('dashboard.partials.kpi-card', [
+        'title' => 'Invoiced',
+        'value' => formatRupeesCompact($growth['invoiced']),
+        'icon' => 'bi bi-receipt',
+        'tone' => 'primary',
+        'delta' => $growth['invoiced_change'],
+        'comparison' => $period->comparisonLabel,
+        'hint' => $period->label,
+        'href' => route('reports.invoice'),
+    ])
+    @include('dashboard.partials.kpi-card', [
+        'title' => 'Delivered, not invoiced',
+        'value' => formatRupeesCompact($unbilled['ready_value'] + $unbilled['pod_pending_value']),
+        'icon' => 'bi bi-receipt-cutoff',
+        'tone' => ($unbilled['ready_count'] + $unbilled['pod_pending_count']) > 0 ? 'warning' : 'success',
+        'hint' => $unbilled['ready_count'].' ready · '.$unbilled['pod_pending_count'].' awaiting memo',
+        'href' => route('reports.pending-invoice', $backlogRange),
+    ])
+    @include('dashboard.partials.kpi-card', [
+        'title' => 'Transporter dues now',
+        'value' => formatRupeesCompact($payables['due_now']),
+        'icon' => 'bi bi-wallet2',
+        'tone' => 'warning',
+        'hint' => $payables['due_now_transporters'].' '.Str::plural('transporter', $payables['due_now_transporters']).' · '.formatRupeesCompact($payables['total']).' total',
+        'href' => route('reports.transporter-report'),
+    ])
+    @include('dashboard.partials.kpi-card', [
+        'title' => 'Paid to transporters',
+        'value' => formatRupeesCompact($payables['paid_out']),
+        'icon' => 'bi bi-send-check',
+        'tone' => 'info',
+        'delta' => $payables['paid_out_change'],
+        'goodWhen' => 'down',
+        'comparison' => $period->comparisonLabel,
+        'hint' => $period->label,
+    ])
 </div>
 
-<div class="row g-3 mt-1">
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="card glass-card info-box">
-            <div class="card-body p-0 d-flex align-items-center">
-                <div class="icon-circle bg-soft-danger me-3 shadow-sm">
-                    <i class="fas fa-exclamation-triangle text-danger"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted fw-semi-bold mb-1">Overdue Invoices</h6>
-                    <h3 class="fw-bold mb-1">{{ number_format($financialStats['overdue_invoices']) }}</h3>
-                    <span class="badge bg-soft-danger text-danger rounded-pill">Action Required</span>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="dashboard-grid dashboard-grid--2">
+    @include('dashboard.partials.receivables-panel', ['agingHref' => route('accounting.debtors-aging')])
+    @include('dashboard.partials.payables-panel', ['payablesHref' => route('reports.transporter-report')])
 </div>
 
-<!-- Priority 1: Pending Invoices - Payment Ledger -->
-@if(isset($pendingInvoices) && $pendingInvoices->count() > 0)
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
-            <div class="card-header bg-soft-danger text-danger border-0 py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold"><i class="fas fa-exclamation-triangle me-2"></i> Pending Invoices - Payment Ledger (High Priority)</h5>
-                    <a href="{{ route('invoices.index') }}" class="btn btn-sm btn-danger text-white fw-bold rounded-pill px-3">View All</a>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-soft-secondary">
+<section class="dashboard-panel">
+    <div class="dashboard-panel__header">
+        <h2 class="dashboard-panel__title"><i class="bi bi-alarm"></i> Most overdue invoices</h2>
+        <span class="dashboard-panel__aside">Due date is the date set on the invoice, or {{ \App\Models\Invoice::DEFAULT_CREDIT_DAYS }} days after the invoice date</span>
+    </div>
+    <div class="dashboard-panel__body dashboard-panel__body--flush">
+        @if (count($receivables['overdue_invoices']) === 0)
+            <div class="dashboard-empty">No overdue invoices.</div>
+        @else
+            <div class="table-responsive">
+                <table class="table dashboard-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Invoice</th>
+                            <th>Customer</th>
+                            <th>Invoice date</th>
+                            <th>Due date</th>
+                            <th class="text-end">Days overdue</th>
+                            <th class="text-end">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($receivables['overdue_invoices'] as $invoice)
                             <tr>
-                                <th class="ps-4">Invoice #</th>
-                                <th>Customer</th>
-                                <th class="text-end">Balance / Total</th>
-                                <th>Date</th>
-                                <th class="text-end pe-4">Action</th>
+                                <td class="fw-semibold text-nowrap">{{ $invoice['number'] }}</td>
+                                <td><div class="text-truncate" style="max-width: 220px;" title="{{ $invoice['customer'] }}">{{ $invoice['customer'] }}</div></td>
+                                <td class="text-nowrap">{{ formatDate($invoice['invoice_date']) }}</td>
+                                <td class="text-nowrap">
+                                    {{ formatDate($invoice['due_date']) }}
+                                    @unless ($invoice['has_due_date'])
+                                        <span class="text-muted small" title="No due date set on the invoice">(default)</span>
+                                    @endunless
+                                </td>
+                                <td class="text-end fw-bold {{ $invoice['days_overdue'] > 60 ? 'text-danger' : 'text-warning' }}">{{ $invoice['days_overdue'] }}</td>
+                                <td class="text-end fw-bold text-nowrap">{{ formatRupeesCompact($invoice['balance']) }}</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($pendingInvoices as $invoice)
-                                <tr>
-                                    <td class="ps-4"><span class="fw-bold text-dark">#{{ $invoice->invoice_number
-                                        ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
-                                        : ($invoice->manual_invoice_number ?? $invoice->id) }}</span></td>
-                                    <td>
-                                        <div class="fw-medium text-dark">{{ Str::limit($invoice->consignee->name ?? 'N/A', 25) }}</div>
-                                    </td>
-                                    <td class="text-end">
-                                        <div class="d-flex flex-column">
-                                            @php $amountToCollect = $invoice->net_amount ?? $invoice->total_amount; @endphp
-                                            <span class="fw-bold text-danger">{{ number_format($invoice->remaining_amount, 2) }}</span>
-                                            <small class="text-muted">of {{ number_format($amountToCollect, 2) }}</small>
-                                        </div>
-                                    </td>
-                                    <td>{{ $invoice->generated_date ? \Carbon\Carbon::parse($invoice->generated_date)->format('d M Y') : '-' }}</td>
-                                    <td class="text-end pe-4 align-middle">
-                                        <a href="{{ route('invoices.show', $invoice->id) }}" class="btn btn-icon btn-view rounded-circle" title="View Ledger">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
+        @endif
+    </div>
+</section>
+
+<section class="dashboard-panel">
+    <div class="dashboard-panel__header">
+        <h2 class="dashboard-panel__title"><i class="bi bi-bar-chart-line"></i> Revenue, trip cost and collections</h2>
+        <span class="dashboard-panel__aside">Last 6 months</span>
+    </div>
+    <div class="dashboard-panel__body">
+        <div class="dashboard-chart">
+            <canvas id="dashMonthlyPnlChart" aria-label="Monthly revenue, cost, profit and collections"></canvas>
         </div>
     </div>
-</div>
-@endif
+</section>
 
-<!-- Priority 2: Recent Payment Ledger Entries -->
-@if(isset($recentInvoicePayments) && $recentInvoicePayments->count() > 0)
-<div class="row mt-4 mb-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm" style="border-radius: 16px;">
-            <div class="card-header bg-white border-0 py-3 mt-1">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-indian-rupee-sign text-success me-2"></i> Recent Payment Ledger Entries</h5>
-                    <a href="{{ route('invoices.index') }}" class="btn btn-sm btn-brand-secondary rounded-pill px-3">View All Invoices</a>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-soft-secondary">
-                            <tr>
-                                <th class="ps-4">Invoice #</th>
-                                <th>Customer</th>
-                                <th class="text-end">Amount Paid</th>
-                                <th>Mode</th>
-                                <th class="pe-4">Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($recentInvoicePayments as $payment)
-                                <tr>
-                                    <td class="ps-4">#{{ $payment->invoice->invoice_number
-                                        ? $payment->invoice->invoice_number . ($payment->invoice->manual_invoice_number ? ' (' . $payment->invoice->manual_invoice_number . ')' : '')
-                                        : ($payment->invoice->manual_invoice_number ?? $payment->invoice->id) }}</td>
-                                    <td>{{ Str::limit($payment->invoice->consignee->name ?? 'N/A', 25) }}</td>
-                                    <td class="text-end fw-bold text-success">{{ number_format($payment->amount, 2) }}</td>
-                                    <td><span class="badge bg-soft-info text-info rounded-pill px-3">{{ ucfirst($payment->mode) }}</span></td>
-                                    <td class="pe-4">{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') : $payment->created_at->format('d M Y') }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
-
+<script type="application/json" id="dashboard-chart-data">@json($chartPayload)</script>

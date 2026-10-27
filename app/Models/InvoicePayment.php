@@ -15,19 +15,35 @@ class InvoicePayment extends Model implements Auditable
     protected $fillable = [
         'invoice_id',
         'mode',
+        'bank_ledger_id',
         'amount',
+        'tds_amount',
+        'deduction_amount',
+        'deduction_reason',
         'remark',
         'payment_date',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'tds_amount' => 'decimal:2',
+        'deduction_amount' => 'decimal:2',
         'payment_date' => 'date',
     ];
 
     public function invoice()
     {
         return $this->belongsTo(Invoice::class);
+    }
+
+    public function bankLedger()
+    {
+        return $this->belongsTo(Ledger::class, 'bank_ledger_id');
+    }
+
+    public function getTotalSettledAmountAttribute(): float
+    {
+        return round((float) $this->amount + (float) ($this->tds_amount ?? 0) + (float) ($this->deduction_amount ?? 0), 2);
     }
 
     /**
@@ -37,6 +53,9 @@ class InvoicePayment extends Model implements Auditable
     {
         return [
             'amount',
+            'tds_amount',
+            'deduction_amount',
+            'deduction_reason',
             'mode',
             'remark',
             'payment_date',

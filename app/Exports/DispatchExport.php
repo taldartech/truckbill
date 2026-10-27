@@ -18,13 +18,18 @@ class DispatchExport implements FromView, ShouldAutoSize, WithColumnFormatting
 
     private $balanceAsOnDate;
 
+    private $customerId;
 
-    public function __construct($startDate, $endDate, $balanceAsOnDate = null)
-{
-    $this->startDate = $startDate;
-    $this->endDate = $endDate;
-    $this->balanceAsOnDate = $balanceAsOnDate;
-}
+    private $transporterId;
+
+    public function __construct($startDate, $endDate, $balanceAsOnDate = null, $customerId = null, $transporterId = null)
+    {
+        $this->startDate = $startDate;
+        $this->endDate = $endDate;
+        $this->balanceAsOnDate = $balanceAsOnDate;
+        $this->customerId = $customerId;
+        $this->transporterId = $transporterId;
+    }
 
     public function view(): View
     {
@@ -38,11 +43,26 @@ class DispatchExport implements FromView, ShouldAutoSize, WithColumnFormatting
                 'consignee',
                 'customer',
                 'truck',
+                'transporter',
             ])->whereBetween('gr_date', [$this->startDate, $this->endDate])
                 ->orderBy('gr_date', 'asc');
 
             if ($user) {
                 $query->where('company_id', $user);
+            }
+
+            if ($this->customerId) {
+                $query->where('customer_id', $this->customerId);
+            }
+
+            if ($this->transporterId) {
+                $transporterId = $this->transporterId;
+                $query->where(function ($q) use ($transporterId) {
+                    $q->where('transporter_id', $transporterId)
+                        ->orWhereHas('freightBookings', function ($fb) use ($transporterId) {
+                            $fb->where('transporter_id', $transporterId);
+                        });
+                });
             }
 
             $lrs = $query->get();
@@ -55,7 +75,6 @@ class DispatchExport implements FromView, ShouldAutoSize, WithColumnFormatting
             'lrs' => $lrs,
             'forExcel' => true,
             'endDate' => $this->endDate,
-       
             'balanceAsOnDate' => $this->balanceAsOnDate,
         ]);
     }

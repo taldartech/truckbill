@@ -28,7 +28,7 @@
     }
 </style>
 
-    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 12px;">
+    <table width="100%" border="1" cellspacing="0" cellpadding="6" class="text-nowrap" style="border-collapse: collapse; font-size: 12px;">
     @if ($invoiceCompanyLogoSrc && !$forExcel)
         @php
             $hName = $partyBillHeaderCompact ? '13px' : '17px';

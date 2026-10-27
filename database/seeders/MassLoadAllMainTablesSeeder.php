@@ -10,7 +10,7 @@ use Illuminate\Database\Seeder;
  * 1. MassLoadTestSeeder — agencies, consignees, drivers, trucks, LR, freight bookings,
  *    advance payments, invoices, leads (+ voucher payments, invoice payments, payment_ledgers, branches).
  * 2. TruckOwnerTruckLoadTestSeeder — truck owners (is_owner=1) + trucks (same row count).
- * 3. MassLoadAuxiliaryTablesSeeder — good_types, pumps, promo_codes, email_*, reminders, audit_*, consignee_user, etc.
+ * 3. MassLoadAuxiliaryTablesSeeder — good_types, pumps, promo_codes, email_*, reminders, audit_*, etc.
  *
  * Env (same as child seeders):
  * - LOAD_TEST_ROW_COUNT (default 100000 — 1 lakh agency chain + related rows)

@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AccountingReportController;
+use App\Http\Controllers\AccountingVoucherController;
 use App\Http\Controllers\AdvancePaymentController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BranchController;
@@ -8,7 +10,6 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CompanySettingsController;
 use App\Http\Controllers\ConsigneeController;
 use App\Http\Controllers\CountryController;
-use App\Http\Controllers\CustomerPortalController;
 use App\Http\Controllers\CustomInvoiceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DriverController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\FreightBookingController;
 use App\Http\Controllers\GoodsTypeController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\LedgerController;
 use App\Http\Controllers\LorryReceiptController;
 use App\Http\Controllers\MasterPanelSummaryController;
 use App\Http\Controllers\PumpController;
@@ -26,7 +28,6 @@ use App\Http\Controllers\StateController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TransporterBankAccountController;
 use App\Http\Controllers\TransporterController;
-use App\Http\Controllers\TransporterDashboardController;
 use App\Http\Controllers\TransporterMasterController;
 use App\Http\Controllers\TruckController;
 use App\Http\Controllers\TruckOwnerBankAccountController;
@@ -108,22 +109,6 @@ Route::middleware(['auth.blocked'])->group(function () {
 
     Route::redirect('/', '/dashboard');
 
-    // Transporter-specific routes (transporter role)
-    Route::prefix('transporter')->name('transporter.')->middleware(['role:transporter'])->group(function () {
-        Route::get('/freight-bookings', [TransporterDashboardController::class, 'freightBookings'])->name('freight_bookings.index');
-        Route::get('/freight-bookings/{freight_booking}', [TransporterDashboardController::class, 'showFreightBooking'])->name('freight_bookings.show');
-        Route::get('/payments', [TransporterDashboardController::class, 'payments'])->name('payments.index');
-    });
-
-    Route::prefix('customer')->name('customer.')->middleware(['role:customer', 'customer.consignee'])->group(function () {
-        Route::get('/lorry-receipts', [CustomerPortalController::class, 'lorryReceipts'])->name('lorry-receipts.index');
-        Route::get('/lorry-receipts/{lorryReceipt}', [CustomerPortalController::class, 'showLorryReceipt'])->name('lorry-receipts.show');
-        Route::get('/invoices', [CustomerPortalController::class, 'invoices'])->name('invoices.index');
-        Route::get('/invoices/{invoice}', [CustomerPortalController::class, 'showInvoice'])->name('invoices.show');
-        Route::get('/payments', [CustomerPortalController::class, 'payments'])->name('payments.index');
-        Route::get('/transporters', [CustomerPortalController::class, 'transporters'])->name('transporters.index');
-    });
-
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->middleware(['auth.blocked', 'verified'])
         ->name('dashboard');
@@ -131,23 +116,48 @@ Route::middleware(['auth.blocked'])->group(function () {
     // Consignee Management
     Route::middleware(['role:admin,moderator,super_admin', 'company.context', 'subscription.active'])->group(function () {
         Route::resource('consignees', ConsigneeController::class)->only(['index', 'create', 'store']);
+        Route::post('/consignees/bulk-upload', [ConsigneeController::class, 'bulkUpload'])
+        ->name('consignees.bulkUpload');
+
+    Route::get('/consignees/bulk-upload-template', [ConsigneeController::class, 'bulkUploadTemplate'])
+        ->name('consignees.bulkUploadTemplate');
     });
     Route::middleware(['role:admin,super_admin', 'company.context', 'subscription.active'])->group(function () {
         Route::resource('consignees', ConsigneeController::class)->only(['edit', 'update', 'destroy']);
     });
 
-    // Transporters CRUD
-    Route::middleware(['role:admin,moderator,super_admin', 'company.context', 'subscription.active'])->group(function () {
-        Route::resource('transporters', TransporterController::class)->only(['index', 'create', 'store', 'show']);
-    });
-    Route::middleware(['role:admin,super_admin', 'company.context', 'subscription.active'])->group(function () {
-        Route::resource('transporters', TransporterController::class)->only(['edit', 'update', 'destroy']);
-        Route::post('/transporters/{transporter}/refresh-tds', [TransporterController::class, 'refreshTds'])->name('transporters.refresh-tds');
-    });
+    //// Transporters CRUD
+
+Route::middleware(['role:admin,moderator,super_admin', 'company.context', 'subscription.active'])->group(function () {
+
+    Route::get('/transporters/bulk-upload-template', [TransporterController::class, 'bulkUploadTemplate'])
+        ->name('transporters.bulk-upload-template');
+
+    Route::resource('transporters', TransporterController::class)
+        ->only(['index', 'create', 'store', 'show']);
+
+    Route::post('/transporters/bulk-upload', [TransporterController::class, 'bulkUpload'])
+        ->name('transporters.bulk-upload');
+});
+
+Route::middleware(['role:admin,super_admin', 'company.context', 'subscription.active'])->group(function () {
+
+    Route::resource('transporters', TransporterController::class)
+        ->only(['edit', 'update', 'destroy']);
+
+    Route::post('/transporters/{transporter}/refresh-tds', [TransporterController::class, 'refreshTds'])
+        ->name('transporters.refresh-tds');
+});
 
     // Truck Owner Management
+   
     Route::middleware(['role:admin,moderator,super_admin', 'company.context', 'subscription.active'])->group(function () {
+
+       Route::get('/truck_owners/bulk-upload-template', [TruckOwnerController::class, 'bulkUploadTemplate'])
+        ->name('truck_owners.bulk-upload-template');
         Route::resource('truck_owners', TruckOwnerController::class)->only(['index', 'create', 'store', 'show']);
+         Route::post('/truck_owners/bulk-upload', [TruckOwnerController::class, 'bulkUpload'])
+        ->name('truck_owners.bulk-upload');
     });
     Route::middleware(['role:admin,super_admin', 'company.context', 'subscription.active'])->group(function () {
         Route::resource('truck_owners', TruckOwnerController::class)->only(['edit', 'update', 'destroy']);
@@ -163,6 +173,11 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/trucks', [TruckController::class, 'index'])->name('trucks.index');
         Route::get('/trucks/create/{transporter_id?}', [TruckController::class, 'create'])->name('trucks.create');
         Route::post('/trucks', [TruckController::class, 'store'])->name('trucks.store');
+        Route::post('/trucks/bulk-upload', [TruckController::class, 'bulkUpload'])
+        ->name('trucks.bulkUpload');
+
+    Route::get('/trucks/bulk-upload/template', [TruckController::class, 'bulkUploadTemplate'])
+        ->name('trucks.bulkUploadTemplate');
         Route::get('/trucks/{truck}', [TruckController::class, 'show'])->name('trucks.show');
     });
     Route::middleware(['role:admin,super_admin', 'company.context', 'subscription.active'])->group(function () {
@@ -195,6 +210,7 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::post('/freight_bookings/store_combined_payment', [FreightBookingController::class, 'storeCombinedPayment'])->name('freight_bookings.store_combined_payment');
         Route::get('/freight_bookings/data', [FreightBookingController::class, 'getFreightBookingsData'])->name('freight_bookings.datatable');
         Route::post('/freight_bookings/confirm', [FreightBookingController::class, 'confirm'])->name('freight_bookings.confirm');
+        Route::get('/freight_bookings/{freight_booking}/settlement', [FreightBookingController::class, 'settlementStatement'])->name('freight_bookings.settlement');
         Route::resource('freight_bookings', FreightBookingController::class);
         Route::post('/freight_bookings/voucher-payment', [FreightBookingController::class, 'voucherPayment'])->name('freight_bookings.voucher_payment');
         Route::post('/freight_bookings/bulk-memo-id', [FreightBookingController::class, 'bulkMemoId'])->name('freight_bookings.bulk_memo_id');
@@ -245,12 +261,18 @@ Route::middleware(['auth.blocked'])->group(function () {
     // Admin + Moderator: read-only access (index, show, daily report)
     Route::middleware(['role:admin,moderator,super_admin', 'company.context', 'subscription.active'])->group(function () {
         Route::get('voucher_payments', [VoucherPaymentController::class, 'index'])->name('voucher_payments.index');
+        Route::get('voucher_payments/export-payout', [VoucherPaymentController::class, 'exportPayoutFile'])->name('voucher_payments.export_payout');
         Route::get('voucher_payments/{voucherNumber}', [VoucherPaymentController::class, 'show'])->name('voucher_payments.show');
         Route::get('daily-payments', [VoucherPaymentController::class, 'dailyPayments'])->name('voucher_payments.daily');
     });
 
     // Driver CRUD
     Route::get('/drivers/data', [DriverController::class, 'getDriversData'])->name('drivers.data');
+    Route::post('/drivers/bulk-upload', [DriverController::class, 'bulkUpload'])
+    ->name('drivers.bulkUpload');
+
+Route::get('/drivers/bulk-upload-template', [DriverController::class, 'bulkUploadTemplate'])
+    ->name('drivers.bulkUploadTemplate');
     Route::resource('drivers', DriverController::class)->except(['show']);
 
     // Master Routes
@@ -282,7 +304,13 @@ Route::middleware(['auth.blocked'])->group(function () {
         // Goods Types
         Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
             Route::resource('goods-types', GoodsTypeController::class)->only(['index', 'create', 'store']);
+
+             Route::get('/goods-types/bulk-upload/template', [GoodsTypeController::class, 'bulkUploadTemplate'])
+        ->name('goods-types.bulk-upload.template');
+        Route::post('/goods-types/bulk-upload', [GoodsTypeController::class, 'bulkUpload'])
+      ->name('goods-types.bulk-upload');
         });
+       
         Route::middleware(['role:admin,super_admin'])->group(function () {
             Route::resource('goods-types', GoodsTypeController::class)->only(['edit', 'update', 'destroy']);
         });
@@ -298,6 +326,12 @@ Route::middleware(['auth.blocked'])->group(function () {
         // Pumps
         Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
             Route::resource('pumps', PumpController::class)->only(['index', 'create', 'store'])->names(['index' => 'pump.index', 'create' => 'pump.create', 'store' => 'pump.store']);
+              Route::get('/pumps/bulk-upload/template', [PumpController::class, 'bulkUploadTemplate'])
+        ->name('pump.bulk-upload.template');
+
+    Route::post('/pumps/bulk-upload', [PumpController::class, 'bulkUpload'])
+        ->name('pump.bulk-upload');
+
         });
         Route::middleware(['role:admin,super_admin'])->group(function () {
             Route::resource('pumps', PumpController::class)->only(['edit', 'update', 'destroy'])->names(['edit' => 'pump.edit', 'update' => 'pump.update', 'destroy' => 'pump.destroy']);
@@ -341,6 +375,10 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/cash-export', [ReportController::class, 'cash_export'])->name('reports.cash-export');
         Route::get('/transporter-report', [ReportController::class, 'transporter_report'])->name('reports.transporter-report');
         Route::get('/transporter-report-export', [ReportController::class, 'transporter_report_export'])->name('reports.transporter-report-export');
+        Route::get('/profitability', [ReportController::class, 'profitability'])
+           ->name('reports.profitability');
+        Route::get('/profitability-export', [ReportController::class, 'profitability_export'])
+         ->name('reports.profitability-export');
         Route::get('/pending-invoice', [ReportController::class, 'pending_invoice'])->name('reports.pending-invoice');
         Route::get('/pending-invoice-export', [ReportController::class, 'pendingInvoiceExport'])->name('reports.pending-invoice-export');
         Route::get('/party-pending-invoice', [PartyPendingInvoiceReportController::class, 'index'])->name('reports.party-pending-invoice');
@@ -349,6 +387,25 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/transporter-master-export', [ReportController::class, 'transporter_master_export'])->name('reports.transporter-master-export');
         Route::get('/voucher-receipt-export', [ReportController::class, 'voucher_receipt_export'])->name('reports.voucher-receipt-export');
         Route::post('/voucher-receipt-mark-printed', [ReportController::class, 'markVoucherReceiptPrinted'])->name('reports.voucher-receipt-mark-printed');
+    });
+
+    // Accounting & Tally Functionality
+    Route::group(['prefix' => 'accounting', 'as' => 'accounting.', 'middleware' => ['role:admin,accountant,super_admin', 'company.context', 'subscription.active']], function () {
+        Route::get('/day-book', [AccountingReportController::class, 'dayBook'])->name('day-book');
+        Route::get('/ledger-statement/{ledgerId?}', [AccountingReportController::class, 'ledgerStatement'])->name('ledger-statement');
+        Route::get('/trial-balance', [AccountingReportController::class, 'trialBalance'])->name('trial-balance');
+        Route::get('/profit-and-loss', [AccountingReportController::class, 'profitAndLoss'])->name('profit-and-loss');
+        Route::get('/balance-sheet', [AccountingReportController::class, 'balanceSheet'])->name('balance-sheet');
+        Route::get('/export-tally-masters', [AccountingReportController::class, 'exportTallyMasters'])->name('export-tally-masters');
+        Route::get('/export-tally-vouchers', [AccountingReportController::class, 'exportTallyVouchers'])->name('export-tally-vouchers');
+        Route::get('/gstr1', [AccountingReportController::class, 'gstr1'])->name('gstr1');
+        Route::get('/debtors-aging', [AccountingReportController::class, 'debtorsAging'])->name('debtors-aging');
+        Route::get('/bank-reconciliation', [AccountingReportController::class, 'bankReconciliation'])->name('bank-reconciliation');
+        Route::post('/bank-reconciliation', [AccountingReportController::class, 'updateBankReconciliation'])->name('bank-reconciliation.update');
+        Route::post('/vouchers/{voucher}/reverse', [AccountingVoucherController::class, 'reverse'])->name('vouchers.reverse');
+        Route::resource('vouchers', AccountingVoucherController::class)->only(['index', 'create', 'store', 'show']);
+        Route::get('/ledgers/{ledger}/pending-invoices', [AccountingVoucherController::class, 'getPendingInvoices'])->name('ledgers.pending-invoices');
+        Route::resource('ledgers', LedgerController::class)->only(['index', 'store']);
     });
 
     Route::middleware(['role:super_admin'])->group(function () {

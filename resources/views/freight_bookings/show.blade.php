@@ -41,7 +41,7 @@
         };
     @endphp
 
-    <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
+    <link rel="stylesheet" href="{{ asset('css/fb-show-redesigned.css') }}?v={{ file_exists(public_path('css/fb-show-redesigned.css')) ? filemtime(public_path('css/fb-show-redesigned.css')) : time() }}">
 
     @if (session('success'))
         <div class="alert alert-success mt-2" style="max-width: 1200px; margin-left: auto; margin-right: auto;">
@@ -75,7 +75,7 @@
                                 <span class="badge bg-primary ms-1">Combined</span>
                             @endif
                         </strong>
-                        <div class="fb-detail-actions ms-auto">
+                        <div class="fb-detail-actions">
                             <a href="{{ route('freight_bookings.index') }}{{ $listingSuffix }}"
                                 class="btn btn-sm btn-icon btn-action-back"
                                 title="Back to list">
@@ -129,6 +129,14 @@
                                     <i class="bi bi-printer"></i>
                                 </a>
                             @endif
+
+                            <a href="{{ route('freight_bookings.settlement', $freightBooking->id) }}"
+                                class="btn btn-sm btn-icon"
+                                style="color: #0284c7; border: 1px solid #bae6fd; background-color: #f0f9ff;"
+                                title="Broker Settlement Statement & Bill Verification"
+                                data-bs-toggle="tooltip">
+                                <i class="bi bi-file-earmark-ruled"></i>
+                            </a>
                         </div>
                     </div>
 
@@ -436,7 +444,7 @@
                     <div class="card-body p-0">
                         @if ($payments->count() > 0)
                             <div class="table-responsive">
-                                <table class="table table-sm table-hover align-middle mb-0 fb-compact-table">
+                                <table class="table table-sm table-hover align-middle mb-0 fb-compact-table text-nowrap">
                                     <thead>
                                         <tr>
                                             <th>Voucher</th>
@@ -493,14 +501,16 @@
                 <div class="card fb-financial-summary">
                     <div class="fb-financial-summary__header">
                         <div>
-                            <strong class="fb-financial-summary__title">Financial Summary</strong>
+                            <div class="fb-financial-summary__title-row d-flex align-items-center gap-2 flex-wrap">
+                                <strong class="fb-financial-summary__title">Financial Summary</strong>
+                                <div class="fb-financial-summary__badge {{ $hasBalanceDue ? 'is-due' : 'is-clear' }}">
+                                    {{ $hasBalanceDue ? 'Balance due' : 'Cleared' }}
+                                    ₹{{ number_format(abs($balanceAmount), 2) }}
+                                </div>
+                            </div>
                             <span class="fb-financial-summary__subtitle">
                                 {{ $isCombined ? 'Combined hire vs deductions' : 'Hire vs deductions' }}
                             </span>
-                        </div>
-                        <div class="fb-financial-summary__badge {{ $hasBalanceDue ? 'is-due' : 'is-clear' }}">
-                            {{ $hasBalanceDue ? 'Balance due' : 'Cleared' }}
-                            ₹{{ number_format(abs($balanceAmount), 2) }}
                         </div>
                     </div>
                     <div class="fb-financial-summary__body">
@@ -549,7 +559,7 @@
                                 <strong>₹{{ number_format($tdsAmount, 2) }}</strong>
                             </div>
                             <div class="fb-financial-summary__row">
-                                <span>Negative Adjusted</span>
+                                <span>Negative Adjusted Amount</span>
                                 <strong class="{{ $negativeAdjusted > 0 ? '' : 'text-muted' }}">₹{{ number_format($negativeAdjusted, 2) }}</strong>
                             </div>
                             <div class="fb-financial-summary__row">
@@ -565,36 +575,40 @@
                         <strong>Record Info</strong>
                     </div>
                     <div class="card-body">
-                        <div class="mb-2">
-                            <span class="fb-side-meta__label">Created</span>
-                            <div class="fb-side-meta__value">
-                                {{ $freightBooking->created_at ? $freightBooking->created_at->format('d-m-Y h:i A') : 'N/A' }}
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <span class="fb-side-meta__label">Created</span>
+                                <div class="fb-side-meta__value">
+                                    {{ $freightBooking->created_at ? $freightBooking->created_at->format('d-m-Y h:i A') : 'N/A' }}
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <span class="fb-side-meta__label">Last Updated</span>
+                                <div class="fb-side-meta__value">
+                                    {{ $freightBooking->updated_at ? $freightBooking->updated_at->format('d-m-Y h:i A') : 'N/A' }}
+                                </div>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <span class="fb-side-meta__label">Last Updated</span>
-                            <div class="fb-side-meta__value">
-                                {{ $freightBooking->updated_at ? $freightBooking->updated_at->format('d-m-Y h:i A') : 'N/A' }}
-                            </div>
-                        </div>
-                        <div class="fb-side-meta__users">
-                            <div class="fb-side-meta__user">
-                                <span class="fb-side-meta__label">Created By</span>
-                                @if ($freightBooking->creator)
-                                    <div class="fb-side-meta__value">{{ $freightBooking->creator->name }}</div>
-                                    <div class="fb-side-meta__email">{{ $freightBooking->creator->email }}</div>
-                                @else
-                                    <div class="fb-side-meta__value text-muted">Not available</div>
-                                @endif
-                            </div>
-                            <div class="fb-side-meta__user">
-                                <span class="fb-side-meta__label">Last Updated By</span>
-                                @if ($freightBooking->updater)
-                                    <div class="fb-side-meta__value">{{ $freightBooking->updater->name }}</div>
-                                    <div class="fb-side-meta__email">{{ $freightBooking->updater->email }}</div>
-                                @else
-                                    <div class="fb-side-meta__value text-muted">Not available</div>
-                                @endif
+                        <div class="fb-side-meta__users pt-2">
+                            <div class="row g-2">
+                                <div class="col-6 fb-side-meta__user">
+                                    <span class="fb-side-meta__label">Created By</span>
+                                    @if ($freightBooking->creator)
+                                        <div class="fb-side-meta__value">{{ $freightBooking->creator->name }}</div>
+                                        <div class="fb-side-meta__email">{{ $freightBooking->creator->email }}</div>
+                                    @else
+                                        <div class="fb-side-meta__value text-muted">Not available</div>
+                                    @endif
+                                </div>
+                                <div class="col-6 fb-side-meta__user">
+                                    <span class="fb-side-meta__label">Last Updated By</span>
+                                    @if ($freightBooking->updater)
+                                        <div class="fb-side-meta__value">{{ $freightBooking->updater->name }}</div>
+                                        <div class="fb-side-meta__email">{{ $freightBooking->updater->email }}</div>
+                                    @else
+                                        <div class="fb-side-meta__value text-muted">Not available</div>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1298,14 +1312,14 @@
                                 <i class="bi bi-currency-rupee"></i> Payment Allocation
                             </div>
                             <div class="fb-pay-panel__body">
-                                <div class="row align-items-center justify-content-between">
-                                    <div class="col-6">
+                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                                    <div>
                                         <span class="fb-pay-fact__label">Total Balance</span>
                                         <div class="fb-pay-fact__value fb-pay-fact__value--warn">₹{{ number_format($combinedTotalBalance, 2) }}</div>
                                     </div>
-                                    <div class="col-6 d-flex align-items-center justify-content-end">
-                                        <label class="form-label mb-1" for="combinedAmountInput">Combined Amount *</label>
-                                        <input style="width: 50%" type="number" class="form-control" id="combinedAmountInput" name="combined_amount"
+                                    <div class="d-flex align-items-center gap-2 ms-auto">
+                                        <label class="form-label mb-0 fw-semibold text-nowrap" for="combinedAmountInput" style="font-size: 0.78rem;">Combined Amount *</label>
+                                        <input style="width: 120px;" type="number" class="form-control form-control-sm text-end fw-bold" id="combinedAmountInput" name="combined_amount"
                                             step="0.01" min="0.01" max="{{ $combinedTotalBalance }}" required>
                                     </div>
                                 </div>
@@ -1314,8 +1328,8 @@
                                         <thead>
                                             <tr>
                                                 <th>LR Number</th>
-                                                <th>Shortage</th>
-                                                <th>Damage</th>
+                                                <th>Shortage Amount</th>
+                                                <th>Damage Amount</th>
                                                 <th>Balance</th>
                                                 <th>Allocated</th>
                                             </tr>

@@ -35,6 +35,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Yajra\DataTables\Facades\DataTables;
+use App\Models\EwayBill;
 
 class FreightBookingController extends Controller
 {
@@ -535,8 +536,8 @@ class FreightBookingController extends Controller
                     $lr = $booking->lr;
                     if ($lr) {
                         $printTitle = $booking->voucher_last_printed_at
-                            ? 'Last printed: '.$booking->voucher_last_printed_at->format('d-m-Y h:i A')
-                            : 'Print voucher challan';
+                          ? 'Last printed: '.$booking->voucher_last_printed_at->format('d-m-Y h:i A')
+                          : 'Print voucher challan';
                         $printedClass = $booking->voucher_printed ? ' is-printed' : '';
                         $html .= '<a href="'.e(route('reports.voucher-receipt-export', ['lr_id' => $lr->id])).'" ';
                         $html .= 'class="btn btn-sm btn-icon btn-action-print voucher-print-btn'.$printedClass.'" ';
@@ -544,6 +545,8 @@ class FreightBookingController extends Controller
                         $html .= 'data-mark-url="'.e(route('reports.voucher-receipt-mark-printed')).'" ';
                         $html .= 'title="'.e($printTitle).'" data-bs-toggle="tooltip"><i class="bi bi-file-earmark-text"></i></a>';
                     }
+
+                    $html .= '<a href="'.e(route('freight_bookings.settlement', $booking->id)).'" class="btn btn-sm btn-icon" style="color: #0284c7;" title="Broker Settlement Statement" data-bs-toggle="tooltip"><i class="bi bi-file-earmark-ruled"></i></a>';
 
                     $html .= '</div>';
 
@@ -684,8 +687,9 @@ class FreightBookingController extends Controller
             'advance_amount' => 'nullable|numeric',
             'balance_amount' => 'required|numeric',
             'tds_amount' => 'nullable|numeric',
-            'eway_bill_number' => 'nullable|string',
-            'eway_bill_expiry' => 'nullable|date',
+            'eway_bills' => 'nullable|array',
+            'eway_bills.*.eway_bill_number' => 'nullable|string',
+            'eway_bills.*.eway_bill_expiry' => 'nullable|date',
             'good_type' => 'nullable|string',
             'pan_verified' => 'required|boolean',
             'remark' => 'nullable|string',
@@ -732,7 +736,7 @@ class FreightBookingController extends Controller
                 ->with('error', 'Please confirm the good hire (lorry hire) details before submission.');
         }
 
-        $data = $request->validate([
+            $data = $request->validate([
             'lr_id' => 'required|exists:lorry_receipts,id',
             'tr_fr_rate' => 'required|numeric',
             'tr_amount' => 'required|numeric',
@@ -740,10 +744,10 @@ class FreightBookingController extends Controller
             'advance_amount' => 'nullable|numeric',
             'balance_amount' => 'required|numeric',
             'tds_amount' => 'nullable|numeric',
-            'eway_bill_number' => 'nullable|string',
-            'eway_bill_expiry' => 'nullable|date',
+            'eway_bills' => 'nullable|array',
+            'eway_bills.*.eway_bill_number' => 'nullable|string',
+            'eway_bills.*.eway_bill_expiry' => 'nullable|date',
             'good_type' => 'nullable|string',
-
             'pan_verified' => 'required|boolean',
             'remark' => 'nullable|string',
             'is_delivered' => 'boolean',
@@ -810,6 +814,20 @@ class FreightBookingController extends Controller
                 'linked_lr_id' => $linkedLrId,
             ], $transporterInfo));
 
+            foreach ($data['eway_bills'] ?? [] as $ewayBillData) {
+     if (
+        empty($ewayBillData['eway_bill_number'] ?? null) &&
+        empty($ewayBillData['eway_bill_expiry'] ?? null)
+        ) {
+        continue;
+       }
+
+      $freightBooking->ewayBills()->create([
+        'eway_bill_number' => $ewayBillData['eway_bill_number'] ?? null,
+        'eway_bill_expiry' => $ewayBillData['eway_bill_expiry'] ?? null,
+      ]);
+     }
+
             $oldDeliveryStatus = $lorryReceipt->delivery_status;
             $deliveryStatus = 'Pending';
             if ($data['is_cancelled'] === '1') {
@@ -851,6 +869,13 @@ class FreightBookingController extends Controller
                 if ($notifyLrStatusChange) {
                     $lorryReceipt->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
                     $this->lrNotificationService->notifyStatusChange($lorryReceipt, $deliveryStatus, auth()->user());
+                }
+
+                try {
+                    $freightBooking->loadMissing(['company', 'transporter', 'truck', 'lr']);
+                    app(\App\Services\AccountingPostingService::class)->postFreightBooking($freightBooking);
+                } catch (\Throwable $e) {
+                    \Log::error('Accounting post freight booking failed: '.$e->getMessage());
                 }
             });
 
@@ -1106,6 +1131,129 @@ class FreightBookingController extends Controller
         }
     }
 
+    /**
+     * Generate Broker / Transporter Settlement Statement & Bill Verification Slip
+     */
+    public function settlementStatement($id)
+    {
+        try {
+            $company = auth()->user()->company;
+            $company?->loadMissing('setting');
+
+            $freightBooking = FreightBooking::with([
+                'lr.truck.driver',
+                'lr.transporter.transporterMaster',
+                'lr.consignor.city',
+                'lr.consignee.city',
+                'lr.branch',
+                'company.setting',
+                'customAmounts',
+            ])->findOrFail($id);
+
+            if (Auth::user()->company_id && $freightBooking->company_id !== Auth::user()->company_id) {
+                abort(403, 'Unauthorized access to good hire (lorry hire).');
+            }
+
+            $isCombined = (bool) $freightBooking->linked_lr_id;
+            $linkedFreightBookings = collect();
+            $payments = collect();
+
+            if ($isCombined) {
+                $linkedFreightBookings = FreightBooking::where('linked_lr_id', $freightBooking->linked_lr_id)
+                    ->where('company_id', auth()->user()->company_id)
+                    ->with([
+                        'lr.truck.driver',
+                        'lr.transporter.transporterMaster',
+                        'lr.consignor.city',
+                        'lr.consignee.city',
+                        'lr.branch',
+                        'customAmounts',
+                    ])
+                    ->orderBy('id')
+                    ->get();
+
+                $freightBookingIds = $linkedFreightBookings->pluck('id')->toArray();
+
+                $payments = VoucherLinked::with(['pump', 'company'])
+                    ->whereIn('freight_booking_id', $freightBookingIds)
+                    ->where('company_id', auth()->user()->company_id)
+                    ->orderBy('date', 'asc')
+                    ->orderBy('id', 'asc')
+                    ->get();
+
+                $grossFreight = (float) $linkedFreightBookings->sum('tr_amount');
+                $detention = (float) $linkedFreightBookings->sum('detention');
+                $deviation = (float) $linkedFreightBookings->sum('deviation');
+                $miscExpense = (float) $linkedFreightBookings->sum('misc_expense');
+                $customAdditions = (float) $linkedFreightBookings->sum(fn ($b) => $b->customAmountsTotal());
+
+                $advanceDeduction = (float) $linkedFreightBookings->sum('advance_amount');
+                $shortageDeduction = (float) $linkedFreightBookings->sum('shortage_amount');
+                $damageDeduction = (float) $linkedFreightBookings->sum('damage_amount');
+                $tdsDeduction = (float) $linkedFreightBookings->sum('tds_amount');
+                $negativeAdjusted = (float) $linkedFreightBookings->sum('negative_adjusted_amount');
+
+                $effectivePayable = (float) $linkedFreightBookings->sum(fn ($b) => $b->effectivePayableAmount());
+                $totalPaid = (float) $payments->sum('amount');
+                $balanceDue = (float) $linkedFreightBookings->sum('balance_amount');
+            } else {
+                $payments = VoucherPayment::with(['pump', 'company', 'bankLedger'])
+                    ->where('freight_booking_id', $id)
+                    ->orderBy('date', 'asc')
+                    ->orderBy('id', 'asc')
+                    ->get();
+
+                $grossFreight = (float) ($freightBooking->tr_amount ?? 0);
+                $detention = (float) ($freightBooking->detention ?? 0);
+                $deviation = (float) ($freightBooking->deviation ?? 0);
+                $miscExpense = (float) ($freightBooking->misc_expense ?? 0);
+                $customAdditions = (float) $freightBooking->customAmountsTotal();
+
+                $advanceDeduction = (float) ($freightBooking->advance_amount ?? 0);
+                $shortageDeduction = (float) ($freightBooking->shortage_amount ?? 0);
+                $damageDeduction = (float) ($freightBooking->damage_amount ?? 0);
+                $tdsDeduction = (float) ($freightBooking->tds_amount ?? 0);
+                $negativeAdjusted = (float) ($freightBooking->negative_adjusted_amount ?? 0);
+
+                $effectivePayable = (float) $freightBooking->effectivePayableAmount();
+                $totalPaid = (float) $payments->sum('amount');
+                $balanceDue = (float) ($freightBooking->balance_amount ?? 0);
+            }
+
+            $totalEarnings = $grossFreight + $detention + $deviation + $customAdditions;
+            $transitDeductions = $tdsDeduction + $shortageDeduction + $damageDeduction + $miscExpense + $negativeAdjusted;
+            $totalDeductions = $transitDeductions + $advanceDeduction;
+
+            return view('freight_bookings.settlement', compact(
+                'freightBooking',
+                'linkedFreightBookings',
+                'isCombined',
+                'company',
+                'payments',
+                'grossFreight',
+                'detention',
+                'deviation',
+                'miscExpense',
+                'customAdditions',
+                'totalEarnings',
+                'advanceDeduction',
+                'shortageDeduction',
+                'damageDeduction',
+                'tdsDeduction',
+                'negativeAdjusted',
+                'transitDeductions',
+                'totalDeductions',
+                'effectivePayable',
+                'totalPaid',
+                'balanceDue'
+            ));
+        } catch (ModelNotFoundException $e) {
+            return $this->redirectToFreightBookingsIndex(request(), 'error', 'Freight booking not found.');
+        } catch (\Exception $e) {
+            return $this->redirectToFreightBookingsIndex(request(), 'error', 'An error occurred while generating the settlement statement.');
+        }
+    }
+
     public function edit($id)
     {
         $company = auth()->user()->company;
@@ -1286,8 +1434,16 @@ class FreightBookingController extends Controller
             'is_delivered' => 'boolean',
             'is_cancelled' => 'boolean',
             'linked_freight_booking_id' => 'nullable|exists:freight_bookings,id',
-            'eway_bill_number' => 'nullable|string',
-            'eway_bill_expiry' => 'nullable|date',
+            'eway_bills' => 'nullable|array',
+            'eway_bills.*.id' => [
+                'nullable',
+                'integer',
+                Rule::exists('eway_bills', 'id')->where(
+                    fn ($query) => $query->where('freight_booking_id', $freightBooking->id)
+                ),
+            ],
+            'eway_bills.*.eway_bill_number' => 'nullable|string',
+            'eway_bills.*.eway_bill_expiry' => 'nullable|date',
             'custom_amounts' => 'nullable|array',
             'custom_amounts.*.id' => [
                 'nullable',
@@ -1355,6 +1511,36 @@ class FreightBookingController extends Controller
                 'lr_number' => $lorryReceipt->lr_number,
                 'linked_lr_id' => $linkedLrId,
             ]));
+
+            $submittedEwayBills = $data['eway_bills'] ?? [];
+
+            $existingEwayBillIds = $freightBooking->ewayBills()->pluck('id')->toArray();
+
+            $submittedEwayBillIds = collect($submittedEwayBills)
+                ->pluck('id')
+                ->filter()
+                ->map(fn ($id) => (int) $id)
+                ->toArray();
+
+            $freightBooking->ewayBills()
+                ->whereIn('id', array_diff($existingEwayBillIds, $submittedEwayBillIds))
+                ->delete();
+
+            foreach ($submittedEwayBills as $ewayBill) {
+                if (! empty($ewayBill['id'])) {
+                    $freightBooking->ewayBills()
+                        ->where('id', $ewayBill['id'])
+                        ->update([
+                            'eway_bill_number' => $ewayBill['eway_bill_number'] ?? null,
+                            'eway_bill_expiry' => $ewayBill['eway_bill_expiry'] ?? null,
+                        ]);
+                } elseif (! empty($ewayBill['eway_bill_number'])) {
+                    $freightBooking->ewayBills()->create([
+                        'eway_bill_number' => $ewayBill['eway_bill_number'],
+                        'eway_bill_expiry' => $ewayBill['eway_bill_expiry'] ?? null,
+                    ]);
+                }
+            }
 
             // Refresh freight booking to get updated values
             $freightBooking->refresh();
@@ -1820,10 +2006,13 @@ class FreightBookingController extends Controller
         try {
             $validated = $request->validate([
                 'memo_id' => 'required|string|max:255',
+                'memo_created_at' => 'nullable|date|before_or_equal:now',
                 'lr_ids' => 'required|array',
                 'lr_ids.*' => 'required|integer|exists:lorry_receipts,id',
                 'freight_booking_ids' => 'required|array',
                 'freight_booking_ids.*' => 'required|integer|exists:freight_bookings,id',
+            ], [
+                'memo_created_at.before_or_equal' => 'The memo date & time cannot be in the future.',
             ]);
 
             $customers = LorryReceipt::whereIn('id', $validated['lr_ids'])
@@ -1870,6 +2059,11 @@ class FreightBookingController extends Controller
                 foreach ($lorryReceipts as $lr) {
                     $oldDeliveryStatus = $lr->delivery_status;
                     $lr->memo_id = $validated['memo_id'];
+                    if (! empty($validated['memo_created_at'])) {
+                        $lr->memo_created_at = Carbon::parse($validated['memo_created_at']);
+                    } elseif (empty($lr->memo_created_at)) {
+                        $lr->memo_created_at = now();
+                    }
                     $lr->delivery_status = 'Delivered';
                     $lr->save();
 

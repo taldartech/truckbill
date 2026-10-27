@@ -2,17 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\CustomerPortalAccessMail;
 use App\Models\Consignee;
-use App\Models\User;
-use App\Models\UserRole;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use App\Imports\ConsigneeImport;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Validator;
 
 class ConsigneeController extends Controller
 {
@@ -26,6 +25,113 @@ class ConsigneeController extends Controller
 
         return view('consignees.index');
     }
+
+   public function bulkUpload(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'file' => [
+            'required',
+            'file',
+            'extensions:xlsx,xls,csv',
+            'max:10240',
+        ],
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'File validation failed.',
+            'errors' => $validator->errors()->all(),
+        ], 422);
+    }
+
+    try {
+        $import = app(ConsigneeImport::class);
+
+        Excel::import(
+            $import,
+            $request->file('file')
+        );
+
+        $total = $import->successCount + count($import->errors);
+
+        /*
+         * PARTIAL / VALIDATION ERRORS
+         */
+        if (!empty($import->errors)) {
+            return response()->json([
+                'success' => $import->successCount > 0,
+                'partial_success' => $import->successCount > 0,
+
+                'message' => $import->successCount > 0
+                    ? $import->successCount . ' customer(s) imported successfully. Some rows have errors.'
+                    : 'No customer records were imported.',
+
+                'imported' => $import->successCount,
+                'success_count' => $import->successCount,
+                'total' => $total,
+
+                'errors' => $import->errors,
+            ], 200);
+        }
+
+        /*
+         * EVERYTHING SUCCESSFUL
+         */
+        return response()->json([
+            'success' => true,
+
+            'message' => $import->successCount .
+                ' customer(s) imported successfully.',
+
+            'imported' => $import->successCount,
+            'success_count' => $import->successCount,
+            'total' => $total,
+
+            'errors' => [],
+        ], 200);
+
+    } catch (\Throwable $e) {
+
+        Log::error('Customer bulk upload failed', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Unable to process the file. Please check the file and try again.',
+            'errors' => [
+                $e->getMessage()
+            ],
+        ], 500);
+    }
+}
+
+public function bulkUploadTemplate()
+{
+    $headers = [
+        'Name',
+        'Contact Number',
+        'Email',
+        'GST Number',
+        'PAN Number',
+        'Country',
+        'State',
+        'City',
+        'Address',
+    ];
+
+    return response()->streamDownload(function () use ($headers) {
+        $handle = fopen('php://output', 'w');
+
+        fputcsv($handle, $headers);
+
+        fclose($handle);
+    }, 'customer-bulk-upload-template.csv', [
+        'Content-Type' => 'text/csv',
+    ]);
+}
 
     private function getConsigneesData(Request $request)
     {
@@ -162,13 +268,28 @@ class ConsigneeController extends Controller
         $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-icon btn-action-edit" title="Edit Consignee" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-pencil"></i></a>';
 
-        // Delete button
+       // Delete button
         $deleteUrl = route('consignees.destroy', $consignee->id);
-        $buttons .= '<form action="'.$deleteUrl.'" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this consignee?\')">';
-        $buttons .= csrf_field().method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-icon btn-action-delete" title="Delete Consignee" data-bs-toggle="tooltip">';
-        $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
+        $buttons .= '<form action="'.$deleteUrl.'" method="POST" class="consignee-delete-form">';
+        $buttons .= csrf_field().method_field('DELETE');
+
+        $buttons .= '<button type="button"
+        class="btn btn-sm btn-icon btn-action-delete consignee-delete-btn"
+        title="Delete Consignee"
+        data-bs-toggle="modal"
+        data-bs-target="#consigneeDeleteModal"
+        data-consignee-id="'.$consignee->id.'"
+        data-consignee-name="'.e($consignee->name ?? '-').'"
+        data-consignee-contact="'.e($consignee->contact_number ?? '-').'"
+        data-consignee-city="'.e($consignee->city?->name ?? '-').'"
+        data-consignee-state="'.e($consignee->state?->name ?? '-').'"
+        data-consignee-country="'.e($consignee->country?->name ?? '-').'"
+        data-consignee-address="'.e($consignee->address ?? '-').'">';
+
+        $buttons .= '<i class="bi bi-trash"></i>';
+        $buttons .= '</button>';
+        $buttons .= '</form>';
         $buttons .= '</div>';
 
         return $buttons;
@@ -265,7 +386,6 @@ class ConsigneeController extends Controller
 
         try {
             $consignee = Consignee::create($validated);
-            $customerEmailResult = $this->createOrAttachCustomerPortalUser($consignee);
         } catch (QueryException $exception) {
             if ($this->isConsigneeUniqueConstraintError($exception)) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
@@ -287,7 +407,7 @@ class ConsigneeController extends Controller
         }
 
         return redirect()->route('consignees.index')
-            ->with('success', 'Customer created successfully! '.$customerEmailResult);
+            ->with('success', 'Customer created successfully!');
     }
 
     private function validateConsigneeUniquenessCreate($data, $companyId)
@@ -461,65 +581,25 @@ class ConsigneeController extends Controller
             && str_contains($message, 'consignees_company_pan_unique');
     }
 
-    private function createOrAttachCustomerPortalUser(Consignee $consignee): string
-    {
-        if (empty($consignee->email)) {
-            return 'Customer login not created because email is empty.';
-        }
-
-        $customerRole = UserRole::query()->firstOrCreate(['name' => 'customer']);
-        $generatedPassword = null;
-        $isNewUser = false;
-
-        $user = User::query()->where('email', $consignee->email)->first();
-        if (! $user) {
-            $generatedPassword = '12345678';
-            $user = User::query()->create([
-                'name' => $consignee->name,
-                'email' => $consignee->email,
-                'password' => bcrypt($generatedPassword),
-                'user_role_id' => $customerRole->id,
-                'company_id' => null,
-                'branch_id' => null,
-            ]);
-            $isNewUser = true;
-        } else {
-            if ($user->userRole?->name !== 'customer') {
-                return 'Consignee created. Login not auto-created because email is linked to a non-customer user.';
-            }
-            if ((int) $user->user_role_id !== (int) $customerRole->id) {
-                $user->update(['user_role_id' => $customerRole->id, 'company_id' => null, 'branch_id' => null]);
-            }
-        }
-
-        $user->consignees()->syncWithoutDetaching([$consignee->id]);
-
-        Mail::to($user->email)->send(new CustomerPortalAccessMail(
-            userName: $user->name,
-            consigneeName: $consignee->name,
-            email: $user->email,
-            plainPassword: $generatedPassword,
-            isNewUser: $isNewUser,
-        ));
-
-        if ($isNewUser) {
-            return 'Customer login created and email sent.';
-        }
-
-        return 'Existing customer login linked and email sent.';
+    public function destroy(Request $request, Consignee $consignee)
+{
+    if (Auth::user()->company_id && $consignee->company_id !== Auth::user()->company_id) {
+        abort(403, 'Unauthorized access to this consignee.');
     }
 
-    public function destroy(Consignee $consignee)
-    {
-        if (Auth::user()->company_id && $consignee->company_id !== Auth::user()->company_id) {
-            abort(403, 'Unauthorized access to this consignee.');
-        }
-        $consignee->delete();
+    $request->validate([
+        'delete_remark' => ['required', 'string', 'max:1000'],
+    ]);
 
-        return redirect()->route('consignees.index')
-            ->with('success', 'Consignee deleted successfully!');
-    }
+    $consignee->deleted_by = Auth::id();
+    $consignee->deleted_remark = $request->input('delete_remark');
+    $consignee->save();
 
+    $consignee->delete();
+
+    return redirect()->route('consignees.index')
+        ->with('success', 'Consignee deleted successfully!');
+}
     /**
      * Get consignee data for API
      * Consolidated method that returns all consignee details

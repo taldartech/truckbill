@@ -47,19 +47,21 @@
             background-color: #fff3cd !important;
         }
     </style>
-    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}?v={{ config('app.ASSET_VERSION') }}">
+    <link rel="stylesheet" href="{{ asset('css/lr-form-redesigned.css') }}?v={{ file_exists(public_path('css/lr-form-redesigned.css')) ? filemtime(public_path('css/lr-form-redesigned.css')) : time() }}">
     <div class="lrf-page app-index-page">
         <div class="lrf-page__toolbar">
-            <div>
-                <h1 class="lrf-page__toolbar-title">Edit Good Receipt (Bilty)</h1>
-                <p class="lrf-page__toolbar-sub">Update receipt, route, and freight details.</p>
+            <div class="lrf-page__toolbar-left">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <h1 class="lrf-page__toolbar-title mb-0">Edit Good Receipt (Bilty)</h1>
+                    <a href="{{ route('lorry_receipts.index') }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::LORRY_RECEIPT_KEYS) }}" class="btn btn-outline-secondary btn-sm lrf-toolbar-back-btn">
+                        <i class="bi bi-arrow-left me-1"></i> Back
+                    </a>
+                </div>
+                <p class="lrf-page__toolbar-sub mb-0 mt-1">Update receipt, route, and freight details.</p>
             </div>
             <div class="lrf-page__toolbar-actions">
                 <a href="{{ route('consignees.create') }}" class="btn btn-outline-secondary btn-sm" target="_blank">
                     <i class="bi bi-plus-lg me-1"></i> Create Consignee
-                </a>
-                <a href="{{ route('lorry_receipts.index') }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::LORRY_RECEIPT_KEYS) }}" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-arrow-left me-1"></i> Back
                 </a>
             </div>
         </div>
@@ -173,7 +175,7 @@
 
     @if ($lorry_receipt->delivery_status === 'Delivered')
         <div class="lrf-pf">
-            <label for="memo_id" class="lrf-pf__lbl">Memo ID</label>
+            <label for="memo_id" class="lrf-pf__lbl">Memo ID / POD</label>
 
             <input type="text"
                 class="form-control @error('memo_id') is-invalid @enderror"
@@ -191,7 +193,7 @@
          </div>
 
 
-                        <div class="lrf-receipt-card">
+                        <div class="lrf-receipt-card lrf-receipt-card--vehicle">
                             <div class="lrf-receipt-card__title">Vehicle &amp; Payee</div>
                             <div class="lrf-receipt-card__row lrf-grid lrf-grid--2">
                                 <div class="lrf-pf">
@@ -228,10 +230,10 @@
 
                                 <div class="lrf-pf" id="lrPayToField" @if(! $lrTruckSelected) hidden @endif>
                                     <label class="lrf-pf__lbl" id="transporterTypeLabel">Pay to<span class="lrf-pf__req">*</span></label>
-                                    <div class="lrf-pay-pills" role="group" aria-label="Pay to">
-                                        <button type="button" class="lrf-pay-pill{{ old('transporter_type', $lorry_receipt->transporter_type) === 'owner' ? ' is-active' : '' }}"
-                                            data-pay-type="owner" id="lrPayPillOwner">Truck Owner</button>
-                                        <button type="button" class="lrf-pay-pill{{ old('transporter_type', $lorry_receipt->transporter_type) === 'agency' ? ' is-active' : '' }}"
+                                    <div class="lrf-pay-pills d-flex flex-nowrap" role="group" aria-label="Pay to">
+                                        <button type="button" class="lrf-pay-pill w-50 text-nowrap{{ old('transporter_type', $lorry_receipt->transporter_type) === 'owner' ? ' is-active' : '' }}"
+                                            data-pay-type="owner" id="lrPayPillOwner"><span class="d-none d-sm-inline">Truck </span>Owner</button>
+                                        <button type="button" class="lrf-pay-pill w-50 text-nowrap{{ old('transporter_type', $lorry_receipt->transporter_type) === 'agency' ? ' is-active' : '' }}"
                                             data-pay-type="agency" id="lrPayPillAgency">Agency</button>
                                     </div>
                                     <select class="form-select lrf-pay-type-select" id="transporter_type" name="transporter_type"
@@ -453,22 +455,23 @@
 
                     <div class="lrf-grid lrf-grid--6">
                         <div class="lrf-pf">
-                            <label for="good_type" class="lrf-pf__lbl">Goods Type<span class="lrf-pf__req">*</span></label>
-                            <div class="input-group flex-nowrap">
-                                <select class="form-select" id="good_type" name="good_type" required>
-                                    <option value="">Select Goods Type</option>
-                                    @foreach ($goodsTypes as $goodsType)
-                                        <option value="{{ $goodsType->name }}"
-                                            {{ old('good_type', $lorry_receipt->good_type) == $goodsType->name ? 'selected' : '' }}>
-                                            {{ $goodsType->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <button type="button" class="btn btn-success" data-bs-toggle="modal"
+                            <div class="lrf-pf__lbl-row">
+                                <label for="good_type" class="lrf-pf__lbl">Goods Type<span class="lrf-pf__req">*</span></label>
+                                <a href="#" class="lrf-quick-add" data-bs-toggle="modal"
                                     data-bs-target="#addGoodsTypeModal" title="Add New Goods Type">
-                                    <i class="bi bi-plus"></i>
-                                </button>
+                                    <i class="bi bi-plus-lg"></i> Add
+                                </a>
                             </div>
+                            <select class="form-select" id="good_type" name="good_type" required
+                                data-placeholder="Search and select goods type...">
+                                <option value=""></option>
+                                @foreach ($goodsTypes as $goodsType)
+                                    <option value="{{ $goodsType->name }}"
+                                        {{ old('good_type', $lorry_receipt->good_type) == $goodsType->name ? 'selected' : '' }}>
+                                        {{ $goodsType->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                             @error('good_type')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -586,16 +589,16 @@
                 <button type="button" class="lrf-section__head lrf-section__head--plain lrf-section__head--toggle" id="lrOptionalToggle" aria-expanded="{{ $lrOptionalOpen ? 'true' : 'false' }}" aria-controls="lrOptionalBody">
                     <div class="lrf-section__head-left">
                         <div class="lrf-step-num lrf-step-num--gray">4</div>
-                        <div>
-                            <h2 class="lrf-section__title">Optional Details</h2>
-                            <p class="lrf-section__desc">GR number, invoice, goods value and reference</p>
+                        <div class="lrf-section__head-text">
+                            <div class="lrf-title-row d-flex align-items-center gap-2 flex-nowrap">
+                                <h2 class="lrf-section__title mb-0 text-nowrap">Optional Details</h2>
+                                <span class="lrf-optional-chip text-nowrap"><i class="bi bi-plus-circle"></i> Expand if needed</span>
+                                <span class="lrf-collapse-arrow{{ $lrOptionalOpen ? ' lrf-collapse-arrow--open' : '' }}" aria-hidden="true">
+                                    <i class="bi bi-chevron-down"></i>
+                                </span>
+                            </div>
+                            <p class="lrf-section__desc mb-0">GR number, invoice, goods value and reference</p>
                         </div>
-                    </div>
-                    <div class="lrf-section__head-right">
-                        <span class="lrf-optional-chip"><i class="bi bi-plus-circle"></i> Expand if needed</span>
-                        <span class="lrf-collapse-arrow{{ $lrOptionalOpen ? ' lrf-collapse-arrow--open' : '' }}" aria-hidden="true">
-                            <i class="bi bi-chevron-down"></i>
-                        </span>
                     </div>
                 </button>
 
@@ -1201,6 +1204,8 @@
             $('#good_type').select2({
                 theme: 'bootstrap-5',
                 width: '100%',
+                allowClear: true,
+                placeholder: 'Search and select goods type...',
                 minimumResultsForSearch: 0
             });
 
@@ -2145,6 +2150,7 @@ if (grNumberInput) {
                     let newOption = new Option(data.goodsType.name, data.goodsType.name, true, true);
                     select.add(newOption);
                     select.value = data.goodsType.name;
+                    $(select).trigger('change');
 
                     // Close modal
                     bootstrap.Modal.getInstance(document.getElementById('addGoodsTypeModal')).hide();

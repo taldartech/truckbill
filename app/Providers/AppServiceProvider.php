@@ -2,7 +2,17 @@
 
 namespace App\Providers;
 
+use App\Models\AdvancePayment;
 use App\Models\Company;
+use App\Models\FreightBooking;
+use App\Models\Invoice;
+use App\Models\InvoicePayment;
+use App\Models\VoucherPayment;
+use App\Observers\Accounting\AdvancePaymentObserver;
+use App\Observers\Accounting\FreightBookingObserver;
+use App\Observers\Accounting\InvoiceObserver;
+use App\Observers\Accounting\InvoicePaymentObserver;
+use App\Observers\Accounting\VoucherPaymentObserver;
 use App\Pulse\PulseDatabaseStorage;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\View;
@@ -25,6 +35,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrapFive();
+
+        Invoice::observe(InvoiceObserver::class);
+        InvoicePayment::observe(InvoicePaymentObserver::class);
+        FreightBooking::observe(FreightBookingObserver::class);
+        VoucherPayment::observe(VoucherPaymentObserver::class);
+        AdvancePayment::observe(AdvancePaymentObserver::class);
 
         View::composer('layouts.app', function ($view): void {
             $user = auth()->user();

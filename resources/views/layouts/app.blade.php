@@ -15,6 +15,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="user-id" content="{{ auth()->id() ?? '' }}">
+    <meta name="company-id" content="{{ auth()->user()->company_id ?? '' }}">
     <title>@yield('title', 'Invoice & Transport Management System')</title>
     @if (config('app.block_search_indexing'))
         <meta name="robots" content="noindex, nofollow, noarchive">
@@ -124,6 +126,11 @@
             background-color: var(--brand-row-hover) !important;
         }
 
+        .form-select-sm,
+        .form-select-sm option {
+            font-size: 0.875rem !important;
+        }
+
         .app-sidebar,
         .main-sidebar {
             width: 250px !important;
@@ -202,109 +209,516 @@
             font-weight: 700;
         }
 
-        /* Credits Display Premium Design */
-        .credits-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(var(--brand-primary-rgb, 0, 51, 102), 0.05);
-            border: 1px solid rgba(var(--brand-primary-rgb, 0, 51, 102), 0.1);
-            padding: 4px 12px;
-            border-radius: 50px;
-            margin-top: 4px;
-            backdrop-filter: blur(8px);
-            transition: all 0.3s ease;
+        /* Navbar Header Responsive */
+        .app-header.navbar {
+            min-height: 48px;
+            height: auto;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
         }
 
-        .credits-container:hover {
-            background: rgba(var(--brand-primary-rgb, 0, 51, 102), 0.08);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        /* Completely remove blue border / focus outline on sidebar menu bar icon */
+        [data-lte-toggle="sidebar"],
+        [data-lte-toggle="sidebar"]:hover,
+        [data-lte-toggle="sidebar"]:focus,
+        [data-lte-toggle="sidebar"]:active,
+        [data-lte-toggle="sidebar"]:focus-visible,
+        .app-header [data-lte-toggle="sidebar"],
+        .app-header [data-lte-toggle="sidebar"]:hover,
+        .app-header [data-lte-toggle="sidebar"]:focus,
+        .app-header [data-lte-toggle="sidebar"]:active,
+        .app-header [data-lte-toggle="sidebar"]:focus-visible {
+            outline: none !important;
+            border: 0 !important;
+            box-shadow: none !important;
+            text-decoration: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        .credits-container {
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+            flex-shrink: 0;
+            background: #fff;
+            border: 1px solid rgba(47, 179, 111, 0.35);
+            border-radius: 50px;
+            padding: 4px 10px;
+            line-height: 1;
         }
 
         .credit-pill {
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 6px;
-            font-size: 11px;
+            gap: 5px;
+            font-size: 0.75rem;
             font-weight: 600;
-            color: #4b5563;
+            color: var(--brand-primary, #2fb36f);
+            white-space: nowrap;
+            line-height: 1;
         }
 
         .credit-pill i {
-            color: var(--brand-primary);
-            font-size: 14px;
-        }
-
-        .credit-pill .label {
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.025em;
+            color: var(--brand-primary, #2fb36f);
+            font-size: 0.85rem;
         }
 
         .credit-pill .value {
-            color: var(--brand-primary);
+            color: var(--brand-primary, #2fb36f);
             font-weight: 700;
+            white-space: nowrap;
         }
 
         .credit-divider {
             width: 1px;
             height: 14px;
-            background: rgba(0,0,0,0.1);
-        }
-
-        @media (max-width: 991.98px) {
-            .credit-pill .label {
-                display: none;
-            }
-            .credits-container {
-                padding: 4px 8px;
-                gap: 8px;
-            }
+            background: rgba(0, 0, 0, 0.15);
+            margin: 0 6px;
+            flex-shrink: 0;
         }
 
         @media (max-width: 575.98px) {
-            .credit-pill {
-                font-size: 10px;
+            .app-header.navbar {
+                min-height: 46px;
             }
             .credits-container {
-                gap: 6px;
-                margin-right: 5px !important;
+                padding: 3px 8px;
+            }
+            .credit-pill {
+                font-size: 0.70rem;
+                gap: 4px;
+            }
+            .credit-pill i {
+                font-size: 0.78rem;
+            }
+            .credit-divider {
+                height: 12px;
+                margin: 0 4px;
             }
         }
 
+        /* Constrain main content area to prevent wide tables from breaking layout without interfering with sticky sidebar */
+        .app-main {
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        .app-footer {
+            grid-area: lte-app-footer !important;
+            width: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            min-height: 44px !important;
+            padding: 0.35rem 1rem !important;
+            background-color: #ffffff !important;
+            border-top: 1px solid #e9ecef !important;
+            box-sizing: border-box !important;
+        }
+
+        .app-footer .container-fluid {
+            width: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            padding-left: 0.25rem !important;
+            padding-right: 0.25rem !important;
+        }
+
+        .truckbill-footer-content {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+            font-size: 0.85rem;
+            line-height: 1.45;
+            color: #475569;
+        }
+
+        .truckbill-footer-content .footer-col-brand,
+        .truckbill-footer-content .footer-col-nav,
+        .truckbill-footer-content .footer-col-meta {
+            display: inline-flex !important;
+            align-items: center !important;
+            line-height: 1.45;
+        }
+
+        .truckbill-footer-content .footer-separator {
+            margin: 0 0.35rem;
+            color: #94a3b8;
+            opacity: 0.75;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .truckbill-footer-content .footer-link {
+            color: #475569;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.15s ease;
+            cursor: pointer;
+            line-height: 1.45;
+        }
+
+        .truckbill-footer-content .footer-link:hover,
+        .truckbill-footer-content .footer-link:focus,
+        .truckbill-footer-content .footer-link:focus-visible {
+            color: #0f172a !important;
+            text-decoration: none;
+            outline: none;
+            box-shadow: none;
+        }
+
+        .truckbill-footer-content .footer-link:active {
+            color: #000000 !important;
+        }
+
+        .truckbill-footer-content .footer-version-badge {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 0.72rem !important;
+            font-weight: 600 !important;
+            padding: 0.15rem 0.5rem !important;
+            line-height: 1.2 !important;
+            vertical-align: middle;
+        }
+
+        /* Large Screens (>= 1200px): Clean single line, larger 0.85rem font, generous spacing */
+        @media (min-width: 1200px) {
+            .truckbill-footer-content {
+                flex-direction: row;
+                flex-wrap: nowrap;
+                white-space: nowrap;
+                font-size: 0.85rem;
+                gap: 1.25rem;
+            }
+            .truckbill-footer-content .footer-col-brand,
+            .truckbill-footer-content .footer-col-nav,
+            .truckbill-footer-content .footer-col-meta {
+                flex-shrink: 0;
+            }
+        }
+
+        /* Medium-Large Screens (992px to 1199.98px - Laptops / sidebar open): Single line, 0.78rem font */
+        @media (min-width: 992px) and (max-width: 1199.98px) {
+            .truckbill-footer-content {
+                flex-direction: row;
+                flex-wrap: nowrap;
+                white-space: nowrap;
+                font-size: 0.78rem;
+                gap: 0.75rem;
+            }
+            .truckbill-footer-content .footer-col-brand,
+            .truckbill-footer-content .footer-col-nav,
+            .truckbill-footer-content .footer-col-meta {
+                flex-shrink: 0;
+            }
+            .truckbill-footer-content .footer-separator {
+                margin: 0 0.25rem;
+            }
+            .truckbill-footer-content .footer-version-badge {
+                font-size: 0.68rem !important;
+                padding: 0.1rem 0.4rem !important;
+            }
+        }
+
+        /* Middle Screens (768px to 991.98px - Tablets landscape / compact laptops): Single line preserved, 0.72rem font */
+        @media (min-width: 768px) and (max-width: 991.98px) {
+            .truckbill-footer-content {
+                flex-direction: row;
+                flex-wrap: nowrap;
+                white-space: nowrap;
+                font-size: 0.72rem;
+                gap: 0.45rem;
+            }
+            .truckbill-footer-content .footer-col-brand,
+            .truckbill-footer-content .footer-col-nav,
+            .truckbill-footer-content .footer-col-meta {
+                flex-shrink: 0;
+            }
+            .truckbill-footer-content .footer-separator {
+                margin: 0 0.15rem;
+            }
+            .truckbill-footer-content .footer-version-badge {
+                font-size: 0.65rem !important;
+                padding: 1px 4px !important;
+            }
+        }
+
+        /* Small Screens & Mobile (< 768px): Stacked centered rows with comfortable readable font */
+        @media (max-width: 767.98px) {
+            .app-footer {
+                min-height: auto !important;
+                padding: 0.5rem 0.75rem !important;
+            }
+            .app-footer .container-fluid {
+                display: block !important;
+            }
+            .truckbill-footer-content {
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                text-align: center !important;
+                gap: 0.4rem !important;
+                font-size: 0.82rem !important;
+            }
+            .truckbill-footer-content .footer-col-nav {
+                order: 1;
+                flex-wrap: nowrap !important;
+                white-space: nowrap !important;
+                justify-content: center;
+                font-size: 0.74rem !important;
+            }
+            .truckbill-footer-content .footer-col-brand {
+                order: 2;
+                justify-content: center;
+            }
+            .truckbill-footer-content .footer-col-meta {
+                order: 3;
+                justify-content: center;
+            }
+            .truckbill-footer-content .footer-separator {
+                margin: 0 0.22rem;
+            }
+            .truckbill-footer-content .footer-version-badge {
+                font-size: 0.70rem !important;
+                padding: 0.1rem 0.45rem !important;
+            }
+        }
+
+        /* Extra Small Mobile (< 480px) */
+        @media (max-width: 479.98px) {
+            .truckbill-footer-content {
+                font-size: 0.72rem !important;
+                gap: 0.35rem !important;
+            }
+            .truckbill-footer-content .footer-col-nav {
+                font-size: 0.67rem !important;
+                flex-wrap: nowrap !important;
+                white-space: nowrap !important;
+            }
+            .truckbill-footer-content .footer-separator {
+                margin: 0 0.14rem;
+            }
+        }
+
+        /* Narrow Mobile (< 360px) */
+        @media (max-width: 359.98px) {
+            .truckbill-footer-content .footer-col-nav {
+                font-size: 0.60rem !important;
+            }
+            .truckbill-footer-content .footer-separator {
+                margin: 0 0.08rem;
+            }
+        }
+
+        /* Mobile View: Compact text size and padding for table data across all Reports */
+        @media (max-width: 767.98px) {
+            body.is-reports-page .table th,
+            body.is-reports-page table th {
+                font-size: 0.76rem !important;
+                padding: 0.35rem 0.45rem !important;
+                white-space: nowrap !important;
+            }
+
+            body.is-reports-page .table td,
+            body.is-reports-page table td {
+                font-size: 0.73rem !important;
+                padding: 0.35rem 0.45rem !important;
+                line-height: 1.3 !important;
+            }
+
+            body.is-reports-page .table td .badge,
+            body.is-reports-page table td .badge,
+            body.is-reports-page .table td small,
+            body.is-reports-page table td small,
+            body.is-reports-page .table td span:not(.badge) {
+                font-size: inherit;
+            }
+
+            body.is-reports-page .table td .badge {
+                font-size: 0.68rem !important;
+            }
+
+            body.is-reports-page .table td .btn {
+                font-size: 0.70rem !important;
+                padding: 0.15rem 0.35rem !important;
+            }
+        }
+
+        @media (max-width: 479.98px) {
+            body.is-reports-page .table th,
+            body.is-reports-page table th {
+                font-size: 0.72rem !important;
+                padding: 0.28rem 0.35rem !important;
+            }
+
+            body.is-reports-page .table td,
+            body.is-reports-page table td {
+                font-size: 0.70rem !important;
+                padding: 0.28rem 0.35rem !important;
+            }
+
+            body.is-reports-page .table td .badge {
+                font-size: 0.65rem !important;
+            }
+        }
+
+        /* Global Print Stylesheet for Browser Printing */
+        @media print {
+            /* Hide non-printable app layout & backdrops/overlays */
+            .sidebar-overlay,
+            .modal-backdrop,
+            .loading-overlay,
+            .overlay,
+            [class*="overlay"],
+            [class*="backdrop"],
+            .app-header,
+            .app-sidebar,
+            .main-sidebar,
+            .app-footer,
+            .app-index-card-toolbar,
+            .sidebar-wrapper,
+            .no-print,
+            .d-print-none,
+            .btn,
+            .btn-group,
+            .app-content-header > .container-fluid > .alert,
+            #subscription-access-banner {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                background: transparent !important;
+                width: 0 !important;
+                height: 0 !important;
+                pointer-events: none !important;
+            }
+
+            html,
+            body,
+            body.layout-fixed,
+            body.bg-body-tertiary,
+            body.sidebar-open {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                background-image: none !important;
+                color: #000000 !important;
+                font-size: 11pt !important;
+                width: 100% !important;
+                height: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
+
+            body.layout-fixed {
+                overflow: visible !important;
+            }
+
+            .app-wrapper {
+                display: block !important;
+                position: static !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: auto !important;
+                height: auto !important;
+                overflow: visible !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .app-main,
+            .sidebar-expand-lg.layout-fixed .app-main,
+            .sidebar-expand.layout-fixed .app-main,
+            .layout-fixed .app-main {
+                display: block !important;
+                position: static !important;
+                overflow: visible !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: auto !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .app-content,
+            .app-content-header,
+            .app-content-header > .container-fluid,
+            .container-fluid {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                overflow: visible !important;
+            }
+
+            .app-index-list-card,
+            .card {
+                border: 1px solid #dee2e6 !important;
+                box-shadow: none !important;
+                overflow: visible !important;
+                margin-bottom: 1rem !important;
+                page-break-inside: auto !important;
+            }
+
+            .table-responsive {
+                overflow: visible !important;
+                display: block !important;
+            }
+
+            table {
+                width: 100% !important;
+                page-break-inside: auto !important;
+            }
+
+            tr {
+                page-break-inside: avoid !important;
+                page-break-after: auto !important;
+            }
+
+            thead {
+                display: table-header-group !important;
+            }
+
+            tfoot {
+                display: table-footer-group !important;
+            }
+        }
         /* Sidebar layout polish lives in sidebar-redesigned.css (OwnFleet-aligned) */
     </style>
     @stack('styles')
 </head>
 
-<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+<body class="layout-fixed sidebar-expand-lg bg-body-tertiary {{ (request()->routeIs('reports.*') || request()->is('reports*')) ? 'is-reports-page' : '' }}">
+    @include('components.loading.AppResponseLoader')
     <!--begin::App Wrapper-->
     <div class="app-wrapper">
-        <nav class="app-header navbar navbar-expand bg-body">
+        <nav class="app-header navbar navbar-expand bg-body px-2 px-md-3 py-1">
             <!--begin::Container-->
-            <div class="container-fluid">
+            <div class="container-fluid d-flex flex-nowrap align-items-center justify-content-between p-0">
                 <!--begin::Start Navbar Links-->
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button">
-                            <i class="fa-solid fa-bars"></i>
+                <ul class="navbar-nav d-flex flex-row align-items-center flex-nowrap gap-1 gap-sm-2 mb-0">
+                    <li class="nav-item flex-shrink-0 d-inline-flex align-items-center">
+                        <a class="nav-link d-inline-flex align-items-center justify-content-center p-1 p-sm-2 text-secondary border-0 shadow-none" data-lte-toggle="sidebar" href="#" role="button" aria-label="Toggle sidebar" style="outline: none !important; border: 0 !important; box-shadow: none !important; line-height: 1;">
+                            <i class="fa-solid fa-bars fs-5" style="line-height: 1; display: inline-flex; align-items: center;"></i>
                         </a>
                     </li>
-                    <li class="nav-item d-none d-md-block"><a href="#" class="nav-link">
+                    <li class="nav-item d-none d-md-block flex-shrink-0">
+                        <span class="nav-link text-muted small border-start ps-3 py-1 text-nowrap">
                             @auth
-                                <span class="align-middle ms-3 me-2 border-start ps-3 small text-muted"
-                                    style="font-size: 1em;">
-                                    <i
-                                        class="fas fa-building me-1"></i>{{ Auth::user()->company ? Auth::user()->company->name : '' }}
-                                </span>
+                                <i class="fas fa-building me-1"></i>{{ Auth::user()->company ? Auth::user()->company->name : '' }}
                             @endauth
-                        </a>
+                        </span>
                     </li>
                     @auth
-                        @if (Auth::user()->userRole->name === 'super_admin' && session('super_admin_company_id'))
-                            <li class="nav-item">
-                                <a href="{{ route('company.exit') }}" class="nav-link text-warning" title="Exit company context">
+                        @if (Auth::user()->userRole?->name === 'super_admin' && session('super_admin_company_id'))
+                            <li class="nav-item flex-shrink-0">
+                                <a href="{{ route('company.exit') }}" class="nav-link text-warning text-nowrap d-inline-flex align-items-center p-1 p-sm-2" title="Exit company context" style="white-space: nowrap;">
                                     <i class="bi bi-box-arrow-left me-1"></i>Exit Company
                                 </a>
                             </li>
@@ -314,20 +728,18 @@
                 </ul>
                 <!--end::Start Navbar Links-->
                 <!--begin::End Navbar Links-->
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto d-flex flex-row align-items-center flex-nowrap gap-1 gap-sm-2 mb-0">
                     @auth
-                        @if (in_array(Auth::user()->user_role_id, [3, 4, 5]) || (Auth::user()->userRole->name === 'super_admin' && Auth::user()->canAccessCompanyPanel()))
-                            <li class="nav-item d-flex align-items-center me-3">
+                        @if (in_array(Auth::user()->user_role_id, [3, 4, 5]) || (Auth::user()->userRole?->name === 'super_admin' && Auth::user()->canAccessCompanyPanel()))
+                            <li class="nav-item flex-shrink-0">
                                 <div class="credits-container">
-                                    <div class="credit-pill" title="Plan Expiry">
+                                    <div class="credit-pill credit-pill--expiry" title="Plan Expiry">
                                         <i class="bi bi-calendar-event"></i>
-                                        <span class="label">Expiry:</span>
                                         <span class="value">{{ Auth::user()->company?->subscription?->ends_on?->format('d M, Y') ?? 'N/A' }}</span>
                                     </div>
                                     <div class="credit-divider"></div>
-                                    <div class="credit-pill" title="LR Credits Remaining">
+                                    <div class="credit-pill credit-pill--credits" title="LR Credits Remaining">
                                         <i class="bi bi-coin"></i>
-                                        <span class="label">Credits:</span>
                                         <span class="value">{{ Auth::user()->company?->lrCreditsRemaining() ?? 'N/A' }}</span>
                                     </div>
                                 </div>
@@ -336,13 +748,11 @@
                     @endauth
 
                     <!--begin::User Menu Dropdown-->
-                    <!--begin::User Menu Dropdown-->
-                    <li class="nav-item dropdown user-menu">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-
-                            <i class="fas fa-user-circle fa-lg"></i>
+                    <li class="nav-item dropdown user-menu flex-shrink-0">
+                        <a href="#" class="nav-link dropdown-toggle p-1 p-sm-2 d-inline-flex align-items-center text-secondary" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle fs-5"></i>
                             @auth
-                                <span class="d-none d-md-inline">{{ Auth::user()->name ?? Auth::user()->email }}</span>
+                                <span class="d-none d-md-inline ms-1 small">{{ Auth::user()->name ?? Auth::user()->email }}</span>
                             @endauth
                         </a>
                         <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end shadow">
@@ -362,7 +772,7 @@
                             <!--end::User Image-->
                             <!--begin::Menu Footer-->
                             <div class="user-footer d-flex justify-content-center p-3">
-                                <form action="{{ route('logout') }}" method="POST" class="me-2">
+                                <form action="{{ route('logout') }}" method="POST" class="me-2 no-draft" data-draft-ignore="true">
                                     @csrf
                                     <button type="submit" class="btn btn-danger text-white btn-sm rounded-3">Sign out</button>
                                 </form>
@@ -403,7 +813,7 @@
                                 <p>Dashboard</p>
                             </a>
                         </li>
-                        @if (auth()->check() && auth()->user()->userRole->name === 'master_admin')
+                        @if (auth()->check() && auth()->user()->userRole?->name === 'master_admin')
                             <li class="nav-item">
                                 <a href="{{ route('master.summary-dashboard') }}"
                                     class="nav-link{{ Request::is('master/summary-dashboard') ? ' active' : '' }}">
@@ -412,47 +822,7 @@
                                 </a>
                             </li>
                         @endif
-                        @if (auth()->check() && auth()->user()->userRole->name === 'transporter')
-                            <li class="nav-header">My Work</li>
-                            <li class="nav-item">
-                                <a href="{{ route('transporter.freight_bookings.index') }}" class="nav-link{{ Request::is('transporter/freight-bookings*') ? ' active' : '' }}">
-                                    <i class="nav-icon fas fa-shipping-fast"></i>
-                                    <p>My Lorry Hires</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('transporter.payments.index') }}" class="nav-link{{ Request::is('transporter/payments*') ? ' active' : '' }}">
-                                    <i class="nav-icon fas fa-indian-rupee-sign"></i>
-                                    <p>My Payments</p>
-                                </a>
-                            </li>
-                        @elseif (auth()->check() && auth()->user()->userRole->name === 'customer')
-                            <li class="nav-header">My Work</li>
-                            <li class="nav-item">
-                                <a href="{{ route('customer.lorry-receipts.index') }}" class="nav-link{{ Request::is('customer/lorry-receipts*') ? ' active' : '' }}">
-                                    <i class="nav-icon fas fa-file-alt"></i>
-                                    <p>My Bilty</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('customer.invoices.index') }}" class="nav-link{{ Request::is('customer/invoices*') ? ' active' : '' }}">
-                                    <i class="nav-icon fas fa-file-invoice-dollar"></i>
-                                    <p>My Invoices</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('customer.payments.index') }}" class="nav-link{{ Request::is('customer/payments*') ? ' active' : '' }}">
-                                    <i class="nav-icon fas fa-wallet"></i>
-                                    <p>Invoice Payments</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('customer.transporters.index') }}" class="nav-link{{ Request::is('customer/transporters*') ? ' active' : '' }}">
-                                    <i class="nav-icon fas fa-building"></i>
-                                    <p>Associated Companies</p>
-                                </a>
-                            </li>
-                        @elseif (auth()->check() && auth()->user()->userRole->name === 'master_admin')
+                        @if (auth()->check() && auth()->user()->userRole?->name === 'master_admin')
                             <li class="nav-header">Platform</li>
                             <li class="nav-item">
                                 <a href="/users" class="nav-link{{ Request::is('users*') ? ' active' : '' }}">
@@ -526,7 +896,7 @@
                             </li>
                         @endif
 
-                        @if (auth()->check() && auth()->user()->userRole->name === 'super_admin' && !session('super_admin_company_id'))
+                        @if (auth()->check() && auth()->user()->userRole?->name === 'super_admin' && !session('super_admin_company_id'))
                             <li class="nav-header">Platform</li>
                             <li class="nav-item">
                                 <a href="{{ route('audit-logs.index') }}"
@@ -883,7 +1253,7 @@
                                 </ul>
                             </li>
 
-                            @if (in_array(auth()->user()->userRole->name, ['super_admin', 'moderator', 'admin']))
+                            @if (in_array(auth()->user()->userRole?->name, ['super_admin', 'moderator', 'admin']))
                                 <li class="nav-header">Setup</li>
                                 <li class="nav-item">
                                     <a class="nav-link{{ Request::is('master/*') ? ' active' : '' }}" href="#masterMenu">
@@ -935,8 +1305,96 @@
                             @endif
                         @endif
 
+                        {{-- Accounting Section --}}
+                        @if (auth()->check() && (in_array(auth()->user()->userRole?->name, ['accountant', 'admin']) || (auth()->user()->userRole?->name === 'super_admin' && auth()->user()->canAccessCompanyPanel())))
+                            <li class="nav-header">Financials & Accounting</li>
+                            <li class="nav-item">
+                                <a class="nav-link{{ Request::is('accounting*') ? ' active' : '' }}" href="#accountingMenu"
+                                    data-lte-toggle="collapse">
+                                    <i class="nav-icon bi bi-calculator"></i>
+                                    <p>
+                                        Accounting <span class="badge bg-warning text-dark ms-1 fw-bold" style="font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; vertical-align: middle;">(BETA)</span>
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview collapse {{ Request::is('accounting*') ? ' show' : '' }}"
+                                    id="accountingMenu">
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.day-book') }}"
+                                            class="nav-link{{ Request::is('accounting/day-book*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-calendar-day"></i>
+                                            <p>Day Book</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.ledger-statement') }}"
+                                            class="nav-link{{ Request::is('accounting/ledger-statement*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-book-open"></i>
+                                            <p>Ledger Statement</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.trial-balance') }}"
+                                            class="nav-link{{ Request::is('accounting/trial-balance*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-balance-scale"></i>
+                                            <p>Trial Balance</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.profit-and-loss') }}"
+                                            class="nav-link{{ Request::is('accounting/profit-and-loss*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-chart-line"></i>
+                                            <p>Profit & Loss</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.balance-sheet') }}"
+                                            class="nav-link{{ Request::is('accounting/balance-sheet*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-file-invoice-dollar"></i>
+                                            <p>Balance Sheet</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.bank-reconciliation') }}"
+                                            class="nav-link{{ Request::is('accounting/bank-reconciliation*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-university"></i>
+                                            <p>Bank Reconciliation</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.debtors-aging') }}"
+                                            class="nav-link{{ Request::is('accounting/debtors-aging*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-hourglass-half"></i>
+                                            <p>Debtors Aging (MSME)</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.gstr1') }}"
+                                            class="nav-link{{ Request::is('accounting/gstr1*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-file-invoice"></i>
+                                            <p>GSTR-1 Preparation</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.vouchers.index') }}"
+                                            class="nav-link{{ Request::is('accounting/vouchers*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-receipt"></i>
+                                            <p>Vouchers Entry</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('accounting.ledgers.index') }}"
+                                            class="nav-link{{ Request::is('accounting/ledgers*') ? ' active' : '' }}">
+                                            <i class="nav-icon fas fa-sitemap"></i>
+                                            <p>Chart of Accounts</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        @endif
+
                         {{-- Reports Section - admin, accountant, moderator, or super_admin in company context --}}
-                        @if (auth()->check() && (in_array(auth()->user()->userRole->name, ['accountant', 'admin', 'moderator']) || (auth()->user()->userRole->name === 'super_admin' && auth()->user()->canAccessCompanyPanel())))
+                        @if (auth()->check() && (in_array(auth()->user()->userRole?->name, ['accountant', 'admin', 'moderator']) || (auth()->user()->userRole?->name === 'super_admin' && auth()->user()->canAccessCompanyPanel())))
                             <li class="nav-header">Insights</li>
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('reports*') ? ' active' : '' }}" href="#reportsMenu"
@@ -991,6 +1449,15 @@
                                             <p>Transporter Report</p>
                                         </a>
                                     </li>
+
+                                 <li class="nav-item">
+                                        <a href="{{ route('reports.profitability') }}"
+                                        class="nav-link{{ Request::is('reports/profitability') ? ' active' : '' }}">
+                                        <i class="nav-icon fas fa-chart-line"></i>
+                                         <p>Profitability Report</p>
+                                             </a>
+                                         </li>
+
                                     <li class="nav-item">
                                         <a href="{{ route('reports.tds') }}"
                                             class="nav-link{{ Request::is('reports/tds') ? ' active' : '' }}">
@@ -1044,7 +1511,7 @@
                                         <a href="{{ route('reports.pending-memo') }}"
                                             class="nav-link{{ Request::is('reports/pending-memo') ? ' active' : '' }}">
                                             <i class="nav-icon fas fa-sticky-note"></i>
-                                            <p>Pending Memo</p>
+                                            <p>Pending Memo / POD</p>
                                         </a>
                                     </li>
                                     <li class="nav-item">
@@ -1065,7 +1532,7 @@
                                         <a href="{{ route('reports.memo-copy') }}"
                                             class="nav-link{{ Request::is('reports/memo-copy') ? ' active' : '' }}">
                                             <i class="nav-icon fas fa-clone"></i>
-                                            <p>Memo Copy</p>
+                                            <p>Memo / POD Copy</p>
                                         </a>
                                     </li>
                                     <li class="nav-item">
@@ -1089,7 +1556,7 @@
                     <i class="fas fa-user-circle sidebar-user__avatar" aria-hidden="true"></i>
                     <div class="sidebar-user__info">
                         <span class="sidebar-user__name">{{ auth()->user()->name }}</span>
-                        <span class="sidebar-user__role">{{ str_replace('_', ' ', auth()->user()->userRole->name ?? '') }}</span>
+                        <span class="sidebar-user__role">{{ str_replace('_', ' ', auth()->user()->userRole?->name ?? '') }}</span>
                     </div>
                 </div>
             @endauth
@@ -1111,29 +1578,130 @@
             <!--end::App Content-->
         </main>
 
-        <footer class="app-footer">
-            <!--begin::To the end-->
-            <div class="float-end d-none d-sm-inline">
-                <a href="https://www.taldartechconsultancy.com/" target="_blank" rel="noopener">
-                    Developed &amp; Consulted by Taldar Tech Consultancy.
-                </a>
+        <footer class="app-footer bg-white border-top">
+            <div class="container-fluid">
+                <div class="truckbill-footer-content">
+                    <!-- Branding: TruckBill — A Product of Taldar Tech Consultancy -->
+                    <div class="footer-col-brand d-inline-flex align-items-center text-nowrap">
+                        <span class="fw-bold text-dark">TruckBill</span>
+                        <span class="footer-separator fw-semibold" style="color: #475569;">&mdash;</span>
+                        <span class="d-inline-flex align-items-center">A Product of&nbsp;<a href="{{ config('app.company_url', 'https://www.taldartechconsultancy.com/') }}" target="_blank" rel="noopener noreferrer" class="text-success text-decoration-none fw-semibold">Taldar Tech Consultancy</a></span>
+                    </div>
+
+                    <!-- Footer Links: Help & Support, Privacy Policy, Terms & Conditions, Contact Us -->
+                    <nav class="footer-col-nav d-inline-flex align-items-center justify-content-center text-nowrap" aria-label="Footer Navigation">
+                        <a href="#helpSupportModal" class="footer-link fw-medium" data-bs-toggle="modal" data-bs-target="#helpSupportModal" role="button">Help &amp; Support</a>
+                        <span class="footer-separator" aria-hidden="true">&bull;</span>
+                        <a href="https://www.truckbill.in/policies/privacy-policy.html" target="_blank" rel="noopener noreferrer" class="footer-link fw-medium">Privacy Policy</a>
+                        <span class="footer-separator" aria-hidden="true">&bull;</span>
+                        <a href="https://www.truckbill.in/policies/terms-and-conditions.html" target="_blank" rel="noopener noreferrer" class="footer-link fw-medium">Terms &amp; Conditions</a>
+                        <span class="footer-separator" aria-hidden="true">&bull;</span>
+                        <a href="https://www.truckbill.in/#contact" target="_blank" rel="noopener noreferrer" class="footer-link fw-medium">Contact Us</a>
+                    </nav>
+
+                    <!-- Copyright & Dynamic Application Version -->
+                    <div class="footer-col-meta d-inline-flex align-items-center text-nowrap gap-2">
+                        <span class="d-inline-flex align-items-center">&copy; {{ config('app.copyright_year', date('Y')) }} TruckBill. All rights reserved.</span>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill footer-version-badge" title="Application Version">
+                            v{{ ltrim(config('app.version', '1.0.0'), 'v') }}
+                        </span>
+                    </div>
+                </div>
             </div>
-            <!--end::To the end-->
-            <!--begin::Copyright-->
-            <strong>
-                Copyright All Rights Reserved © {{ date('Y') }}
-
-            </strong>
-
-            <!--end::Copyright-->
         </footer>
+    </div>
+    <!--end::App Wrapper-->
 
+    <!-- Help & Support Modal -->
+    <!-- Help & Support Modal -->
+    <div class="modal fade" id="helpSupportModal" tabindex="-1" aria-labelledby="helpSupportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+                <!-- Modal Header -->
+                <div class="modal-header bg-success px-4 py-3 border-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center bg-white text-success flex-shrink-0" style="width: 38px; height: 38px;">
+                            <i class="fas fa-headset fa-lg"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold mb-0" id="helpSupportModalLabel">Help &amp; Support</h5>
+                            <span class="small text-success d-block fw-semibold" style="color: #4BB563 !important;">TruckBill Technical &amp; Operational Assistance</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body p-4 text-start">
+                    <p class="text-muted small mb-3">
+                        Need assistance with billing, lorry receipts (LR), GST compliance, or fleet operations? Contact our support team:
+                    </p>
+
+                    <!-- Email Contact Card -->
+                    <div class="d-flex align-items-center p-3 mb-3 rounded-3 bg-success-subtle border border-success-subtle">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0 bg-success text-white" style="width: 42px; height: 42px;">
+                            <i class="fas fa-envelope fa-lg"></i>
+                        </div>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="text-secondary small fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Email Support</div>
+                            <a href="https://mail.google.com/mail/?view=cm&fs=1&to={{ config('app.support_email', 'support@truckbill.in') }}&su=TruckBill%20Support%20Inquiry" target="_blank" rel="noopener noreferrer" class="fw-bold text-decoration-none text-success text-truncate d-block" style="font-size: 0.95rem;" title="Click to open in Gmail">
+                                {{ config('app.support_email', 'support@truckbill.in') }}
+                            </a>
+                        </div>
+                        <button type="button" class="btn btn-sm bg-white border border-success text-success px-3 py-1 fw-semibold rounded-pill ms-2 flex-shrink-0" onclick="navigator.clipboard.writeText('{{ config('app.support_email', 'support@truckbill.in') }}'); const orig=this.innerHTML; this.innerHTML='<i class=\'fas fa-check me-1\'></i> Copied!'; setTimeout(() => this.innerHTML=orig, 2000);" title="Copy email address">
+                            <i class="far fa-copy me-1"></i> Copy
+                        </button>
+                    </div>
+
+                    <!-- Phone Contact Card -->
+                    <div class="d-flex align-items-center p-3 mb-3 rounded-3 bg-primary-subtle border border-primary-subtle">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0 bg-primary text-white" style="width: 42px; height: 42px;">
+                            <i class="fas fa-phone-alt fa-lg"></i>
+                        </div>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="text-secondary small fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Helpline &amp; Contact</div>
+                            <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
+                                <a href="tel:+919784451256" class="fw-bold text-decoration-none text-primary" style="font-size: 0.95rem;" title="Call +91 97844 51256">
+                                    +91 97844 51256
+                                </a>
+                                <span class="text-secondary opacity-50">&bull;</span>
+                                <a href="tel:+919784946004" class="fw-bold text-decoration-none text-primary" style="font-size: 0.95rem;" title="Call +91 97849 46004">
+                                    +91 97849 46004
+                                </a>
+                            </div>
+                        </div>
+                        <button id="phoneCopyBtn" type="button" class="btn btn-sm bg-white border border-primary text-primary px-3 py-1 fw-semibold rounded-pill ms-2 flex-shrink-0" onclick="navigator.clipboard.writeText('+91 97844 51256, +91 97849 46004'); const o=this.innerHTML; this.innerHTML='<i class=\'fas fa-check me-1\'></i> Copied!'; setTimeout(()=>this.innerHTML=o, 2000); if(window.Swal){ Swal.fire({toast:true, position:'top-end', icon:'success', title:'Phone numbers copied!', showConfirmButton:false, timer:2000}); }" title="Copy phone numbers">
+                            <i class="far fa-copy me-1"></i> Copy
+                        </button>
+                    </div>
+
+                    <!-- Support Details -->
+                    <div class="p-3 bg-light rounded-3 border">
+                        <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom">
+                            <span class="text-muted small"><i class="fas fa-clock text-warning me-1"></i> Working Hours:</span>
+                            <span class="fw-semibold small text-dark">Mon &ndash; Sat: 10:00 AM &ndash; 7:00 PM IST</span>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="text-muted small"><i class="fas fa-building text-secondary me-1"></i> Product by:</span>
+                            <a href="{{ config('app.company_url', 'https://www.taldartechconsultancy.com/') }}" target="_blank" rel="noopener noreferrer" class="fw-semibold small text-decoration-none text-success">
+                                {{ config('app.company_name', 'Taldar Tech Consultancy') }} <i class="fas fa-external-link-alt fa-xs ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer bg-light px-4 py-2 border-top">
+                    <button type="button" class="btn btn-secondary btn-sm px-4 fw-semibold rounded-pill" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     {{-- bootstrap.bundle includes Popper; do not also load popper + bootstrap.min.js --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="/js/theme-ui.js?v={{ config('app.ASSET_VERSION') }}"></script>
+    <script src="{{ asset('js/theme-ui.js') }}?v={{ config('app.ASSET_VERSION') }}"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/browser/overlayscrollbars.browser.es6.min.js"
         integrity="sha256-dghWARbRe2eLlIJ56wNB+b760ywulqK3DzZYEpsg2fQ=" crossorigin="anonymous"></script>

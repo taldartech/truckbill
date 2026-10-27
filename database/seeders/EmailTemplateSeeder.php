@@ -44,17 +44,6 @@ class EmailTemplateSeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'key' => 'TRANSPORTER_ACCOUNT_CREATED',
-                'name' => 'Transporter Account Created',
-                'subject' => 'Your transporter account is ready',
-                'body_html' => '<p>Hello {{name}},</p><p>Your transporter account has been created successfully and is now part of TruckBill.</p><p><strong>Email:</strong> {{transporterEmail}}<br><strong>Created at:</strong> {{dateTime}}</p><p>Our team will guide you for next steps.</p>',
-                'allowed_variables' => ['name', 'transporterEmail', 'dateTime', 'downloadUrl'],
-                'allowed_roles' => [],
-                'send_to_transporter' => false,
-                'send_to_customer' => false,
-                'is_active' => false,
-            ],
-            [
                 'key' => 'COMPANY_REGISTERED',
                 'name' => 'Company Registered',
                 'subject' => 'Company registered successfully: {{companyName}}',

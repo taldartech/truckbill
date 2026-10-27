@@ -1,6 +1,12 @@
 /* Global theme overlays — modals, Swals, glass cards */
 
 /* —— Bootstrap modals (all pages) —— */
+.modal.fade .modal-dialog,
+.fb-pay-modal .modal-dialog {
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .modal.fade .modal-content,
 .fb-pay-modal .modal-content {
     border: none;
@@ -126,13 +132,58 @@
 @media (max-width: 575.98px) {
     .modal.fade .modal-footer,
     .fb-pay-modal .modal-footer {
-        flex-direction: column-reverse;
-        align-items: stretch;
+        flex-direction: row !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+        gap: 0.35rem !important;
+        padding: 0.45rem 0.65rem !important;
     }
 
     .modal.fade .modal-footer .btn,
     .fb-pay-modal .modal-footer .btn {
-        width: 100%;
+        width: auto !important;
+        min-width: 0 !important;
+        flex: 0 0 auto !important;
+        padding: 0.28rem 0.65rem !important;
+        font-size: 0.78rem !important;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .modal.fade .modal-body #showAddDriverForm,
+    .fb-pay-modal .modal-body #showAddDriverForm,
+    .modal.fade .modal-body #showAddDriverFormModal,
+    .fb-pay-modal .modal-body #showAddDriverFormModal,
+    .modal.fade .modal-body #showAddDriverFormTruck,
+    .fb-pay-modal .modal-body #showAddDriverFormTruck,
+    #showAddDriverForm,
+    #showAddDriverFormModal,
+    #showAddDriverFormTruck {
+        font-size: 0.70rem !important;
+        font-weight: 600 !important;
+        padding: 0.2rem 0.5rem !important;
+        min-height: 26px !important;
+        height: 26px !important;
+        border-radius: 0.375rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.25rem !important;
+        width: auto !important;
+    }
+
+    .modal.fade .modal-body #showAddDriverForm i,
+    .fb-pay-modal .modal-body #showAddDriverForm i,
+    .modal.fade .modal-body #showAddDriverFormModal i,
+    .fb-pay-modal .modal-body #showAddDriverFormModal i,
+    .modal.fade .modal-body #showAddDriverFormTruck i,
+    .fb-pay-modal .modal-body #showAddDriverFormTruck i,
+    #showAddDriverForm i,
+    #showAddDriverFormModal i,
+    #showAddDriverFormTruck i {
+        font-size: 0.70rem !important;
+        margin: 0 !important;
     }
 }
 
@@ -303,6 +354,43 @@
 @media (max-width: 575.98px) {
     .tb-company-confirm__grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .swal2-actions.lrf-swal-actions,
+    .swal2-actions.tb-swal-actions {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 0.3rem !important;
+        padding: 0.5rem 0.55rem 0.75rem !important;
+    }
+
+    .lrf-swal-confirm,
+    .lrf-swal-cancel,
+    .lrf-swal-deny,
+    .tb-swal-confirm,
+    .tb-swal-cancel,
+    .tb-swal-deny {
+        white-space: nowrap !important;
+    }
+
+    .lrf-swal-cancel,
+    .tb-swal-cancel {
+        flex: 0 0 auto !important;
+        min-width: 50px !important;
+        padding: 0.38rem 0.45rem !important;
+        font-size: 0.67rem !important;
+    }
+
+    .lrf-swal-confirm,
+    .lrf-swal-deny,
+    .tb-swal-confirm,
+    .tb-swal-deny {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        padding: 0.38rem 0.32rem !important;
+        font-size: 0.67rem !important;
+        letter-spacing: -0.02em !important;
     }
 }
 

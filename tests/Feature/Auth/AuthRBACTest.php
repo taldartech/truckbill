@@ -325,7 +325,8 @@ class AuthRBACTest extends TestCase
 
         $response = $this->actingAs($user)->get('/dashboard');
 
-        $response->assertForbidden();
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHasErrors('email');
     }
 
     #[DataProvider('unauthorizedRouteProvider')]
@@ -342,11 +343,10 @@ class AuthRBACTest extends TestCase
     {
         return [
             'super admin routes require correct role' => ['/users', 'admin'],
-            'master admin routes require correct role' => ['/promo_codes', 'admin'],
+            'master admin routes require correct role' => ['/email_templates', 'admin'],
             'super admin branch routes require correct role' => ['/branches', 'admin'],
             'admin or moderator routes require correct role' => ['/consignees', 'accountant'],
             'admin only voucher payments create requires admin' => ['/voucher_payments/create', 'moderator'],
-            'reports still deny unrelated roles' => ['/reports/invoice', 'customer'],
         ];
     }
 

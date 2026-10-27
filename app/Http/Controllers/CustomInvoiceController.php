@@ -115,6 +115,7 @@ class CustomInvoiceController extends Controller
                     'after_or_equal:'.Carbon::today()->subMonth()->toDateString(),
                     'before_or_equal:'.Carbon::today()->addMonth()->toDateString(),
                 ],
+                'due_date' => 'nullable|date|after_or_equal:generated_date',
                 'customer_id' => 'required|exists:consignees,id',
                 'total_amount' => 'required|numeric|min:0',
                 'net_amount' => 'nullable|numeric|min:0',

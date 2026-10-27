@@ -19,17 +19,17 @@
     <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
         <div class="card-body">
             <form method="GET" action="{{ route('master.summary-dashboard') }}" class="row g-3 align-items-end">
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <label for="from_date" class="form-label">From Date</label>
                     <input type="date" name="from_date" id="from_date" class="form-control"
                         value="{{ $filters['from_date'] }}">
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <label for="to_date" class="form-label">To Date</label>
                     <input type="date" name="to_date" id="to_date" class="form-control"
                         value="{{ $filters['to_date'] }}">
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <label for="super_admin_user_id" class="form-label">Super Admin</label>
                     <select name="super_admin_user_id" id="super_admin_user_id" class="form-select"
                         @if (! $isMasterAdmin) disabled @endif>
@@ -45,7 +45,7 @@
                         <input type="hidden" name="super_admin_user_id" value="{{ auth()->id() }}">
                     @endif
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <label for="company_id" class="form-label">Company</label>
                     <select name="company_id" id="company_id" class="form-select">
                         <option value="">All Companies</option>

@@ -91,7 +91,7 @@
                             </div>
                         </div>
 
-                        <div class="lrf-receipt-card">
+                        <div class="lrf-receipt-card lrf-receipt-card--vehicle">
                             <div class="lrf-receipt-card__title">Vehicle &amp; Payee</div>
                             <div class="lrf-receipt-card__row lrf-grid lrf-grid--2">
                                 <div class="lrf-pf">
@@ -128,10 +128,10 @@
 
                                 <div class="lrf-pf" id="lrPayToField" @if(! $lrTruckSelected) hidden @endif>
                                     <label class="lrf-pf__lbl" id="transporterTypeLabel">Pay to<span class="lrf-pf__req">*</span></label>
-                                    <div class="lrf-pay-pills" role="group" aria-label="Pay to">
-                                        <button type="button" class="lrf-pay-pill{{ $selectedPayType === 'owner' ? ' is-active' : '' }}"
-                                            data-pay-type="owner" id="lrPayPillOwner">Truck Owner</button>
-                                        <button type="button" class="lrf-pay-pill{{ $selectedPayType === 'agency' ? ' is-active' : '' }}"
+                                    <div class="lrf-pay-pills d-flex flex-nowrap" role="group" aria-label="Pay to">
+                                        <button type="button" class="lrf-pay-pill w-50 text-nowrap{{ $selectedPayType === 'owner' ? ' is-active' : '' }}"
+                                            data-pay-type="owner" id="lrPayPillOwner"><span class="d-none d-sm-inline">Truck </span>Owner</button>
+                                        <button type="button" class="lrf-pay-pill w-50 text-nowrap{{ $selectedPayType === 'agency' ? ' is-active' : '' }}"
                                             data-pay-type="agency" id="lrPayPillAgency">Agency</button>
                                     </div>
                                     <select class="form-select lrf-pay-type-select" id="transporter_type" name="transporter_type"
@@ -398,7 +398,11 @@
                     if (!select) {
                         return;
                     }
-                    const option = new Option(text || ('#' + id), id, true, true);
+                    let label = text;
+                    if (!label || label === id || label === ('#' + id)) {
+                        try { label = sessionStorage.getItem('tb_label_' + id) || ''; } catch (e) {}
+                    }
+                    const option = new Option(label, id, true, true);
                     select.appendChild(option);
                 };
 
@@ -407,12 +411,18 @@
                 appendSelectOption('.consignee-select', prefill.consignee_id, prefill.consignee_name);
 
                 const goodsSelect = item.querySelector('.goods-type');
-                if (goodsSelect && prefill.good_type) {
-                    const existing = Array.from(goodsSelect.options).some((opt) => opt.value === prefill.good_type);
-                    if (!existing) {
-                        goodsSelect.add(new Option(prefill.good_type, prefill.good_type, true, true));
+                if (goodsSelect && (prefill.goods_type || prefill.good_type)) {
+                    const gt = String(prefill.goods_type || prefill.good_type).trim();
+                    const matchedOpt = Array.from(goodsSelect.options).find((opt) => (opt.getAttribute('data-id') && String(opt.getAttribute('data-id')).trim() === gt) || opt.value === gt);
+                    if (matchedOpt) {
+                        goodsSelect.value = matchedOpt.value;
+                        if (window.jQuery && window.jQuery(goodsSelect).hasClass('select2-hidden-accessible')) {
+                            window.jQuery(goodsSelect).val(matchedOpt.value).trigger('change');
+                        }
                     } else {
-                        goodsSelect.value = prefill.good_type;
+                        const newOpt = new Option(gt, gt, true, true);
+                        newOpt.setAttribute('data-id', gt);
+                        goodsSelect.add(newOpt);
                     }
                 }
                 window.LinkedLrFormUI?.updateRoutePreview(item);
@@ -1602,7 +1612,7 @@ lrItemsContainer.addEventListener('blur', function(e) {
             // Using Bootstrap's Modal API to show the modal
             const modalElement = document.getElementById('addGoodsTypeModal');
             const goodTypeField = document.getElementById('good_type_field');
-            goodTypeField.value = btn.closest('.input-group').querySelector('.goods-type').dataset.select2Id;
+            goodTypeField.value = btn.closest('.input-group, .lrf-pf').querySelector('.goods-type').dataset.select2Id;
             const modal = new bootstrap.Modal(modalElement);
             modal.show();
         }
@@ -1647,14 +1657,18 @@ lrItemsContainer.addEventListener('blur', function(e) {
                         let newOption = new Option(data.goodsType.name, data.goodsType.name);
 
                         selects.forEach(select => {
-                            select.add(new Option(data.goodsType.name, data.goodsType.name));
+                            const opt = new Option(data.goodsType.name, data.goodsType.name);
+                            opt.setAttribute('data-id', data.goodsType.id);
+                            select.add(opt);
                         });
 
                         // Add in template as well for future items
                         const templateSelect = document.getElementById('lr-item-template').content
                             .querySelector('.goods-type');
                         if (templateSelect) {
-                            templateSelect.add(new Option(data.goodsType.name, data.goodsType.name));
+                            const opt = new Option(data.goodsType.name, data.goodsType.name);
+                            opt.setAttribute('data-id', data.goodsType.id);
+                            templateSelect.add(opt);
                         }
 
                         // Select the newly added option in the relevant dropdown

@@ -8,7 +8,6 @@ use App\Models\LorryReceipt;
 use App\Models\Transporter;
 use App\Models\TransporterMaster;
 use App\Models\Truck;
-use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -46,7 +45,7 @@ class MergeTransporterMasters extends Command
 
         $this->info('Merge plan (keeping master #'.$keepMaster->id.'):');
         $this->table(
-            ['Role', 'ID', 'Name', 'PAN', 'Email', 'Transporters', 'User'],
+            ['Role', 'ID', 'Name', 'PAN', 'Email', 'Transporters'],
             collect([$keepMaster])->merge($duplicateMasters)->map(function (TransporterMaster $master) use ($keepMaster): array {
                 return [
                     $master->id === $keepMaster->id ? 'KEEP' : 'MERGE',
@@ -55,7 +54,6 @@ class MergeTransporterMasters extends Command
                     $master->pan_number,
                     $master->email ?? '-',
                     $master->transporters()->count(),
-                    $master->user ? '#'.$master->user->id : '-',
                 ];
             })->all()
         );
@@ -158,15 +156,6 @@ class MergeTransporterMasters extends Command
                 }
             }
 
-            $duplicateUser = $duplicateMaster->user;
-            $keepUser = $keepMaster->user;
-
-            if ($duplicateUser !== null && $keepUser === null) {
-                $actions[] = "Move user #{$duplicateUser->id} ({$duplicateUser->email}) to master #{$keepMaster->id}";
-            } elseif ($duplicateUser !== null && $keepUser !== null) {
-                $actions[] = "WARNING: Both masters have portal users — duplicate user #{$duplicateUser->id} will block merge (resolve manually)";
-            }
-
             $actions[] = "Permanently delete transporter master #{$duplicateMaster->id} (PAN: {$duplicateMaster->pan_number})";
         }
 
@@ -197,27 +186,6 @@ class MergeTransporterMasters extends Command
             $duplicateTransporter->transporter_master_id = $keepMaster->id;
             $duplicateTransporter->save();
             $this->line("  Moved transporter #{$duplicateTransporter->id} to master #{$keepMaster->id}");
-        }
-
-        $duplicateUser = User::query()
-            ->where('transporter_master_id', $duplicateMaster->id)
-            ->lockForUpdate()
-            ->first();
-
-        if ($duplicateUser !== null) {
-            $keepUserExists = User::query()
-                ->where('transporter_master_id', $keepMaster->id)
-                ->exists();
-
-            if ($keepUserExists) {
-                throw new \RuntimeException(
-                    "Cannot merge master #{$duplicateMaster->id}: both masters have portal users (duplicate user #{$duplicateUser->id})."
-                );
-            }
-
-            $duplicateUser->transporter_master_id = $keepMaster->id;
-            $duplicateUser->save();
-            $this->line("  Moved user #{$duplicateUser->id} to master #{$keepMaster->id}");
         }
 
         $duplicateMaster->forceDelete();

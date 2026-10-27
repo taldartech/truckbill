@@ -4,159 +4,121 @@
 
 @push('styles')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <style>
-    /* Select2 custom styling for truck dropdown */
-    .select2-container--bootstrap-5 .select2-selection {
-        min-height: 38px;
-    }
-
-    .select2-result-truck {
-        padding: 4px 0;
-    }
-
-    .truck-info {
-        font-size: 14px;
-        line-height: 1.4;
+    .select2-container--bootstrap-5 .select2-selection--single {
+        height: 38px !important;
+        min-height: 38px !important;
+        border: 1px solid var(--brand-border, #dee2e6) !important;
+        border-radius: 0.375rem !important;
+        background-color: var(--brand-card-bg, #fff) !important;
+        display: flex;
+        align-items: center;
     }
 
     .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-        padding-left: 12px;
-        padding-right: 20px;
-        color: var(--brand-text-primary);
-        line-height: 36px;
-        background: var(--brand-card-bg);
-        border: 1px solid var(--brand-border);
-        border-radius: 0.375rem;
+        color: var(--brand-text-primary, #111827) !important;
+        line-height: 36px !important;
+        padding-left: 0.75rem !important;
+        padding-right: 2.25rem !important;
+        border: none !important;
+        background: transparent !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
     }
 
-    .select2-container--bootstrap-5 .select2-selection--single:focus-visible {
-        border-color: var(--brand-primary);
-        box-shadow: 0 0 0 0.25rem var(--brand-primary-light);
-        outline: 0;
-        border-radius: 0.375rem;
+    .select2-container--bootstrap-5 .select2-selection--single:focus,
+    .select2-container--bootstrap-5.select2-container--focus .select2-selection--single,
+    .select2-container--bootstrap-5.select2-container--open .select2-selection--single {
+        border-color: var(--brand-primary, #2fb36f) !important;
+        box-shadow: 0 0 0 0.25rem var(--brand-input-focus-shadow, rgba(47, 179, 111, 0.15)) !important;
+        outline: 0 !important;
     }
 
     .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
         height: 36px;
-        right: 12px;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        position: absolute;
     }
 
     .select2-dropdown {
-        border: 1px solid var(--brand-border);
-        border-radius: 0.375rem;
+        border: 1px solid var(--brand-border, #dee2e6) !important;
+        border-radius: 0.375rem !important;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
     }
 
     .select2-results__option--highlighted {
-        background-color: var(--brand-primary);
-        color: white;
+        background-color: var(--brand-primary, #2fb36f) !important;
+        color: white !important;
     }
 </style>
 @endpush
 
 @section('content')
-<div class="card mb-4">
-    <div class="card-body">
+<div class="card mb-3">
+    <div class="card-body p-2 p-md-3">
         <form method="GET" action="{{ route('reports.transporter-report') }}" id="searchForm">
-       <div class="row g-2 align-items-end mb-2">
+            <div class="row g-2 align-items-end">
+                <div class="col-6 col-md-3 col-xl">
+                    <label class="form-label small mb-1">Start Date <span class="text-danger">*</span></label>
+                    <input type="date" name="start_date" class="form-control form-control-sm" value="{{ $startDate }}" required>
+                </div>
+                <div class="col-6 col-md-3 col-xl">
+                    <label class="form-label small mb-1">End Date <span class="text-danger">*</span></label>
+                    <input type="date" name="end_date" class="form-control form-control-sm" value="{{ $endDate }}" required>
+                </div>
+                <div class="col-6 col-md-6 col-xl">
+                    <label class="form-label small mb-1">Transporter/Owner</label>
+                    <select name="transporter_id" id="transporterFilter" class="form-select form-select-sm select2">
+                        <option value="">Select Transporter/Owner</option>
+                        @foreach ($transporters as $transporter)
+                        <option @if ($transporterId==$transporter->id) selected @endif value="{{ $transporter->id }}">
+                            {{ $transporter->name }} (@if ($transporter->is_owner) Owner @else Transporter @endif)
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-6 col-md-4 col-xl">
+                    <label class="form-label small mb-1">Truck No</label>
+                    <select name="truck_id" id="truckFilter" class="form-select form-select-sm select2">
+                        <option value="">Select Truck No</option>
+                        @foreach ($trucks as $truck)
+                        <option @if ($truckId==$truck->id) selected @endif value="{{ $truck->id }}">
+                            {{ $truck->truck_number }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-6 col-md-4 col-xl">
+                    <label class="form-label small mb-1">Reference</label>
+                    <select name="reference_by" id="referenceFilter" class="form-select form-select-sm select2">
+                        <option value="">Select Reference</option>
+                        @foreach ($references as $reference)
+                        <option @if ($referenceId==$reference->id) selected @endif value="{{ $reference->id }}">
+                            {{ $reference->name }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-6 col-md-4 col-xl-auto d-flex align-items-end justify-content-end gap-1 gap-sm-2">
+                    <button type="submit" class="btn btn-brand-primary btn-sm btn-report-search" title="Search">
+                        <i class="bi bi-search"></i> <span class="d-none d-sm-inline ms-1">Search</span>
+                    </button>
+                    <a href="{{ route('reports.transporter-report') }}" class="btn btn-secondary btn-sm btn-report-reset" title="Reset">
+                        <i class="bi bi-arrow-clockwise"></i> <span class="d-none d-sm-inline ms-1">Reset</span>
+                    </a>
+                </div>
+            </div>
 
-    <div class="col">
-        <label class="form-label">Start Date <span class="text-danger">*</span></label>
-        <input type="date"
-               name="start_date"
-               class="form-control"
-               value="{{ $startDate }}"
-               required>
-    </div>
-
-    <div class="col">
-        <label class="form-label">End Date <span class="text-danger">*</span></label>
-        <input type="date"
-               name="end_date"
-               class="form-control"
-               value="{{ $endDate }}"
-               required>
-    </div>
-
-    <div class="col">
-        <label class="form-label">Transporter/Owner</label>
-        <select name="transporter_id"
-                id="transporterFilter"
-                class="form-select select2">
-            <option value="">Select Transporter/Owner</option>
-
-            @foreach ($transporters as $transporter)
-                <option
-                    @if ($transporterId == $transporter->id) selected @endif
-                    value="{{ $transporter->id }}">
-                    {{ $transporter->name }}
-                    (@if ($transporter->is_owner)
-                        Owner
-                    @else
-                        Transporter
-                    @endif)
-                </option>
-            @endforeach
-        </select>
-    </div>
-
-    <div class="col">
-        <label class="form-label">Truck No</label>
-        <select name="truck_id"
-                id="truckFilter"
-                class="form-select select2">
-            <option value="">Select Truck No</option>
-
-            @foreach ($trucks as $truck)
-                <option
-                    @if ($truckId == $truck->id) selected @endif
-                    value="{{ $truck->id }}">
-                    {{ $truck->truck_number }}
-                </option>
-            @endforeach
-        </select>
-    </div>
-
-    <div class="col">
-        <label class="form-label">Reference</label>
-        <select name="reference_by"
-                id="referenceFilter"
-                class="form-select select2">
-            <option value="">Select Reference</option>
-
-            @foreach ($references as $reference)
-                <option
-                    @if ($referenceId == $reference->id) selected @endif
-                    value="{{ $reference->id }}">
-                    {{ $reference->name }}
-                </option>
-            @endforeach
-        </select>
-    </div>
-
-    <div class="col-auto d-flex gap-2">
-        <button type="submit" class="btn btn-primary">
-            <i class="bi bi-search"></i> Search
-        </button>
-
-        <a href="{{ route('reports.transporter-report') }}"
-           class="btn btn-secondary">
-            <i class="bi bi-arrow-clockwise"></i> Reset
-        </a>
-    </div>
-
-</div>
-
-
-            <div class="row mb-2">
+            <div class="row mt-2">
                 <div class="col-12">
                     <div id="filterValidationMessage" class="alert alert-warning d-none py-2 mb-0"></div>
                 </div>
             </div>
-
-
-
-
-
         </form>
     </div>
 </div>
@@ -171,15 +133,15 @@
 </div>
 @else
 <div class="card mb-4">
-    <div class="card-header">
+    <div class="card-header py-2">
         <div class="d-flex justify-content-between align-items-center">
             <div>
                 <h3 class="card-title mb-0">Transporter/Truck wise Report</h3>
             </div>
             <div class="d-flex">
-                <a class="btn btn-warning ms-2"
+                <a class="btn btn-warning btn-sm" title="Export"
                     href="{{ route('reports.transporter-report-export', ['start_date' => $startDate, 'end_date' => $endDate, 'transporter_id' => $transporterId, 'truck_id' => $truckId, 'reference_by' => $referenceId]) }}">
-                    <i class="bi bi-file-earmark-spreadsheet"></i> Export
+                    <i class="bi bi-file-earmark-spreadsheet"></i> <span class="d-none d-sm-inline ms-1">Export</span>
                 </a>
             </div>
         </div>
@@ -187,79 +149,81 @@
     @php
     $payments = array_fill_keys($paymentNames, 0);
     @endphp
-    <div class="card-body" style="overflow-x: auto;">
-        <table class="table table-bordered table-striped" style="font-size: 12px !important;">
-            <thead>
-                <tr>
-                    <th>GR Date</th>
-                    <th>LR No</th>
-                    <th>GR No</th>
-                    <th>Truck No</th>
-                    <th>Destination</th>
-                    <th>Loading Weight</th>
-                    <th>Unloading Weight</th>
-                    <th>Bags</th>
-                    <th>Consignor Name</th>
-                    <th>Consignee Name</th>
-                    <th>TR Rate</th>
-                    <th>Tr Freight</th>
-                    <th>TDS</th>
-                    @foreach ($paymentNames as $paymentName)
-                    <th>{{ $paymentName }}</th>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover align-middle mb-0 text-nowrap small">
+                <thead>
+                    <tr>
+                        <th>GR Date</th>
+                        <th>LR No</th>
+                        <th>GR No</th>
+                        <th>Truck No</th>
+                        <th>Destination</th>
+                        <th>Loading Weight</th>
+                        <th>Unloading Weight</th>
+                        <th>Bags</th>
+                        <th>Consignor Name</th>
+                        <th>Consignee Name</th>
+                        <th>TR Rate</th>
+                        <th>Tr Freight</th>
+                        <th>TDS</th>
+                        @foreach ($paymentNames as $paymentName)
+                        <th>{{ $paymentName }}</th>
+                        @endforeach
+                        <th>Damage Amount</th>
+                        <th>Short Amount</th>
+                        <th>Misc Expenses</th>
+                        <th>Balance</th>
+                        <th>Negative Adjusted</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($lrs as $index => $lr)
+                    @php
+                    $fr = $lr->freightBooking;
+                    $payments = array_fill_keys($paymentNames, 0);
+                    $total_balance = 0;
+                    if ($fr) {
+                    $vouchers = $fr->voucherPayments ?? collect();
+                    foreach ($vouchers as $voucher) {
+                    $paymentMode = $voucher->payment_mode;
+                    if (isset($payments[$paymentMode])) {
+                    $payments[$paymentMode] += $voucher->amount;
+                    }
+                    }
+                    $total_balance = $fr->balance_amount;
+                    }
+                    @endphp
+                    <tr>
+                        <td class="text-nowrap">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}
+                        </td>
+                        <td>{{ $lr->lr_number }}</td>
+                        <td>{{ $lr->gr_number }}</td>
+                        <td>{{ $lr->truck_id ? $lr->truck->truck_number : 'N/A' }}</td>
+                        <td>{{ $lr->destination_city . ', ' . $lr->destination_state }}</td>
+                        <td>{{ $lr->weight }}</td>
+                        <td>{{ number_format($lr->unloading_weight ?? $lr->weight, 3) }}</td>
+                        <td>{{ $lr->no_of_units }}</td>
+                        <td>{{ $lr->consignor_id ? $lr->consignor->name : 'N/A' }}</td>
+                        <td>{{ $lr->consignee_id ? $lr->consignee->name : 'N/A' }}</td>
+                        <td>{{ number_format($fr?->tr_fr_rate ?? 0, 2) }}</td>
+                        <td>{{ number_format($fr?->tr_amount ?? 0, 2) }}</td>
+                        <td>{{ number_format($fr?->tds_amount ?? 0, 2) }}</td>
+                        @foreach ($paymentNames as $paymentName)
+                        <td>{{ number_format($payments[$paymentName], 2) }}</td>
+                        @endforeach
+                        <td>{{ number_format($lr->damage_amount ?? 0, 2) }}</td>
+                        <td>{{ number_format($lr->shortage_amount ?? 0, 2) }}</td>
+                        <td>{{ number_format($fr?->misc_expense ?? 0, 2) }}</td>
+                        <td>{{ number_format($total_balance, 2) }}</td>
+                        <td>{{ number_format($fr?->negative_adjusted_amount ?? 0, 2) }}</td>
+                    </tr>
                     @endforeach
-                    <th>Damage Amount</th>
-                    <th>Short Amount</th>
-                    <th>Misc Expenses</th>
-                    <th>Balance</th>
-                    <th>Negative Adjusted</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($lrs as $index => $lr)
-                @php
-                $fr = $lr->freightBooking;
-                $payments = array_fill_keys($paymentNames, 0);
-                $total_balance = 0;
-                if ($fr) {
-                $vouchers = $fr->voucherPayments ?? collect();
-                foreach ($vouchers as $voucher) {
-                $paymentMode = $voucher->payment_mode;
-                if (isset($payments[$paymentMode])) {
-                $payments[$paymentMode] += $voucher->amount;
-                }
-                }
-                $total_balance = $fr->balance_amount;
-                }
-                @endphp
-                <tr>
-                    <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}
-                    </td>
-                    <td>{{ $lr->lr_number }}</td>
-                    <td>{{ $lr->gr_number }}</td>
-                    <td>{{ $lr->truck_id ? $lr->truck->truck_number : 'N/A' }}</td>
-                    <td>{{ $lr->destination_city . ', ' . $lr->destination_state }}</td>
-                    <td>{{ $lr->weight }}</td>
-                    <td>{{ number_format($lr->unloading_weight ?? $lr->weight, 3) }}</td>
-                    <td>{{ $lr->no_of_units }}</td>
-                    <td>{{ $lr->consignor_id ? $lr->consignor->name : 'N/A' }}</td>
-                    <td>{{ $lr->consignee_id ? $lr->consignee->name : 'N/A' }}</td>
-                    <td>{{ number_format($fr?->tr_fr_rate ?? 0, 2) }}</td>
-                    <td>{{ number_format($fr?->tr_amount ?? 0, 2) }}</td>
-                    <td>{{ number_format($fr?->tds_amount ?? 0, 2) }}</td>
-                    @foreach ($paymentNames as $paymentName)
-                    <td>{{ number_format($payments[$paymentName], 2) }}</td>
-                    @endforeach
-                    <td>{{ number_format($lr->damage_amount ?? 0, 2) }}</td>
-                    <td>{{ number_format($lr->shortage_amount ?? 0, 2) }}</td>
-                    <td>{{ number_format($fr?->misc_expense ?? 0, 2) }}</td>
-                    <td>{{ number_format($total_balance, 2) }}</td>
-                    <td>{{ number_format($fr?->negative_adjusted_amount ?? 0, 2) }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
-    <div class="mt-3 d-flex justify-content-end">
+    <div class="p-2 p-md-3 d-flex justify-content-end">
         {{ $lrs->links() }}
     </div>
 </div>

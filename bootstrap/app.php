@@ -20,7 +20,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'auth.blocked' => \App\Http\Middleware\CheckBlockMiddleware::class,
             'company.context' => \App\Http\Middleware\EnsureCompanyContextMiddleware::class,
-            'customer.consignee' => \App\Http\Middleware\EnsureCustomerConsigneeContext::class,
             'onboarding.signature' => \App\Http\Middleware\VerifyOnboardingSignature::class,
             'subscription.active' => \App\Http\Middleware\EnsureActiveSubscription::class,
         ]);

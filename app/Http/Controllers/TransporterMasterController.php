@@ -6,7 +6,6 @@ use App\Http\Requests\StoreTransporterMasterRequest;
 use App\Http\Requests\UpdateTransporterMasterRequest;
 use App\Models\Country;
 use App\Models\TransporterMaster;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -65,15 +64,6 @@ class TransporterMasterController extends Controller
     {
         $payload = $request->prepareTransporterMasterPayload();
         $transporterMaster->update($payload);
-
-        $userUpdate = ['name' => $payload['name']];
-        if ($payload['email'] !== null) {
-            $userUpdate['email'] = $payload['email'];
-        }
-
-        User::query()
-            ->where('transporter_master_id', $transporterMaster->id)
-            ->update($userUpdate);
 
         return redirect()
             ->route('master.transporter-masters.index')

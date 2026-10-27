@@ -45,6 +45,91 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="branchDeleteModal" tabindex="-1" aria-labelledby="branchDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="branchDeleteModalLabel">
+                    Delete Branch
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                </button>
+            </div>
+
+            <form id="branchDeleteForm" method="POST">
+                @csrf
+                @method('DELETE')
+
+                <div class="modal-body">
+
+                    <p class="mb-3">
+                        Are you sure you want to delete this branch?
+                    </p>
+
+                    <div class="mb-2">
+                        <strong>Branch Name:</strong>
+                        <span id="deleteBranchName">-</span>
+                    </div>
+
+                    <div class="mb-2">
+                        <strong>Company:</strong>
+                        <span id="deleteBranchCompany">-</span>
+                    </div>
+
+                   
+
+                    <div class="mb-3">
+                        <strong>Head Office:</strong>
+                        <span id="deleteBranchHeadOffice">-</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="deleteBranchRemark" class="form-label">
+                            Delete Remark <span class="text-danger">*</span>
+                        </label>
+
+                        <textarea
+                            class="form-control"
+                            id="deleteBranchRemark"
+                            name="delete_remark"
+                            rows="3"
+                            required
+                            maxlength="1000"
+                            placeholder="Enter reason for deleting this branch"></textarea>
+
+                        <div id="deleteBranchRemarkError"
+                             class="text-danger mt-1"
+                             style="display:none;">
+                            Delete remark is required.
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-danger"
+                            id="confirmBranchDelete">
+                        Delete
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -141,12 +226,42 @@ $(document).ready(function() {
     });
 
     // Handle delete confirmation
-    $(document).on('submit', 'form[action*="destroy"]', function(e) {
-        if (!confirm('Are you sure you want to delete this branch?')) {
-            e.preventDefault();
-            return false;
-        }
-    });
+    $(document).on('click', '.branch-delete-btn', function () {
+
+    const button = $(this);
+
+    const branchId = button.data('branch-id');
+    const branchName = button.data('branch-name');
+    const company = button.data('branch-company');
+    const headOffice = button.data('branch-head-office');
+
+    $('#deleteBranchName').text(branchName || '-');
+    $('#deleteBranchCompany').text(company || '-');
+    $('#deleteBranchHeadOffice').text(headOffice || '-');
+
+    $('#deleteBranchRemark').val('');
+    $('#deleteBranchRemarkError').hide();
+
+    $('#branchDeleteForm').attr(
+        'action',
+        '/branches/' + branchId
+    );
+});
+$('#branchDeleteForm').on('submit', function (e) {
+
+    const remark = $('#deleteBranchRemark').val().trim();
+
+    if (!remark) {
+        e.preventDefault();
+
+        $('#deleteBranchRemarkError').show();
+        $('#deleteBranchRemark').focus();
+
+        return false;
+    }
+
+    $('#deleteBranchRemarkError').hide();
+});
 });
 </script>
 @endpush
