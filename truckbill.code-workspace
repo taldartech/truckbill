@@ -11,6 +11,12 @@
 		},
 		{
 			"path": "../truckbill_website"
+		},
+		{
+			"path": "../truckbill_platform"
+		},
+		{
+			"path": "../truckbill_admin"
 		}
 	]
 }
