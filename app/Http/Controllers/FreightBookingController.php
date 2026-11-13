@@ -312,10 +312,10 @@ class FreightBookingController extends Controller
             }
 
             if ($request->filled('transporter_id')) {
-                $query->where(function ($q) use ($request) {
-                    $q->where('freight_bookings.transporter_id', $request->transporter_id)
-                        ->orWhere('list_lr.transporter_id', $request->transporter_id)
-                        ->orWhere('freight_bookings.transporter_name', 'LIKE', "%{$request->transporter_id}%");
+                $transporterId = (int) $request->transporter_id;
+                $query->where(function ($q) use ($transporterId) {
+                    $q->where('freight_bookings.transporter_id', $transporterId)
+                        ->orWhere('list_lr.transporter_id', $transporterId);
                 });
             }
 
@@ -334,7 +334,14 @@ class FreightBookingController extends Controller
                     ->where('freight_bookings.is_cancelled', 0);
             }
 
-            $listSearch = trim((string) $request->input('filter_search', $request->input('search', '')));
+            $rawListSearch = $request->input('filter_search');
+            if ($rawListSearch === null) {
+                $rawListSearch = $request->input('search.value', $request->input('search', ''));
+            }
+            if (is_array($rawListSearch)) {
+                $rawListSearch = $rawListSearch['value'] ?? '';
+            }
+            $listSearch = trim((string) $rawListSearch);
             if ($listSearch !== '') {
                 $search = $listSearch;
                 $searchQuery = clone $query;

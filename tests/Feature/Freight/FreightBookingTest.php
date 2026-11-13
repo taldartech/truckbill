@@ -222,6 +222,7 @@ class FreightBookingTest extends TestCase
             'length' => 10,
             'start_date' => now()->subDays(7)->toDateString(),
             'end_date' => now()->addDays(14)->toDateString(),
+            'filter_search' => '',
             'search' => ['value' => '', 'regex' => 'false'],
             'order' => [['column' => 1, 'dir' => 'desc']],
             'columns' => $columns,
@@ -243,7 +244,7 @@ class FreightBookingTest extends TestCase
 
         $response = $this->actingAs($admin)
             ->withHeader('X-Requested-With', 'XMLHttpRequest')
-            ->get('/freight_bookings/data', $payload);
+            ->call('GET', '/freight_bookings/data', $payload);
 
         $response->assertOk();
         $json = $response->json();
@@ -255,7 +256,9 @@ class FreightBookingTest extends TestCase
     {
         $admin = $this->makeUser('admin');
         $lr = $this->makeLorryReceipt($admin);
-        FreightBooking::create($this->bookingPayload($admin, $lr));
+        FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 'V-NO-MATCH',
+        ]));
 
         $payload = $this->freightBookingsDataTableRequestPayload([
             'filter_search' => 'ZZZ-NO-MATCH-TERM',
@@ -263,13 +266,251 @@ class FreightBookingTest extends TestCase
 
         $response = $this->actingAs($admin)
             ->withHeader('X-Requested-With', 'XMLHttpRequest')
-            ->get('/freight_bookings/data', $payload);
+            ->call('GET', '/freight_bookings/data', $payload);
 
         $response->assertOk();
         $json = $response->json();
         $this->assertArrayNotHasKey('error', $json);
         $this->assertSame(0, (int) ($json['recordsFiltered'] ?? -1));
         $this->assertSame(0, count($json['data'] ?? []));
+    }
+
+    public function test_datatable_transporter_filter_matches_id_not_digit_in_name(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
+
+        $selectedTransporter = Transporter::factory()
+            ->forCompany($admin->company_id)
+            ->create([
+                'mobile_number' => '9000000001',
+                'declaration_given' => false,
+                'tds_percentage' => 1,
+                'total_trucks' => 0,
+                'advance_amount' => 0,
+            ]);
+        $selectedTruck = Truck::create([
+            'transporter_id' => $selectedTransporter->id,
+            'truck_number' => 'RJ16GB0056',
+            'truck_type' => 'Trailer',
+        ]);
+
+        $otherTransporter = Transporter::factory()
+            ->forCompany($admin->company_id)
+            ->create([
+                'mobile_number' => '9000000002',
+                'declaration_given' => false,
+                'tds_percentage' => 1,
+                'total_trucks' => 0,
+                'advance_amount' => 0,
+            ]);
+        $otherTruck = Truck::create([
+            'transporter_id' => $otherTransporter->id,
+            'truck_number' => 'RJ27GD4891',
+            'truck_type' => 'Trailer',
+        ]);
+
+        $selectedLr = LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'lr_number' => 'LR-FILTER-SELECTED',
+            'gr_number' => 'GR-FILTER-SELECTED',
+            'invoice_number' => 'INV-FILTER-SELECTED',
+            'truck_id' => $selectedTruck->id,
+            'transporter_id' => $selectedTransporter->id,
+            'reference_by' => $selectedTransporter->id,
+            'gr_date' => now()->toDateString(),
+            'delivery_status' => 'Pending',
+            'source_city' => 'Ahmedabad',
+            'source_state' => 'Gujarat',
+            'destination_city' => 'Mumbai',
+            'destination_state' => 'Maharashtra',
+            'unloading_station' => 'Station A',
+            'lane' => 'Lane 1',
+            'good_type' => 'Cement',
+            'weight' => 10,
+            'no_of_units' => 1,
+            'fr_rate' => 1000,
+            'amount' => 10000,
+            'damage_amount' => 0,
+            'shortage_amount' => 0,
+            'transporter_type' => 'agency',
+        ]);
+
+        $otherLr = LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'lr_number' => 'LR-FILTER-OTHER',
+            'gr_number' => 'GR-FILTER-OTHER',
+            'invoice_number' => 'INV-FILTER-OTHER',
+            'truck_id' => $otherTruck->id,
+            'transporter_id' => $otherTransporter->id,
+            'reference_by' => $otherTransporter->id,
+            'gr_date' => now()->toDateString(),
+            'delivery_status' => 'Pending',
+            'source_city' => 'Jaipur',
+            'source_state' => 'Rajasthan',
+            'destination_city' => 'Udaipur',
+            'destination_state' => 'Rajasthan',
+            'unloading_station' => 'Station B',
+            'lane' => 'Lane 2',
+            'good_type' => 'Cement',
+            'weight' => 12,
+            'no_of_units' => 1,
+            'fr_rate' => 1100,
+            'amount' => 13200,
+            'damage_amount' => 0,
+            'shortage_amount' => 0,
+            'transporter_type' => 'owner',
+        ]);
+
+        $selectedBooking = FreightBooking::create(array_merge($this->bookingPayload($admin, $selectedLr), [
+            'voucher_number' => 'V-FILTER-SELECTED',
+            'transporter_id' => $selectedTransporter->id,
+            'transporter_name' => 'MAHADEV TRANSPORT COMPANY KAILASH',
+        ]));
+
+        // Name intentionally contains the selected transporter id digits (e.g. "...RJ27...")
+        // so a buggy LIKE '%{id}%' on transporter_name would falsely include this row.
+        FreightBooking::create(array_merge($this->bookingPayload($admin, $otherLr), [
+            'voucher_number' => 'V-FILTER-OTHER',
+            'transporter_id' => $otherTransporter->id,
+            'transporter_name' => 'VIKRAM NATH CHOUHAN RJ'.$selectedTransporter->id.'GD4891',
+        ]));
+
+        $payload = $this->freightBookingsDataTableRequestPayload([
+            'transporter_id' => $selectedTransporter->id,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->call('GET', '/freight_bookings/data', $payload);
+
+        $response->assertOk();
+        $json = $response->json();
+        $this->assertArrayNotHasKey('error', $json, json_encode($json));
+        $rowIds = collect($json['data'] ?? [])->map(fn ($row) => (string) ($row['DT_RowId'] ?? ''))->all();
+        $this->assertSame(
+            [(string) $selectedBooking->id],
+            $rowIds,
+            'Expected only selected transporter booking. Got: '.json_encode([
+                'selected_transporter_id' => $selectedTransporter->id,
+                'other_transporter_id' => $otherTransporter->id,
+                'recordsFiltered' => $json['recordsFiltered'] ?? null,
+                'rows' => $json['data'] ?? null,
+            ])
+        );
+    }
+
+    public function test_datatable_customer_and_truck_filters_are_exact(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$customerA, $consignor, $consignee] = $this->seedConsignees($admin);
+        $customerB = Consignee::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Other Customer',
+            'address' => 'Addr',
+        ]);
+        [$transporter, $truckA] = $this->makeTransporterAndTruck($admin);
+        $truckB = Truck::create([
+            'transporter_id' => $transporter->id,
+            'truck_number' => 'GJ09ZZ9999',
+            'truck_type' => 'Flatbed',
+        ]);
+
+        $lrA = LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customerA->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'lr_number' => 'LR-CUST-A',
+            'gr_number' => 'GR-CUST-A',
+            'invoice_number' => 'INV-CUST-A',
+            'truck_id' => $truckA->id,
+            'transporter_id' => $transporter->id,
+            'reference_by' => $transporter->id,
+            'gr_date' => now()->toDateString(),
+            'delivery_status' => 'Pending',
+            'source_city' => 'Ahmedabad',
+            'source_state' => 'Gujarat',
+            'destination_city' => 'Mumbai',
+            'destination_state' => 'Maharashtra',
+            'unloading_station' => 'Station A',
+            'lane' => 'Lane 1',
+            'good_type' => 'Cement',
+            'weight' => 10,
+            'no_of_units' => 1,
+            'fr_rate' => 1000,
+            'amount' => 10000,
+            'damage_amount' => 0,
+            'shortage_amount' => 0,
+            'transporter_type' => 'agency',
+        ]);
+        $lrB = LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customerB->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'lr_number' => 'LR-CUST-B',
+            'gr_number' => 'GR-CUST-B',
+            'invoice_number' => 'INV-CUST-B',
+            'truck_id' => $truckB->id,
+            'transporter_id' => $transporter->id,
+            'reference_by' => $transporter->id,
+            'gr_date' => now()->toDateString(),
+            'delivery_status' => 'Pending',
+            'source_city' => 'Surat',
+            'source_state' => 'Gujarat',
+            'destination_city' => 'Pune',
+            'destination_state' => 'Maharashtra',
+            'unloading_station' => 'Station B',
+            'lane' => 'Lane 2',
+            'good_type' => 'Cement',
+            'weight' => 8,
+            'no_of_units' => 1,
+            'fr_rate' => 900,
+            'amount' => 7200,
+            'damage_amount' => 0,
+            'shortage_amount' => 0,
+            'transporter_type' => 'agency',
+        ]);
+
+        $bookingA = FreightBooking::create(array_merge($this->bookingPayload($admin, $lrA), [
+            'voucher_number' => 'V-CUST-A',
+            'transporter_id' => $transporter->id,
+            'transporter_name' => 'Agency A',
+        ]));
+        FreightBooking::create(array_merge($this->bookingPayload($admin, $lrB), [
+            'voucher_number' => 'V-CUST-B',
+            'transporter_id' => $transporter->id,
+            'transporter_name' => 'Agency A',
+        ]));
+
+        $customerPayload = $this->freightBookingsDataTableRequestPayload([
+            'customer_id' => $customerA->id,
+        ]);
+        $customerResponse = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->call('GET', '/freight_bookings/data', $customerPayload);
+        $customerResponse->assertOk();
+        $customerJson = $customerResponse->json();
+        $this->assertSame(1, (int) ($customerJson['recordsFiltered'] ?? -1));
+        $this->assertSame((string) $bookingA->id, (string) ($customerJson['data'][0]['DT_RowId'] ?? ''));
+
+        $truckPayload = $this->freightBookingsDataTableRequestPayload([
+            'truck_id' => $truckA->id,
+        ]);
+        $truckResponse = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->call('GET', '/freight_bookings/data', $truckPayload);
+        $truckResponse->assertOk();
+        $truckJson = $truckResponse->json();
+        $this->assertSame(1, (int) ($truckJson['recordsFiltered'] ?? -1));
+        $this->assertSame((string) $bookingA->id, (string) ($truckJson['data'][0]['DT_RowId'] ?? ''));
     }
 
     public function test_super_admin_redirected_without_company_and_guest_redirected(): void
