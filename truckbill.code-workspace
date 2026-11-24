@@ -17,6 +17,9 @@
 		},
 		{
 			"path": "../truckbill_admin"
+		},
+		{
+			"path": "../truckbill_nexus"
 		}
 	]
 }
